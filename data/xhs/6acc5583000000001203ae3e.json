@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "实测，Agent 跑一宿真没掉线\n\t\n最近这波 模型全家桶 2 折，属实有点香。\n覆盖范围大，重点就三个：\n\t\n✅ 真无限：没有周总量限制\n✅ 真兼容：ChatBox \/ NextChat \/ LocalAI 直接连\n✅ 真稳定：Agent 长跑场景 99.9%\n\t\n可用性我拿 Cursor + GLM 5.2 重构了 300 行老代码，几秒就出了干净结果。\n超大上下文也不用来回切，Agent 挂一晚上也没掉线。\n\t\n有测试需求的朋友，这波可以冲。\n\t\n#API接口[话题]# #大模型API[话题]##API推荐[话题]##GLM5[话题]# #智谱GLM[话题]# #AI编程[话题]# #Agent[话题]# #程序员[话题]# #AI工具[话题]# #Cursor[话题]#",
+  "cover_ocr" : "GG\n破防了！\n御3家Ae\n稳定还量大\n这波闭眼冲",
+  "fetched_at" : "2026-11-01T09:22:10.475Z",
+  "id" : "6acc5583000000001203ae3e",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011722\/7733815e6c5bb7d6521b4c0336decc44\/1040g2sg32677iv5j4a005qev5efsj7g7oto3t2o!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6acc5583000000001203ae3e\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 1,
+    "comments" : 0,
+    "likes" : 1,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "API接口",
+    "大模型API",
+    "API推荐",
+    "GLM5",
+    "智谱GLM",
+    "AI编程",
+    "Agent",
+    "程序员",
+    "AI工具",
+    "Cursor"
+  ],
+  "title" : "算力成本打下来了，这波真的香！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acc5583000000001203ae3e?xsec_token=ABthmdMv4N-NcBC_RLnxtuUaZmSny73_AEPX68em1dnks=&xsec_source=pc_user"
+}

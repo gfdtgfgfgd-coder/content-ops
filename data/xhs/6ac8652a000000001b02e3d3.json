@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "买 GLM 5.3 API，别被低价宣传绕进去了！\n现在市面上各种“GLM 5 API”很多，\n价格一个比一个低，\n但真正调用时才发现：\n型号不明确，\n到底是 5.3、5.2 还是 5.1 说不清；\n价格不透明，\n充值、并发、调用费用容易算不明白；\n用量查不到，\n出了问题也不知道钱花在哪里。\n淘 API，建议先看三点：\n第一，看模型型号。\n我这里明确标注 GLM-5.3、GLM-5.2、GLM-5.1，\n不拿旧型号混着宣传。\n第二，看价格规则。\n明码标价，套餐、调用费用提前说清楚，\n不用到最后才发现还有额外成本。\n第三，看调用记录。\n每一笔用量都透明可查，\n花了多少、用了多少，一目了然。\nGLM 5.3 API 适合什么场景？\n长文本处理、代码开发、项目调试、\nCursor\/Trae 接入，都可以安排。\n低价不是唯一标准，\n型号真实、价格透明、调用可查，\n这才是开发者真正需要的 API。\n#GLM53[话题]# #智谱GLM[话题]# #GLM52[话题]# #GLM51[话题]# #API避坑[话题]# #开发者[话题]# #AI工具[话题]# #程序员[话题]# #Cursor[话题]# #Trae[话题]#",
+  "cover_ocr" : "G\n真白菜价\n文字 API\n好吃又管饱\n有人要试吗？",
+  "fetched_at" : "2026-11-01T09:22:51.869Z",
+  "id" : "6ac8652a000000001b02e3d3",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011722\/d751cba7527bcc4fff437982d3df5671\/notes_pre_post\/1040g3k83263ciik6k4705qev5efsj7g71m52ni0!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6ac8652a000000001b02e3d3\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 1,
+    "comments" : 0,
+    "likes" : 3,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "GLM53",
+    "智谱GLM",
+    "GLM52",
+    "GLM51",
+    "API避坑",
+    "开发者",
+    "AI工具",
+    "程序员",
+    "Cursor",
+    "Trae"
+  ],
+  "title" : "谁要低价api？",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac8652a000000001b02e3d3?xsec_token=AB9ev9U5kwo_FsirW8ztPyKt31Cttuoa9dCuchdv3kwvs=&xsec_source=pc_user"
+}

@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "还在为 API 费用太高发愁？\n同等能力的模型，官方价格什么水平，大家心里都有数。\n\t\n现在 GLM 5.3 API 直接低价开冲，\n超大上下文，长代码、长文档一次处理；\n写代码够稳，Cursor、Trae 随时切换；\n日常开发、项目搭建、代码重构都能用。\nGLM 全系通用，\n个人开发、团队测试、项目部署都合适。\n\t\n淘 API，重点看这三点：\n型号写清楚：GLM-5.3 \/ GLM-5.2 \/ GLM-5.1\n价格明码标价，不玩隐藏收费\n调用记录透明，每一笔都能查\n这一波就是给开发者省预算，\n想上手 GLM 5.3 API 的，可以直接冲。\n#开发者[话题]# #GLM53[话题]# #智谱GLM[话题]# #GLM5[话题]# #AI大模型[话题]# #API接口[话题]# #Cursor[话题]# #Trae[话题]# #编程工具[话题]# #代码开发[话题]#",
+  "cover_ocr" : "G\n真白菜价\ngim 5.3 API\n好吃又管饱\n有人要试吗？\n-",
+  "fetched_at" : "2026-11-01T09:22:57.581Z",
+  "id" : "6ac7598b000000001b02d055",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011722\/b2580d40ed70c7042b6a17ae779c3f06\/notes_pre_post\/1040g3k832623khno4a905qev5efsj7g7t7c8nl8!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6ac7598b000000001b02d055\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 2,
+    "comments" : 2,
+    "likes" : 3,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "开发者",
+    "GLM53",
+    "智谱GLM",
+    "GLM5",
+    "AI大模型",
+    "API接口",
+    "Cursor",
+    "Trae",
+    "编程工具",
+    "代码开发"
+  ],
+  "title" : "GLM 5.3 API 直接打到白菜价！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac7598b000000001b02d055?xsec_token=ABk_GOVJLKx1RXsIy4xjGizb-5cnr-UwrtfkUFQRiOQ4Q=&xsec_source=pc_user"
+}

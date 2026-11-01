@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "写文案、跑测试、做对话机器人——GLM-5.3 API这波特价，适合想控制成本的人。\n\t\n调用名：glm-5.3 特价。大批量调用也不心疼。\n\t\n智谱模型全包：GLM-5.3、5.3 Flash、5.2、5.1、4.7、4.6。\n\t\n常用工具直接兼容：ChatBox、Cherry Studio、CLI，填Key就能用。\n\t\n支持测试体验，调用记录可查，按量计费，对账方便。\n#glm5[话题]# #glm51[话题]# #glm52[话题]# #智谱glm5[话题]# #智谱GLM大模型[话题]# #开发者[话题]# #开发者选项[话题]# #ai编程[话题]# #ai代码[话题]# #agent[话题]#",
+  "cover_ocr" : "舜源模型\n赶紧冲！\nGLM-5.3\n量大管饱\n支持1M上下文\n跑推理逻辑太强了",
+  "fetched_at" : "2026-11-01T09:26:58.025Z",
+  "id" : "6ab37d2d000000001b02c098",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011726\/cf6573eb48272197e6d9d4d5b1d9138c\/notes_pre_post\/1040g3k0325e07r3e58105qev5efsj7g7vleuks8!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6ab37d2d000000001b02c098\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 0,
+    "likes" : 1,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "glm5",
+    "glm51",
+    "glm52",
+    "智谱glm5",
+    "智谱GLM大模型",
+    "开发者",
+    "开发者选项",
+    "ai编程",
+    "ai代码",
+    "agent"
+  ],
+  "title" : "破防了！GLM 5.3 API太香了",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab37d2d000000001b02c098?xsec_token=ABnKmnv_Wman5Be5Mz4NfHtSCXT_oRlQakdALcU49zBRw=&xsec_source=pc_user"
+}

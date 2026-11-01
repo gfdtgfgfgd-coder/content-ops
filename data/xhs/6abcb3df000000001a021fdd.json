@@ -1,0 +1,40 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "最近挖到一个好用的多模型API渠道\n御三家、SD2等模型基本都能覆盖\n适合日常开发、批量调用和内容生产。\n\t\n价格相对友好，量大还有优惠\n整体使用起来更省预算\n需要朋友，可以试用哦！\n#开发者[话题]##程序员[话题]##ai编程[话题]##codingplan[话题]##agent[话题]# #ai大模型[话题]# #ai编程[话题]# #AI工具[话题]# #大模型[话题]# #智谱GLM[话题]#",
+  "cover_ocr" : "源模型\n挖到宝了！\n御3家+sd2全都有\n稳定好用\n量大还有优惠",
+  "fetched_at" : "2026-11-01T09:24:43.335Z",
+  "id" : "6abcb3df000000001a021fdd",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011724\/02dd6ad8b1bda76ee1a6a8bc99c9187c\/notes_pre_post\/1040g3k0325nv5rsbl8005qev5efsj7g7f1s0rj8!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6abcb3df000000001a021fdd\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 1,
+    "comments" : 0,
+    "likes" : 1,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "开发者",
+    "程序员",
+    "ai编程",
+    "codingplan",
+    "agent",
+    "ai大模型",
+    "AI工具",
+    "大模型",
+    "智谱GLM"
+  ],
+  "title" : "超稳定API，开发党真的省事",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6abcb3df000000001a021fdd?xsec_token=ABNJ9fWQcnuCLTqEVs69Qgk_JPyJPB5ciAQvL-RbdGMm8=&xsec_source=pc_user"
+}

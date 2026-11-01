@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "GLM-5.2 实测：1M 上下文 + 强 Agent 能力，这波真的管饱\n\t\n正文：智谱 GLM-5.2 来了，这次升级方向很明确：代码生成和长程 Agent 任务。\n\t\n几个关键点：\n真实可用 1M 超长上下文，长文档、长代码仓库、多轮任务直接扔进去\n\t\n代码与 Agent 能力增强，支持任务规划、步骤拆解、多轮工具调用和结果校验\n\t\n面向 Agentic Engineering，从理解目标到执行、修正、交付，流程更完整\n\t\n再加上 GLM-5.1 资源到位，GLM-5.2 价格继续卷，量大管饱，敞开用。\n\t\n开发者、Agent 从业者、程序员、运维、分析师，这波可以直接安排。\n#glm5[话题]# #glm51[话题]# #glm52[话题]# #智谱glm5[话题]# #智谱GLM大模型[话题]# #开发者[话题]# #开发者选项[话题]# #ai编程[话题]# #ai代码[话题]# #agent[话题]#",
+  "cover_ocr" : "挖到宝了！\n良心API供应\n靠谱好用\n跑代码嘎嘎香",
+  "fetched_at" : "2026-11-01T09:26:46.730Z",
+  "id" : "6ab4d5d30000000012039fd0",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011726\/7440a6c8be56ac2a4fd92511f83e52d1\/notes_pre_post\/1040g3k0325g91vfd4c0g5qev5efsj7g7348uqqo!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6ab4d5d30000000012039fd0\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 0,
+    "likes" : 0,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "glm5",
+    "glm51",
+    "glm52",
+    "智谱glm5",
+    "智谱GLM大模型",
+    "开发者",
+    "开发者选项",
+    "ai编程",
+    "ai代码",
+    "agent"
+  ],
+  "title" : "便宜量大的GLM-5.2太香了！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab4d5d30000000012039fd0?xsec_token=ABy5grGD5Wlq9JCWW7gWp2Qweo-8ijkBxP6mqUcj3WFXA=&xsec_source=pc_user"
+}

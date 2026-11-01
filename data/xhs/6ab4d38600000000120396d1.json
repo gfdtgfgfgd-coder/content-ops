@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "破防了！GLM 5.3 API太香了\nGLM-5.3 上线：1M 上下文 + 强 Agent 能力，开发者又能敞开用了\n\t\n核心特性：\n\t\n支持真实可用的 1M 超长上下文长文档、长代码仓库、多轮任务处理更从容，海量数据解析和复杂逻辑推理更顺畅。\n\t\n强代码与 Agent 能力具备任务规划、步骤拆解、多轮工具调用和结果校验能力，复杂软件工程任务表现领先。\n\t\n适合 Agentic Engineering 场景\n覆盖从理解目标、执行步骤、修正反馈到最终交付的完整流程，更接近工程级 Agent 使用方式。\n\t\n欢迎开发者、Agent 从业者、技术、研发、运维、分析师、工程师、程序员体验。\n#glm5[话题]# #glm51[话题]# #glm52[话题]# #智谱glm5[话题]# #智谱GLM大模型[话题]# #开发者[话题]# #开发者选项[话题]# #ai编程[话题]# #ai代码[话题]# #agent[话题]#",
+  "cover_ocr" : "glm 5.3 API\n量大管饱\n跑代码真的香",
+  "fetched_at" : "2026-11-01T09:26:52.360Z",
+  "id" : "6ab4d38600000000120396d1",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011726\/3e8f98d29b2447900b8e6dd386307691\/notes_pre_post\/1040g3k0325g91vfd4c005qev5efsj7g75ai2m3g!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6ab4d38600000000120396d1\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 0,
+    "likes" : 0,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "glm5",
+    "glm51",
+    "glm52",
+    "智谱glm5",
+    "智谱GLM大模型",
+    "开发者",
+    "开发者选项",
+    "ai编程",
+    "ai代码",
+    "agent"
+  ],
+  "title" : "破防了！GLM 5.3 API太香了",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab4d38600000000120396d1?xsec_token=ABy5grGD5Wlq9JCWW7gWp2QwHQkigNx9C8E9fjcllY2Mk=&xsec_source=pc_user"
+}

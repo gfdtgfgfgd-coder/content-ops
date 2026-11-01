@@ -1,0 +1,39 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "同样是批量做视频\n为什么有人能低成本批量做视频，有人越做越贵？\n\t\n尤其是高频生成的时候：\n接口稳定性、响应速度、并发能力，影响特别大。\n\t\n后来换成seedance2之后，整个流程顺很多！\n\t\n现在我基本是：\n商品文案整理好 → 直接批量生成视频。\n最大的变化：\n✔ 不需要一条条手动操作\n✔ 可以同时跑很多素材\n✔ 内容生产效率明显提高\n\t\n现在做电商内容，已经越来越像“工业化生产”了。\n效率高的人，才能跑出更多结果。\n\t\n#seedance[话题]# #seedance2[话题]#  #seedance模型[话题]# #豆包seedance2[话题]# #即梦seedance2[话题]# #小云雀seedance2[话题]# #seedance20[话题]# #seedance2模型[话题]#",
+  "cover_ocr" : "Seedance2.0\n成本打下来",
+  "fetched_at" : "2026-11-01T10:27:35.214Z",
+  "id" : "69f1a600000000003503946a",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011827\/e22e27435fe1f75c228f48dc8aeb0df0\/1040g2sg320lh5fm95ifg5qev5efsj7g78t2qhlo!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/69f1a600000000003503946a\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 10,
+    "comments" : 86,
+    "likes" : 9,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "seedance",
+    "seedance2",
+    "seedance模型",
+    "豆包seedance2",
+    "即梦seedance2",
+    "小云雀seedance2",
+    "seedance20",
+    "seedance2模型"
+  ],
+  "title" : "Seedance2.0成本打下来了",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/69f1a600000000003503946a?xsec_token=ABX0_tzqyB_QCrQvJu1aQGBc3sYA54GFcntSvWTRBv0Z4=&xsec_source=pc_user"
+}

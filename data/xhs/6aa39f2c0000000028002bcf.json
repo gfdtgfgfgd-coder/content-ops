@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "关于GLM-5.3 API，可以无脑入。\n\t\n性能层面：\n全IDE适配（Cursor\/VSCode\/Trae），响应延迟低到几乎无感；\n长文本问答稳定性极高，复杂逻辑推理不掉链子；\n生态灵活，OpenClaw、Hemes工作流无缝对接，轮询代理也支持。\n\t\n成本层面：\n\t\n79元\/月，给到450额度，对比原价，属于“击穿底价”；\n\t\n支持试用，接入文档写得清清楚楚，没有任何隐形门槛。\n\t\n结论：与其在各种小模型间反复横跳，不如花79块体验一下真正的效率提升。试错成本几乎为零。\n\t\n需要的朋友，可以先测试哦！\n#ai编程[话题]# #ai工具[话题]# #glm5[话题]# #glm52[话题]# #glm[话题]# #glm53[话题]# #智谱GLM[话题]# #智谱glm5[话题]# #智谱GLM大模型[话题]# #程序员[话题]#",
+  "cover_ocr" : "cnote\n闭眼冲\nglm 5.3 API\n量大管饱\n巨好用",
+  "fetched_at" : "2026-11-01T09:34:46.253Z",
+  "id" : "6aa39f2c0000000028002bcf",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011734\/0a584b045453fae2ae9a52bf401899fb\/notes_pre_post\/1040g3k0324va8uqnj20g5qev5efsj7g74qq07i8!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6aa39f2c0000000028002bcf\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 1,
+    "comments" : 0,
+    "likes" : 3,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "ai编程",
+    "ai工具",
+    "glm5",
+    "glm52",
+    "glm",
+    "glm53",
+    "智谱GLM",
+    "智谱glm5",
+    "智谱GLM大模型",
+    "程序员"
+  ],
+  "title" : "亏本冲量，GLM-5.3 API 速抢啊！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa39f2c0000000028002bcf?xsec_token=AB46roKFsvB0I22JHOJImG97kPR4hAwFVJ17yTnzZ28V0=&xsec_source=pc_user"
+}

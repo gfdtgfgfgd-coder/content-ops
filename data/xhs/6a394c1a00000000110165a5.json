@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "智谱GLM-5.2这次表现太亮眼了！\n\t\nGLM-5.2的核心竞争力不是“通用聊天第一”，而是组合能力\n\t\n✅真实可用 1M 上下文\n📎不只是“读得多”，是能在复杂工程任务里持续保留上下文，不容易中途断片\n📎更关注：模块边界、架构约束、API契约、目录结构、历史决策、多文件依赖关系、长链路任务状态。\n\t\n✅长程任务能力强\n📎需求理解 → 读项目 → 定方案 → 改多文件 → 调工具 → 跑测试 → 修 bug → 出结果\n一整条链路自己跑下来\n\t\n✅Agentic Engineering能力\n📎GLM-5.2的重点不是单次代码补全，而是更长的工程任务链路。\n📎更像CodingAgent底座，而不是普通代码补全模型。\n\t\n✅推理效率优化：\n📎长任务跑得动\n📎长上下文能力 × 推理效率优化 = 更可用的长程工程模型\n\t\n✅MIT 协议开源：\n可自由部署、二次开发，企业使用更灵活\n\t\n🎉 好消息\n💥GLM-5.1 、GLM-5.2 资源充足💥\n💥顶级模型，平民价格，性价比拉满💥\n\t\n1M 上下文装得下 + Agent 能力跑得动 + 推理效率用得起 + 开源生态落得地\nGLM-5.2 四个点都在线，工程场景自然就能打了\n\t\n开发者们，别犹豫，直接安排上GLM-5.2 ！\n\t\n#glm52[话题]# #glm51[话题]# #智谱GLM[话题]# #glmcodingplan[话题]##开发者[话题]# #程序员[话题]# #人工智能[话题]# #智能体[话题]# #glm[话题]# #ai编程[话题]#",
+  "cover_ocr" : "文件\n图像查看\n字体\ncanvasans\n26\nBIU\n） 搜票\n立马安排！\nGLM-5.2\n长程任务强\n代码能力升级\n工程场景太能打了",
+  "fetched_at" : "2026-11-01T10:12:14.758Z",
+  "id" : "6a394c1a00000000110165a5",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011812\/eb093d41f60fdcff1192989628d7c84c\/1040g2sg321o6cv1a6u505qev5efsj7g75ourd28!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6a394c1a00000000110165a5\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 0,
+    "likes" : 0,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "glm52",
+    "glm51",
+    "智谱GLM",
+    "glmcodingplan",
+    "开发者",
+    "程序员",
+    "人工智能",
+    "智能体",
+    "glm",
+    "ai编程"
+  ],
+  "title" : "🆙安排上！GLM-5.2长程任务真的很顶！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a394c1a00000000110165a5?xsec_token=ABL4WlU0HOt79O1WSd4BgUPE9c6vfnezT3cU0bLD8uTSY=&xsec_source=pc_user"
+}

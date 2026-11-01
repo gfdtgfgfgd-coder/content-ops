@@ -1,0 +1,43 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "做短视频最耗时的环节，往往不是拍，是反复调整画面风格😭\n\t\n最近在MakeNow AI试了视频转绘功能：\n把原视频导入后，AI会先识别画面里的人物、场景、物品结构，再按选定的风格重新生成。\n不需要重新拍摄，也不需要逐帧手动调整。\n\t\n👇 实测下来，三个环节比较实用：\n1️⃣ 原片拆解\n按所选风格重新生成🪄\n\t\n2️⃣ 多种画风可选\n批量产出不同视觉版本\n\t\n3️⃣ 批量出图\n减少重复操作的时间成本\n\t\n🖐️ 怎么玩？（有手就行）\n导入原视频 → AI智能拆解 → 一键复刻生成\n\t\n短视频创作者、电商内容运营、需要多版本素材的团队，\n赶紧去试试！ 真的绝！🏃‍♂️💨\n\t\n#howto解锁创意剪辑[话题]# #howto用好AI[话题]# #视频制作[话题]# #爆款视频复刻[话题]# #一键转绘[话题]# #AI视频制作[话题]# #AI视频生成[话题]# #AI视频创作[话题]#",
+  "cover_ocr" : "MA\nAI VIDEO\nSTYLE TRANSFER\nAI\nVIDEO\n同一段视频\n换一种画风\n极速爆款复刻\n口 原视频\n转绘后\n回\n视频风格转换\n保留镜头节奏\n多种画风模板\n一键生成\n极速生成\n高质量复刻\nD0\n爆款内容创作\n快速出片",
+  "fetched_at" : "2026-11-01T09:07:52.902Z",
+  "id" : "6ad97f75000000003102e657",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011707\/853db436fb5f535e4d77163743c946ba\/spectrum\/1040g34o326k27oe244305qev5efsj7g7iimg4p8!nd_dft_wlteh_webp_3",
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011707\/8522393c71761a505fa2e1addd96bf3e\/spectrum\/1040g34o326k27oe2443g5qev5efsj7g7nn09uio!nd_dft_wlteh_webp_3",
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011707\/b0e1ca64f737bf1f45deb42e8202a0de\/spectrum\/1040g34o326k27oe244405qev5efsj7g7tbolre0!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6ad97f75000000003102e657\/1.jpg",
+    "data\/images\/xhs\/6ad97f75000000003102e657\/2.jpg",
+    "data\/images\/xhs\/6ad97f75000000003102e657\/3.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 0,
+    "likes" : 1,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "howto解锁创意剪辑",
+    "howto用好AI",
+    "视频制作",
+    "爆款视频复刻",
+    "一键转绘",
+    "AI视频制作",
+    "AI视频生成",
+    "AI视频创作"
+  ],
+  "title" : "别再逐帧改视频！一键视频转绘效率拉满💯",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad97f75000000003102e657?xsec_token=AB-1eTv-YYvQTDtokElWxs0awJ2929kDnr3hvOdjux4Vg=&xsec_source=pc_user"
+}

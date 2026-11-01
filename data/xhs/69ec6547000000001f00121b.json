@@ -1,0 +1,39 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "SD 2.0 可以用了，效果真的顶！\n实测3-5分钟成片，不用排队，\n60秒、多镜头切换、音画同步，效果稳\n\t\nSD2.0 把创作瓶颈打穿了。它把图、视频、音频同时作为输入，让模型同时理解视觉素材、运动素材和声音素材。然后，你可以把镜头偏好、构图规则、节奏参数、声音风格全部固定下来。这叫“多模态锁定”。\n\t\n锁住之后，你的第一条视频就是模板。第二条、第十条、第一百条，都是在这个模板上的迭代和优化。这不是“更聪明的随机”，这是真正可复制、可规模化的视频生产能力。\n\t\n它拿下3个子榜的第1名：文生视频、图生视频、视频编辑。“当前地表最强的视频生成模型，没有之一。”\n\t\nSD2 赶紧冲🔥\n\t\n#字节跳动[话题]# #即梦[话题]# #小云雀[话题]# #ai视频生成[话题]# #ai视频制作[话题]# #AI视频[话题]#    #AIGC[话题]# #豆包ai[话题]#",
+  "cover_ocr" : "6\n多元探索\n妈呀，被我挖到了\n量大管饱的\nseedance2 API\n出视频免排队\n8d高清效果",
+  "fetched_at" : "2026-11-01T10:29:03.725Z",
+  "id" : "69ec6547000000001f00121b",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011828\/9efd14ca38a844282baee4e69e31752a\/notes_pre_post\/1040g3k831vchkope40705qev5efsj7g7fan4bio!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/69ec6547000000001f00121b\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 121,
+    "comments" : 359,
+    "likes" : 183,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "字节跳动",
+    "即梦",
+    "小云雀",
+    "ai视频生成",
+    "ai视频制作",
+    "AI视频",
+    "AIGC",
+    "豆包ai"
+  ],
+  "title" : "赶紧冲，SD2高效出视频！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/69ec6547000000001f00121b?xsec_token=ABKNpPIt4GG_n3kh36yl1dcSqSTUSl5eSRtWNwzGG_2bc=&xsec_source=pc_user"
+}

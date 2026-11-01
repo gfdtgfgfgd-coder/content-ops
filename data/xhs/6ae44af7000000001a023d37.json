@@ -1,0 +1,40 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "经常写代码、跑智能体、做项目的朋友看过来！\n🔥 好消息！GLM-5.3现在可以便宜用了！\n💰源头好价：价格实在，量大更划算，长期用也不心疼！\n\t\nGLM-5.3：\n✅ 复杂编程升级：代码生成、Bug修复、跨文件修改、项目重构都能搞\n✅ 长程Agent：多步骤任务、自动化工作流，复杂任务也能安排\n✅ 百万上下文：长代码、大型项目文档轻松处理\n✅ 网络安全能力：支持代码安全分析、漏洞排查等\n✅ 稳定流畅：响应快、调用稳，日常开发和高频使用更省心\n\t\n不管是个人开发、项目调试，还是批量跑任务，都能用得起！\n📩 便宜的GLM-5.3用着不烧心！🚀\n\t\n#开发者[话题]# #ai编程[话题]# #程序员[话题]# #glm[话题]# #glm53[话题]# #glm52[话题]# #glm[话题]#  #智谱GLM[话题]# #GLMCodingPlan[话题]# #效率神机营[话题]#",
+  "cover_ocr" : "GLM5.3\n便宜量大\n◎\n◎\nGLM5.3\n@ Text Generation\nE Code Generation\nB Function Caling\n& Agent Workfiow\nUser Input\nGLM5.3\nTools\/API\nGLM5.3\nfrom glm import GLM53\n＃ 刻化模型\nmodel = GLM530\n#生成应\nresponse = model.chat（\nprompt=\"你好，GLM5.3！\"\nprint（response）\nOutput\nAI\nLarge Language Model\nOpen Source\n强大性能\n多任务高效处理\n超高性价比\n便宜量大更划算\n开源开放\n灵活可定制\n多场景应用\n覆盖多行业需求",
+  "fetched_at" : "2026-11-01T09:04:40.314Z",
+  "id" : "6ae44af7000000001a023d37",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011704\/5bab822b1f344ae1ba17b9db00936ac5\/spectrum\/1040g0k0326ukcajimc105qev5efsj7g7vp6ejm8!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6ae44af7000000001a023d37\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 0,
+    "likes" : 0,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "开发者",
+    "ai编程",
+    "程序员",
+    "glm",
+    "glm53",
+    "glm52",
+    "智谱GLM",
+    "GLMCodingPlan",
+    "效率神机营"
+  ],
+  "title" : "GLM-5.3入手真的香！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae44af7000000001a023d37?xsec_token=ABuEAYb2X8Fpkw-sdGbqcK9W8uKlKFCVfXBmaY5o0NhbM=&xsec_source=pc_user"
+}

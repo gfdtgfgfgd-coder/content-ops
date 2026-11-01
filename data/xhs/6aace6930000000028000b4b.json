@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "想象两个画面。\n\t\n画面一：\n打开 Cursor，切到 GLM 5.2，贴进去一段300行的老代码，说一句“重构这个模块”。几秒钟，干净整洁的新代码就出来了。超大上下文，不用切来切去。\n\t\n画面二：\n跑 Agent 跑了一宿，早上起来看日志。99.9%可用性，一条报错都没有。\n\t\n现在 GLM-5.3 API 限时2折，GLM-5.3 \/ 5.3Flash \/ 5.2 \/ 5.1 \/ 4.7 \/ 4.6 全家桶随便调。\n\t\n没有5小时限制，没有周总量限制。\nChatBox \/ NextChat \/ LocalAI 直接连，不改代码。\n\t\n今天想调多少次就调多少次。\n需要的朋友可以测试。\n#开发者[话题]# #glm51[话题]# #glm52[话题]# #智谱GLM[话题]# #codingplan[话题]# #glm5[话题]# #ai大模型[话题]# #智谱glm5[话题]# #智谱glm[话题]# #glm[话题]#",
+  "cover_ocr" : "更强的大模型•更往佳的开发体验\ngIm53API\n写代码贼香！‘\nGLM5.3\nAPI\nimportglm\nresponse\nglm.chat（\nnodel=\"gln-5.3\"\nmessages=［C\"role\"：\"user：\n\"content\"：\"HelLo,GLM！\"y］\nPrint（response）\n^\/>\n超强性能\n更高的理解力与生成能力\n轻松应对复杂任务\n丰富的应用场景\n支持多轮对话、代码生成、\n内容创作等多种场景\n稳定可靠\n高可用服务保障\n助力业务持续发展\n立即购买",
+  "fetched_at" : "2026-11-01T09:30:46.941Z",
+  "id" : "6aace6930000000028000b4b",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011730\/99c79c29c6a2516665f69c1e32748b7e\/notes_pre_post\/1040g3k03258fhdt8461g5qev5efsj7g75mcrpu0!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6aace6930000000028000b4b\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 0,
+    "likes" : 0,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "开发者",
+    "glm51",
+    "glm52",
+    "智谱GLM",
+    "codingplan",
+    "glm5",
+    "ai大模型",
+    "智谱glm5",
+    "智谱glm",
+    "glm"
+  ],
+  "title" : "低至2折，GLM你敢信？",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aace6930000000028000b4b?xsec_token=ABaP7cU58JXv_0Y7epziHSpamFlMRE77Rue62cMK_CbQ0=&xsec_source=pc_user"
+}

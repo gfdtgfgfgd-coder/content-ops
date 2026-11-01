@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "还在寻觅好用不贵的编程大模型？GLM-5.3这波千万别错过！🔥\n\t\nGLM-5.3到底有哪些过人之处？\n\t\n💻 硬核编程能力：代码生成、Bug调试、项目重构，复杂工程开发也能应对\n\t\n🔐 网络安全能力：辅助漏洞分析、代码安全审查、风险排查，安全相关任务也能处理\n\t\n📚 百万Token上下文：轻松处理大型代码库、长文档，多文件项目不用反复拆解\n\t\n🤖 长程Agent能力：多步骤任务规划、自动化执行，复杂工作流处理更省心\n\t\n⚡ 稳定流畅：响应顺滑，适合日常开发、反复调试和长任务使用\n\t\n🔥划重点！GLM-5.3现在有活动！💰\n不用为高频使用的成本发愁，写代码、查漏洞、跑长任务都能更尽兴！\n\t\n想找一款兼顾编程实力、网络安全能力和性价比的大模型，GLM-5.3值得试试！\n\t\n#glm5[话题]# #glm53[话题]# #glm52[话题]# #glm[话题]# #开发者[话题]# #ai编程[话题]# #程序员[话题]# #AI代码[话题]# #智普清言[话题]# #开发者选项[话题]#",
+  "cover_ocr" : "GLM5.3\n活动价\n<\/> AI 代码生成\nfrom glm import GLM\nmodel = GLM（model=\"glm-5.3\"）\nresponse\n= model.chat（\n“你好，GLM5.3，\n帮我生成一段文案”，\nstream=True\nfor chunk in response：\nprint（chunk,end=\"\"）\nAI 工作流\n仰\n数据輸入\n機型椎理\n结果输出\nGLM5.3\n更强的理解能力\n更高的推理精度\n更丰富的应用场景\nGLM5.3\n更强性能\n多任务处理更高效\n更高智能\n理解推理更精准\n更安全可靠\n数据隐私有保障\n更广泛应用\n多场景轻松落地",
+  "fetched_at" : "2026-11-01T09:04:47.832Z",
+  "id" : "6ae44142000000001200baaa",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011704\/cd2f16d3f8dac495250b20273eb62723\/spectrum\/1040g34o326uinkggma105qev5efsj7g7oqp2org!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6ae44142000000001200baaa\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 0,
+    "likes" : 0,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "glm5",
+    "glm53",
+    "glm52",
+    "glm",
+    "开发者",
+    "ai编程",
+    "程序员",
+    "AI代码",
+    "智普清言",
+    "开发者选项"
+  ],
+  "title" : "冲！GLM-5.3活动来了！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae44142000000001200baaa?xsec_token=ABuEAYb2X8Fpkw-sdGbqcK9QQ-G5JFgbQFBGakVQlhPHQ=&xsec_source=pc_user"
+}

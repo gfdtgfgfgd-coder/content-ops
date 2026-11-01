@@ -1,0 +1,40 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "算一笔AI视频创作的账🧮\n传统方式：排队几小时 + 抽卡七八条出一条 + 反复重跑修细节 = 时间全耗在“等”和“赌”上。\n\t\nSD2.5 通道：\n⚡ 快速生成，提交即跑\n⚡ 30秒直出，一条内容顶过去两条的叙事量\n⚡ 时间戳编辑，改局部不用整条重来\n⚡ 不掺水，废片少，出片可用率上来了\n⚡30张图＋10段视频＋10段音频混着喂，一致性强\n\t\n🎯关键是：便宜接入，海量出视频也不心疼，个人\/小团队也扛得住\n\t\nsd这样好用的视频模型能提升团队出片效率，省下大量时间人力💼\nAI视频创作的朋友闭眼安排！\n\t\n#AI新手村[话题]# #AI漫剧howto[话题]# #AI生视频[话题]# #AI生成视频[话题]# #AIGC[话题]# #AI视频生成[话题]# #AIGC[话题]# #AI短剧[话题]# #AI视频制作[话题]#",
+  "cover_ocr" : "seedance2.5\nseedance25\n便宜接入\nCI AI视频\n围片生成\n文本生成\n创意工作流\n输入你的创意，\n让 AI 帮你生成精彩视频...\n* 生成视须\n00:30\n00:30\n30秒时长\n高效出片\nHD\n高清画质\n细节拉满\n快速生成\n创意即刻成片\n稳定\n流畅不卡顿",
+  "fetched_at" : "2026-11-01T09:06:23.566Z",
+  "id" : "6ae01dbd0000000003003464",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011706\/70d43e6eaab05215b9facd2734c67016\/spectrum\/1040g34o326qhpug6ka105qev5efsj7g7ihdcp78!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6ae01dbd0000000003003464\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 10,
+    "likes" : 0,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "AI新手村",
+    "AI漫剧howto",
+    "AI生视频",
+    "AI生成视频",
+    "AIGC",
+    "AI视频生成",
+    "AIGC",
+    "AI短剧",
+    "AI视频制作"
+  ],
+  "title" : "💸SD2.5便宜接入放开跑！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae01dbd0000000003003464?xsec_token=ABdRKoo1cfkTgfKkUH4mcSk0nLb6s-v9EZNFML5eo0VMk=&xsec_source=pc_user"
+}

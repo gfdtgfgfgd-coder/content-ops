@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "GLM-5.3 \/ 5.3Flash \/ 5.2 \/ 5.1 \/ 4.7 \/ 4.6全都能用，按月计费，价格很香！\n\t\nChatBox、NextChat、LocalAI 直接连，不改代码\n\t\n写代码的时候：Cursor 切 GLM 5.2 → 贴300行老代码 → “重构这个模块” → 几秒出结果\n\t\n跑 Agent 的时候：跑一宿，早上看日志，99.9%可用，一条报错都没有\n\t\n今天想调多少调多少，需要的去测！\n#开发者[话题]# #glm51[话题]# #ai编程[话题]# #智谱GLM[话题]# #程序员[话题]# #codingplan[话题]# #glm5[话题]# #aigc[话题]# #glm[话题]# #glm52[话题]#",
+  "cover_ocr" : "破防了！\nglm5.3 API\n量大管饱\n这波香麻了！",
+  "fetched_at" : "2026-11-01T09:30:52.717Z",
+  "id" : "6aacddf80000000012002b5f",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011730\/9a546f51c7c4c8d5f8a5a50fa9b160eb\/notes_pre_post\/1040g3k03258fhdt846105qev5efsj7g72a1hn1o!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6aacddf80000000012002b5f\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 1,
+    "comments" : 0,
+    "likes" : 1,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "开发者",
+    "glm51",
+    "ai编程",
+    "智谱GLM",
+    "程序员",
+    "codingplan",
+    "glm5",
+    "aigc",
+    "glm",
+    "glm52"
+  ],
+  "title" : "🔥GLM-5.3 API 2折了！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aacddf80000000012002b5f?xsec_token=ABaP7cU58JXv_0Y7epziHSpS3Qrfk8ZOm9PUYipy0Gi5s=&xsec_source=pc_user"
+}

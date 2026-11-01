@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "GLM5.1适合人群：",
+  "author" : "深度deepAI",
+  "body" : "以前让模型生成代码，常常要一段一段等\n现在用GLM5.1 更像是代码在屏幕上连续“刷”出来，等待感明显降低\n\t\n更关键的是，这不是靠小模型牺牲能力换速度，而是 GLM-5.1 这种旗舰级模型也进入了高速输出阶段。\n\t\n对 Coding Agent 来说，速度尤其重要\nGLM5.1不是单次问答，而是要反复执行：\n🔁任务规划🔁读取代码🔁修改文件🔁运行测试🔁修复 Bug🔁 多轮迭代\n每一轮响应都更快，整个开发任务的完成时间就会被明显压缩\n\t\n🧩代码能力提升 30%，复复杂代码、跨文件依赖、工程重构更稳\n\t\n‼️亲民价，比市面更友好‼️\n\t\nGLM5.1适合人群：\n程序员 \/ 软件开发工程师、 前端\/后端开发者\n全栈开发者、测试开发 \/ QA 工程师\nAI Agent 开发者、独立开发者\n\t\nGLM5.1闭眼冲！\n\t\n#glm5[话题]# #glm[话题]# #glm51[话题]# #智谱GLM[话题]# #glm5turbo[话题]# #前端后端开发[话题]# #人工智能[话题]# #开发者[话题]# #glm51highspeed[话题]# #智谱glm5[话题]#",
+  "cover_ocr" : "闭眼入！\nGLM-5.1\n代码能力飙升30%\n复杂代码轻松跑\nJm",
+  "fetched_at" : "2026-11-01T10:16:55.084Z",
+  "id" : "6a2b568700000000360012e8",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011816\/0b1a41f7985675dfe2e98442b4cbc4a9\/notes_pre_post\/1040g3k0321a0geum72005qev5efsj7g7co66320!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6a2b568700000000360012e8\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 0,
+    "likes" : 0,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "glm5",
+    "glm",
+    "glm51",
+    "智谱GLM",
+    "glm5turbo",
+    "前端后端开发",
+    "人工智能",
+    "开发者",
+    "glm51highspeed",
+    "智谱glm5"
+  ],
+  "title" : "冲！GLM5.1 写代码速度太快了！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2b568700000000360012e8?xsec_token=ABzkkvg53uhNl7gh35IIDdkhNkOGvgPBHe3hkzhlrZwjs=&xsec_source=pc_user"
+}

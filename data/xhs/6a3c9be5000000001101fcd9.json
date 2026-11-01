@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "国产大模型真的站起来了！\n以前觉得国产 = 便宜不好用，智谱GLM-5.2 直接打脸！\n\t\nGLM-5.2打开了新世界的大门：\n📝1M 真长上下文\n长文档、长代码仓库、多轮任务都能塞进去，不用反复切片喂资料\n\t\n📝长程任务能力强\n从需求理解、任务拆解到多轮执行，连续处理复杂任务更稳，不容易中途断片\n\t\n📝代码能力强\n覆盖代码生成、逻辑拆解、Bug 分析、重构建议\n\t\n📝 Agent 能力强\nBrowp 75.9% 全球第一，数小时级任务不会跑偏\n支持任务规划、工具调用、反馈修正、结果校验\n\t\n📝MIT 协议完全开源，部署自由\n\t\n📝MTP 推测解码优化，输出速度更快\n\t\n⭕️重点来了⭕️\n‼️GLM-5.1\/GLM-5.2资源充足、稳定‼️\n‼️价格友好，高频用也不肉疼‼️\n\t\nGLM-5.2适合：开发者、工程师、Agent 从业者、程序员\n\t\n低成本跑长程复杂任务，GLM-5.2这波值得用！\n\t\n#开发者[话题]# #glm51[话题]# #glm5[话题]# #人工智能[话题]# #glm52[话题]# #智谱GLM[话题]# #开发者选项[话题]# #GLMCodingPlan[话题]# #算力[话题]# #ai编程[话题]#",
+  "cover_ocr" : "e ©\n我天！白菜价\nGLM-5.2\n长程任务不卡顿\n跑复杂编码太顺了",
+  "fetched_at" : "2026-11-01T10:10:09.436Z",
+  "id" : "6a3c9be5000000001101fcd9",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011810\/424dd471ad0c5512cb9cdfb1a4ec346d\/1040g008321qs8as1n0605qev5efsj7g7djovhs0!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6a3c9be5000000001101fcd9\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 2,
+    "comments" : 0,
+    "likes" : 2,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "开发者",
+    "glm51",
+    "glm5",
+    "人工智能",
+    "glm52",
+    "智谱GLM",
+    "开发者选项",
+    "GLMCodingPlan",
+    "算力",
+    "ai编程"
+  ],
+  "title" : "😍价格友好的 GLM-5.2跑复杂编码太顺了",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3c9be5000000001101fcd9?xsec_token=ABBYTRFa1fxzdcWKTMzdGEXKAfEZwxdlOg8hqkEK8ML-o=&xsec_source=pc_user"
+}

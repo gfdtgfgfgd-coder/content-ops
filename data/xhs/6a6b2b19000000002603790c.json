@@ -1,0 +1,40 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "",
+  "author" : "深度deepAI",
+  "body" : "闭眼冲！GLM 5.2 API ，49元450额度\n\t\n帮你算笔大账：\n450额度能跑什么水平？\n——写一个完整的电商后台项目，绰绰有余。\n——跑RAG检索问答，大几百次打底。\n——日常Cursor写代码，够肝两到三周。\n\t\n换来的是：\n✅ GLM全系通用，想切哪个切哪个。\n✅ 超大上下文，长篇代码一次吞。\n✅ 生成细腻，逻辑严谨，改bug快。\n✅ Cursor\/Trae秒切，丝滑不卡。\n✅ 企业级99.9%可用性，放心造。\n\t\n1折，49块拿下。\n这笔账算完，你觉得值不值？#开发者[话题]# #glm51[话题]# #ai编程[话题]# #AI人工智能[话题]# #glm52[话题]# #智谱GLM[话题]# #codingplan[话题]# #程序员[话题]# #人工智能[话题]#",
+  "cover_ocr" : "N\nEXT -GEN\nAI\nMODEL\ng\/m 5.2API\n低至1折\nGLM-5.2\nAPI\ninport glm\nclient = gln.Client （api,key: YOUJR.XRY）\nresponse = client.chat.coepletiors.creste（\nmodel=\"gln-5.23，\nmessages=［（ role'：\"user, content”：*优R,GuME.\"］\nprint（response.choices（0）_nessage.content）\n* Powerful. Fast. Reliable.\nGLM 5.2\n更强模型|更低成本|天限可能\n更强性能\n全新升级 GLM 5.2\n推理、代码、创作全面跃升\n复杂任务轻松应对\nPOWER\nYOUR\n超低价格\n低至1折起\n极致性价比\n让 AI应用无成本门槛\n极速易用\n稳定可的 API 服务\n高井发、低延迟\n接入简单，快速上线\nIDEAS BUILD THE FUTURE.",
+  "fetched_at" : "2026-11-01T09:51:24.946Z",
+  "id" : "6a6b2b19000000002603790c",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011751\/59e9c650072574a7d71c99034e364d4f\/notes_pre_post\/1040g3k83238b7oien4705qev5efsj7g7rnjceg0!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6a6b2b19000000002603790c\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 1,
+    "comments" : 0,
+    "likes" : 1,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "开发者",
+    "glm51",
+    "ai编程",
+    "AI人工智能",
+    "glm52",
+    "智谱GLM",
+    "codingplan",
+    "程序员",
+    "人工智能"
+  ],
+  "title" : "低至1折！GLM5.2 api，香麻了！",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a6b2b19000000002603790c?xsec_token=ABOyHTbqC-4ct4ymMXwbZVgR2VpoIhhLtOB1oXsCTYQbc=&xsec_source=pc_user"
+}

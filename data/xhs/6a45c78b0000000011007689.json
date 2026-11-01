@@ -1,0 +1,41 @@
+{
+  "audience" : [
+
+  ],
+  "audience_raw" : "GLM-5.2适合人群",
+  "author" : "深度deepAI",
+  "body" : "智谱GLM-5.2 的核心特长就是搞定长任务、上下文大直接拉到 1M ，写代码的能力在各项长任务的跑分上，也闯进了 Coding 大模型的前三\n\t\n选模型，无非看两点：便宜、能装\n\t\nGLM-5.2这波全占了👇\n1️⃣  Solid 1M 上下文\n📝整个代码库、几百页PDF直接全丢进去，不用分段喂\n📝一次输入全程记忆，首尾信息全能关联，细节不丢\n\t\n2️⃣ 长程任务不断片\n多轮对话稳记初始设定，多步自动化流程一气呵成\n\t\n3️⃣  代码能力强\n📝不只是会写 Demo\n📝能理解代码结构、模块关系、函数调用链，也能辅助生成和修改代码\n\t\n‼️超高性价比，量大不心疼‼️\n🤩GLM-5.1、GLM-5.2满血接入🤩\n🤩资源稳定、批量跑任务随便造🤩\n\t\nGLM-5.2适合人群\n👨‍💻程序员、前端\/后端工程师\n👨‍💻全栈、架构师、技术负责人\n👨‍💻产品经理、企业研发团队\n👨‍💻AI开发者、agent开发者\n\t\n量大的、代码多的、文档长的开发者，真的可以上 GLM-5.2！\n\t\n#开发者[话题]# #glm5[话题]# #glm51[话题]# #glm52[话题]# #智谱GLM[话题]# #ai大模型[话题]# #codingplan[话题]# #ai编程[话题]# #程序员[话题]# #人工智能[话题]#",
+  "cover_ocr" : "• 开源模型\n开源模型\n我去！量大的\nGLM-5.2\n超高性价比\n1M可用上下文\n长文档一次吃透",
+  "fetched_at" : "2026-11-01T10:06:04.741Z",
+  "id" : "6a45c78b0000000011007689",
+  "image_urls" : [
+    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011806\/6e6bb0428ed1c080129b0fbfd8ddc2e9\/1040g0083223qquvc6u3g5qev5efsj7g7db5af5o!nd_dft_wlteh_webp_3"
+  ],
+  "images" : [
+    "data\/images\/xhs\/6a45c78b0000000011007689\/1.jpg"
+  ],
+  "is_pinned" : false,
+  "label" : null,
+  "metrics" : {
+    "collects" : 0,
+    "comments" : 0,
+    "likes" : 0,
+    "wants" : null
+  },
+  "platform" : "xhs",
+  "source" : "bookmark",
+  "tags" : [
+    "开发者",
+    "glm5",
+    "glm51",
+    "glm52",
+    "智谱GLM",
+    "ai大模型",
+    "codingplan",
+    "ai编程",
+    "程序员",
+    "人工智能"
+  ],
+  "title" : "🤩高性价比的GLM-5.2 百万上下文太好用了",
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a45c78b0000000011007689?xsec_token=ABxTXq7iw_Gt6TWP93cX4cGljiV8RvHE3poyHpWxgw2Fw=&xsec_source=pc_user"
+}
