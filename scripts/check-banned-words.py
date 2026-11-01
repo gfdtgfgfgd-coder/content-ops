@@ -17,10 +17,13 @@ def load_rules():
     with RULES.open(encoding="utf-8") as f:
         return yaml.safe_load(f) or []
 
-def check(text: str, platform: str = "xhs"):
+def check(text: str, platform: str = "xhs", model: str = ""):
     hits=[]
     for rule in load_rules():
-        if platform not in (rule.get("platform") or []):
+        if platform not in (rule.get("platform") or []) and 'all' not in (rule.get("platform") or []):
+            continue
+        scopes=rule.get('models') or []
+        if scopes and not any(scope.casefold() in model.casefold() for scope in scopes):
             continue
         word=str(rule.get("word", ""))
         if not word: continue
@@ -30,11 +33,11 @@ def check(text: str, platform: str = "xhs"):
     return hits
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument("--text"); ap.add_argument("--file"); ap.add_argument("--platform",default="xhs",choices=["xhs","xianyu","gzh"]); ap.add_argument("--json",action="store_true")
+    ap=argparse.ArgumentParser(); ap.add_argument("--text"); ap.add_argument("--file"); ap.add_argument("--platform",default="xhs",choices=["xhs","xianyu","gzh"]); ap.add_argument("--model",default="",help="产品名，用于 Seedance 等专属规则"); ap.add_argument("--json",action="store_true")
     a=ap.parse_args()
     if not a.text and not a.file: ap.error("需要 --text 或 --file")
     text=a.text if a.text is not None else Path(a.file).read_text(encoding="utf-8")
-    hits=check(text,a.platform)
+    hits=check(text,a.platform,a.model)
     if a.json: print(json.dumps(hits,ensure_ascii=False,indent=2))
     elif hits:
         print(f"命中 {len(hits)} 个风险词：")

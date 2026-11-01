@@ -15,7 +15,15 @@
     "data\/images\/xhs\/6aba2b7a000000001802fe41\/1.jpg"
   ],
   "is_pinned" : false,
-  "label" : null,
+  "label" : {
+    "good": true,
+    "by": "思敏",
+    "reason": "企微选帖 2026-10-30：S1（单独截出）；只作素材参考，风险词按新规则过滤",
+    "evidence": "S1",
+    "evidence_type": "single_extract",
+    "labeled_at": "2026-11-01",
+    "use_scope": "style_reference_only"
+  },
   "metrics" : {
     "collects" : 9,
     "comments" : 1,

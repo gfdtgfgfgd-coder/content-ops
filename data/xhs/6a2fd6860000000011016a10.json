@@ -15,7 +15,15 @@
     "data\/images\/xhs\/6a2fd6860000000011016a10\/1.jpg"
   ],
   "is_pinned" : false,
-  "label" : null,
+  "label" : {
+    "good": true,
+    "by": "思敏",
+    "reason": "企微选帖 2026-10-30：C-R2C5（红色勾选）；只作素材参考，风险词按新规则过滤",
+    "evidence": "C-R2C5",
+    "evidence_type": "red_tick",
+    "labeled_at": "2026-11-01",
+    "use_scope": "style_reference_only"
+  },
   "metrics" : {
     "collects" : 27,
     "comments" : 58,
