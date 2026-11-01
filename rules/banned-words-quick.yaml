@@ -116,3 +116,11 @@
   models: [seedance]
   replace: ""
   reason: Seedance 单独禁词，不换成秒出等速度承诺（2026-10-29）
+
+# T08 补足具体金额变体；不将模型版本号或任务时长当成价格。
+- word: '(?:[0-9]+(?:\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\s*(?:元|块钱|人民币|美元|美金|RMB|USD)'
+  regex: true
+  level: ban
+  platform: [xhs]
+  replace: ''
+  reason: D10 禁具体金额，包括中文数字及单位后缀
