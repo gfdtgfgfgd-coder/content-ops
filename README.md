@@ -54,10 +54,10 @@ outputs/             成品，按日期分目录
 ## 换电脑
 
 ```bash
-cd ~/Desktop && git clone <仓库地址> content-ops
+cd ~/Desktop && git clone https://github.com/gfdtgfgfgd-coder/content-ops.git
 ```
 
-所有电脑都克隆到 `~/Desktop/content-ops`，路径统一，任务卡里的路径才不会断。
+私有仓，需要 `gh auth login` 登录 gfdtgfgfgd-coder 账号。所有电脑都克隆到 `~/Desktop/content-ops`，路径统一，任务卡里的路径才不会断。每次换电脑前 `git push`，到新电脑先 `git pull`。
 图片不进 git，`scripts/` 里会有按 JSON 重下图片的脚本（T02 产出）。
 
 ## 相关资产（都在本机，不在本仓库）
