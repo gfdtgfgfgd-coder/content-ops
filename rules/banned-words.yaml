@@ -1,0 +1,71 @@
+# 禁用词与替换词
+# level: ban 直接禁 / warn 提醒人工看
+# platform: xhs 小红书 / xianyu 闲鱼 / gzh 公众号 / all
+# T05 负责填充：先放广告法极限词 + 平台公开违禁词，再从企微记录提炼公司内部敏感词。
+# 新需求来了直接追加，脚本 scripts/check-words.py 读这个文件。
+
+- word: 最便宜
+  level: ban
+  platform: [all]
+  replace: 便宜管饱
+  reason: 广告法极限词
+
+- word: 全网最低
+  level: ban
+  platform: [all]
+  replace: 价格很友好
+  reason: 广告法极限词
+
+- word: 史上最低
+  level: ban
+  platform: [all]
+  replace: 这波价格不错
+  reason: 广告法极限词
+
+- word: 几折
+  level: ban
+  platform: [xhs]
+  replace: 便宜量大
+  reason: 小红书不写具体折扣（D10）
+
+- word: 折扣
+  level: warn
+  platform: [xhs]
+  replace: 便宜管饱
+  reason: 小红书不写具体折扣（D10）
+
+- word: 元/
+  level: warn
+  platform: [xhs]
+  replace: ""
+  reason: 小红书不写具体价格（D10），人工确认
+
+- word: 宝子们
+  level: warn
+  platform: [xhs]
+  replace: ""
+  reason: 油腻（platform-rules）
+
+- word: 姐妹们
+  level: warn
+  platform: [xhs]
+  replace: ""
+  reason: 油腻
+
+- word: 震撼
+  level: warn
+  platform: [xhs]
+  replace: ""
+  reason: 不普
+
+- word: 炸裂
+  level: warn
+  platform: [xhs]
+  replace: ""
+  reason: 不普
+
+- word: 官方
+  level: warn
+  platform: [xianyu]
+  replace: ""
+  reason: 闲鱼用户不吃
