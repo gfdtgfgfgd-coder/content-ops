@@ -34,28 +34,52 @@
 ## 目录
 
 ```
-README.md            入口（你在这）
-AGENTS.md            Codex / 任何 agent 的工作规矩
-docs/
-  00-需求原文.md      lilith 的原始笔记，原样保留
-  01-决策记录.md      定了什么、否了什么、为什么
-  02-架构.md          五层结构、模型分工、数据流
-  03-开放问题.md      还没定的事，谁来定
-tasks/
-  README.md          进度表 + 任务卡模板
-  T01…T09-*.md       任务卡，Codex 按卡执行
-rules/
-  platform-rules.md  小红书 / 闲鱼 / 公众号 各自能说不能说
-  design-rules.md    大字报配色、层次、字号规则
-  banned-words.yaml  禁用词 + 替换词（T05 填充）
-data/
-  sources/           素材来源账号与置顶链接（先看这个）
-  xhs/ xianyu/       抓取的帖子，JSON，进 git
-  wecom/             企微记录提炼出的偏好与风险词，进 git；原始截图不进
-  images/            图片，不进 git，按 JSON 里的 url 可重下
-skills/              沉淀下来可复用的方法（SKILL.md 格式，Codex 和 Claude 都能读）
-scripts/             抓取、清洗、生成脚本
-outputs/             成品，按日期分目录
+README.md              入口（你在这）
+AGENTS.md              agent 工作规矩
+data/                  原始数据（进 git）
+  sources/             素材来源账号与置顶链接（先看这个）
+  xhs/                 小红书帖子 JSON
+  xianyu/              闲鱼帖子 JSON
+  wecom/               企微聊天提炼
+  images/              图片（不进 git，按 JSON 重下）
+  reference-posts.json 好帖与高想要帖子索引（16 好帖 + 14 高想要）
+rules/                 规则库
+  platform-rules.md    小红书 / 闲鱼 / 公众号各自能说不能说
+  design-rules.md      大字报配色、层次、字号规则
+  banned-words-quick.yaml  禁用词 + 替换词
+  cover-palettes.json  封面配色方案
+  README.md            规则使用说明
+skills/                可复用方法（SKILL.md 格式）
+  simin-persona/       思敏偏好（15 标准 + 8 反例）
+  xhs-title-patterns/  标题句式（12 样本 + 5 组模板）
+  xhs-post-generation/ 生成指导
+scripts/               生成脚本
+  gen-xhs-post.py      小红书图文生成主脚本
+  gen-image.py         文生图 API 调用
+  check-banned-words.py 风险词检查
+  README.md            脚本使用说明
+outputs/               生成成品（按日期分目录）
+releases/              打包发布物
+  Hanabi-macOS-arm64.zip  完整程序包
+  README.md            打包说明
+docs/                  文档
+  00-需求原文.md
+  01-决策记录.md        定了什么、否了什么
+  02-架构.md
+  03-开放问题.md
+  gateway-image-usage.md  公司网关配置
+  xhs-generation-usage.md 生成脚本使用
+  hanabi-usage.md       Hanabi 使用说明
+  诊断-2026-11-01-质量问题.md
+  修复总结-2026-11-01.md
+  文件夹整理方案.md
+tasks/                 任务卡
+  README.md            进度表
+  T01-T12-*.md         任务卡
+work/                  工作文件（不进 git）
+  gateway.env          公司网关配置
+  .venv/               Python 虚拟环境
+  tests/               测试文件
 ```
 
 ## 换电脑

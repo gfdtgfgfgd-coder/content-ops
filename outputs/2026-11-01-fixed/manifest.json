@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "status": "failed",
+  "product_model": "GLM5.3",
+  "platform": "xhs",
+  "count": 2,
+  "text_model": "claude-sonnet-4-6",
+  "image_model": "qwen-image-3.0",
+  "created_at": "2026-11-01T23:08:36.681940+08:00",
+  "facts": {
+    "model": "GLM5.3",
+    "verified_claims": [],
+    "note": "仅输入模型名，没有核验产品资料；只能写试用建议"
+  },
+  "rules": {
+    "skills/simin-persona/SKILL.md": "f3ad4336941e33ed885b0c830ea9ba8050d8ecbc93d09cba17603eb08923b6de",
+    "skills/xhs-title-patterns/quick.md": "0e7e4d7a9a2063232a9c7a4144547370a721977f39c51d845c061eb3e7163b3d",
+    "rules/banned-words-quick.yaml": "acb7fb979d347f80ea426a3ecd1e6ff97d44e13f0655de2002fd7cbf038cca1f",
+    "rules/platform-rules.md": "2a976b6b5856b4f07f3dbdd8f56aaae761aa9621a5d14ed558cb3b59bc0492b5",
+    "rules/design-rules.md": "e6ab914a80f95298703f2c42318c041d4ff63429596f67b55c9fcde2e20a0f40",
+    "skills/xhs-post-generation/SKILL.md": "585ac0ccfc9c8a81bf2be24f69d87b0ebafd848c129bc14d26b8dd7a3392c84e"
+  },
+  "posts": [],
+  "error": "Gateway HTTP 403: {\"error\":{\"message\":\"预扣费额度失败, 用户剩余额度: ＄0.022894, 需要预扣费额度: ＄0.029866 (request id: 1e10ba42-d606-11f1-9afa-d265e78b77e2)\",\"type\":\"aix_api_error\",\"param\":\"\",\"code\":\"insufficient_user_quota\"}}"
+}
