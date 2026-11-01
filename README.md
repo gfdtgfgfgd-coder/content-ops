@@ -15,7 +15,7 @@
 | 项 | 值 |
 |---|---|
 | 更新日期 | 2026-11-01 |
-| 阶段 | 骨架刚建好，T01 完成，T02 待开始 |
+| 阶段 | T01 完成，素材来源已定位（data/sources/README.md），T02 可开始 |
 | 使用者 | lilith 一人；做顺了同事（阮思敏，运营）会用 |
 | 界面 | 暂不做。文件 + 脚本 + Codex 对话 |
 
@@ -36,12 +36,13 @@ docs/
   03-开放问题.md      还没定的事，谁来定
 tasks/
   README.md          进度表 + 任务卡模板
-  T01…T08-*.md       任务卡，Codex 按卡执行
+  T01…T09-*.md       任务卡，Codex 按卡执行
 rules/
   platform-rules.md  小红书 / 闲鱼 / 公众号 各自能说不能说
   design-rules.md    大字报配色、层次、字号规则
   banned-words.yaml  禁用词 + 替换词（T05 填充）
 data/
+  sources/           素材来源账号与置顶链接（先看这个）
   xhs/ xianyu/       抓取的帖子，JSON，进 git
   wecom/             企微记录提炼出的偏好与风险词，进 git；原始截图不进
   images/            图片，不进 git，按 JSON 里的 url 可重下
