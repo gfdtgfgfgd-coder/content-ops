@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+"""Check text against the quick risk-word rules.
+
+Examples:
+  python3 scripts/check-banned-words.py --text "最便宜 5 折"
+  python3 scripts/check-banned-words.py --file outputs/2026-11-01/post-1.md
+"""
+from __future__ import annotations
+import argparse, json, re
+from pathlib import Path
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+RULES = ROOT / "rules/banned-words-quick.yaml"
+
+def load_rules():
+    with RULES.open(encoding="utf-8") as f:
+        return yaml.safe_load(f) or []
+
+def check(text: str, platform: str = "xhs"):
+    hits=[]
+    for rule in load_rules():
+        if platform not in (rule.get("platform") or []):
+            continue
+        word=str(rule.get("word", ""))
+        if not word: continue
+        pattern=word if rule.get("regex") else re.escape(word)
+        for m in re.finditer(pattern, text, flags=re.IGNORECASE):
+            hits.append({"word":m.group(0),"rule":word,"replace":rule.get("replace",""),"reason":rule.get("reason","")})
+    return hits
+
+def main():
+    ap=argparse.ArgumentParser(); ap.add_argument("--text"); ap.add_argument("--file"); ap.add_argument("--platform",default="xhs",choices=["xhs","xianyu","gzh"]); ap.add_argument("--json",action="store_true")
+    a=ap.parse_args()
+    if not a.text and not a.file: ap.error("需要 --text 或 --file")
+    text=a.text if a.text is not None else Path(a.file).read_text(encoding="utf-8")
+    hits=check(text,a.platform)
+    if a.json: print(json.dumps(hits,ensure_ascii=False,indent=2))
+    elif hits:
+        print(f"命中 {len(hits)} 个风险词：")
+        for h in hits: print(f"- {h['word']} → 建议替换为：{h['replace']}（{h['reason']}）")
+    else: print("未命中风险词")
+    return 1 if hits else 0
+if __name__=="__main__": raise SystemExit(main())

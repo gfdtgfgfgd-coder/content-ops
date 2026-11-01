@@ -1,0 +1,64 @@
+# T05 简化版：今天生成链路使用。来源：D10、platform-rules.md、广告法常见极限词。
+- word: 最便宜
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 便宜管饱
+  reason: 广告法极限词（platform-rules.md）
+- word: 全网最低
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 价格友好
+  reason: 广告法极限词（platform-rules.md）
+- word: 史上最低
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 价格友好
+  reason: 广告法极限词（platform-rules.md）
+- word: 第一
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 表现突出
+  reason: 广告法极限词
+- word: 顶级
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 高性能
+  reason: 广告法极限词
+- word: 独家
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 专属
+  reason: 广告法极限词/未经证明的绝对化表述
+- word: 几折
+  level: ban
+  platform: [xhs]
+  replace: 便宜量大
+  reason: 小红书禁止具体折扣（D10）
+- word: '[0-9]+(?:\.[0-9]+)?\s*折'
+  level: ban
+  platform: [xhs]
+  replace: 便宜量大
+  reason: 小红书禁止具体折扣（D10）
+  regex: true
+- word: '¥\s*[0-9]+(?:\.[0-9]+)?'
+  level: ban
+  platform: [xhs]
+  replace: 低价
+  reason: 小红书禁止具体价格（D10）
+  regex: true
+- word: '￥\s*[0-9]+(?:\.[0-9]+)?'
+  level: ban
+  platform: [xhs]
+  replace: 低价
+  reason: 小红书禁止具体价格（D10）
+  regex: true
+- word: 宝子们
+  level: ban
+  platform: [xhs]
+  replace: 大家
+  reason: 小红书调性：避免油腻称呼（platform-rules.md）
+- word: 姐妹们
+  level: ban
+  platform: [xhs]
+  replace: 大家
+  reason: 小红书调性：避免油腻称呼（platform-rules.md）
