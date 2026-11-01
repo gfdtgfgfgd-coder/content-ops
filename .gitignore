@@ -8,3 +8,8 @@ __pycache__/
 *.env
 .venv/
 work/
+
+# Local runnable Hanabi packages; small source snapshots and checksums stay in Git.
+releases/Hanabi-*/
+releases/*-mac-arm64.zip
+启动Hanabi.app/

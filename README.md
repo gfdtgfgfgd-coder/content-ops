@@ -24,6 +24,7 @@
 | 生成脚本 | GLM5.3 两套 + Kimi 一套已产出；缓存背景可用，新图需充值，见 docs/xhs-generation-usage.md |
 | 界面 | Hanabi 6187 已实测 GLM5.3 ×2：图文、历史、刷新恢复、燃放预览可用；见 docs/hanabi-usage.md |
 | 本轮交付 | [2026-11-01 完成报告](outputs/2026-11-01/完成报告.md)，含卡片结果、验收证据、使用步骤与缺口 |
+| Hanabi 程序包 | T12 完成：releases/ 下完整 ZIP；根目录可双击启动Hanabi.app（Apple Silicon）；源码快照可随 Git 同步，见 [打包说明](releases/README.md) |
 
 ## 这个项目不是什么
 

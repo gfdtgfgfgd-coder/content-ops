@@ -43,7 +43,7 @@ node scripts/ensure-server.mjs
 
 运行副本避开 macOS 后台服务对桌面目录的权限限制。修改 content-ops 后，在仓库根目录运行 `python3 scripts/install-hanabi-runtime.py` 更新运行所需的脚本、规则、背景和本机配置；不复制企微原文、不覆盖 Hanabi 数据库。令牌仍只在忽略目录和本机应用数据目录，权限 600，不进 Git。
 
-**换电脑时，git pull 只同步 content-ops 代码、规则、文案与说明。** 按 T11 约定，Hanabi 改动仅本机，没有推入 content-ops；生成图片、背景与应用数据也不会靠 Git 自动同步。需要迁移当前 Hanabi 源码/应用数据、背景文件，或在新电脑重新部署并配置公司令牌。不能把当前电脑上的可用界面宣称为另一台电脑已部署。
+**T12 已按新要求补齐程序打包。** 桌面 content-ops 的 `releases/Hanabi-2026-11-01-mac-arm64.zip` 含最新 Hanabi、运行环境、生成脚本与背景，Apple Silicon Mac 解压后双击「启动Hanabi.app」。完整 ZIP 体积约 241 MB，本机保留；Git 同步对应源码快照、代码、规则和说明。另一台电脑需复制 ZIP，并用「配置公司网关.command」设置本机令牌；个人数据库、附件、登录态未包含。当前电脑已验证启动，不能宣称另一台电脑已部署。见 [程序包说明](../releases/README.md)。
 
 ## 技术维护
 
