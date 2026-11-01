@@ -30,12 +30,14 @@ class GenerationTests(unittest.TestCase):
             else:value['posts'][0][field][-1]+='API'
             with self.assertRaises(ValueError):gen.validate_posts(value,1,'GLM5.3')
         with self.assertRaises(ValueError):gen.validate_input('GLM\n5.3',1,'xhs')
+        value=self.posts();value['posts'][0]['body']='最近在试这个模型，扔了几个任务。'*8
+        with self.assertRaisesRegex(ValueError,'个人体验'):gen.validate_posts(value,1,'GLM5.3')
     def test_failed_image_preserves_copy_and_explicit_resume(self):
         with tempfile.TemporaryDirectory() as directory:
             args=self.args(directory)
             with patch.object(gen.image_api,'load_config',return_value=self.settings()),patch.object(gen,'claude_call',return_value=(self.posts(),{'model':'claude-sonnet-4-6'})) as calls,patch.object(gen.image_api,'generate_image',side_effect=RuntimeError('image unavailable')):
                 with self.assertRaisesRegex(RuntimeError,'unavailable'):gen.run(args)
-                self.assertEqual(calls.call_count,2)
+                self.assertEqual(calls.call_count,3)
             manifest=json.loads((Path(directory)/'manifest.json').read_text())
             self.assertEqual(manifest['status'],'failed')
             self.assertTrue((Path(directory)/'post-1.md').exists())

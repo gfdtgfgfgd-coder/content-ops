@@ -1,7 +1,7 @@
 # T11 · 改 Hanabi 界面接入生成脚本
 
 执行者：Codex
-状态：进行中
+状态：完成（缓存背景模式实测可用，新图受 Q9 额度限制）
 依赖：T08（生成脚本跑通）
 开始时间：2026-11-01 晚
 
@@ -156,10 +156,10 @@
 - `docs/hanabi-interface-screenshot.png`
 
 ## 验收
-- [ ] Hanabi 启动成功（`npm run dev` 无报错）
-- [ ] 界面打开能看到表单（模型名 / 平台 / 数量）
-- [ ] 输入 GLM5.3 + 数量 2，点生成，页面显示 2 个帖子
-- [ ] 帖子有文案 + 图片，图片能显示
+- [x] Hanabi 启动成功（`npm run dev` 无报错）
+- [x] 界面打开能看到表单（模型名 / 平台 / 数量）
+- [x] 输入 GLM5.3 + 数量 2，点生成，页面显示 2 个帖子
+- [x] 帖子有文案 + 图片，图片能显示
 
 ## 规矩
 - 只改必要的文件（后端接口 + 前端表单），不重构整个 Hanabi
@@ -171,3 +171,19 @@
 3 小时（读代码 0.5h + 改后端 1.5h + 改前端 1h）
 
 ## 完成记录
+
+### 2026-11-01 · 实际实现与验收
+
+- 启动备忘中的 Nuxt 文件只是示例。实际 Hanabi 是 Electron + Node；最新开发版位于 `/Users/lilith/Documents/ChatGPT/【探索】/content-alchemy`，运行版在应用数据目录，端口 6187。备份已读，仅作参考，未覆盖较新应用。
+- 必要接入：server.mjs、app.js、index.html、styles.css；新增 content-ops-production / content-ops-ui 两个模块及 focused tests。表单放现有内容工作台顶部，保留三导航。模型/平台/数量/背景模式可见。
+- 后端使用 spawn argv（shell:false），不拼接输入；同源与本机检查、1–10数量校验、请求标识防重、串行批次、持久化与重启恢复、停止、部分失败保留均已接入。没有替换真实数据库。
+- 成品进入现有 analysis_jobs + 内部 conversation 上下文 + uploads，逐篇可在燃放预览查看。实测前后资料库均 25；完成任务 8→10、预览 27→29，未另造统计。
+- **浏览器真操作**：GLM5.3、xhs、2、cached，点击生成，批次 `bc45c766-917e-4241-a275-7bd0c6b0190f` 完成。页面两张图均 naturalWidth/naturalHeight=1080；文案全字段禁词检查通过。截图 `docs/hanabi-interface-screenshot.png`，预览截图 `docs/hanabi-preview-screenshot.png`；副本 `outputs/2026-11-01/hanabi-验收/`。
+- 终审发现第1篇开头虚构「最近在试」经历，已由公司 Claude 删除并更新同一作品版本；脚本增加独立事实终审与个人体验拦截，4项 Python 测试通过。最终成稿复核通过。
+- 页面刷新后恢复同一批次；后台服务重新部署后仍显示两篇 completed，没有重跑收费请求。18项 focused Node 测试通过，`npm run test:application-ui` 通过（1400/900宽度、资料增删、Skill/成品计数、刷新与新启动），语法检查通过。
+- HTTP 实测：无 Origin 生成 403、数量20为400、PNG返回200（64,365字节）、原有 Word 导出200（3,298字节）。燃放预览实际显示两篇图文，选入本批2篇成功。
+- macOS 后台服务读取桌面目录会挂起；已提供应用数据目录运行副本与 `scripts/install-hanabi-runtime.py`，脚本、规则、背景、私密配置按最小范围复制，未复制企微原文或替换应用数据。一次 launchctl bootstrap 瞬态失败后修复退出信号防重并重新安装，最终 LaunchAgent running，/healthz 与配置端点均200。
+- 本卡按约定只本地修改 Hanabi，不把完整应用推入 content-ops。使用说明 `docs/hanabi-usage.md` 明确换电脑还需迁移 Hanabi/背景/本机配置。
+- AI行为局部追加同步至相关三份基础 Skill，用户原有内容保留。`data/wecom/raw/` 与凭证未进入 Git。
+
+**外部限制**：公司新背景额度不足（Q9）；默认明确显示 cached，仍生成新文案与两套可辨版式，不把复用背景算作当次新生图。T04 更早聊天仍因锁屏待补（Q8）。

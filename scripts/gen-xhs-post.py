@@ -84,6 +84,8 @@ def validate_posts(value, count, model):
             raise ValueError('标题首行缺少行动词')
         if not isinstance(post.get('body'), str) or not 80 <= len(post['body']) <= 500:
             raise ValueError('正文长度应为 80–500 字')
+        if re.search(r'我|最近在试|亲测|实测|测下来|用下来|试过了|跑过了|扔了.{0,30}任务',post['body']):
+            raise ValueError('正文出现未提供依据的个人体验叙述；只允许中性的任务建议')
         tags = post.get('tags')
         if not isinstance(tags, list) or not 3 <= len(tags) <= 5 or not all(isinstance(s, str) and re.fullmatch(r'#[\w\u4e00-\u9fff.-]+', s) for s in tags):
             raise ValueError('需要 3–5 个无空格标签')
@@ -159,7 +161,8 @@ def run(args):
     settings = image_api.load_config(args.config)
     if not settings.get('CONTENT_OPS_API_KEY') or not settings.get('CONTENT_OPS_BASE_URL','').startswith('https://'):
         raise ValueError('未配置公司网关 HTTPS 地址或本机令牌，见 docs/gateway-image-usage.md')
-    font_path = Path(settings.get('CONTENT_OPS_FONT','/Users/lilith/Library/Fonts/SourceHanSansSC-Medium.otf')).expanduser()
+    default_font=next((path for path in [Path.home()/'Library/Fonts/SourceHanSansSC-Medium.otf',Path('/System/Library/Fonts/Hiragino Sans GB.ttc')] if path.exists()),Path('missing-font'))
+    font_path = Path(settings.get('CONTENT_OPS_FONT',str(default_font))).expanduser()
     if not font_path.exists():
         raise ValueError('未找到中文字体；请设置 CONTENT_OPS_FONT')
     snapshots = {name:(ROOT/name).read_text(encoding='utf-8') for name in RULE_FILES}
@@ -211,6 +214,10 @@ def run(args):
             final,usage2 = claude_call(system,'请作为风格与去AI味终审员审核下面草稿，按原 JSON 结构返回最终可用稿。核对当前风险词、事实边界、结构差异和口语；删除未核实的使用环境、无需配置、接入、价格和性能等断言。只在命中规则时最小修改，不新增事实，不改篇数，不用同义宣传代替未经证明的承诺。保留 title_lines/body/tags/angle。仅返回一个完整 JSON，不追加说明。\n事实：'+json.dumps(facts,ensure_ascii=False)+'\n草稿：'+json.dumps(draft,ensure_ascii=False),settings,args.timeout,out/'copy-review-response.txt')
             save_json(out/'copy.json',final)
             manifest['copy_calls'] = [usage1,usage2]
+            final,usage3=claude_call('你是严格的事实终审员。只返回同结构合法 JSON，不用代码围栏。保留篇数和三行标题、tags、angle。',
+                '产品事实资料：'+json.dumps(facts,ensure_ascii=False)+'\n请逐句核对下列文案。没有任何提供的亲身经历，绝对不能出现“我”“最近在试”“扔了任务”“亲测”“用下来”等个人经历叙述。必须改成读者可以做的任务建议。删除所有没有资料支持的配置要求、产品能力、上线、价格、活动或性能断言。不要加免责声明占据正文，不要编新事实，不用“第一”等字面禁词。只返回修正后的完整 JSON。\n'+json.dumps(final,ensure_ascii=False),settings,args.timeout,out/'copy-fact-review-response.txt')
+            save_json(out/'copy.json',final)
+            manifest['copy_calls'].append(usage3)
         posts = validate_posts(final,args.count,model)
         previous_posts={p['index']:p for p in manifest.get('posts',[])}
         manifest['posts']=[]

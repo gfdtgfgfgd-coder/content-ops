@@ -43,7 +43,7 @@ python3 scripts/gen-xhs-post.py --model GLM5.3 --count 2 --resume \
 
 ## 事实与规则
 
-- 读取 persona、quick、平台、配色、风险库及生成 Skill；公司 Claude 再做风格与去 AI 味终审。
+- 读取 persona、quick、平台、配色、风险库及生成 Skill；公司 Claude 再做风格与去 AI 味终审，并独立做事实终审。
 - 没有产品资料时，输出任务试用建议，不编能力参数、价格、活动或亲测。可通过 `--facts` 传 `{ "model": "GLM5.3", "verified_claims": [{"claim":"已核验主张", "source":"来源与日期"}] }`。
 - 风险检查覆盖三行封面标题、正文、标签及人群。Seedance 的限制通过产品名范围匹配。
 - 图片为 1080×1080，模型名最大，准确中文在本机排版。通用 3:4 建议保留，今晚按 persona 用 1:1。

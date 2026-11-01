@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "status": "completed",
+  "product_model": "GLM5.3",
+  "platform": "xhs",
+  "count": 2,
+  "text_model": "claude-sonnet-4-6",
+  "image_model": "qwen-image-3.0",
+  "created_at": "2026-11-01T20:41:28.327750+08:00",
+  "facts": {
+    "model": "GLM5.3",
+    "verified_claims": [],
+    "note": "仅输入模型名，没有核验产品资料；只能写试用建议"
+  },
+  "rules": {
+    "skills/simin-persona/SKILL.md": "f3ad4336941e33ed885b0c830ea9ba8050d8ecbc93d09cba17603eb08923b6de",
+    "skills/xhs-title-patterns/quick.md": "0e7e4d7a9a2063232a9c7a4144547370a721977f39c51d845c061eb3e7163b3d",
+    "rules/banned-words-quick.yaml": "acb7fb979d347f80ea426a3ecd1e6ff97d44e13f0655de2002fd7cbf038cca1f",
+    "rules/platform-rules.md": "2a976b6b5856b4f07f3dbdd8f56aaae761aa9621a5d14ed558cb3b59bc0492b5",
+    "rules/design-rules.md": "e6ab914a80f95298703f2c42318c041d4ff63429596f67b55c9fcde2e20a0f40",
+    "skills/xhs-post-generation/SKILL.md": "2082fcba1ca7f5cab953f78123a5bb309f9c66df764f2dd066b3e8553c989792"
+  },
+  "posts": [
+    {
+      "index": 1,
+      "title_lines": [
+        "安排！",
+        "GLM5.3",
+        "先跑一个真实任务"
+      ],
+      "body": "想了解 GLM5.3 的实际表现，可以不看评测，直接用自己平时会遇到的任务试一试，看它怎么处理。\n\n如果你是电商商家，可以试试丢一段产品信息，让它帮你整理卖点、写三条不同风格的主图文案，然后自己对比一下哪条最顺、有没有跑偏。\n\n如果你做广告创意，可以给它一个品牌简介加目标人群，要求它出三个角度的脚本框架，看看逻辑是否完整、有没有明显漏洞。\n\n做短视频的话，可以把一篇已有的文字稿交给它，要求按「钩子—冲突—解决—行动」重新拆解，对比前后结构差异。\n\n用完之后建议自己核对：输出内容有没有错误事实、有没有把你没说的前提当成已知条件、逻辑层次是否清晰。这些才是判断一个模型适不适合你工作流的关键，不用急着下结论。",
+      "tags": [
+        "#GLM5.3",
+        "#AI写作",
+        "#短视频创作",
+        "#电商文案",
+        "#AI工具"
+      ],
+      "angle": "场景叙述：按三类受众分段描述可以尝试的具体任务，结尾给核对建议，不宣称能力",
+      "audience": "电商商家、广告工作室、短视频创作者",
+      "markdown": "post-1.md",
+      "image": "post-1.png",
+      "status": "completed",
+      "palette": {
+        "id": "blue_mint",
+        "background": "#1C79D3",
+        "card": "#FFFEFF",
+        "text": "#000000",
+        "accent": "#6FD0A2"
+      },
+      "layout": "center_card",
+      "image_metadata": {
+        "width": 1080,
+        "height": 1080,
+        "bytes": 64365,
+        "sha256": "c25bb97c05c9fa3def4a5890b73d449cf57ba4af511bfaf7bcc404c43aa13aee"
+      },
+      "background_generation": {
+        "mode": "cached_background",
+        "source": "/Users/lilith/Library/Application Support/Content Alchemy/content-ops/data/images/backgrounds/company-qwen-2026-11-01.png",
+        "sha256": "9b385ad24e4a500c0199085898df68143b40a0a28ec438e640ac597947132105",
+        "note": "复用既有公司生成背景，本次未调用生图；本机换色与排版"
+      }
+    },
+    {
+      "index": 2,
+      "title_lines": [
+        "直接冲！",
+        "GLM5.3",
+        "三个任务测一测"
+      ],
+      "body": "想知道 GLM5.3 适不适合你的工作？与其看别人的评测，不如自己跑三个任务。\n\n1. 文案拆解\n把一条你觉得还不错的竞品文案发给它，要求分析结构、提炼核心钩子，再让它按同一框架写一条你自己产品的版本。重点看：逻辑有没有跑偏，核心卖点有没有被保留。\n\n2. 多版本生成\n给出同一个主题，要求输出三种不同切入角度的正文，长度相近。然后检查三版之间有没有实质区别，还是只换了几个词。\n\n3. 结构梳理\n把一份杂乱的创意简报或选题思路贴进去，让它整理成带层级的提纲。核对它有没有自己加了你没提的假设。\n\n三个任务跑完，你基本能判断它在你的使用场景里是省力还是添乱。结果因任务类型和输入质量会有差异，建议用自己的真实素材测，不要用示例数据代替。",
+      "tags": [
+        "#GLM5.3",
+        "#AI测评",
+        "#广告创意",
+        "#短视频脚本",
+        "#内容创作"
+      ],
+      "angle": "任务清单：用编号步骤列出三个可操作的测试任务，每项附核对要点，结构与第一篇明显不同",
+      "audience": "电商商家、广告工作室、短视频创作者",
+      "markdown": "post-2.md",
+      "image": "post-2.png",
+      "status": "completed",
+      "palette": {
+        "id": "cream_pink",
+        "background": "#EFEFF1",
+        "card": "#EFEFF1",
+        "text": "#000000",
+        "accent": "#FFC9EC"
+      },
+      "layout": "task_blocks",
+      "image_metadata": {
+        "width": 1080,
+        "height": 1080,
+        "bytes": 51438,
+        "sha256": "680eef18b924ec00653f6ee019bb93615f51bde1e39cb988098cd00bff3d83dc"
+      },
+      "background_generation": {
+        "mode": "cached_background",
+        "source": "/Users/lilith/Library/Application Support/Content Alchemy/content-ops/data/images/backgrounds/company-qwen-2026-11-01.png",
+        "sha256": "9b385ad24e4a500c0199085898df68143b40a0a28ec438e640ac597947132105",
+        "note": "复用既有公司生成背景，本次未调用生图；本机换色与排版"
+      }
+    }
+  ],
+  "copy_calls": [
+    {
+      "model": "claude-sonnet-4-6",
+      "usage": {
+        "prompt_tokens": 8752,
+        "completion_tokens": 1034,
+        "total_tokens": 9786,
+        "usage_semantic": "openai",
+        "usage_source": "anthropic",
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cached_creation_tokens": 8750,
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0
+        },
+        "completion_tokens_details": {
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "input_tokens": 8752,
+        "claude_cache_creation_5_m_tokens": 8750
+      }
+    },
+    {
+      "model": "claude-sonnet-4-6",
+      "usage": {
+        "prompt_tokens": 9215,
+        "completion_tokens": 321,
+        "total_tokens": 9536,
+        "usage_semantic": "openai",
+        "usage_source": "anthropic",
+        "prompt_tokens_details": {
+          "cached_tokens": 8332,
+          "cached_creation_tokens": 881,
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0
+        },
+        "completion_tokens_details": {
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "input_tokens": 9215,
+        "claude_cache_creation_5_m_tokens": 881
+      }
+    },
+    {
+      "model": "claude-sonnet-4-6",
+      "usage": {
+        "prompt_tokens": 984,
+        "completion_tokens": 395,
+        "total_tokens": 1379,
+        "usage_semantic": "openai",
+        "usage_source": "anthropic",
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0
+        },
+        "completion_tokens_details": {
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "input_tokens": 984
+      }
+    }
+  ],
+  "completed_at": "2026-11-01T20:41:51.301754+08:00"
+}
