@@ -36,5 +36,14 @@
     "AI大模型"
   ],
   "title" : "冲！Kimi K3 限时6折体验🔥",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad06d38000000001301bd58?xsec_token=ABQ6g6K3to45kfJYozB5CzncuVv1q_gDkafvmUYUII184=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad06d38000000001301bd58?xsec_token=ABQ6g6K3to45kfJYozB5CzncuVv1q_gDkafvmUYUII184=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

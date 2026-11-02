@@ -37,5 +37,14 @@
     "算力"
   ],
   "title" : "赶紧冲！GLM-5.2量大放开用！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3c8a9a000000001102e620?xsec_token=ABBYTRFa1fxzdcWKTMzdGEXD9UdbvYaJ7bo0RlP8DZUZ0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3c8a9a000000001102e620?xsec_token=ABBYTRFa1fxzdcWKTMzdGEXD9UdbvYaJ7bo0RlP8DZUZ0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "顶级"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

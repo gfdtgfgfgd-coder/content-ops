@@ -36,5 +36,15 @@
     "程序员"
   ],
   "title" : "GLM-5.1 能独立工作8小时真香！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2b6a8b0000000035020e2c?xsec_token=ABzkkvg53uhNl7gh35IIDdko_JEvxwgXW-Epb_-tKMNo4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2b6a8b0000000035020e2c?xsec_token=ABzkkvg53uhNl7gh35IIDdko_JEvxwgXW-Epb_-tKMNo4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一",
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

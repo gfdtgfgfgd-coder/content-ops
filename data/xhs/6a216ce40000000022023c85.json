@@ -36,5 +36,12 @@
     "ai视频生成"
   ],
   "title" : "AI出视频必看！seedance太好用了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a216ce40000000022023c85?xsec_token=ABscEqavkczBNKHJpQMM06BX-_PadIk_Mqs3jXmDBiUR4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a216ce40000000022023c85?xsec_token=ABscEqavkczBNKHJpQMM06BX-_PadIk_Mqs3jXmDBiUR4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

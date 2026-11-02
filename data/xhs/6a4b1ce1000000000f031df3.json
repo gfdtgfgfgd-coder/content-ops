@@ -37,5 +37,12 @@
     "seedance20"
   ],
   "title" : "Seedance2.0可以放开用了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4b1ce1000000000f031df3?xsec_token=ABTb8t72SD3KPuLHgH-JoCTr2AJv5rmOXTnGPtakyv8OM=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4b1ce1000000000f031df3?xsec_token=ABTb8t72SD3KPuLHgH-JoCTr2AJv5rmOXTnGPtakyv8OM=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

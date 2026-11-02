@@ -36,5 +36,12 @@
     "设计软件"
   ],
   "title" : "无限生图体验！makenow内测",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acf1ea2000000001203cefc?xsec_token=ABX1BBwgq64SMK0i1ImjO3HYftAKZnQg0rIi-USf__If0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acf1ea2000000001203cefc?xsec_token=ABX1BBwgq64SMK0i1ImjO3HYftAKZnQg0rIi-USf__If0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "high",
+    "clean_for_style_reference": false
+  }
 }

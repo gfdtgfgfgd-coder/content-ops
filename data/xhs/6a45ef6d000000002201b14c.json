@@ -37,5 +37,14 @@
     "视频剪辑"
   ],
   "title" : "便宜的Seedance2出视频用爽了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a45ef6d000000002201b14c?xsec_token=ABxTXq7iw_Gt6TWP93cX4cGoIVbBtpBpWbvHhrfsOb4uo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a45ef6d000000002201b14c?xsec_token=ABxTXq7iw_Gt6TWP93cX4cGoIVbBtpBpWbvHhrfsOb4uo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

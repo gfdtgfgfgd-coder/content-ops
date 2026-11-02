@@ -37,5 +37,12 @@
     "豆包seedance2"
   ],
   "title" : "来！Seedance2 把AI视频价格打下来了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5f46790000000011012496?xsec_token=ABLQf9P5UvNf6wRmGbP7ah5qsQ5WzaTm86K8n-IeQgXE0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5f46790000000011012496?xsec_token=ABLQf9P5UvNf6wRmGbP7ah5qsQ5WzaTm86K8n-IeQgXE0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

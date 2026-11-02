@@ -36,5 +36,14 @@
     "可灵首尾帧"
   ],
   "title" : "赶紧冲！Kling3.0出视频嘎嘎快！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a794430000000002500056b?xsec_token=ABQSFx6GeLTMztY6SPliLao94wwOt_NItNGrjl9xNGGOI=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a794430000000002500056b?xsec_token=ABQSFx6GeLTMztY6SPliLao94wwOt_NItNGrjl9xNGGOI=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

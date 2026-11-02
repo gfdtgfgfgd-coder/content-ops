@@ -35,5 +35,14 @@
     "智谱GLM大模型"
   ],
   "title" : "真划算！GLM 5.3 API 量大",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aaf5b1a00000000120362a4?xsec_token=ABZlk7ArXANv6JEKdRlIMeMVAZhtPcEBedng_H8BQSj0Q=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aaf5b1a00000000120362a4?xsec_token=ABZlk7ArXANv6JEKdRlIMeMVAZhtPcEBedng_H8BQSj0Q=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

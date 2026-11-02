@@ -37,5 +37,14 @@
     "ai大模型"
   ],
   "title" : "🚀SD2.5出视频贼快！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8bc2d500000000230102fe?xsec_token=ABl78y85XRJLVZFa0rOx8pOWfCjgT056_mK-gkbT-4F6o=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8bc2d500000000230102fe?xsec_token=ABl78y85XRJLVZFa0rOx8pOWfCjgT056_mK-gkbT-4F6o=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

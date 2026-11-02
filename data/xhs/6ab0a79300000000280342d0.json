@@ -36,5 +36,15 @@
     "agent"
   ],
   "title" : "跌破价！GLM 5.3 API随便跑！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab0a79300000000280342d0?xsec_token=ABbjXo7QOlQvjZkBhKgwTCUaZ2H3oVmTxJP-kapN1H4LU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab0a79300000000280342d0?xsec_token=ABbjXo7QOlQvjZkBhKgwTCUaZ2H3oVmTxJP-kapN1H4LU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

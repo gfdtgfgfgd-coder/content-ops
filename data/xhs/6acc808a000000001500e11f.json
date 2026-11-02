@@ -34,5 +34,12 @@
     "ai设计"
   ],
   "title" : "开发者推荐的ai设计工具",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acc808a000000001500e11f?xsec_token=ABthmdMv4N-NcBC_RLnxtuUUSYcNl4URoJG5nWOP0tcTc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acc808a000000001500e11f?xsec_token=ABthmdMv4N-NcBC_RLnxtuUUSYcNl4URoJG5nWOP0tcTc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

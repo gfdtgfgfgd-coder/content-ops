@@ -42,5 +42,12 @@
     "小云雀seedance2"
   ],
   "title": "Seedance2.0 嘎嘎好用！",
-  "url": "https://www.xiaohongshu.com/explore/69fc29aa0000000035032e27?xsec_token=ABdBXeCBzm8U1iqTlPDm4i7fuxqB8DXNOXbHekClYNy0Y=&xsec_source=pc_user"
+  "url": "https://www.xiaohongshu.com/explore/69fc29aa0000000035032e27?xsec_token=ABdBXeCBzm8U1iqTlPDm4i7fuxqB8DXNOXbHekClYNy0Y=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": true
+  }
 }

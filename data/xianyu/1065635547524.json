@@ -24,5 +24,16 @@
   "source": "bookmark",
   "tags": [],
   "title": "不多说｜Seedance 2.0 API 亏本冲量",
-  "url": "https://www.goofish.com/item?id=1065635547524&categoryId=50023914"
+  "url": "https://www.goofish.com/item?id=1065635547524&categoryId=50023914",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "wants_tier": "low",
+    "style_reference_rank": 32,
+    "no_wants_signal": false,
+    "clean_for_style_reference": false
+  }
 }

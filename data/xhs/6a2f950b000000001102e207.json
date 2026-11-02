@@ -35,5 +35,14 @@
     "seedance2使用教程"
   ],
   "title" : "拿下！Seedance2 跑视频太快了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2f950b000000001102e207?xsec_token=ABjVKXO1CssoRTTZMr3Y_zmVRcW1EODU2YgxZl2294Wak=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2f950b000000001102e207?xsec_token=ABjVKXO1CssoRTTZMr3Y_zmVRcW1EODU2YgxZl2294Wak=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

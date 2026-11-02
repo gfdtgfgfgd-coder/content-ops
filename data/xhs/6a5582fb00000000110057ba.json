@@ -37,5 +37,12 @@
     "ai代码生成"
   ],
   "title" : "必入！GLM-5.2跑深度推理太顺了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5582fb00000000110057ba?xsec_token=ABf557xmUDH4z35uNkVrTM2zmFNWQII26hnWBeyF12fj4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5582fb00000000110057ba?xsec_token=ABf557xmUDH4z35uNkVrTM2zmFNWQII26hnWBeyF12fj4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

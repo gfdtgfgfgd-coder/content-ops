@@ -37,5 +37,16 @@
     "ai编程"
   ],
   "title" : "🆙安排上！GLM-5.2长程任务真的很顶！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a394c1a00000000110165a5?xsec_token=ABL4WlU0HOt79O1WSd4BgUPE9c6vfnezT3cU0bLD8uTSY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a394c1a00000000110165a5?xsec_token=ABL4WlU0HOt79O1WSd4BgUPE9c6vfnezT3cU0bLD8uTSY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一",
+      "顶级",
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

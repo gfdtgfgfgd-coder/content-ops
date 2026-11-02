@@ -33,5 +33,14 @@
     "seedance2模型"
   ],
   "title" : "Seedance 2.0 ，爽出视频！！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/69ef374c000000003503a93a?xsec_token=ABbhil7GhFXTuUu3XgCLGbmv9WHv4jEDEhFvAyv-m8ViA=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/69ef374c000000003503a93a?xsec_token=ABbhil7GhFXTuUu3XgCLGbmv9WHv4jEDEhFvAyv-m8ViA=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "宝子们"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "high",
+    "clean_for_style_reference": false
+  }
 }

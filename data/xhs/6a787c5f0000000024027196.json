@@ -31,5 +31,12 @@
     "aigc"
   ],
   "title" : "Seedance2嘎嘎好用！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a787c5f0000000024027196?xsec_token=ABIYi7B-l4oUt3ppLLox3KGc6GdAHSK9XKA6Ub7-N_q8A=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a787c5f0000000024027196?xsec_token=ABIYi7B-l4oUt3ppLLox3KGc6GdAHSK9XKA6Ub7-N_q8A=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

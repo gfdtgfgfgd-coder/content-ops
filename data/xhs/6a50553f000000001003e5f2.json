@@ -37,5 +37,12 @@
     "ai代码"
   ],
   "title" : "开发者必入！GLM-5.2 真的有点香 🔥",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a50553f000000001003e5f2?xsec_token=ABcClK-w_yWryBuU8MsjnuJHe4EUrvfBNx3wB_ZhYD86o=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a50553f000000001003e5f2?xsec_token=ABcClK-w_yWryBuU8MsjnuJHe4EUrvfBNx3wB_ZhYD86o=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -43,5 +43,14 @@
     "ai视频生成"
   ],
   "title" : "终于找到便宜4k画质的Seedance2了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a41eab4000000000f01f3aa?xsec_token=ABXAhqizJBsLf00FyntKzY5auAK9lJnaJzRuOloFWyCOc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a41eab4000000000f01f3aa?xsec_token=ABXAhqizJBsLf00FyntKzY5auAK9lJnaJzRuOloFWyCOc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": false
+  }
 }

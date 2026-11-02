@@ -24,5 +24,16 @@
   "source": "bookmark",
   "tags": [],
   "title": "Seedance 2 白菜价入",
-  "url": "https://www.goofish.com/item?id=1065730769775&categoryId=50023914"
+  "url": "https://www.goofish.com/item?id=1065730769775&categoryId=50023914",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "wants_tier": "top",
+    "style_reference_rank": 3,
+    "no_wants_signal": false,
+    "clean_for_style_reference": false
+  }
 }

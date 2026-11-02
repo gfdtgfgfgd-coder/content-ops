@@ -38,5 +38,15 @@
     "ai代码"
   ],
   "title" : "",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad590ae000000001e027bb2?xsec_token=ABimXrA8fnRK1aTUIhgPPUb2NvELrZDiINJYpG1V5jwow=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad590ae000000001e027bb2?xsec_token=ABimXrA8fnRK1aTUIhgPPUb2NvELrZDiINJYpG1V5jwow=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

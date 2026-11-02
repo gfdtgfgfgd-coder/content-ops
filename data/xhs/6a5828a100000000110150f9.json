@@ -37,5 +37,12 @@
     "codingplan"
   ],
   "title" : "实测好用！GLM-5.2 Agent执行力拉满！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5828a100000000110150f9?xsec_token=ABibbwrSxiSlAUVReCUopHuGlOvB6RjDQsGqjrRB6u82k=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5828a100000000110150f9?xsec_token=ABibbwrSxiSlAUVReCUopHuGlOvB6RjDQsGqjrRB6u82k=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -28,5 +28,15 @@
 
   ],
   "title" : "手慢无！GLM 5.3 API 便宜畅玩！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aaa4c1000000000280389b1?xsec_token=AB6SZ9JQamBjpiJPqe8La0QFA0T1DLEymrRCBpiRJaIEA=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aaa4c1000000000280389b1?xsec_token=AB6SZ9JQamBjpiJPqe8La0QFA0T1DLEymrRCBpiRJaIEA=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

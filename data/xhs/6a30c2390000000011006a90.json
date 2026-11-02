@@ -36,5 +36,14 @@
     "agent"
   ],
   "title" : "便宜的DeepSeek V4复杂信息一次喂饱",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a30c2390000000011006a90?xsec_token=AB44u9g2U5ot8e47_cMb9u3ObjUbbGVS7E0j6zKzHK3Wk=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a30c2390000000011006a90?xsec_token=AB44u9g2U5ot8e47_cMb9u3ObjUbbGVS7E0j6zKzHK3Wk=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "顶级"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

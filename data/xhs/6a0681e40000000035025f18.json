@@ -34,5 +34,14 @@
     "小云雀seedance"
   ],
   "title" : "🆘Seedance2满血版快到离谱！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a0681e40000000035025f18?xsec_token=ABE6EnQlIRJAReIogbT7qG7aQLuKWqpqpgkemAL2pRC-w=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a0681e40000000035025f18?xsec_token=ABE6EnQlIRJAReIogbT7qG7aQLuKWqpqpgkemAL2pRC-w=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,12 @@
     "ai写代码"
   ],
   "title" : "🤖GLM-5.2开发效率拉满了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3884e50000000022019066?xsec_token=ABVtmrXwdntVh_hqXqf_QUynWlZq3H6OgH9WlD2yrR6X8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3884e50000000022019066?xsec_token=ABVtmrXwdntVh_hqXqf_QUynWlZq3H6OgH9WlD2yrR6X8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

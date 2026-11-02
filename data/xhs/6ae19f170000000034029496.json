@@ -45,5 +45,12 @@
     "agent"
   ],
   "title" : "Kimi K3.1 Pro嘎嘎香！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae19f170000000034029496?xsec_token=ABiiphMsQoZ6XjGV777-qkyG7s3oTaCTg--WXrETs6RBg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae19f170000000034029496?xsec_token=ABiiphMsQoZ6XjGV777-qkyG7s3oTaCTg--WXrETs6RBg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": true
+  }
 }

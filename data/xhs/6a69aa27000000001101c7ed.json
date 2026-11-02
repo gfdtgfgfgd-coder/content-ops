@@ -37,5 +37,17 @@
     "人工智能"
   ],
   "title" : "GLM5.2，低至1折，闭眼冲！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a69aa27000000001101c7ed?xsec_token=AB3w7a5gKKl8wX1upEyP7VIJTYm_GlbbZAlvA1k-K4WOY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a69aa27000000001101c7ed?xsec_token=AB3w7a5gKKl8wX1upEyP7VIJTYm_GlbbZAlvA1k-K4WOY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "API",
+      "量大管饱",
+      "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

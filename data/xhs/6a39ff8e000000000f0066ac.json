@@ -34,5 +34,14 @@
     "ai视频生成"
   ],
   "title" : "Seedance2太猛了，AI视频终于不降智了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a39ff8e000000000f0066ac?xsec_token=ABL4WlU0HOt79O1WSd4BgUPA6Io0IlG6P1vYNLpDN8_lg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a39ff8e000000000f0066ac?xsec_token=ABL4WlU0HOt79O1WSd4BgUPA6Io0IlG6P1vYNLpDN8_lg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

@@ -44,5 +44,14 @@
     "效率神机营"
   ],
   "title" : "GLM-5.3入手真的香！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae44af7000000001a023d37?xsec_token=ABuEAYb2X8Fpkw-sdGbqcK9W8uKlKFCVfXBmaY5o0NhbM=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae44af7000000001a023d37?xsec_token=ABuEAYb2X8Fpkw-sdGbqcK9W8uKlKFCVfXBmaY5o0NhbM=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,14 @@
     "agent"
   ],
   "title" : "GLM-5.2便宜随便造！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4656c6000000001102db23?xsec_token=ABSJy_GZ2s1B6rRP_PZk0B6mjbC1DzYpdyVi9Zo9W9xCg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4656c6000000001102db23?xsec_token=ABSJy_GZ2s1B6rRP_PZk0B6mjbC1DzYpdyVi9Zo9W9xCg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "顶级"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

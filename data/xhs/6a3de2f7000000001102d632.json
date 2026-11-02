@@ -37,5 +37,12 @@
     "ai编程"
   ],
   "title" : "便宜量大的GLM-5.2跑长推理太稳了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3de2f7000000001102d632?xsec_token=ABRfGNsZyW6Wlsd3RX9m9tBQaSD-utQpYe5LUsMiMU97Y=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3de2f7000000001102d632?xsec_token=ABRfGNsZyW6Wlsd3RX9m9tBQaSD-utQpYe5LUsMiMU97Y=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

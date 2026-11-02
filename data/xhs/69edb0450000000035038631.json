@@ -36,5 +36,14 @@
     "seedance2模型"
   ],
   "title" : "🔥Seedance 2.0 一上线我就冲了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/69edb0450000000035038631?xsec_token=ABUkd2HkcPOo49YTOBRI616um6zlHUxaJ0DGikNTRAfo0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/69edb0450000000035038631?xsec_token=ABUkd2HkcPOo49YTOBRI616um6zlHUxaJ0DGikNTRAfo0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

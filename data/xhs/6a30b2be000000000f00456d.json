@@ -45,5 +45,14 @@
     "agent"
   ],
   "title" : "便宜量大的GLM-5.2太香了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a30b2be000000000f00456d?xsec_token=AB44u9g2U5ot8e47_cMb9u3BRAKoQRrtiT2wjMtGQHIeM=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a30b2be000000000f00456d?xsec_token=AB44u9g2U5ot8e47_cMb9u3BRAKoQRrtiT2wjMtGQHIeM=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": false
+  }
 }

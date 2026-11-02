@@ -45,5 +45,12 @@
     "ai大模型"
   ],
   "title" : "Kimi K3 API ，这波赶紧冲！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aba2b7a000000001802fe41?xsec_token=ABHSk5zneUc2tK2KZpkNjswPyTY2pEK_LXBu-13UC__NA=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aba2b7a000000001802fe41?xsec_token=ABHSk5zneUc2tK2KZpkNjswPyTY2pEK_LXBu-13UC__NA=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": true
+  }
 }

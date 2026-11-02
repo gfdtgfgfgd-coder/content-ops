@@ -37,5 +37,12 @@
     "程序员"
   ],
   "title" : "立马安排！GLM-5.2 编程能力太能打了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a32b938000000000f005f3a?xsec_token=ABJE_sSy-S_dJCZaw4XvvjUUbWpxi2frASs1rW_TCrzG4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a32b938000000000f005f3a?xsec_token=ABJE_sSy-S_dJCZaw4XvvjUUbWpxi2frASs1rW_TCrzG4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

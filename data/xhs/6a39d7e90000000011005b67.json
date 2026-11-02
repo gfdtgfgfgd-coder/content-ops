@@ -37,5 +37,12 @@
     "程序员"
   ],
   "title" : "爽了！GLM-5.2复杂推理嘎嘎跑",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a39d7e90000000011005b67?xsec_token=ABL4WlU0HOt79O1WSd4BgUPEkPGhlSo1uI0r4QbwvQQ4E=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a39d7e90000000011005b67?xsec_token=ABL4WlU0HOt79O1WSd4BgUPEkPGhlSo1uI0r4QbwvQQ4E=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

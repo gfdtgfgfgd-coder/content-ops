@@ -37,5 +37,14 @@
     "ai视频制作"
   ],
   "title" : "🚀视频人狂喜！Seedance2 出视频太快了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4c95d2000000001101989f?xsec_token=ABp-WJX0WitbBajf82qwayGqzJxw7Xe6pgaYOHlkj_XIY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4c95d2000000001101989f?xsec_token=ABp-WJX0WitbBajf82qwayGqzJxw7Xe6pgaYOHlkj_XIY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

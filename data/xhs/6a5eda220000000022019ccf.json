@@ -37,5 +37,12 @@
     "效率神器"
   ],
   "title" : "快安排！GLM-5.2高效长任务专用！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5eda220000000022019ccf?xsec_token=AB54H6y7yvlkJlTu69j5-zf5dez6JIyyMne9mMCAtAoNw=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5eda220000000022019ccf?xsec_token=AB54H6y7yvlkJlTu69j5-zf5dez6JIyyMne9mMCAtAoNw=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

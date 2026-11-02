@@ -34,5 +34,12 @@
     "seedance2使用教程"
   ],
   "title" : "赶紧冲！Seedance2太适合批量出视频了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a28b432000000003503b686?xsec_token=AB27r7B_890nPcJApQduPi8qxmMRmbnm2AiUjWUzbHtPY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a28b432000000003503b686?xsec_token=AB27r7B_890nPcJApQduPi8qxmMRmbnm2AiUjWUzbHtPY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

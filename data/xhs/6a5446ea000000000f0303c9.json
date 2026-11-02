@@ -35,5 +35,14 @@
     "seedance4k"
   ],
   "title" : "Seedance 2出片速度感人！闭眼冲🏃‍♀️",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5446ea000000000f0303c9?xsec_token=ABSXOWCvwUoWEgcMwYZq0hIu-1hvdJqIWLXgUSoO7Z-Wo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5446ea000000000f0303c9?xsec_token=ABSXOWCvwUoWEgcMwYZq0hIu-1hvdJqIWLXgUSoO7Z-Wo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

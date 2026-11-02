@@ -37,5 +37,12 @@
     "ai大模型"
   ],
   "title" : "GLM-5.2优惠价直接冲！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a603562000000000f028d31?xsec_token=ABgT15Q97vyuviqRo7RoteovWt5Bhs1h_ttvANpnEgIok=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a603562000000000f028d31?xsec_token=ABgT15Q97vyuviqRo7RoteovWt5Bhs1h_ttvANpnEgIok=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

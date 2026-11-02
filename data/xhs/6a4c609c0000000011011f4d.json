@@ -37,5 +37,12 @@
     "ai写代码"
   ],
   "title" : "立马入手！GLM-5.2开发效率快到离谱！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4c609c0000000011011f4d?xsec_token=ABp-WJX0WitbBajf82qwayGjxgjjwm2TXb6frKzZbO3hA=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4c609c0000000011011f4d?xsec_token=ABp-WJX0WitbBajf82qwayGjxgjjwm2TXb6frKzZbO3hA=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

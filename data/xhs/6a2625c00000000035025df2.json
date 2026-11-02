@@ -37,5 +37,14 @@
     "开发者选项"
   ],
   "title" : "安排！GLM-5.2连续独立工作8小时！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2625c00000000035025df2?xsec_token=ABtV97Eirpyi1-17Ga9y2HLENP25IhMUPoBoca_bdCy68=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2625c00000000035025df2?xsec_token=ABtV97Eirpyi1-17Ga9y2HLENP25IhMUPoBoca_bdCy68=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "high",
+    "clean_for_style_reference": false
+  }
 }

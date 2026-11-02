@@ -36,5 +36,16 @@
     "人工智能"
   ],
   "title" : "低至1折！GLM5.2 api，香麻了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a6b2b19000000002603790c?xsec_token=ABOyHTbqC-4ct4ymMXwbZVgR2VpoIhhLtOB1oXsCTYQbc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a6b2b19000000002603790c?xsec_token=ABOyHTbqC-4ct4ymMXwbZVgR2VpoIhhLtOB1oXsCTYQbc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "API",
+      "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

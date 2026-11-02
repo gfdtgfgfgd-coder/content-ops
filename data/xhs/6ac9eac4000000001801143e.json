@@ -45,5 +45,14 @@
     "作图神器"
   ],
   "title" : "Image2 出电商详情页，别再一次出长图了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac9eac4000000001801143e?xsec_token=ABBWFA65gdkYYy6-7SLKoroWa2ugX6EzcNXOGSP2R4LLk=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac9eac4000000001801143e?xsec_token=ABBWFA65gdkYYy6-7SLKoroWa2ugX6EzcNXOGSP2R4LLk=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "¥\\s*[0-9]+(?:\\.[0-9]+)?"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

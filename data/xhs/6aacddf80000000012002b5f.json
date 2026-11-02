@@ -37,5 +37,15 @@
     "glm52"
   ],
   "title" : "🔥GLM-5.3 API 2折了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aacddf80000000012002b5f?xsec_token=ABaP7cU58JXv_0Y7epziHSpS3Qrfk8ZOm9PUYipy0Gi5s=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aacddf80000000012002b5f?xsec_token=ABaP7cU58JXv_0Y7epziHSpS3Qrfk8ZOm9PUYipy0Gi5s=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

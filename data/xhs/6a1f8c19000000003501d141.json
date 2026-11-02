@@ -34,5 +34,12 @@
     "seedance20"
   ],
   "title" : "Seedance2.0 出视频很能打了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1f8c19000000003501d141?xsec_token=ABHdsK2rk_WDdK78hNqME3LQQy0SV9SvCxc6jg4SxpK_Q=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1f8c19000000003501d141?xsec_token=ABHdsK2rk_WDdK78hNqME3LQQy0SV9SvCxc6jg4SxpK_Q=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

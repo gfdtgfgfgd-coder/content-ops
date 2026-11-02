@@ -35,5 +35,12 @@
     "ai视频生成"
   ],
   "title" : "真香价的Seedance2.0用爽了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a43466d00000000110139f0?xsec_token=ABtMzlor89Y43GRy5eWCPYPIKiFU8vx37Rl9yaxoO66-Y=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a43466d00000000110139f0?xsec_token=ABtMzlor89Y43GRy5eWCPYPIKiFU8vx37Rl9yaxoO66-Y=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

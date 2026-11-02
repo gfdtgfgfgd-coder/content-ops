@@ -36,5 +36,14 @@
     "智谱GLM"
   ],
   "title" : "一站式AI能力平台，API接入太方便了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6abcc3a9000000001c00e1aa?xsec_token=ABNJ9fWQcnuCLTqEVs69QgkxyZAvnA1vhT0oR6Woltp6Q=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6abcc3a9000000001c00e1aa?xsec_token=ABNJ9fWQcnuCLTqEVs69QgkxyZAvnA1vhT0oR6Woltp6Q=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

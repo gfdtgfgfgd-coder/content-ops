@@ -37,5 +37,12 @@
     "ai绘画"
   ],
   "title" : "冲！Seedream5 Pro更低成本更高质量出图！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a55cfea000000001101ace8?xsec_token=ABf557xmUDH4z35uNkVrTM20cC0CHcQQDwYT9s99tbS4U=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a55cfea000000001101ace8?xsec_token=ABf557xmUDH4z35uNkVrTM20cC0CHcQQDwYT9s99tbS4U=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

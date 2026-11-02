@@ -37,5 +37,12 @@
     "智谱GLM大模型"
   ],
   "title" : "🔔GLM-5.2 特惠来袭！代码放心跑！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a562fd8000000001102fbd8?xsec_token=ABIEHrl1eI5Vve3A6A2dvcXsJ07iKmOIa0XyLASuLBIvE=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a562fd8000000001102fbd8?xsec_token=ABIEHrl1eI5Vve3A6A2dvcXsJ07iKmOIa0XyLASuLBIvE=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

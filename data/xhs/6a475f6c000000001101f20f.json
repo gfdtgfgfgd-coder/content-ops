@@ -1,6 +1,8 @@
 {
   "audience" : [
-
+    "短视频创作者",
+    "AI视频创作者",
+    "电商商家"
   ],
   "audience_raw" : "👥 适合人群：短视频创作者、AI视频创作者、电商商家",
   "author" : "深度deepAI",
@@ -36,5 +38,14 @@
     "Seedance2直出4K"
   ],
   "title" : "Seedance2.0 出视频香迷糊了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a475f6c000000001101f20f?xsec_token=ABZwfRCIn3a_llm-_yfNdjzMdlbi6FzS218VSSECPeais=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a475f6c000000001101f20f?xsec_token=ABZwfRCIn3a_llm-_yfNdjzMdlbi6FzS218VSSECPeais=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

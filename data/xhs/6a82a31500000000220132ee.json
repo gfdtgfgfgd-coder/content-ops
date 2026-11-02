@@ -36,5 +36,12 @@
     "ai生成视频"
   ],
   "title" : "📢冲！MiniMax H3 抄底价！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a82a31500000000220132ee?xsec_token=ABu6ioxQgjmCM29rHt5tXb4xC-NGH-ijeMLSQaI88FMTQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a82a31500000000220132ee?xsec_token=ABu6ioxQgjmCM29rHt5tXb4xC-NGH-ijeMLSQaI88FMTQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,12 @@
     "codingplan"
   ],
   "title" : "⚡真香价的GLM-5.2 开发太高效了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4b0ed4000000001003d942?xsec_token=ABTb8t72SD3KPuLHgH-JoCThdmYYrE51Dzy2b81vk2wF0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4b0ed4000000001003d942?xsec_token=ABTb8t72SD3KPuLHgH-JoCThdmYYrE51Dzy2b81vk2wF0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

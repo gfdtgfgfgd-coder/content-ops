@@ -36,5 +36,14 @@
     "agent"
   ],
   "title" : "快来！GLM-5.2太适合干复杂活了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5455c00000000011018ed3?xsec_token=ABSXOWCvwUoWEgcMwYZq0hIp_B0gvxI3CXzqJknjNMoHI=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5455c00000000011018ed3?xsec_token=ABSXOWCvwUoWEgcMwYZq0hIp_B0gvxI3CXzqJknjNMoHI=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

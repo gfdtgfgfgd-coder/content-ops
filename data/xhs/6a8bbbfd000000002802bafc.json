@@ -35,5 +35,14 @@
     "ai生成视频"
   ],
   "title" : "安排！SD2.5 出视频不返工！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8bbbfd000000002802bafc?xsec_token=ABl78y85XRJLVZFa0rOx8pOYeRJP_ttECS9M0mmAnoHdc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8bbbfd000000002802bafc?xsec_token=ABl78y85XRJLVZFa0rOx8pOYeRJP_ttECS9M0mmAnoHdc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

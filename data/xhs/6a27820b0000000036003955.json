@@ -37,5 +37,15 @@
     "ai大模型"
   ],
   "title" : "满血版DeepSeek V4直接冲",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a27820b0000000036003955?xsec_token=ABNvyGz8zuMyqP0zVPIGA882A5b7uW-2FpUtkx6IqCvc0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a27820b0000000036003955?xsec_token=ABNvyGz8zuMyqP0zVPIGA882A5b7uW-2FpUtkx6IqCvc0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一",
+      "顶级"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

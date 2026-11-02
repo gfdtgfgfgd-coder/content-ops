@@ -36,5 +36,12 @@
     "seedance2提示词"
   ],
   "title" : "安排！全网都在用的seedance2！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a260c3c0000000022019869?xsec_token=ABtV97Eirpyi1-17Ga9y2HLPL7E--jx1RbALhZYmlR_zg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a260c3c0000000022019869?xsec_token=ABtV97Eirpyi1-17Ga9y2HLPL7E--jx1RbALhZYmlR_zg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

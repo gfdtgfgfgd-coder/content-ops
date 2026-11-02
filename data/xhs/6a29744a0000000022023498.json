@@ -36,5 +36,14 @@
     "智谱GLM52"
   ],
   "title" : "GLM-5.2用得太爽了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a29744a0000000022023498?xsec_token=ABfa2CSgA6A3kgqU1KRYNGia_ulx8R15JqN0cE4QkZtfY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a29744a0000000022023498?xsec_token=ABfa2CSgA6A3kgqU1KRYNGia_ulx8R15JqN0cE4QkZtfY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

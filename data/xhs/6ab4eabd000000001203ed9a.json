@@ -45,5 +45,12 @@
     "审美积累"
   ],
   "title" : "实测极简词，搞定千禧Y2K大片！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab4eabd000000001203ed9a?xsec_token=ABy5grGD5Wlq9JCWW7gWp2Q5VS9sE6w61omgQCbOxG4WU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab4eabd000000001203ed9a?xsec_token=ABy5grGD5Wlq9JCWW7gWp2Q5VS9sE6w61omgQCbOxG4WU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

@@ -44,5 +44,14 @@
     "智谱GLM"
   ],
   "title" : "GLM-5.3 API，真的破防了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac8a878000000001b02c806?xsec_token=AB9ev9U5kwo_FsirW8ztPyKnljvPfgs0EiRgrD8U8xC3E=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac8a878000000001b02c806?xsec_token=AB9ev9U5kwo_FsirW8ztPyKnljvPfgs0EiRgrD8U8xC3E=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": false
+  }
 }

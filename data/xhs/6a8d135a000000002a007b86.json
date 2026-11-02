@@ -34,5 +34,14 @@
     "ai工作流"
   ],
   "title" : "SD2.5出长视频自由了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8d135a000000002a007b86?xsec_token=ABTfeI1mQiYjXfqUWrlE2SttdNVHgH1UewyMW2mRTsJPY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8d135a000000002a007b86?xsec_token=ABTfeI1mQiYjXfqUWrlE2SttdNVHgH1UewyMW2mRTsJPY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

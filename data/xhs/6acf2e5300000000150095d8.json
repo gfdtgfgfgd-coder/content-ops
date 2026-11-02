@@ -43,5 +43,14 @@
     "人工智能"
   ],
   "title" : "DeepSeek V4.1 API ，量大可优惠",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acf2e5300000000150095d8?xsec_token=ABX1BBwgq64SMK0i1ImjO3HfAFvwaOi50EcPhz_HtxcXk=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acf2e5300000000150095d8?xsec_token=ABX1BBwgq64SMK0i1ImjO3HfAFvwaOi50EcPhz_HtxcXk=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

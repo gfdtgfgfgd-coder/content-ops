@@ -37,5 +37,12 @@
     "ai代码"
   ],
   "title" : "安排上！GLM-5.2跑长任务太香了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a31e8ce000000002201b312?xsec_token=ABWyGOFgQpIIXQFLBbN6-ZucW-khq-0o25sqimBV1uc88=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a31e8ce000000002201b312?xsec_token=ABWyGOFgQpIIXQFLBbN6-ZucW-khq-0o25sqimBV1uc88=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

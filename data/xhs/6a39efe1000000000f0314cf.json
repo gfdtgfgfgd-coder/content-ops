@@ -37,5 +37,14 @@
     "人工智能"
   ],
   "title" : "长程任务出色的GLM-5.2管饱敞开用！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a39efe1000000000f0314cf?xsec_token=ABL4WlU0HOt79O1WSd4BgUPD7iDvShfSD1Tiglck8M5yo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a39efe1000000000f0314cf?xsec_token=ABL4WlU0HOt79O1WSd4BgUPD7iDvShfSD1Tiglck8M5yo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

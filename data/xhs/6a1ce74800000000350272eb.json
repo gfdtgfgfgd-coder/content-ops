@@ -34,5 +34,12 @@
     "seedance模型"
   ],
   "title" : "被Seedance2出视频惊艳到了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1ce74800000000350272eb?xsec_token=ABxRGwa2llX4E8IDSzvBWEwxm9k-lhRiyOlOOEfWC8Hr0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1ce74800000000350272eb?xsec_token=ABxRGwa2llX4E8IDSzvBWEwxm9k-lhRiyOlOOEfWC8Hr0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,12 @@
     "ai工作流"
   ],
   "title" : "🥳价格友好的GLM-5.2越用越香！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a45d393000000001101c165?xsec_token=ABxTXq7iw_Gt6TWP93cX4cGsbDnfsfI3T88NMz-VRU2qc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a45d393000000001101c165?xsec_token=ABxTXq7iw_Gt6TWP93cX4cGsbDnfsfI3T88NMz-VRU2qc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

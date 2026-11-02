@@ -37,5 +37,12 @@
     "codingplan"
   ],
   "title" : "太顶了！GLM-5.1编程能力提升30%！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2a1af6000000003501c661?xsec_token=ABySzm1G_Ovc85FTdnFCIDkNx3vOMZ6seV4GkithUDECI=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2a1af6000000003501c661?xsec_token=ABySzm1G_Ovc85FTdnFCIDkNx3vOMZ6seV4GkithUDECI=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

@@ -36,5 +36,15 @@
     "大模型"
   ],
   "title" : "亏本冲量！API 开冲",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9fc7750000000028035e4c?xsec_token=AB-98-jOPyxjy3Qdh6pTCbkmzqg6HBdyn0vgM8njr_h0A=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9fc7750000000028035e4c?xsec_token=AB-98-jOPyxjy3Qdh6pTCbkmzqg6HBdyn0vgM8njr_h0A=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

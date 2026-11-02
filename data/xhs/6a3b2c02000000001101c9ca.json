@@ -37,5 +37,14 @@
     "算法"
   ],
   "title" : "安排！便宜的GLM-5.2 跑 Agent 太强了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3b2c02000000001101c9ca?xsec_token=AB-BngYH_pCtziQ_2hoHEAIGLcyIIeaMg4Oao5kdZyWL8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3b2c02000000001101c9ca?xsec_token=AB-BngYH_pCtziQ_2hoHEAIGLcyIIeaMg4Oao5kdZyWL8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

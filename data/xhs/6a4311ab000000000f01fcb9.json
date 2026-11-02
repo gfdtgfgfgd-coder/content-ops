@@ -37,5 +37,15 @@
     "codingplan"
   ],
   "title" : "🚨速来！GLM-5.2跑复杂推理很顶！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4311ab000000000f01fcb9?xsec_token=ABtMzlor89Y43GRy5eWCPYPGwtv6bcGGC9dl3cEiAwR7g=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4311ab000000000f01fcb9?xsec_token=ABtMzlor89Y43GRy5eWCPYPGwtv6bcGGC9dl3cEiAwR7g=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱",
+      "第一"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

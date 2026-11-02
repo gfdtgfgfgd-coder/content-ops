@@ -35,5 +35,16 @@
     "ai大模型"
   ],
   "title" : "疯了！GLM 5.3把价格打下来了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9fcc650000000028037047?xsec_token=AB-98-jOPyxjy3Qdh6pTCbkk-0NdeTa_gq-fd_i6zXpmc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9fcc650000000028037047?xsec_token=AB-98-jOPyxjy3Qdh6pTCbkk-0NdeTa_gq-fd_i6zXpmc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

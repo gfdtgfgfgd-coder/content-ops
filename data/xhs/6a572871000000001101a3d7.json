@@ -37,5 +37,15 @@
     "ai短剧"
   ],
   "title" : "AI出视频必入Seedance2.5！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a572871000000001101a3d7?xsec_token=AB49fIufwyj-eEvkWzQ2wi9oIoLME49hDyBUOaEbvDMUo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a572871000000001101a3d7?xsec_token=AB49fIufwyj-eEvkWzQ2wi9oIoLME49hDyBUOaEbvDMUo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱",
+      "满血"
+    ],
+    "banned_word_scope": "body|tags",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

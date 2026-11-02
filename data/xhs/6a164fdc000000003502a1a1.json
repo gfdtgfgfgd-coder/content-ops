@@ -36,5 +36,12 @@
     "seedance视频模型"
   ],
   "title" : "🔜Seedance2.0稳稳出片",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a164fdc000000003502a1a1?xsec_token=ABzkDuUGiC2q3pNx_xwCMK5_vwsmDm5PUOTj5Kof4Mm38=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a164fdc000000003502a1a1?xsec_token=ABzkDuUGiC2q3pNx_xwCMK5_vwsmDm5PUOTj5Kof4Mm38=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

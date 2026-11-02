@@ -36,5 +36,15 @@
     "ai漫剧"
   ],
   "title" : "必须冲！wan3.0api 接入，支持480p，",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa2291e0000000011038000?xsec_token=ABlaX-hKXGar_aUsnffC-uQUbp9a98XW_P0z_9ZrHNmHg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa2291e0000000011038000?xsec_token=ABlaX-hKXGar_aUsnffC-uQUbp9a98XW_P0z_9ZrHNmHg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

@@ -36,5 +36,14 @@
     "ai代码"
   ],
   "title" : "🚀价格低的GLM-5.2 写代码又快又稳",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a50893a00000000110104d7?xsec_token=ABcClK-w_yWryBuU8MsjnuJPv4N2bIkR-r7eKr199te_M=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a50893a00000000110104d7?xsec_token=ABcClK-w_yWryBuU8MsjnuJPv4N2bIkR-r7eKr199te_M=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

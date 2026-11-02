@@ -36,5 +36,14 @@
     "ai写代码"
   ],
   "title" : "🔥 便宜的GLM-5.2跑长项目太稳了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4d9f19000000000f033f1d?xsec_token=ABYLU5lX-MeAgxQRlXV1qDXga8SzJTBw16PMiwdF1d7bU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4d9f19000000000f033f1d?xsec_token=ABYLU5lX-MeAgxQRlXV1qDXga8SzJTBw16PMiwdF1d7bU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

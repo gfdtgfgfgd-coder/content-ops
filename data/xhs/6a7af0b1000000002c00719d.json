@@ -37,5 +37,12 @@
     "minimaxh3本地部署"
   ],
   "title" : "🔥冲！MiniMax H3出视频太牛了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a7af0b1000000002c00719d?xsec_token=AB4EntZ1cYFiQRpZrsjWGKBUclJ0FoLUWtGQCjUM6OkIU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a7af0b1000000002c00719d?xsec_token=AB4EntZ1cYFiQRpZrsjWGKBUclJ0FoLUWtGQCjUM6OkIU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

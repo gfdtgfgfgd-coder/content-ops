@@ -33,5 +33,12 @@
     "seedance模型"
   ],
   "title" : "Seedance2用上头了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a20dbe1000000003502ee4a?xsec_token=AB3LloHoFUETtJ_ZtbYl_ikHdomhcugL4bw1i45cO02WQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a20dbe1000000003502ee4a?xsec_token=AB3LloHoFUETtJ_ZtbYl_ikHdomhcugL4bw1i45cO02WQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

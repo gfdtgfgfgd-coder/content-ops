@@ -37,5 +37,15 @@
     "ai大模型"
   ],
   "title" : "Kimi k3 API，跑代码贼顺畅",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6abb704c000000001500eaa3?xsec_token=ABL80Ulw22Viy1AU-aj90Apxuv9P8A8pL4x8Tl1jbqonk=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6abb704c000000001500eaa3?xsec_token=ABL80Ulw22Viy1AU-aj90Apxuv9P8A8pL4x8Tl1jbqonk=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

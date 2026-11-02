@@ -34,5 +34,14 @@
     "ai分镜"
   ],
   "title" : "赶紧安排！Seedance2 丝滑出片太香了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4c820e000000001102e58c?xsec_token=ABp-WJX0WitbBajf82qwayGr1AUsF6B7oMIuhXE4nwpVs=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4c820e000000001102e58c?xsec_token=ABp-WJX0WitbBajf82qwayGr1AUsF6B7oMIuhXE4nwpVs=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

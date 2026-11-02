@@ -37,5 +37,15 @@
     "codingplan"
   ],
   "title" : "打工人：GLM5.3白菜价拿捏了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6abb64ac000000001c00d8ff?xsec_token=ABL80Ulw22Viy1AU-aj90Ap9PH96NDxiNSfMc6EjIDUNw=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6abb64ac000000001c00d8ff?xsec_token=ABL80Ulw22Viy1AU-aj90Ap9PH96NDxiNSfMc6EjIDUNw=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

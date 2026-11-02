@@ -37,5 +37,12 @@
     "agent"
   ],
   "title" : "夯爆了！GLM-5.2满血接入！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a62d55e000000000f007fbb?xsec_token=AB7ppTOSZF6ePmQB5bWCqKJ19gm9p_jxZBZfu6yHB4_iQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a62d55e000000000f007fbb?xsec_token=AB7ppTOSZF6ePmQB5bWCqKJ19gm9p_jxZBZfu6yHB4_iQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

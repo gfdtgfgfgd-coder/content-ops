@@ -37,5 +37,12 @@
     "人工智能"
   ],
   "title" : "为长程任务而生的GLM-5.2便宜随便用！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4db2bd000000002201a583?xsec_token=ABYLU5lX-MeAgxQRlXV1qDXtE9vZhCxn9OyUQknJx0VH4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4db2bd000000002201a583?xsec_token=ABYLU5lX-MeAgxQRlXV1qDXtE9vZhCxn9OyUQknJx0VH4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,15 @@
     "codingplan"
   ],
   "title" : "直接拿下！量大的GLM-5.2长任务不跑偏！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3d3640000000000f005fd6?xsec_token=ABRfGNsZyW6Wlsd3RX9m9tBT7RX9VZUpgRm6IGmZSvB9k=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3d3640000000000f005fd6?xsec_token=ABRfGNsZyW6Wlsd3RX9m9tBT7RX9VZUpgRm6IGmZSvB9k=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "顶级",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

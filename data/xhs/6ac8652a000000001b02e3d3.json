@@ -37,5 +37,15 @@
     "Trae"
   ],
   "title" : "谁要低价api？",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac8652a000000001b02e3d3?xsec_token=AB9ev9U5kwo_FsirW8ztPyKt31Cttuoa9dCuchdv3kwvs=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac8652a000000001b02e3d3?xsec_token=AB9ev9U5kwo_FsirW8ztPyKt31Cttuoa9dCuchdv3kwvs=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一",
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr|tags",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

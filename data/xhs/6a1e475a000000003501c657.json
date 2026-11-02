@@ -43,5 +43,12 @@
     "seedance2怎么使用"
   ],
   "title" : "爱了爱了！Seedance2放开用",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1e475a000000003501c657?xsec_token=ABgvu5hnLd_icnvWjxwFbHHNmP9vONfy0dFp32H80fPq8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1e475a000000003501c657?xsec_token=ABgvu5hnLd_icnvWjxwFbHHNmP9vONfy0dFp32H80fPq8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": true
+  }
 }

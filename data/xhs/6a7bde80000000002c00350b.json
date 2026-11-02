@@ -36,5 +36,14 @@
     "ai视频工具"
   ],
   "title" : "🤩低成本的MiniMax H3高清出视频！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a7bde80000000002c00350b?xsec_token=ABE5AXUxDmkmnuY2jPDYyaYjiMG7Y5Cfuzs-j0JDpS8h4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a7bde80000000002c00350b?xsec_token=ABE5AXUxDmkmnuY2jPDYyaYjiMG7Y5Cfuzs-j0JDpS8h4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,14 @@
     "kimi智能助手"
   ],
   "title" : "Kimi K3 限时5折！这波真的冲🔥",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad0507b00000000120383d3?xsec_token=ABQ6g6K3to45kfJYozB5CznXUqHms3uMveYSljU48ANUo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad0507b00000000120383d3?xsec_token=ABQ6g6K3to45kfJYozB5CznXUqHms3uMveYSljU48ANUo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

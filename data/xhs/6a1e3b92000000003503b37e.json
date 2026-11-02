@@ -35,5 +35,12 @@
     "seedance2使用教程"
   ],
   "title" : "🔜Seedance2 香迷糊了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1e3b92000000003503b37e?xsec_token=ABgvu5hnLd_icnvWjxwFbHHIcqQ-nke3120gVHoT9rmRQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1e3b92000000003503b37e?xsec_token=ABgvu5hnLd_icnvWjxwFbHHIcqQ-nke3120gVHoT9rmRQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,14 @@
     "ai短剧"
   ],
   "title" : "😍便宜的Seedance 2越用越上头！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5ed296000000000f01f187?xsec_token=AB54H6y7yvlkJlTu69j5-zf1oEgpHG5klzwjK1a8nTXXo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5ed296000000000f01f187?xsec_token=AB54H6y7yvlkJlTu69j5-zf1oEgpHG5klzwjK1a8nTXXo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

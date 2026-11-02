@@ -35,5 +35,15 @@
     "ai视频生成"
   ],
   "title" : "速来！Seedance2快速出视频！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3b7156000000000f03340c?xsec_token=AB-BngYH_pCtziQ_2hoHEAIPKs2TJ4NbhwhejGgKD-5kc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3b7156000000000f03340c?xsec_token=AB-BngYH_pCtziQ_2hoHEAIPKs2TJ4NbhwhejGgKD-5kc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

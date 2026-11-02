@@ -37,5 +37,16 @@
     "coding编程"
   ],
   "title" : "🔥赶紧冲！GLM-5.2长程编程丝滑开跑",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3896c2000000000f033ae2?xsec_token=ABVtmrXwdntVh_hqXqf_QUylM8XXotG6MYyIl2zpdm8IE=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3896c2000000000f033ae2?xsec_token=ABVtmrXwdntVh_hqXqf_QUylM8XXotG6MYyIl2zpdm8IE=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "顶级",
+      "第一",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

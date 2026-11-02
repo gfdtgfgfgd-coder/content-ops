@@ -37,5 +37,15 @@
     "agent"
   ],
   "title" : "亏本冲量，Kimi k3 APl真的香",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aab9b4f000000001203cc21?xsec_token=ABCkc8AL8VwDmhEG7sdZqrBAQecbWmEflC9QiTHbT-D_U=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aab9b4f000000001203cc21?xsec_token=ABCkc8AL8VwDmhEG7sdZqrBAQecbWmEflC9QiTHbT-D_U=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

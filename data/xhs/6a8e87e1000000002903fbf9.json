@@ -34,5 +34,14 @@
     "ai工具"
   ],
   "title" : "😍SD2.5把高清出片门槛打下来了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8e87e1000000002903fbf9?xsec_token=ABrovsFQr78YelFFTTuzccNaFSPwN2Y_V36DtdomYHmFQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8e87e1000000002903fbf9?xsec_token=ABrovsFQr78YelFFTTuzccNaFSPwN2Y_V36DtdomYHmFQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

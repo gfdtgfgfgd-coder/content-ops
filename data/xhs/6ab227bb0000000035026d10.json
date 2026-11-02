@@ -36,5 +36,14 @@
     "ai工具"
   ],
   "title" : "破防了！Kimi K3 API 太香了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab227bb0000000035026d10?xsec_token=ABkfuBCWrdEnpyz-GGS6mlHr-vPYjaXk5f65kV6KUmUJ0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab227bb0000000035026d10?xsec_token=ABkfuBCWrdEnpyz-GGS6mlHr-vPYjaXk5f65kV6KUmUJ0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

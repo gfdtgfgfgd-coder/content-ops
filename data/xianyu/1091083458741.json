@@ -26,5 +26,16 @@
   "source": "bookmark",
   "tags": [],
   "title": "Seedance 2.5免排队生成",
-  "url": "https://www.goofish.com/item?id=1091083458741&categoryId=50023914"
+  "url": "https://www.goofish.com/item?id=1091083458741&categoryId=50023914",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "wants_tier": "top",
+    "style_reference_rank": 4,
+    "no_wants_signal": false,
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,12 @@
     "KimiAI"
   ],
   "title" : "便宜的Kimi K3 真香！🚀",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad8450a0000000032014c61?xsec_token=ABNFniYJCuomd_lD9008AStKjTrCsbOsJPJfLhLXGHCqc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad8450a0000000032014c61?xsec_token=ABNFniYJCuomd_lD9008AStKjTrCsbOsJPJfLhLXGHCqc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,16 @@
     "agent"
   ],
   "title" : "GLM-5.2 API，5-6折，闭眼冲！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a686d450000000011014d1b?xsec_token=ABNef8U_-Nnl-H8uaCDSg5tb26GoFjrXepZV4WrqSMtSQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a686d450000000011014d1b?xsec_token=ABNef8U_-Nnl-H8uaCDSg5tb26GoFjrXepZV4WrqSMtSQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "API",
+      "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -35,5 +35,12 @@
     "seedance教程"
   ],
   "title" : "杀疯了🔥Seedance 2.0 API我冲了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acf45ad000000001a02b3b9?xsec_token=ABX1BBwgq64SMK0i1ImjO3HdlbTpe902AnpLC1i2AJJ6w=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acf45ad000000001a02b3b9?xsec_token=ABX1BBwgq64SMK0i1ImjO3HdlbTpe902AnpLC1i2AJJ6w=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

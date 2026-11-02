@@ -37,5 +37,14 @@
     "AI工具"
   ],
   "title" : "🚀快来！Seedance2.5全新升级！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a523ebf000000001102c430?xsec_token=AB9D95kPt9nmFiEigXQwv3eJr-cVlO1oLdD-CpGDyw_Jg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a523ebf000000001102c430?xsec_token=AB9D95kPt9nmFiEigXQwv3eJr-cVlO1oLdD-CpGDyw_Jg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

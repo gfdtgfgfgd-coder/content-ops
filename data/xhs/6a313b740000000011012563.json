@@ -37,5 +37,12 @@
     "agent"
   ],
   "title" : "太能打了！GLM-5.2实打实好用！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a313b740000000011012563?xsec_token=ABWyGOFgQpIIXQFLBbN6-ZufILyqig7uf2RFYKybQlPvA=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a313b740000000011012563?xsec_token=ABWyGOFgQpIIXQFLBbN6-ZufILyqig7uf2RFYKybQlPvA=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

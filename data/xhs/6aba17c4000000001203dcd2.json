@@ -35,5 +35,14 @@
     "codingplan"
   ],
   "title" : "破防了，GLM-5.3 API，太香了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aba17c4000000001203dcd2?xsec_token=ABHSk5zneUc2tK2KZpkNjswFEyvQn8BPJPn1j3yx2lXrk=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aba17c4000000001203dcd2?xsec_token=ABHSk5zneUc2tK2KZpkNjswFEyvQn8BPJPn1j3yx2lXrk=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

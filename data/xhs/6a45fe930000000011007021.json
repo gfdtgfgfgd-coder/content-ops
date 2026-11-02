@@ -37,5 +37,14 @@
     "AI工具"
   ],
   "title" : "Seedance2.0真的适合高频做AI视频！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a45fe930000000011007021?xsec_token=ABxTXq7iw_Gt6TWP93cX4cGrDY4aU48iiquWWnbGWiaYI=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a45fe930000000011007021?xsec_token=ABxTXq7iw_Gt6TWP93cX4cGrDY4aU48iiquWWnbGWiaYI=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

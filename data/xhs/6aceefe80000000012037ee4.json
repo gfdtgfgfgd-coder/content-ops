@@ -37,5 +37,12 @@
     "采购"
   ],
   "title" : "算力源头供应，需要的来",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aceefe80000000012037ee4?xsec_token=ABz1yMeBsb1n_Ud5iKaGoLgaXe5O8YOjjqdvpmIq9yymE=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aceefe80000000012037ee4?xsec_token=ABz1yMeBsb1n_Ud5iKaGoLgaXe5O8YOjjqdvpmIq9yymE=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

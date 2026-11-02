@@ -38,5 +38,15 @@
     "效率神器"
   ],
   "title" : "kimi k3 api白菜价，闭眼冲~~",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad5b7a1000000001d02c1dc?xsec_token=ABimXrA8fnRK1aTUIhgPPUbxfWN2-z_z8xmfvxdq7xmr8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad5b7a1000000001d02c1dc?xsec_token=ABimXrA8fnRK1aTUIhgPPUbxfWN2-z_z8xmfvxdq7xmr8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

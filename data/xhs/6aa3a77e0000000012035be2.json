@@ -37,5 +37,16 @@
     "ai大模型"
   ],
   "title" : "必须冲！Kimi-k3来了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa3a77e0000000012035be2?xsec_token=AB46roKFsvB0I22JHOJImG9xE8xowEAvsU50xsVvLM90U=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa3a77e0000000012035be2?xsec_token=AB46roKFsvB0I22JHOJImG9xE8xowEAvsU50xsVvLM90U=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

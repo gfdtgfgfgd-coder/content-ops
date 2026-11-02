@@ -37,5 +37,14 @@
     "agent"
   ],
   "title" : "低成本GLM-5.2跑长程任务爽翻了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a43cce1000000001003d713?xsec_token=ABtMzlor89Y43GRy5eWCPYPAzhwFtO6pdDKahTZKBmQd4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a43cce1000000001003d713?xsec_token=ABtMzlor89Y43GRy5eWCPYPAzhwFtO6pdDKahTZKBmQd4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

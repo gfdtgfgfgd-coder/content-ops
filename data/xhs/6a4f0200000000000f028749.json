@@ -36,5 +36,14 @@
     "agent"
   ],
   "title" : "🔥我去！挖到便宜的 GLM-5.2 了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4f0200000000000f028749?xsec_token=AB_OpewqL2vnT9wBxQ00gQsJ0GgJNyiNsZqBZ2_42HbVU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4f0200000000000f028749?xsec_token=AB_OpewqL2vnT9wBxQ00gQsJ0GgJNyiNsZqBZ2_42HbVU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "姐妹们"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

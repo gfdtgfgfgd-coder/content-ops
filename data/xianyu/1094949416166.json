@@ -24,5 +24,16 @@
   "source": "bookmark",
   "tags": [],
   "title": "seedance2.5高质量视频创作",
-  "url": "https://www.goofish.com/item?id=1094949416166&categoryId=50023914"
+  "url": "https://www.goofish.com/item?id=1094949416166&categoryId=50023914",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "wants_tier": "top",
+    "style_reference_rank": 2,
+    "no_wants_signal": false,
+    "clean_for_style_reference": false
+  }
 }

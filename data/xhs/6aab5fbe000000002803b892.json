@@ -37,5 +37,14 @@
     "agent"
   ],
   "title" : "白菜价！GLM 5.3 API 限量畅玩！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aab5fbe000000002803b892?xsec_token=ABCkc8AL8VwDmhEG7sdZqrBNwmktOGmTdt2EBWpWgTQrg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aab5fbe000000002803b892?xsec_token=ABCkc8AL8VwDmhEG7sdZqrBNwmktOGmTdt2EBWpWgTQrg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

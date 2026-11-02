@@ -37,5 +37,14 @@
     "ai编程"
   ],
   "title" : "😍价格友好的 GLM-5.2跑复杂编码太顺了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3c9be5000000001101fcd9?xsec_token=ABBYTRFa1fxzdcWKTMzdGEXKAfEZwxdlOg8hqkEK8ML-o=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3c9be5000000001101fcd9?xsec_token=ABBYTRFa1fxzdcWKTMzdGEXKAfEZwxdlOg8hqkEK8ML-o=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

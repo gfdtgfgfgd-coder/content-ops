@@ -36,5 +36,14 @@
     "人工智能"
   ],
   "title" : "别再为API交智商税了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac74fdb000000001803bb0a?xsec_token=ABk_GOVJLKx1RXsIy4xjGizXaPM_Mq6qUfx7YTgxKc_h0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac74fdb000000001803bb0a?xsec_token=ABk_GOVJLKx1RXsIy4xjGizXaPM_Mq6qUfx7YTgxKc_h0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body|tags",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,14 @@
     "seedance4k"
   ],
   "title" : "🥳更低成本的Seedance随便造！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a583a0e000000000f02bc5c?xsec_token=ABibbwrSxiSlAUVReCUopHuOMimtYKtdwR9ObJXQ-Zxlo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a583a0e000000000f02bc5c?xsec_token=ABibbwrSxiSlAUVReCUopHuOMimtYKtdwR9ObJXQ-Zxlo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

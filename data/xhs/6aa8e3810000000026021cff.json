@@ -34,5 +34,15 @@
     "ai代码"
   ],
   "title" : "疯了！Kimi K3亏本冲量",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa8e3810000000026021cff?xsec_token=ABnFL9oxQ_8R6YZE7ezrh_V_jXzBY8u0uD7eHHEZ5AkjA=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa8e3810000000026021cff?xsec_token=ABnFL9oxQ_8R6YZE7ezrh_V_jXzBY8u0uD7eHHEZ5AkjA=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

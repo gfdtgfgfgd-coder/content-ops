@@ -35,5 +35,12 @@
     "ai视频制作"
   ],
   "title" : "便宜的MiniMax H3高质量出片！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a84fd1400000000260357e1?xsec_token=ABot0tZNCA3Cr840YUo4GNjv3q2szu43aXqZrQI78O-3M=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a84fd1400000000260357e1?xsec_token=ABot0tZNCA3Cr840YUo4GNjv3q2szu43aXqZrQI78O-3M=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

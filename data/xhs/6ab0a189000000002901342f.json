@@ -37,5 +37,12 @@
     "ai大模型"
   ],
   "title" : "速抢！Kimi K3 写代码贼快！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab0a189000000002901342f?xsec_token=ABbjXo7QOlQvjZkBhKgwTCUe8AE-s88XPiB-oflLBLc4s=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab0a189000000002901342f?xsec_token=ABbjXo7QOlQvjZkBhKgwTCUe8AE-s88XPiB-oflLBLc4s=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

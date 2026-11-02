@@ -35,5 +35,12 @@
     "Seedance2.0"
   ],
   "title" : "Seedance2越用越上头！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a190f9f00000000350257b5?xsec_token=ABZkTtOAdM2FtZVeP1o9AaDa21Y1cbe-OoKX8dzReEVVs=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a190f9f00000000350257b5?xsec_token=ABZkTtOAdM2FtZVeP1o9AaDa21Y1cbe-OoKX8dzReEVVs=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

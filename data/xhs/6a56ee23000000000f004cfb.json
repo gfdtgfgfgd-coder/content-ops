@@ -37,5 +37,14 @@
     "智谱"
   ],
   "title" : "长程能力硬核的GLM-5.2立马拿下！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a56ee23000000000f004cfb?xsec_token=ABIEHrl1eI5Vve3A6A2dvcXlRmnMzs1td2K6CqSP_JJeY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a56ee23000000000f004cfb?xsec_token=ABIEHrl1eI5Vve3A6A2dvcXlRmnMzs1td2K6CqSP_JJeY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

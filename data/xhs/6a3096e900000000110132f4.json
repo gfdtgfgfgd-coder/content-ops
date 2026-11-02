@@ -37,5 +37,12 @@
     "ai编程"
   ],
   "title" : "安排上！GLM-5.2编程能力质的飞跃！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3096e900000000110132f4?xsec_token=AB44u9g2U5ot8e47_cMb9u3FBUDtteHGXyenf8wiztkrU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3096e900000000110132f4?xsec_token=AB44u9g2U5ot8e47_cMb9u3FBUDtteHGXyenf8wiztkrU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

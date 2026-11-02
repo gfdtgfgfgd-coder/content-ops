@@ -35,5 +35,12 @@
     "AI短剧"
   ],
   "title" : "爽了！SD2.0 稳稳出视频！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6adef6360000000017034cdc?xsec_token=ABrYNPhbuPEBbHU6PaPC9AHrSbqfBQoRz4H3XB79CxeM8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6adef6360000000017034cdc?xsec_token=ABrYNPhbuPEBbHU6PaPC9AHrSbqfBQoRz4H3XB79CxeM8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

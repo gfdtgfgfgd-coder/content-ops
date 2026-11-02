@@ -37,5 +37,15 @@
     "开发者"
   ],
   "title" : "快得离谱！GLM-5.1效率起飞！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a28caba0000000036002079?xsec_token=AB27r7B_890nPcJApQduPi8k5L19fwNJbKBYdWfmvBT40=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a28caba0000000036002079?xsec_token=AB27r7B_890nPcJApQduPi8k5L19fwNJbKBYdWfmvBT40=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

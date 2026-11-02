@@ -35,5 +35,12 @@
     "seedance2使用教程"
   ],
   "title" : "赶紧冲！速度快的Seedance2真好用！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/69f5a1ba0000000036001adc?xsec_token=ABgvK9vuJazebdX25wxd6JrLhO4HtX3jvnoVERcTPnvmU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/69f5a1ba0000000036001adc?xsec_token=ABgvK9vuJazebdX25wxd6JrLhO4HtX3jvnoVERcTPnvmU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

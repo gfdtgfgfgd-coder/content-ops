@@ -34,5 +34,14 @@
     "aigc视频"
   ],
   "title" : "W3出视频稳定、可控！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a94f18b00000000260001e0?xsec_token=AB_LOfX3Ql4Ehp_FUTsWbEEeu25XnI-9e6ZcnxDmM5Z4g=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a94f18b00000000260001e0?xsec_token=AB_LOfX3Ql4Ehp_FUTsWbEEeu25XnI-9e6ZcnxDmM5Z4g=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

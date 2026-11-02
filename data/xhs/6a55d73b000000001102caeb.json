@@ -37,5 +37,14 @@
     "aigc"
   ],
   "title" : "Seedream5 Pro高质量出图太牛了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a55d73b000000001102caeb?xsec_token=ABf557xmUDH4z35uNkVrTM239xoY4P-047XUgZMHrrXxo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a55d73b000000001102caeb?xsec_token=ABf557xmUDH4z35uNkVrTM239xoY4P-047XUgZMHrrXxo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

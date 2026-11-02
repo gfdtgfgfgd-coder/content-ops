@@ -37,5 +37,14 @@
     "codingplan"
   ],
   "title" : "太猛了！GLM5.2效率起飞！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2a22670000000022024dfb?xsec_token=ABySzm1G_Ovc85FTdnFCIDkL4uFB4H7ld5iqqdyv3BCSg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2a22670000000022024dfb?xsec_token=ABySzm1G_Ovc85FTdnFCIDkL4uFB4H7ld5iqqdyv3BCSg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,12 @@
     "程序员"
   ],
   "title" : "更低成本的GLM-5.2用爽了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a41cf61000000001102ca87?xsec_token=ABXAhqizJBsLf00FyntKzY5Y3BRRIMuI4GDAw7rWNd0_8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a41cf61000000001102ca87?xsec_token=ABXAhqizJBsLf00FyntKzY5Y3BRRIMuI4GDAw7rWNd0_8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

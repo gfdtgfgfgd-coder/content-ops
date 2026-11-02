@@ -37,5 +37,15 @@
     "agent"
   ],
   "title" : "破防了！GLM 5.3 API太香了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab4d38600000000120396d1?xsec_token=ABy5grGD5Wlq9JCWW7gWp2QwHQkigNx9C8E9fjcllY2Mk=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab4d38600000000120396d1?xsec_token=ABy5grGD5Wlq9JCWW7gWp2QwHQkigNx9C8E9fjcllY2Mk=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

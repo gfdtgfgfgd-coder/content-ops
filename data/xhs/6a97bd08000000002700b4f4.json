@@ -34,5 +34,15 @@
     "AI生视频"
   ],
   "title" : "✨SD2.5出视频质感拉满",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a97bd08000000002700b4f4?xsec_token=ABdK6QRALVGntdV9DV6Ga8DAoRb_KREzGHTj6W0gCBHk8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a97bd08000000002700b4f4?xsec_token=ABdK6QRALVGntdV9DV6Ga8DAoRb_KREzGHTj6W0gCBHk8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱",
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

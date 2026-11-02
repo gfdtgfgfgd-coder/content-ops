@@ -35,5 +35,14 @@
     "seedance模型"
   ],
   "title" : "🈵Seedance2.0出视频太爽了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a17aeb10000000035031b34?xsec_token=ABZau8zz6_E7pMWKwZ4qzVHrSBAEZiD5DgmBpomTkcYT8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a17aeb10000000035031b34?xsec_token=ABZau8zz6_E7pMWKwZ4qzVHrSBAEZiD5DgmBpomTkcYT8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

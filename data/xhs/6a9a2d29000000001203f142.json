@@ -36,5 +36,15 @@
     "AI动画"
   ],
   "title" : "SD2.5出视频太丝滑了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9a2d29000000001203f142?xsec_token=AB0GP723_SW3o6yLF1xQ7kVC_ONQ72Rc-mxjG66tZeKFU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9a2d29000000001203f142?xsec_token=AB0GP723_SW3o6yLF1xQ7kVC_ONQ72Rc-mxjG66tZeKFU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血",
+      "管饱管够"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

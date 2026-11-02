@@ -37,5 +37,12 @@
     "GLMCodingPlan"
   ],
   "title" : "便宜能打的GLM-5.2直接冲！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a26309f0000000036000dc1?xsec_token=ABtV97Eirpyi1-17Ga9y2HLCpWpSISxmB6SU0JhQ99V3k=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a26309f0000000036000dc1?xsec_token=ABtV97Eirpyi1-17Ga9y2HLCpWpSISxmB6SU0JhQ99V3k=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

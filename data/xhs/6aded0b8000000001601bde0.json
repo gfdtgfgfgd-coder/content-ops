@@ -40,5 +40,12 @@
     "AI漫剧howto"
   ],
   "title": "🤩SD2.5实现视频创作自由了！",
-  "url": "https://www.xiaohongshu.com/explore/6aded0b8000000001601bde0?xsec_token=ABrYNPhbuPEBbHU6PaPC9AHlBluQatUGOwxasROMQMzZE=&xsec_source=pc_user"
+  "url": "https://www.xiaohongshu.com/explore/6aded0b8000000001601bde0?xsec_token=ABrYNPhbuPEBbHU6PaPC9AHlBluQatUGOwxasROMQMzZE=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": true
+  }
 }

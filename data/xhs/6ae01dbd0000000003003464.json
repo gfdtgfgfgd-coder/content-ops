@@ -36,5 +36,12 @@
     "AI视频制作"
   ],
   "title" : "💸SD2.5便宜接入放开跑！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae01dbd0000000003003464?xsec_token=ABdRKoo1cfkTgfKkUH4mcSk0nLb6s-v9EZNFML5eo0VMk=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae01dbd0000000003003464?xsec_token=ABdRKoo1cfkTgfKkUH4mcSk0nLb6s-v9EZNFML5eo0VMk=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,15 @@
     "办公神器howto"
   ],
   "title" : "Kimi K3 API，赶紧抢！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa8bfe200000000260230d5?xsec_token=ABnFL9oxQ_8R6YZE7ezrh_V3OF2Ga7TYH2W3khOBPYz1g=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa8bfe200000000260230d5?xsec_token=ABnFL9oxQ_8R6YZE7ezrh_V3OF2Ga7TYH2W3khOBPYz1g=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

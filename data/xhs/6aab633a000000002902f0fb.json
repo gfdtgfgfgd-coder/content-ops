@@ -37,5 +37,15 @@
     "ai大模型"
   ],
   "title" : "智谱GLM 5.3，让AI更强大！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aab633a000000002902f0fb?xsec_token=ABCkc8AL8VwDmhEG7sdZqrBNeL_VZ6zS3TPA_5eAOBRag=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aab633a000000002902f0fb?xsec_token=ABCkc8AL8VwDmhEG7sdZqrBNeL_VZ6zS3TPA_5eAOBRag=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -35,5 +35,16 @@
     "ai代码"
   ],
   "title" : "DeepSeek-V4 长代码、复杂逻辑都能拆👨‍",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2febdf000000001102e8f3?xsec_token=ABjVKXO1CssoRTTZMr3Y_zmXDtATuxI7L_zJT_NxcjUGg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2febdf000000001102e8f3?xsec_token=ABjVKXO1CssoRTTZMr3Y_zmXDtATuxI7L_zJT_NxcjUGg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱",
+      "第一",
+      "顶级"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

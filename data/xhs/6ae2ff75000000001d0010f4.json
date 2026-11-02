@@ -37,5 +37,12 @@
     "AI设计"
   ],
   "title" : "全免费对话生图\/视频+网页设计+方案设计",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae2ff75000000001d0010f4?xsec_token=ABtVDZsqQnituLqzxP-qV3tJmPGtO8qXaItjz6Vw-ysqE=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae2ff75000000001d0010f4?xsec_token=ABtVDZsqQnituLqzxP-qV3tJmPGtO8qXaItjz6Vw-ysqE=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

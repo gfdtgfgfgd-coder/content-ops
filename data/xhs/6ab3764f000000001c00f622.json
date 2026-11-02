@@ -37,5 +37,14 @@
     "agent"
   ],
   "title" : "GLM 5.3 API 限时2折🔥",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab3764f000000001c00f622?xsec_token=ABnKmnv_Wman5Be5Mz4NfHtbkeyXajA98X0O_FepoiU3E=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab3764f000000001c00f622?xsec_token=ABnKmnv_Wman5Be5Mz4NfHtbkeyXajA98X0O_FepoiU3E=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

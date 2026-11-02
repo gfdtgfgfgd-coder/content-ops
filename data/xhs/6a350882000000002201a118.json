@@ -37,5 +37,15 @@
     "deepseek模型"
   ],
   "title" : "拿下！DeepSeek-V4推理能力上大分！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a350882000000002201a118?xsec_token=AB8EVp4Muriwewr9Kr-RsBKntjLlLirTj-hYE0b5BKhmc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a350882000000002201a118?xsec_token=AB8EVp4Muriwewr9Kr-RsBKntjLlLirTj-hYE0b5BKhmc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "顶级",
+      "第一"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,14 @@
     "ai大模型"
   ],
   "title" : "Kimi K3按量计费，速抢不亏",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aaf8e9a0000000029013e2a?xsec_token=ABZlk7ArXANv6JEKdRlIMeMfBM_GoeuBXSWbkZVZvd0iw=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aaf8e9a0000000029013e2a?xsec_token=ABZlk7ArXANv6JEKdRlIMeMfBM_GoeuBXSWbkZVZvd0iw=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

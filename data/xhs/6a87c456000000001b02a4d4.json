@@ -34,5 +34,14 @@
     "ai视频工具"
   ],
   "title" : "💥SD2.5高质量出视频太爽了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a87c456000000001b02a4d4?xsec_token=ABiNagt3B-q5AWNxagSF1kp9GO8NOydZz1P4qEuRviunY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a87c456000000001b02a4d4?xsec_token=ABiNagt3B-q5AWNxagSF1kp9GO8NOydZz1P4qEuRviunY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

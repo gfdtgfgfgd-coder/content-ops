@@ -36,5 +36,14 @@
     "满血版Seedance2"
   ],
   "title" : "别等了！Seedance2出片速度快、效果还好",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a56fc2c000000001003da0c?xsec_token=ABIEHrl1eI5Vve3A6A2dvcXkSpgn6_cwBCpB9uzLRmNiQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a56fc2c000000001003da0c?xsec_token=ABIEHrl1eI5Vve3A6A2dvcXkSpgn6_cwBCpB9uzLRmNiQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body|tags",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

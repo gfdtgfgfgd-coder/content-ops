@@ -44,5 +44,12 @@
     "AI新手村"
   ],
   "title" : "安排！sd全能型视频模型！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae2d146000000001c037783?xsec_token=ABtVDZsqQnituLqzxP-qV3tIfB6do_FLEx4r0bKReaga4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae2d146000000001c037783?xsec_token=ABtVDZsqQnituLqzxP-qV3tIfB6do_FLEx4r0bKReaga4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": true
+  }
 }

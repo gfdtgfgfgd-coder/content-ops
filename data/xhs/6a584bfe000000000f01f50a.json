@@ -36,5 +36,12 @@
     "ai生图教程"
   ],
   "title" : "快来试！Seedream5Pro出图太惊艳了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a584bfe000000000f01f50a?xsec_token=ABibbwrSxiSlAUVReCUopHuEHDkQGZ5iK3a3FA0Uqxf1s=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a584bfe000000000f01f50a?xsec_token=ABibbwrSxiSlAUVReCUopHuEHDkQGZ5iK3a3FA0Uqxf1s=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

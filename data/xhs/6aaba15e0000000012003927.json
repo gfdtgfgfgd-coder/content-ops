@@ -37,5 +37,14 @@
     "agent"
   ],
   "title" : "🚨GLM-5.3 API 限时2折！全家桶一次到位",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aaba15e0000000012003927?xsec_token=ABCkc8AL8VwDmhEG7sdZqrBEqNPiKdWBTuTOknpRo-kiM=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aaba15e0000000012003927?xsec_token=ABCkc8AL8VwDmhEG7sdZqrBEqNPiKdWBTuTOknpRo-kiM=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

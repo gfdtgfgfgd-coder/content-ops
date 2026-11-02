@@ -36,5 +36,12 @@
     "ai生成视频"
   ],
   "title" : "🔜SD2.5快速出视频！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a83e2fb0000000025000ea6?xsec_token=AB5eF_yHUM7VcYieAYIu1T7WN9u4p6L_lmbxURySRrucU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a83e2fb0000000025000ea6?xsec_token=AB5eF_yHUM7VcYieAYIu1T7WN9u4p6L_lmbxURySRrucU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

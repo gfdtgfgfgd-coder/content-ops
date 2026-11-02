@@ -34,5 +34,12 @@
     "AI漫剧"
   ],
   "title" : "🎬sd2.5高质量视频直接出！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad86607000000002c036432?xsec_token=ABNFniYJCuomd_lD9008AStCEClOuVD6LvkPrMFFPkHqA=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad86607000000002c036432?xsec_token=ABNFniYJCuomd_lD9008AStCEClOuVD6LvkPrMFFPkHqA=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -35,5 +35,14 @@
     "seedance2使用教程"
   ],
   "title" : "拿下！Seedance2给到一个夯！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a20ec61000000003501f8d6?xsec_token=AB3LloHoFUETtJ_ZtbYl_ikDbtC0Eu4pdTrFGtEm29Slc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a20ec61000000003501f8d6?xsec_token=AB3LloHoFUETtJ_ZtbYl_ikDbtC0Eu4pdTrFGtEm29Slc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

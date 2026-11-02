@@ -49,5 +49,15 @@
     "电商美工"
   ],
   "title" : "AI直出电商详情图!效率翻倍",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac8a11600000000150158d7?xsec_token=AB9ev9U5kwo_FsirW8ztPyKgdSBcaY2gk7lonlB3fTXWQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac8a11600000000150158d7?xsec_token=AB9ev9U5kwo_FsirW8ztPyKgdSBcaY2gk7lonlB3fTXWQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一",
+      "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

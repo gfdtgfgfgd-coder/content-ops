@@ -34,5 +34,12 @@
     "AI视频生成"
   ],
   "title" : "sd2.0高清出视频！这波必须安排！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad87571000000003300a349?xsec_token=ABNFniYJCuomd_lD9008AStAJXDaItdob7CPl9_l8LViY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad87571000000003300a349?xsec_token=ABNFniYJCuomd_lD9008AStAJXDaItdob7CPl9_l8LViY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

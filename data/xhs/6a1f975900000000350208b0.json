@@ -34,5 +34,14 @@
     "seedance2使用教程"
   ],
   "title" : "别用降智版了！seedance2简直是宝藏！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1f975900000000350208b0?xsec_token=ABHdsK2rk_WDdK78hNqME3LfbMlCovsq4DmHhHdwxzVG4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1f975900000000350208b0?xsec_token=ABHdsK2rk_WDdK78hNqME3LfbMlCovsq4DmHhHdwxzVG4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

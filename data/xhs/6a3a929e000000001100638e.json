@@ -37,5 +37,12 @@
     "智谱GLM"
   ],
   "title" : "📢冲！GLM-5.2长程任务稳得一匹",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3a929e000000001100638e?xsec_token=ABBVnlxMZ8B5mrY3d-CtBMAb6Nh8Fcbi0yDwTFzq_iqBU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3a929e000000001100638e?xsec_token=ABBVnlxMZ8B5mrY3d-CtBMAb6Nh8Fcbi0yDwTFzq_iqBU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

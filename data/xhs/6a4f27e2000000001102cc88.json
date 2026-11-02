@@ -36,5 +36,12 @@
     "seedance4k"
   ],
   "title" : "⚡Seedance2一句话快速出视频！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4f27e2000000001102cc88?xsec_token=AB_OpewqL2vnT9wBxQ00gQsJp5HcL3rtcJd_tCoR63ufA=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4f27e2000000001102cc88?xsec_token=AB_OpewqL2vnT9wBxQ00gQsJp5HcL3rtcJd_tCoR63ufA=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

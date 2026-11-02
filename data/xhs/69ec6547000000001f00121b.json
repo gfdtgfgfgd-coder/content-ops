@@ -41,5 +41,16 @@
     "豆包ai"
   ],
   "title": "赶紧冲，SD2高效出视频！",
-  "url": "https://www.xiaohongshu.com/explore/69ec6547000000001f00121b?xsec_token=ABKNpPIt4GG_n3kh36yl1dcSqSTUSl5eSRtWNwzGG_2bc=&xsec_source=pc_user"
+  "url": "https://www.xiaohongshu.com/explore/69ec6547000000001f00121b?xsec_token=ABKNpPIt4GG_n3kh36yl1dcSqSTUSl5eSRtWNwzGG_2bc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一",
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": false
+  }
 }

@@ -36,5 +36,12 @@
     "ai视频生成"
   ],
   "title" : "我去！Seedance2 也太好用了吧？！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a275f9a000000003503a9ee?xsec_token=ABNvyGz8zuMyqP0zVPIGA884htb1Z6zzxgwzj2bhic65w=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a275f9a000000003503a9ee?xsec_token=ABNvyGz8zuMyqP0zVPIGA884htb1Z6zzxgwzj2bhic65w=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

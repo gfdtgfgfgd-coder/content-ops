@@ -37,5 +37,15 @@
     "ai大模型"
   ],
   "title" : "glm 5.3 API 上线，开发党狂喜！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab236cf0000000036014250?xsec_token=ABkfuBCWrdEnpyz-GGS6mlHss5DMKBr_OkB7ijCJrNQxM=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab236cf0000000036014250?xsec_token=ABkfuBCWrdEnpyz-GGS6mlHss5DMKBr_OkB7ijCJrNQxM=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "[0-9]+(?:\\.[0-9]+)?\\s*折"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

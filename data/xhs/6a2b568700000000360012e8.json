@@ -37,5 +37,12 @@
     "智谱glm5"
   ],
   "title" : "冲！GLM5.1 写代码速度太快了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2b568700000000360012e8?xsec_token=ABzkkvg53uhNl7gh35IIDdkhNkOGvgPBHe3hkzhlrZwjs=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2b568700000000360012e8?xsec_token=ABzkkvg53uhNl7gh35IIDdkhNkOGvgPBHe3hkzhlrZwjs=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

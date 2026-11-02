@@ -35,5 +35,12 @@
     "KimiAI"
   ],
   "title" : "Kimi K3活动重磅来袭✨",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad83262000000002b01e57b?xsec_token=ABNFniYJCuomd_lD9008AStDs52_jrh8IBrE1U9nhn00U=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad83262000000002b01e57b?xsec_token=ABNFniYJCuomd_lD9008AStDs52_jrh8IBrE1U9nhn00U=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

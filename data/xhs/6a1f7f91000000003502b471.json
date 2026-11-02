@@ -35,5 +35,12 @@
     "seedance20"
   ],
   "title" : "seedance2 出视频效率杠杠的！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1f7f91000000003502b471?xsec_token=ABHdsK2rk_WDdK78hNqME3LW7dQe1kq4zGZR_kuxJ9Hb8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1f7f91000000003502b471?xsec_token=ABHdsK2rk_WDdK78hNqME3LW7dQe1kq4zGZR_kuxJ9Hb8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

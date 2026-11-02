@@ -35,5 +35,12 @@
     "seedance2使用教程"
   ],
   "title" : "直接冲 Seedance2 就对了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1904c7000000003503ac1c?xsec_token=ABZkTtOAdM2FtZVeP1o9AaDf6kYzss-dzI-lIAkQNed9M=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a1904c7000000003503ac1c?xsec_token=ABZkTtOAdM2FtZVeP1o9AaDf6kYzss-dzI-lIAkQNed9M=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

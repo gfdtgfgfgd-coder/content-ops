@@ -37,5 +37,12 @@
     "agent"
   ],
   "title" : "📢管饱的GLM5.3闭眼入！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9e1b76000000001103a586?xsec_token=ABeubJq_MOMtw_hGJi9vUTVXjE6oqPfOVv5rS5XuMWMn0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9e1b76000000001103a586?xsec_token=ABeubJq_MOMtw_hGJi9vUTVXjE6oqPfOVv5rS5XuMWMn0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

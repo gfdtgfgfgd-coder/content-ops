@@ -35,5 +35,12 @@
     "AI新手村"
   ],
   "title" : "SD2.5高质量出视频太爽了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad9e51b000000002c034747?xsec_token=AB-1eTv-YYvQTDtokElWxs0RePvzLlSp8M-BO_ugyfbsE=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad9e51b000000002c034747?xsec_token=AB-1eTv-YYvQTDtokElWxs0RePvzLlSp8M-BO_ugyfbsE=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

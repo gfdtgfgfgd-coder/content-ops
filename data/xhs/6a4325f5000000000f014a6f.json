@@ -37,5 +37,12 @@
     "程序员"
   ],
   "title" : "高性价比的GLM-5.2跑Agent太强了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4325f5000000000f014a6f?xsec_token=ABtMzlor89Y43GRy5eWCPYPNOoT7y587YmKSpKDIDZfhc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4325f5000000000f014a6f?xsec_token=ABtMzlor89Y43GRy5eWCPYPNOoT7y587YmKSpKDIDZfhc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

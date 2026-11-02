@@ -35,5 +35,12 @@
     "seedance2使用教程"
   ],
   "title" : "Seedance2出视频不用等太快乐了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a17a2ed000000003501f1f6?xsec_token=ABZau8zz6_E7pMWKwZ4qzVHl2kNrzkiucWIDuPaRb06k8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a17a2ed000000003501f1f6?xsec_token=ABZau8zz6_E7pMWKwZ4qzVHl2kNrzkiucWIDuPaRb06k8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

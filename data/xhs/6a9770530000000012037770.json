@@ -37,5 +37,14 @@
     "人工智能"
   ],
   "title" : "Kimi K3，5折直接安排🎁",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9770530000000012037770?xsec_token=ABdK6QRALVGntdV9DV6Ga8DNwkFCC1ypaFxSATxc-Y0PQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9770530000000012037770?xsec_token=ABdK6QRALVGntdV9DV6Ga8DNwkFCC1ypaFxSATxc-Y0PQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

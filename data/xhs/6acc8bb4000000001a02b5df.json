@@ -36,5 +36,14 @@
     "ai大模型"
   ],
   "title" : "",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acc8bb4000000001a02b5df?xsec_token=ABthmdMv4N-NcBC_RLnxtuUW5HJo183gXpOfmywVnwSgU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acc8bb4000000001a02b5df?xsec_token=ABthmdMv4N-NcBC_RLnxtuUW5HJo183gXpOfmywVnwSgU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

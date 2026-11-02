@@ -36,5 +36,12 @@
     "ai视频教程"
   ],
   "title" : "AI Agent做电商选品，效率翻倍",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6abce6d90000000012038103?xsec_token=ABNJ9fWQcnuCLTqEVs69Qgk02Ovspxf-MUb5ZieNCQN1k=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6abce6d90000000012038103?xsec_token=ABNJ9fWQcnuCLTqEVs69Qgk02Ovspxf-MUb5ZieNCQN1k=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

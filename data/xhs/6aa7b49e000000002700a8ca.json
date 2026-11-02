@@ -37,5 +37,15 @@
     "ai大模型"
   ],
   "title" : "挖到宝了！GLM 5.3 API 赶紧抢！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa7b49e000000002700a8ca?xsec_token=AB3W2XvdqBqVR5XRHFemONX5pdJz4EaG91yuxbZfGBcWY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa7b49e000000002700a8ca?xsec_token=AB3W2XvdqBqVR5XRHFemONX5pdJz4EaG91yuxbZfGBcWY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

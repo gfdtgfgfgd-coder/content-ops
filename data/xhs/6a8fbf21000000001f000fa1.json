@@ -35,5 +35,15 @@
     "ai模型"
   ],
   "title" : "💨SD2.5 高清快速出片",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8fbf21000000001f000fa1?xsec_token=AB-xz_MsXwwxFDU6OILdVG7uPOPQ7sJW2nsOdN5LQ3UDc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8fbf21000000001f000fa1?xsec_token=AB-xz_MsXwwxFDU6OILdVG7uPOPQ7sJW2nsOdN5LQ3UDc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "独家",
+      "满血"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

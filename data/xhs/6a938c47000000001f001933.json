@@ -33,5 +33,12 @@
     "ai生成视频"
   ],
   "title" : "🥳W3.0出视频效果太好了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a938c47000000001f001933?xsec_token=ABpp_cVfJs5x7RwpoT9vo-u0-8b_5w0X_AR1ZTTFfrf8g=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a938c47000000001f001933?xsec_token=ABpp_cVfJs5x7RwpoT9vo-u0-8b_5w0X_AR1ZTTFfrf8g=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

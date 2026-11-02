@@ -37,5 +37,12 @@
     "agent开发"
   ],
   "title" : "GLM-5.2跑复杂任务太爽了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a333e93000000001102e2ac?xsec_token=ABxG-U23c7INUHwoaHiiw_HYHVSvDOzL7mw-tcjUzLW0w=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a333e93000000001102e2ac?xsec_token=ABxG-U23c7INUHwoaHiiw_HYHVSvDOzL7mw-tcjUzLW0w=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

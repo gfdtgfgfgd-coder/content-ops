@@ -35,5 +35,12 @@
     "Seedance2"
   ],
   "title" : "拿捏🫴Seedance2.0 轻松出片！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a166b23000000003502b3f3?xsec_token=ABzkDuUGiC2q3pNx_xwCMK55cU5go2IDfG8Om_Jrjdhpw=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a166b23000000003502b3f3?xsec_token=ABzkDuUGiC2q3pNx_xwCMK55cU5go2IDfG8Om_Jrjdhpw=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

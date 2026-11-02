@@ -35,5 +35,15 @@
     "小云雀seedance2"
   ],
   "title" : "满血Seedance2这波必须冲🔥",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a6c048900000000250023f8?xsec_token=ABuSw50tHlc0ap-uLm5GwLBVzyjCEpuMyUnjrDtOxUm5w=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a6c048900000000250023f8?xsec_token=ABuSw50tHlc0ap-uLm5GwLBVzyjCEpuMyUnjrDtOxUm5w=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱",
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

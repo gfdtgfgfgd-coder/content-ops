@@ -37,5 +37,15 @@
     "ai漫剧"
   ],
   "title" : "Seedance 2 高效出片太省心了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5c602e000000000f01c558?xsec_token=AB1j-bQbcZ_BvMDrfgvX1RTu-LEotTRHWFUeBKdMrJ0xo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5c602e000000000f01c558?xsec_token=AB1j-bQbcZ_BvMDrfgvX1RTu-LEotTRHWFUeBKdMrJ0xo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血",
+      "秒级"
+    ],
+    "banned_word_scope": "body|cover_ocr|tags",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

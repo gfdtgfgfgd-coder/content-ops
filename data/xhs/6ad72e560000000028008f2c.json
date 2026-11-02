@@ -1,6 +1,8 @@
 {
   "audience" : [
-
+    "电商商家",
+    "自媒体博主",
+    "短视频编导"
   ],
   "audience_raw" : "👥适合人群：电商商家、自媒体博主、短视频编导",
   "author" : "深度deepAI",
@@ -31,5 +33,12 @@
     "AI视频创作"
   ],
   "title" : "好用视频模型推荐！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad72e560000000028008f2c?xsec_token=ABRRTpiVVOj9lbAW8QR0ymDKimvKRpRQcmTI_Y1AeOuNY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad72e560000000028008f2c?xsec_token=ABRRTpiVVOj9lbAW8QR0ymDKimvKRpRQcmTI_Y1AeOuNY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

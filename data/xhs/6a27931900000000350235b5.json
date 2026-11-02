@@ -37,5 +37,12 @@
     "aigc"
   ],
   "title" : "🥬冲！DeepSeek-V4百万级上下文太好用了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a27931900000000350235b5?xsec_token=ABNvyGz8zuMyqP0zVPIGA8836kkaAllo0GaYCRgYXGJFI=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a27931900000000350235b5?xsec_token=ABNvyGz8zuMyqP0zVPIGA8836kkaAllo0GaYCRgYXGJFI=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

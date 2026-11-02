@@ -37,5 +37,15 @@
     "极致性价比"
   ],
   "title" : "手慢无！GLM-5.3超稳定！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acef933000000001301b860?xsec_token=ABz1yMeBsb1n_Ud5iKaGoLgWGzw4x5ctio4YWDTn722JY=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acef933000000001301b860?xsec_token=ABz1yMeBsb1n_Ud5iKaGoLgWGzw4x5ctio4YWDTn722JY=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)",
+      "[0-9]+(?:\\.[0-9]+)?\\s*折"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

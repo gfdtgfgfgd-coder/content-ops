@@ -37,5 +37,14 @@
     "算力"
   ],
   "title" : "冲！GLM-5.2 跑长代码真的太爽了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3c7764000000000f01cf1b?xsec_token=ABBYTRFa1fxzdcWKTMzdGEXOiYo68saV55XP7y0V7ayfQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3c7764000000000f01cf1b?xsec_token=ABBYTRFa1fxzdcWKTMzdGEXOiYo68saV55XP7y0V7ayfQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

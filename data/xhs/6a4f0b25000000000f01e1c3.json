@@ -34,5 +34,12 @@
     "Seedance2直出4K"
   ],
   "title" : "Seedance2批量视频生产的效率神器",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4f0b25000000000f01e1c3?xsec_token=AB_OpewqL2vnT9wBxQ00gQsHXYCC-p5LJvmPLrIoW2V-8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4f0b25000000000f01e1c3?xsec_token=AB_OpewqL2vnT9wBxQ00gQsHXYCC-p5LJvmPLrIoW2V-8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

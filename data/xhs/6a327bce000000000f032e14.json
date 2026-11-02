@@ -37,5 +37,12 @@
     "程序员"
   ],
   "title" : "便宜的GLM-5.2 跑长任务不心疼",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a327bce000000000f032e14?xsec_token=ABJE_sSy-S_dJCZaw4XvvjURsHEoA9Thvzbf4SurGTugU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a327bce000000000f032e14?xsec_token=ABJE_sSy-S_dJCZaw4XvvjURsHEoA9Thvzbf4SurGTugU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

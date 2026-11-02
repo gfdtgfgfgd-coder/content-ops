@@ -37,5 +37,12 @@
     "agent"
   ],
   "title" : "💥谁还不知道GLM5.2冰点价？",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a729d840000000032020e32?xsec_token=ABXwW7OdPMrABjhZ6A8Phhm-3p4lTrTM0tnSVWG9L2wU4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a729d840000000032020e32?xsec_token=ABXwW7OdPMrABjhZ6A8Phhm-3p4lTrTM0tnSVWG9L2wU4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

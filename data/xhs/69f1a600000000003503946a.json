@@ -41,5 +41,12 @@
     "seedance2模型"
   ],
   "title": "Seedance2.0成本打下来了",
-  "url": "https://www.xiaohongshu.com/explore/69f1a600000000003503946a?xsec_token=ABX0_tzqyB_QCrQvJu1aQGBc3sYA54GFcntSvWTRBv0Z4=&xsec_source=pc_user"
+  "url": "https://www.xiaohongshu.com/explore/69f1a600000000003503946a?xsec_token=ABX0_tzqyB_QCrQvJu1aQGBc3sYA54GFcntSvWTRBv0Z4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": true
+  }
 }

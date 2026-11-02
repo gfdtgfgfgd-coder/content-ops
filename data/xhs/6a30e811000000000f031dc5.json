@@ -34,5 +34,12 @@
     "seedance2提示词"
   ],
   "title" : "安排！量大便宜的Seedance2太顶了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a30e811000000000f031dc5?xsec_token=AB44u9g2U5ot8e47_cMb9u3JLMuRLaolfdNts4BL_QA4Y=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a30e811000000000f031dc5?xsec_token=AB44u9g2U5ot8e47_cMb9u3JLMuRLaolfdNts4BL_QA4Y=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

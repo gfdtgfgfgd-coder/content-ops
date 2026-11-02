@@ -37,5 +37,14 @@
     "人工智能"
   ],
   "title" : "连续独立工作8小时的GLM-5.1 直接拿下！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a28eaf2000000002202d427?xsec_token=AB27r7B_890nPcJApQduPi8kQJ-b8Siy-WsGsUSSemXUU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a28eaf2000000002202d427?xsec_token=AB27r7B_890nPcJApQduPi8kQJ-b8Siy-WsGsUSSemXUU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

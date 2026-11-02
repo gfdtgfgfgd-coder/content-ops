@@ -36,5 +36,12 @@
     "ai代码"
   ],
   "title" : "冲！GLM-5.2编程能力太猛了🔥",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a31fe19000000000f01db42?xsec_token=ABWyGOFgQpIIXQFLBbN6-ZuWUyJqZkjFkIMO0sDLoGQ94=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a31fe19000000000f01db42?xsec_token=ABWyGOFgQpIIXQFLBbN6-ZuWUyJqZkjFkIMO0sDLoGQ94=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

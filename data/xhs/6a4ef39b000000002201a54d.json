@@ -37,5 +37,12 @@
     "开发效率"
   ],
   "title" : "这波必冲！GLM-5.2放开跑！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4ef39b000000002201a54d?xsec_token=ABjIZ8H9vCS7u53_0l48A9bIKiRK-x4-cQNtv_2OYk2u4=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4ef39b000000002201a54d?xsec_token=ABjIZ8H9vCS7u53_0l48A9bIKiRK-x4-cQNtv_2OYk2u4=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

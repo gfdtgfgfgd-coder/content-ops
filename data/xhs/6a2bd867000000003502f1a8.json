@@ -34,5 +34,14 @@
     "文心一言"
   ],
   "title" : "夯！DeepSeek-V4复杂流程丝滑开跑",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2bd867000000003502f1a8?xsec_token=ABzkkvg53uhNl7gh35IIDdkhW49a-6no2C9Isg1O12C7U=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2bd867000000003502f1a8?xsec_token=ABzkkvg53uhNl7gh35IIDdkhW49a-6no2C9Isg1O12C7U=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "顶级"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

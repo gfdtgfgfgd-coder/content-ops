@@ -37,5 +37,12 @@
     "ai视频生成"
   ],
   "title" : "快安排！Seedance2高质量出视频贼快！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5991e5000000000f028022?xsec_token=ABDkhtX7SqC-dC72it20I_Qna5d18eJl7smTkr9Im5aa0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5991e5000000000f028022?xsec_token=ABDkhtX7SqC-dC72it20I_Qna5d18eJl7smTkr9Im5aa0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

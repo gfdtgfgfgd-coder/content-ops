@@ -36,5 +36,12 @@
     "glm"
   ],
   "title" : "速来！​​GLM-5.3​​跑推理太强了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6adb142400000000330093d4?xsec_token=ABwUuBtOVZsdXBTo0nb0-lBHEuH5yx93yMx1kQD4-cpaI=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6adb142400000000330093d4?xsec_token=ABwUuBtOVZsdXBTo0nb0-lBHEuH5yx93yMx1kQD4-cpaI=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

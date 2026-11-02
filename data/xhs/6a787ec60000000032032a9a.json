@@ -37,5 +37,12 @@
     "分镜"
   ],
   "title" : "速来！可灵3.0高质量出视频！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a787ec60000000032032a9a?xsec_token=ABIYi7B-l4oUt3ppLLox3KGThxr9DAf-PYLIFfzBUeUkU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a787ec60000000032032a9a?xsec_token=ABIYi7B-l4oUt3ppLLox3KGThxr9DAf-PYLIFfzBUeUkU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

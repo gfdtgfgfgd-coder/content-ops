@@ -37,5 +37,12 @@
     "agent"
   ],
   "title" : "代码能力强的GLM-5.2必用！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5d6f2b000000001003fcda?xsec_token=ABZoTp7Lqct6DMCM13sHT6eH6-lUf06wXCW5QMUetjOZE=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5d6f2b000000001003fcda?xsec_token=ABZoTp7Lqct6DMCM13sHT6eH6-lUf06wXCW5QMUetjOZE=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

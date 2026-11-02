@@ -37,5 +37,14 @@
     "ai大模型"
   ],
   "title" : "Kimi K3 API，写代码专用。",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab0d69900000000350237e1?xsec_token=ABbjXo7QOlQvjZkBhKgwTCUeSESZJC1eaa6X8EvOfyXBw=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab0d69900000000350237e1?xsec_token=ABbjXo7QOlQvjZkBhKgwTCUeSESZJC1eaa6X8EvOfyXBw=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

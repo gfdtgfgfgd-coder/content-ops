@@ -37,5 +37,14 @@
     "agent"
   ],
   "title" : "拿下！GLM-5.2做工作流自动化太省心了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4476050000000022018e87?xsec_token=ABT63zmJ1ZbhXHoRhpoaZGf3DY0T9xkhsFMgbX6Sov2-M=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4476050000000022018e87?xsec_token=ABT63zmJ1ZbhXHoRhpoaZGf3DY0T9xkhsFMgbX6Sov2-M=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

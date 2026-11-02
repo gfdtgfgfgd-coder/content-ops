@@ -37,5 +37,15 @@
     "glm"
   ],
   "title" : "低至2折，GLM你敢信？",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aace6930000000028000b4b?xsec_token=ABaP7cU58JXv_0Y7epziHSpamFlMRE77Rue62cMK_CbQ0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aace6930000000028000b4b?xsec_token=ABaP7cU58JXv_0Y7epziHSpamFlMRE77Rue62cMK_CbQ0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

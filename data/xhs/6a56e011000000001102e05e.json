@@ -37,5 +37,14 @@
     "ai工具"
   ],
   "title" : "🔥Seedance2高峰期不卡太爽了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a56e011000000001102e05e?xsec_token=ABIEHrl1eI5Vve3A6A2dvcXn6C_TYu04RMTLZUspLmFnE=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a56e011000000001102e05e?xsec_token=ABIEHrl1eI5Vve3A6A2dvcXn6C_TYu04RMTLZUspLmFnE=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

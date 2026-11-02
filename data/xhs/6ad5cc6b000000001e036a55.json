@@ -39,5 +39,14 @@
     "agent"
   ],
   "title" : "GLM-5.3放量，低价快充！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad5cc6b000000001e036a55?xsec_token=ABimXrA8fnRK1aTUIhgPPUb3xFeYv-a_FCixzCiPHFaGc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad5cc6b000000001e036a55?xsec_token=ABimXrA8fnRK1aTUIhgPPUb3xFeYv-a_FCixzCiPHFaGc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

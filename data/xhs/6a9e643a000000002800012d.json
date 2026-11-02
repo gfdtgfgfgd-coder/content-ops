@@ -37,5 +37,12 @@
     "人工智能"
   ],
   "title" : "便宜的GLM5.3跑推理嘎嘎快！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9e643a000000002800012d?xsec_token=ABeubJq_MOMtw_hGJi9vUTVXvGPwFCM6xErezyaf4n1qo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9e643a000000002800012d?xsec_token=ABeubJq_MOMtw_hGJi9vUTVXvGPwFCM6xErezyaf4n1qo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

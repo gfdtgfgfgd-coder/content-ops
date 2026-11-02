@@ -37,5 +37,12 @@
     "ai代码"
   ],
   "title" : "🥬亲民价的GLM-5.2香迷糊了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a37e9e6000000000f030876?xsec_token=AB-3gF1Wk1wI0caAKBEn2elXvwlPU8NxV2QI5Ghc8Q418=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a37e9e6000000000f030876?xsec_token=AB-3gF1Wk1wI0caAKBEn2elXvwlPU8NxV2QI5Ghc8Q418=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

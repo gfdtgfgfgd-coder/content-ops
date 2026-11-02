@@ -36,5 +36,12 @@
     "kimi智能助手"
   ],
   "title" : "成本直降的Kimi K3.1 Pro 真香！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6adf09c4000000000803d353?xsec_token=ABW_AUNehzXmJ0UzuYcv_UXbxLJnufq82iVH6v31tnUwU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6adf09c4000000000803d353?xsec_token=ABW_AUNehzXmJ0UzuYcv_UXbxLJnufq82iVH6v31tnUwU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

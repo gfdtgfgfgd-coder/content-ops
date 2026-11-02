@@ -36,5 +36,15 @@
     "ai工具"
   ],
   "title" : "疯了！Kimi-k3价格打下来了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa1249f000000001203e511?xsec_token=AByzHJF5Q_6h8JnfP7ADm-9Pbzb6wAIf0nI1gjSwvJ15w=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa1249f000000001203e511?xsec_token=AByzHJF5Q_6h8JnfP7ADm-9Pbzb6wAIf0nI1gjSwvJ15w=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

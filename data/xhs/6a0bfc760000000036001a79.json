@@ -36,5 +36,14 @@
     "小云雀seedance2"
   ],
   "title" : "别凑合了！还得是不降智的Seedance2",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a0bfc760000000036001a79?xsec_token=ABW1gLVE_AIWFKr_H0ChttaBWi6QKk1CL8WLV8OcjsevA=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a0bfc760000000036001a79?xsec_token=ABW1gLVE_AIWFKr_H0ChttaBWi6QKk1CL8WLV8OcjsevA=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr|tags",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

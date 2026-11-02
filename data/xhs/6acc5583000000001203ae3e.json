@@ -37,5 +37,15 @@
     "Cursor"
   ],
   "title" : "算力成本打下来了，这波真的香！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acc5583000000001203ae3e?xsec_token=ABthmdMv4N-NcBC_RLnxtuUaZmSny73_AEPX68em1dnks=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acc5583000000001203ae3e?xsec_token=ABthmdMv4N-NcBC_RLnxtuUaZmSny73_AEPX68em1dnks=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "API"
+    ],
+    "banned_word_scope": "body|tags",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

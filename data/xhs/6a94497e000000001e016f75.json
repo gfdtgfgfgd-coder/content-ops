@@ -34,5 +34,12 @@
     "千问"
   ],
   "title" : "来！W3视频质量嘎嘎好！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a94497e000000001e016f75?xsec_token=AB_LOfX3Ql4Ehp_FUTsWbEEfls41NGpakzZiCg0W2uTQM=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a94497e000000001e016f75?xsec_token=AB_LOfX3Ql4Ehp_FUTsWbEEfls41NGpakzZiCg0W2uTQM=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

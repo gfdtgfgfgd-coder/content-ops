@@ -37,5 +37,12 @@
     "代码"
   ],
   "title" : "冲！便宜的DeepSeek-V4太能干活了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2cd8dc000000003502139b?xsec_token=AB-C5jZbfzT_iWl_ngemjO6b6dRNaV97I5502xaxrUIdU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2cd8dc000000003502139b?xsec_token=AB-C5jZbfzT_iWl_ngemjO6b6dRNaV97I5502xaxrUIdU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

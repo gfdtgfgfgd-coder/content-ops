@@ -36,5 +36,15 @@
     "文心一言"
   ],
   "title" : "性价比天花板的DeepSeek V4直接安排！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2775f800000000350249d0?xsec_token=ABNvyGz8zuMyqP0zVPIGA886-L_n9WVkLN_3-UirbuPSo=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2775f800000000350249d0?xsec_token=ABNvyGz8zuMyqP0zVPIGA886-L_n9WVkLN_3-UirbuPSo=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一",
+      "顶级"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -36,5 +36,15 @@
     "agent"
   ],
   "title" : "5️⃣折！GLM-5.2长代码随便跑！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a6c1c13000000002c001b74?xsec_token=ABuSw50tHlc0ap-uLm5GwLBdj35k_RmAW7ainWwCZuUm0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a6c1c13000000002c001b74?xsec_token=ABuSw50tHlc0ap-uLm5GwLBdj35k_RmAW7ainWwCZuUm0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "量大管饱",
+      "[一二三四五六七八九十零〇两半]+(?:点[一二三四五六七八九十零〇]+)?\\s*折"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

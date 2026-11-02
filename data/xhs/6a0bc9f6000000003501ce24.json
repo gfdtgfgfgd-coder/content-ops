@@ -36,5 +36,14 @@
     "seedance教程"
   ],
   "title" : "😈速度快的Seedance2被我玩明白了",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a0bc9f6000000003501ce24?xsec_token=ABW1gLVE_AIWFKr_H0ChttaChtTsfYdPdMP-gZYMce86M=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a0bc9f6000000003501ce24?xsec_token=ABW1gLVE_AIWFKr_H0ChttaChtTsfYdPdMP-gZYMce86M=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,15 @@
     "ai编程"
   ],
   "title" : "爽！GLM-5.2长Agent随便跑！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3dcb69000000000f033d01?xsec_token=ABRfGNsZyW6Wlsd3RX9m9tBXIVJDFR_x1-_RMyv-75DFk=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a3dcb69000000000f033d01?xsec_token=ABRfGNsZyW6Wlsd3RX9m9tBXIVJDFR_x1-_RMyv-75DFk=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一",
+      "顶级"
+    ],
+    "banned_word_scope": "cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -39,5 +39,12 @@
     "ai视频教程"
   ],
   "title" : "YYDS！出图出视频真的绝！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acdfdd6000000001803bc52?xsec_token=ABIvmmWRi1K2g56ABxz-XW7SthFn0RSUrNdJFPmG787UE=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6acdfdd6000000001803bc52?xsec_token=ABIvmmWRi1K2g56ABxz-XW7SthFn0RSUrNdJFPmG787UE=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

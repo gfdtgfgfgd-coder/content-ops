@@ -34,5 +34,12 @@
     "ai视频"
   ],
   "title" : "来！Seedance2丝滑出视频！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a62cd2e000000000f0304b5?xsec_token=AB7ppTOSZF6ePmQB5bWCqKJ39JJQ2jwXHMSOPvv8rbzFk=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a62cd2e000000000f0304b5?xsec_token=AB7ppTOSZF6ePmQB5bWCqKJ39JJQ2jwXHMSOPvv8rbzFk=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

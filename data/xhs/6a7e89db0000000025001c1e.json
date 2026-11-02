@@ -37,5 +37,12 @@
     "ai视频制作"
   ],
   "title" : "MiniMax H3把价格打下来了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a7e89db0000000025001c1e?xsec_token=ABHQXNtLsJY0m2kktZdLJtYQyOu2mFUf75zh84TyYNuxE=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a7e89db0000000025001c1e?xsec_token=ABHQXNtLsJY0m2kktZdLJtYQyOu2mFUf75zh84TyYNuxE=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

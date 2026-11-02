@@ -36,5 +36,15 @@
     "ai工具"
   ],
   "title" : "冲！Seedance2出视频速度快的一匹",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4267e1000000001101158d?xsec_token=ABNIGtLJNmlelJVgGdPnYdzt-5LjW-VX3rv7TB73m8Ohw=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4267e1000000001101158d?xsec_token=ABNIGtLJNmlelJVgGdPnYdzt-5LjW-VX3rv7TB73m8Ohw=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr|tags",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

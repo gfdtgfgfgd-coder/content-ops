@@ -43,5 +43,12 @@
     "电商美工"
   ],
   "title" : "免费做图神器！电商人快码住！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad97873000000002a03835a?xsec_token=AB-1eTv-YYvQTDtokElWxs0SaBbbKpviTjbt-FT92cl-Q=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad97873000000002a03835a?xsec_token=AB-1eTv-YYvQTDtokElWxs0SaBbbKpviTjbt-FT92cl-Q=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

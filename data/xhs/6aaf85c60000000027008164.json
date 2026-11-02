@@ -37,5 +37,16 @@
     "glm"
   ],
   "title" : "亏本冲量！GLM 5.3 API 白菜价开冲",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aaf85c60000000027008164?xsec_token=ABZlk7ArXANv6JEKdRlIMeMXHiPAlVAcnLs6cnTR96lTU=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aaf85c60000000027008164?xsec_token=ABZlk7ArXANv6JEKdRlIMeMXHiPAlVAcnLs6cnTR96lTU=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "[0-9]+(?:\\.[0-9]+)?\\s*折",
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

@@ -37,5 +37,14 @@
     "人工智能"
   ],
   "title" : "杀疯了！API 5.6 直接拉满",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac9e29a000000001303dee9?xsec_token=ABBWFA65gdkYYy6-7SLKoroeY2Y08kMuKQfv4Dc6_tE80=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ac9e29a000000001303dee9?xsec_token=ABBWFA65gdkYYy6-7SLKoroeY2Y08kMuKQfv4Dc6_tE80=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr|tags",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

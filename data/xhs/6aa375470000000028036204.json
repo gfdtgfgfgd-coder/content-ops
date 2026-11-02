@@ -37,5 +37,15 @@
     "ai视频生成"
   ],
   "title" : "GLM 5.3 API 调用！冲就完了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa375470000000028036204?xsec_token=AB46roKFsvB0I22JHOJImG9-EHlnt4nCyjHzoTzloJ4vc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6aa375470000000028036204?xsec_token=AB46roKFsvB0I22JHOJImG9-EHlnt4nCyjHzoTzloJ4vc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

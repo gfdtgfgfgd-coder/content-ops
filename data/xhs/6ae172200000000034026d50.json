@@ -38,5 +38,12 @@
     "我的AI办公搭子"
   ],
   "title" : "来MakeNow讨论组，免费领积分创作！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae172200000000034026d50?xsec_token=ABiiphMsQoZ6XjGV777-qkyGnUcBcE0yNya0cCrEeVS0k=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae172200000000034026d50?xsec_token=ABiiphMsQoZ6XjGV777-qkyGnUcBcE0yNya0cCrEeVS0k=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

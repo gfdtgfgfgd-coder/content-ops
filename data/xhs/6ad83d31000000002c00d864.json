@@ -37,5 +37,12 @@
     "AI代码"
   ],
   "title" : "我天… 便宜用Kimi k3！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad83d31000000002c00d864?xsec_token=ABNFniYJCuomd_lD9008AStMuwjUE-BxSyjSBX1IySuZs=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad83d31000000002c00d864?xsec_token=ABNFniYJCuomd_lD9008AStMuwjUE-BxSyjSBX1IySuZs=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

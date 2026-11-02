@@ -35,5 +35,12 @@
     "Seedance2.0"
   ],
   "title" : "别被排队拖住了！Seedance2.0安排上！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a18f21000000000350322f8?xsec_token=AB2VsKaHrS2jRu5xXPNCBjVve9I63YhAG7-Wcvqxeip6g=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a18f21000000000350322f8?xsec_token=AB2VsKaHrS2jRu5xXPNCBjVve9I63YhAG7-Wcvqxeip6g=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

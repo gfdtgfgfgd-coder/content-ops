@@ -37,5 +37,14 @@
     "agent"
   ],
   "title" : "便宜量大的GLM-5.3太香了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad192950000000012034ee1?xsec_token=AB_n45WS4tAsRqn2dW793Lp-yRGgE7MbWuOO6Xy_v6N5c=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad192950000000012034ee1?xsec_token=AB_n45WS4tAsRqn2dW793Lp-yRGgE7MbWuOO6Xy_v6N5c=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

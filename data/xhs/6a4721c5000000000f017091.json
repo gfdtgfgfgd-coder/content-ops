@@ -37,5 +37,12 @@
     "智能体"
   ],
   "title" : "便宜的GLM-5.2冲就完了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4721c5000000000f017091?xsec_token=ABZwfRCIn3a_llm-_yfNdjzPtRLljj4YzldMDc3VcD0E8=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4721c5000000000f017091?xsec_token=ABZwfRCIn3a_llm-_yfNdjzPtRLljj4YzldMDc3VcD0E8=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

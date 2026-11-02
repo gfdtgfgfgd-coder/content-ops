@@ -37,5 +37,15 @@
     "ai短剧"
   ],
   "title" : "🤩冲！SD2.5出视频快的一匹！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9101d9000000000a00a735?xsec_token=ABvNkH_nB8LsJNUEk7aheIpQmv_jKj99d29vAbZpcVjD0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a9101d9000000000a00a735?xsec_token=ABvNkH_nB8LsJNUEk7aheIpQmv_jKj99d29vAbZpcVjD0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血",
+      "量大管饱"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

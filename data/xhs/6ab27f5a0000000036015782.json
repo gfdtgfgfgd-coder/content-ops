@@ -35,5 +35,12 @@
     "codingplan"
   ],
   "title" : "🫢｜当我还有5分钟下班",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab27f5a0000000036015782?xsec_token=ABkfuBCWrdEnpyz-GGS6mlHkQvH3NGV8-GtlwYf5XCnvc=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ab27f5a0000000036015782?xsec_token=ABkfuBCWrdEnpyz-GGS6mlHkQvH3NGV8-GtlwYf5XCnvc=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

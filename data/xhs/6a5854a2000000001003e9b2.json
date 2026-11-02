@@ -36,5 +36,12 @@
     "ai作图"
   ],
   "title" : "快来体验！Seedream 5.0 Pro专业级出图！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5854a2000000001003e9b2?xsec_token=ABibbwrSxiSlAUVReCUopHuEP9b4vJaeU5B7jMFTYkoO0=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a5854a2000000001003e9b2?xsec_token=ABibbwrSxiSlAUVReCUopHuEP9b4vJaeU5B7jMFTYkoO0=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

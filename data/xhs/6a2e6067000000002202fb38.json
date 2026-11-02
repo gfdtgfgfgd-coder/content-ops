@@ -37,5 +37,14 @@
     "agent"
   ],
   "title" : "重磅来袭！GLM-5.2全量开放！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2e6067000000002202fb38?xsec_token=ABpvKuaVyPipmXSY-251FnpNaEsykEHAlPoxwH13GAIQg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a2e6067000000002202fb38?xsec_token=ABpvKuaVyPipmXSY-251FnpNaEsykEHAlPoxwH13GAIQg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

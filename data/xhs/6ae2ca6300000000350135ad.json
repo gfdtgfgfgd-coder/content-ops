@@ -43,5 +43,12 @@
     "AI漫剧howto"
   ],
   "title" : "🥳SD2.5便宜又好用的视频模型",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae2ca6300000000350135ad?xsec_token=ABtVDZsqQnituLqzxP-qV3tNvsCjrVm0tVpLtSeyaw1_s=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae2ca6300000000350135ad?xsec_token=ABtVDZsqQnituLqzxP-qV3tNvsCjrVm0tVpLtSeyaw1_s=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "good",
+    "clean_for_style_reference": true
+  }
 }

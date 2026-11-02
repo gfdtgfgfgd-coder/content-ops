@@ -39,5 +39,12 @@
     "AI视频创作"
   ],
   "title" : "别再逐帧改视频！一键视频转绘效率拉满💯",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad97f75000000003102e657?xsec_token=AB-1eTv-YYvQTDtokElWxs0awJ2929kDnr3hvOdjux4Vg=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad97f75000000003102e657?xsec_token=AB-1eTv-YYvQTDtokElWxs0awJ2929kDnr3hvOdjux4Vg=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

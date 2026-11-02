@@ -39,5 +39,12 @@
     "AI工作流"
   ],
   "title" : "什么？免费一站式AI创作？",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae413ae0000000018025396?xsec_token=ABuEAYb2X8Fpkw-sdGbqcK9X3zr-JdEctcToPgj0AeZ2k=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ae413ae0000000018025396?xsec_token=ABuEAYb2X8Fpkw-sdGbqcK9X3zr-JdEctcToPgj0AeZ2k=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

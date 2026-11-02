@@ -39,5 +39,14 @@
     "ai大模型"
   ],
   "title" : "kimi k3 API 放量，手慢无！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad19d08000000001c00c23d?xsec_token=AB_n45WS4tAsRqn2dW793Lp44kJ46X5-6qb-0SO07Q1uQ=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad19d08000000001c00c23d?xsec_token=AB_n45WS4tAsRqn2dW793Lp44kJ46X5-6qb-0SO07Q1uQ=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "API"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }

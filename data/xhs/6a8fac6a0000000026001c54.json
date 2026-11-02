@@ -36,5 +36,14 @@
     "ai视频创作"
   ],
   "title" : "被SD2.5的高效生产力拿捏了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8fac6a0000000026001c54?xsec_token=AB-xz_MsXwwxFDU6OILdVG7mPM0_mjWZBPsaVCgFHAA-A=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a8fac6a0000000026001c54?xsec_token=AB-xz_MsXwwxFDU6OILdVG7mPM0_mjWZBPsaVCgFHAA-A=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "满血"
+    ],
+    "banned_word_scope": "body|cover_ocr",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

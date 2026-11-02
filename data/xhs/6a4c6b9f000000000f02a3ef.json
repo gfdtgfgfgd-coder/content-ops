@@ -37,5 +37,12 @@
     "程序员"
   ],
   "title" : "✅Agent能力强的GLM-5.2敞开用！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4c6b9f000000000f02a3ef?xsec_token=ABp-WJX0WitbBajf82qwayGq3fN_imN6pV54FuOUzGl_E=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a4c6b9f000000000f02a3ef?xsec_token=ABp-WJX0WitbBajf82qwayGq3fN_imN6pV54FuOUzGl_E=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

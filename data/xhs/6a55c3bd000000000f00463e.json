@@ -37,5 +37,12 @@
     "aigc"
   ],
   "title" : "便宜的Seedream5.0Pro局部可编辑太方便了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a55c3bd000000000f00463e?xsec_token=ABf557xmUDH4z35uNkVrTM2-2jNIrfovcgZUnm7RavO8U=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a55c3bd000000000f00463e?xsec_token=ABf557xmUDH4z35uNkVrTM2-2jNIrfovcgZUnm7RavO8U=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [],
+    "banned_word_scope": "",
+    "platform_allows_api": false,
+    "engagement_tier": "mid",
+    "clean_for_style_reference": false
+  }
 }

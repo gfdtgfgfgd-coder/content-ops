@@ -37,5 +37,14 @@
     "开发者选项"
   ],
   "title" : "GLM-5.2开发效率直接起飞 🚀",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a41d89f000000000f006376?xsec_token=ABXAhqizJBsLf00FyntKzY5UOlaeC5IVwqLu6kZ4mzlTk=&xsec_source=pc_user"
+  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6a41d89f000000000f006376?xsec_token=ABXAhqizJBsLf00FyntKzY5UOlaeC5IVwqLu6kZ4mzlTk=&xsec_source=pc_user",
+  "signal": {
+    "banned_word_hits": [
+      "第一"
+    ],
+    "banned_word_scope": "body",
+    "platform_allows_api": false,
+    "engagement_tier": "low",
+    "clean_for_style_reference": false
+  }
 }
