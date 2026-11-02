@@ -130,6 +130,10 @@ python3 scripts/gen-xhs-post.py --model GLM5.3 --count 2 --resume \
   --background data/images/backgrounds/company-qwen-2026-11-01.png
 ```
 
+**偏好版本**：生成脚本优先读 `data/distilled-preferences.json`，日志输出 `preferences_loaded`，manifest 保存来源、日期、版本和 SHA256。缺包时会明确警告并回退旧来源；损坏或超长包会在收费调用前失败，不截断硬规则。可用 `--preferences <文件>` 指定路径，用 `--preference-max-chars` 调整上限。部分失败批次续跑要求同一偏好哈希，已完成历史保持原版本。Hanabi provider 行显示当前偏好版本。安装/打包脚本会同步偏好包，源规则改动后先蒸馏再安装。
+
+2026-11-02 本机验收使用 `tmp/t14-neutral-test-background.png` 浅灰测试底图，不代表恢复了旧公司背景或调用了新生图。跨机缺少缓存时 `cachedAvailable=false`；新背景仍受 Q9 限制。当前三栏页面的旧 `app.js` 有缺失旧 DOM 的初始化错误；T14 provider 状态独立可读，完整工作台由后续卡处理，不能据版本显示推断整页生成功能已验收。
+
 **文生图（单独调用）**
 ```bash
 python3 scripts/gen-image.py \
