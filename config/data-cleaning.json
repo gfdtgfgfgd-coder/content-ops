@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "rules": "rules/banned-words-quick.yaml",
+  "scan_fields": ["body", "cover_ocr", "tags"],
+  "model_context_fields": ["title", "body", "cover_ocr", "tags"],
+  "profiles": {
+    "xhs": {
+      "platform": "xhs",
+      "input_dir": "data/xhs",
+      "policy_flags": {"platform_allows_api": false},
+      "high_metrics": {"likes": 50, "collects": 20},
+      "interaction_metrics": ["likes", "collects", "comments"]
+    },
+    "xianyu": {
+      "platform": "xianyu",
+      "input_dir": "data/xianyu",
+      "policy_flags": {"platform_allows_api": false},
+      "ranked_file": "data/xianyu/_ranked.md",
+      "wants_field": "wants",
+      "top_count": 5,
+      "reference_count": 14,
+      "ranked_entry_pattern": "(?m)^\\d+\\. .*?—\\s*([0-9,]+)\\s*人想要\\s*\\n\\s*https?://[^\\s]+[?&]id=([^&\\s]+)"
+    }
+  },
+  "audience": {
+    "raw_field": "audience_raw",
+    "output_field": "audience",
+    "list_pattern": "适合人群\\s*[：:]\\s*(.+)",
+    "separator_pattern": "[、，,；;\\n]+"
+  }
+}
