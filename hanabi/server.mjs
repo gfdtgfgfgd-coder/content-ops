@@ -38,6 +38,7 @@ import { FeishuDocuments } from './lib/feishu-documents.mjs';
 import { ConversationProduction } from './lib/conversation-production.mjs';
 import { ContentOpsProduction } from './lib/content-ops-production.mjs';
 import { ContentOpsReferenceStore, referenceImageRequestPath } from './lib/content-ops-reference-store.mjs';
+import { ContentOpsEditor } from './lib/content-ops-editor.mjs';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { ChatKnowledgeReader } from './lib/chat-knowledge-reader.mjs';
 import { ChatWorkbench, runConnectedJob } from './lib/chat-workbench.mjs';
@@ -2600,6 +2601,7 @@ const chatTools={descriptions:[
 const chatWorkbench=new ChatWorkbench({db,models:aiModels,connections:aiConnections,tools:chatTools,context:async()=>({date:new Date().toISOString(),skill:(await optionalKnowledge(join(KNOWLEDGE_ROOT,'SKILL.md'))).slice(0,20000)})});
 const contentOpsProduction=new ContentOpsProduction({db,root:process.env.CONTENT_OPS_ROOT||join(APP_DATA,'content-ops'),uploadDir:UPLOAD_DIR,chats:chatWorkbench});
 const contentOpsReferences=new ContentOpsReferenceStore({root:contentOpsProduction.root});
+const contentOpsEditor=new ContentOpsEditor({root:process.env.CONTENT_OPS_EDITOR_ROOT,runtimeRoot:contentOpsProduction.root,candidates:[ROOT,process.cwd(),contentOpsProduction.root]});
 await contentOpsProduction.recover();
 function publicChat(chat){
   return {...chat,messages:chat.messages.map(message=>({...message,attachments:message.attachments.map(({path,...file})=>file),artifacts:message.artifacts.map(artifact=>{
@@ -2624,6 +2626,13 @@ const server = createServer(async (request, response) => {
     if (url.pathname === "/healthz") return sendJson(response, 200, { ok: true });
     if(url.pathname==='/api/content-ops/config'&&method==='GET')return sendJson(response,200,await contentOpsProduction.config());
     if(url.pathname==='/api/content-ops/references'&&method==='GET')return sendJson(response,200,await contentOpsReferences.list(url.searchParams));
+    if(['/api/content-ops/persona','/api/content-ops/banned-words'].includes(url.pathname)){
+      const kind=url.pathname.endsWith('/persona')?'persona':'banned-words';
+      if(method==='GET')return sendJson(response,200,kind==='persona'?await contentOpsEditor.persona():await contentOpsEditor.bannedWords());
+      if(method!=='POST')return sendJson(response,405,{error:'规则接口只支持读取或保存。'});
+      if(!isSameOrigin(request)||!/^application\/json(?:;|$)/iu.test(String(request.headers['content-type']||'')))return sendJson(response,403,{error:'规则编辑须从本机 Hanabi 页面以 JSON 提交。'});
+      return sendJson(response,200,await contentOpsEditor.mutate(kind,await readJson(request,16000)));
+    }
     if(url.pathname==='/api/content-ops/generate'&&method==='POST'){
       if(!isSameOrigin(request))return sendJson(response,403,{error:'请求来源无效。'});
       const result=await contentOpsProduction.create(await readJson(request,8000));return sendJson(response,result.reused?200:202,result);
