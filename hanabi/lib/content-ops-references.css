@@ -1,0 +1,82 @@
+/* Hanabi's existing type and surfaces; the source covers are the visual anchor. */
+#view-caihuo .ops-ref-page { max-width:none; padding:24px; }
+#view-caihuo .ops-ref-page-header { margin-bottom:20px; }
+#view-caihuo h1 { font-size:24px; font-weight:600; }
+#content-ops-references { --text-muted:#606470; color:var(--text); min-width:0; }
+#content-ops-references > summary { cursor:pointer; width:fit-content; font-size:16px; font-weight:600; padding:4px 0 14px; }
+#content-ops-ref-total { margin-left:10px; color:var(--text-muted); font-size:13px; font-weight:400; font-variant-numeric:tabular-nums; }
+.ref-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:12px 20px; margin-bottom:16px; }
+.ref-toolbar label { display:flex; align-items:center; gap:8px; font-size:13px; }
+.ref-toolbar select { min-width:108px; height:36px; padding:5px 28px 5px 10px; border:1px solid var(--line-strong); border-radius:6px; background:var(--surface); color:var(--text); font:inherit; }
+.ref-progress { margin-left:auto; color:var(--text-muted); font-size:13px; font-variant-numeric:tabular-nums; }
+.ref-selection { color:var(--text-soft); font-size:13px; font-variant-numeric:tabular-nums; }
+.ref-status { margin:0 0 12px; font-size:14px; color:var(--text-soft); overflow-wrap:anywhere; }
+.ref-status:empty { display:none; }
+/* Each column takes (canvas - 16px gutter) / 2; its edges share the toolbar frame. */
+.ref-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; min-width:0; }
+.ref-grid[hidden] { display:none; }
+.ref-card { display:grid; grid-template-columns:minmax(120px,36%) minmax(0,1fr); gap:16px; padding:16px; border:1px solid var(--line); border-radius:8px; background:var(--surface); min-width:0; scroll-margin-top:20px; }
+.ref-card--cited { border-left:4px solid #c08a13; padding-left:13px; }
+.ref-card:focus-visible { outline:2px solid var(--text); outline-offset:3px; }
+.ref-media,.ref-body { min-width:0; }
+.ref-image { display:flex; align-items:center; justify-content:center; margin:0; min-width:0; background:var(--surface-muted); border-radius:4px; overflow:hidden; }
+.ref-image img { display:block; width:100%; height:auto; object-fit:contain; }
+.ref-image--missing { aspect-ratio:3 / 4; padding:12px; text-align:center; font-size:13px; color:var(--text-muted); }
+.ref-image-error { font-size:13px; }
+.ref-images { margin-top:8px; }
+.ref-images > summary { padding:7px 0; cursor:pointer; color:var(--text-soft); font-size:12px; overflow-wrap:anywhere; }
+.ref-extra-images { display:grid; gap:8px; }
+.ref-badges { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; }
+.ref-badges:empty { display:none; }
+.ref-badges > span { padding:2px 5px; border-radius:4px; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+.ref-badge-good { background:#e9f3ed; color:#215f3e; }
+.ref-badge-warn { background:#fff5df; color:#82530e; }
+.ref-badge-cited { background:#fff4cb; color:#73530d; }
+.ref-badge-selected { background:#e9eef7; color:#354b69; }
+.ref-title { margin:0 0 10px; font-size:16px; font-weight:600; line-height:1.5; overflow-wrap:anywhere; }
+.ref-facts { display:flex; flex-wrap:wrap; gap:4px 16px; margin:0 0 14px; font-size:12px; color:var(--text-muted); }
+.ref-facts > div { display:flex; flex-wrap:wrap; gap:5px; }
+.ref-facts dt,.ref-facts dd { margin:0; }
+.ref-copy-section { margin-top:12px; }
+.ref-copy-section h3 { margin:0 0 4px; font-size:12px; font-weight:500; color:var(--text-muted); }
+.ref-ocr,.ref-text { white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px; line-height:1.75; margin:0; }
+.ref-tags { color:var(--text-soft); font-size:12px; line-height:1.7; overflow-wrap:anywhere; margin:12px 0; }
+.ref-metrics { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:16px; padding-top:12px; margin:0; border-top:1px solid var(--line); }
+.ref-metrics > div { display:flex; align-items:baseline; gap:5px; font-size:12px; }
+.ref-metrics dt { color:var(--text-muted); }
+.ref-metrics dd { margin:0; font-size:14px; font-variant-numeric:tabular-nums; text-align:right; }
+.ref-text-button { border:0; padding:6px 0; margin-right:10px; background:transparent; color:var(--text); text-decoration:underline; text-underline-offset:3px; cursor:pointer; font:inherit; font-size:13px; }
+.ref-pagination { margin-top:20px; text-align:center; }
+.ref-button { min-height:38px; padding:8px 18px; border:1px solid var(--line-strong); border-radius:6px; background:var(--surface); color:var(--text); font:inherit; font-size:14px; cursor:pointer; }
+.ref-button:hover { background:var(--surface-muted); }
+.ref-button:disabled { cursor:wait; color:var(--text-muted); }
+#content-ops-references :is(button,select,summary):focus-visible { outline:2px solid var(--text); outline-offset:3px; }
+.ref-pin-label { grid-column:1 / -1; margin:0; font-size:13px; color:var(--text-muted); }
+#content-ops-ref-pinned { margin-bottom:24px; }
+#content-ops-ref-pinned .ref-card { grid-column:1 / -1; }
+.ref-loading { grid-column:1 / -1; display:grid; gap:12px; padding:20px; background:var(--surface); border:1px solid var(--line); border-radius:8px; }
+.ref-loading span { display:block; width:70%; height:16px; background:var(--surface-muted); }
+.ref-loading span:first-child { height:24px; width:40%; }
+.ref-loading span:last-child { width:55%; }
+@media (max-width:1200px) {
+  .ref-grid { grid-template-columns:minmax(0,1fr); }
+  .ref-card { grid-template-columns:minmax(120px,28%) minmax(0,1fr); }
+}
+@media (max-width:680px) {
+  #view-caihuo .ops-ref-page { padding:8px 3px; }
+  #view-caihuo .ops-ref-page-header { margin-bottom:14px; }
+  #view-caihuo h1 { font-size:22px; }
+  .ref-toolbar { gap:10px; margin-bottom:12px; }
+  .ref-toolbar label { flex:1; flex-wrap:wrap; gap:4px; }
+  .ref-toolbar select { width:100%; min-width:0; height:44px; }
+  .ref-progress { margin-left:0; width:100%; font-size:12px; }
+  .ref-card { grid-template-columns:minmax(0,1fr); gap:14px; padding:14px; }
+  .ref-card--cited { padding-left:11px; }
+  .ref-media { max-width:100%; }
+  .ref-image img { max-height:360px; }
+  .ref-image--missing { aspect-ratio:auto; min-height:130px; }
+  .ref-image { background:var(--surface-muted); }
+  .ref-text-button,.ref-button,.ref-images > summary { min-height:44px; }
+  .ref-title { font-size:16px; }
+  .ref-card { scroll-margin-top:210px; }
+}
