@@ -1,30 +1,36 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "深度deepAI",
+  "body": "see dance2 不用再抽卡了。\nMCN老板，Seedance2必须冲🔥\n实话实话：市面上大部分AI视频工具，不适合MCN量产。\n\t\nSeedance 2.0 不一样：\n能力         \t传统AI\t      Seedance 2.0\n画风统一\t❌ 随缘\t✅ 一张图锁定\n角色一致\t❌ 频繁崩\t✅ 全片稳定\n运镜复刻\t❌ 不可控\t✅ 视频参考\n复杂物理\t⚠️ 常穿模\t✅ 接近实拍\n局部编辑\t❌ 重抽\t✅ 角色替更/增删\n出片速度\t10-30分钟+\t✅ 3-5分钟\n\t\nSeedance 2.0\n👉 图定风格 / 视频学运镜 / 音频控氛围\n👉 角色一致 / 局部编辑 / 复杂物理稳\n👉 3-5分钟出4K / 零排队 / 量大价优\n👉 全自动：脚本→素材→剪辑→上线\n\t\n一个团队干三个团队的活。\nsee dance2出视频真的强，还不试试吗？\n\t\n#Seedance2[话题]# #AI视频[话题]#  #AI创作工具[话题]#  #seedance[话题]# #AI工具[话题]# #seedance模型[话题]# #seedance2模型[话题]# #豆包seedance2[话题]# #即梦seedance2[话题]#",
+  "cover_ocr": "就离谱！\nSeedance2\n©DC\n跑视频嘎嘎出\n便宜又好用\n右划查看全文",
+  "fetched_at": "2026-11-01T10:28:45.920Z",
+  "id": "69f053c700000000350219db",
+  "image_urls": [
+    "http://sns-webpic-qc.xhscdn.com/202611011828/878725d946ffa96c711180452ea354ed/1040g008320li0emumo305qev5efsj7g73cfd4gg!nd_dft_wlteh_webp_3"
   ],
-  "audience_raw" : "",
-  "author" : "深度deepAI",
-  "body" : "see dance2 不用再抽卡了。\nMCN老板，Seedance2必须冲🔥\n实话实话：市面上大部分AI视频工具，不适合MCN量产。\n\t\nSeedance 2.0 不一样：\n能力         \t传统AI\t      Seedance 2.0\n画风统一\t❌ 随缘\t✅ 一张图锁定\n角色一致\t❌ 频繁崩\t✅ 全片稳定\n运镜复刻\t❌ 不可控\t✅ 视频参考\n复杂物理\t⚠️ 常穿模\t✅ 接近实拍\n局部编辑\t❌ 重抽\t✅ 角色替更\/增删\n出片速度\t10-30分钟+\t✅ 3-5分钟\n\t\nSeedance 2.0\n👉 图定风格 \/ 视频学运镜 \/ 音频控氛围\n👉 角色一致 \/ 局部编辑 \/ 复杂物理稳\n👉 3-5分钟出4K \/ 零排队 \/ 量大价优\n👉 全自动：脚本→素材→剪辑→上线\n\t\n一个团队干三个团队的活。\nsee dance2出视频真的强，还不试试吗？\n\t\n#Seedance2[话题]# #AI视频[话题]#  #AI创作工具[话题]#  #seedance[话题]# #AI工具[话题]# #seedance模型[话题]# #seedance2模型[话题]# #豆包seedance2[话题]# #即梦seedance2[话题]#",
-  "cover_ocr" : "就离谱！\nSeedance2\n©DC\n跑视频嘎嘎出\n便宜又好用\n右划查看全文",
-  "fetched_at" : "2026-11-01T10:28:45.920Z",
-  "id" : "69f053c700000000350219db",
-  "image_urls" : [
-    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011828\/878725d946ffa96c711180452ea354ed\/1040g008320li0emumo305qev5efsj7g73cfd4gg!nd_dft_wlteh_webp_3"
+  "images": [
+    "data/images/xhs/69f053c700000000350219db/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xhs\/69f053c700000000350219db\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : 3,
-    "comments" : 0,
-    "likes" : 3,
-    "wants" : null
+  "is_pinned": false,
+  "label": {
+    "good": true,
+    "by": "思敏",
+    "reason": "企微截图选帖 2026-11-02：001 上半列表 C2（黑底 Seedance2）（红色勾选）；只作素材参考，风险词按新规则过滤",
+    "evidence": "001 上半列表 C2（黑底 Seedance2）",
+    "evidence_type": "red_tick",
+    "labeled_at": "2026-11-02",
+    "use_scope": "style_reference_only"
   },
-  "platform" : "xhs",
-  "source" : "bookmark",
-  "tags" : [
+  "metrics": {
+    "collects": 3,
+    "comments": 0,
+    "likes": 3,
+    "wants": null
+  },
+  "platform": "xhs",
+  "source": "bookmark",
+  "tags": [
     "Seedance2",
     "AI视频",
     "AI创作工具",
@@ -35,6 +41,6 @@
     "豆包seedance2",
     "即梦seedance2"
   ],
-  "title" : "Seedance2 现在冲 🔥",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/69f053c700000000350219db?xsec_token=ABe5Xgn24XDoDFUNzsKLFqv4Zh83tyFyhgNIFg8_SXvj8=&xsec_source=pc_user"
+  "title": "Seedance2 现在冲 🔥",
+  "url": "https://www.xiaohongshu.com/explore/69f053c700000000350219db?xsec_token=ABe5Xgn24XDoDFUNzsKLFqv4Zh83tyFyhgNIFg8_SXvj8=&xsec_source=pc_user"
 }

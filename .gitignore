@@ -16,3 +16,6 @@ hanabi/
 releases/Hanabi-*/
 releases/*-mac-arm64.zip
 启动Hanabi.app/
+
+# 本机临时脚本与中间产物
+tmp/

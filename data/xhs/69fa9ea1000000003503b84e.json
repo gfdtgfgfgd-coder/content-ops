@@ -1,36 +1,42 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "深度deepAI",
+  "body": "谁懂啊家人们！还在 为ai出视频 排队排到天荒地老吗😭\n\t\n排 7 小时出片还崩的痛我真的受够了！\n\t\n这个SD2.0 直接把我从排队里捞出来了！\n\t\n✅ ❌排队！速度快\n高峰不拥堵，再也不用熬大夜等渲染\n\t\n✅ 功能全面\n口播 / 短剧 / 种草视频多场景适配\n\t\n✅ 足量随便造\n百条视频同时跑不卡\n\t\n✅ 稳定不翻车\n长镜头 / 多场景 / 复杂动作流畅\n\t\n还在苦哈哈排队、为等待崩溃的宝子，这个SD2.0 【直接冲】！\n\t\n#ai视频生成[话题]# #ai视频制作[话题]# #ai视频创作[话题]# #ai生视频[话题]# #aigc率[话题]#",
+  "cover_ocr": "别再排队了！\nSeedance2.0\n量大管饱敞开用\n速度还贼快！",
+  "fetched_at": "2026-11-01T10:27:23.010Z",
+  "id": "69fa9ea1000000003503b84e",
+  "image_urls": [
+    "http://sns-webpic-qc.xhscdn.com/202611011827/ec469aba02e7c8d82ae90759b6c5dc59/1040g2sg326ljkfv9ka605qev5efsj7g7prb7a0g!nd_dft_wlteh_webp_3"
   ],
-  "audience_raw" : "",
-  "author" : "深度deepAI",
-  "body" : "谁懂啊家人们！还在 为ai出视频 排队排到天荒地老吗😭\n\t\n排 7 小时出片还崩的痛我真的受够了！\n\t\n这个SD2.0 直接把我从排队里捞出来了！\n\t\n✅ ❌排队！速度快\n高峰不拥堵，再也不用熬大夜等渲染\n\t\n✅ 功能全面\n口播 \/ 短剧 \/ 种草视频多场景适配\n\t\n✅ 足量随便造\n百条视频同时跑不卡\n\t\n✅ 稳定不翻车\n长镜头 \/ 多场景 \/ 复杂动作流畅\n\t\n还在苦哈哈排队、为等待崩溃的宝子，这个SD2.0 【直接冲】！\n\t\n#ai视频生成[话题]# #ai视频制作[话题]# #ai视频创作[话题]# #ai生视频[话题]# #aigc率[话题]#",
-  "cover_ocr" : "别再排队了！\nSeedance2.0\n量大管饱敞开用\n速度还贼快！",
-  "fetched_at" : "2026-11-01T10:27:23.010Z",
-  "id" : "69fa9ea1000000003503b84e",
-  "image_urls" : [
-    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011827\/ec469aba02e7c8d82ae90759b6c5dc59\/1040g2sg326ljkfv9ka605qev5efsj7g7prb7a0g!nd_dft_wlteh_webp_3"
+  "images": [
+    "data/images/xhs/69fa9ea1000000003503b84e/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xhs\/69fa9ea1000000003503b84e\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : 75,
-    "comments" : 304,
-    "likes" : 121,
-    "wants" : null
+  "is_pinned": false,
+  "label": {
+    "good": true,
+    "by": "思敏",
+    "reason": "企微截图选帖 2026-11-02：001 底部 C3（青色别再排队）（红色勾选）；只作素材参考，风险词按新规则过滤",
+    "evidence": "001 底部 C3（青色别再排队）",
+    "evidence_type": "red_tick",
+    "labeled_at": "2026-11-02",
+    "use_scope": "style_reference_only"
   },
-  "platform" : "xhs",
-  "source" : "bookmark",
-  "tags" : [
+  "metrics": {
+    "collects": 75,
+    "comments": 304,
+    "likes": 121,
+    "wants": null
+  },
+  "platform": "xhs",
+  "source": "bookmark",
+  "tags": [
     "ai视频生成",
     "ai视频制作",
     "ai视频创作",
     "ai生视频",
     "aigc率"
   ],
-  "title" : "SD2.0敞开用！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/69fa9ea1000000003503b84e?xsec_token=ABD1RXmZwaOFtWdlnov0mVApjIGq7DkYVAQJtPKoku-YE=&xsec_source=pc_user"
+  "title": "SD2.0敞开用！",
+  "url": "https://www.xiaohongshu.com/explore/69fa9ea1000000003503b84e?xsec_token=ABD1RXmZwaOFtWdlnov0mVApjIGq7DkYVAQJtPKoku-YE=&xsec_source=pc_user"
 }

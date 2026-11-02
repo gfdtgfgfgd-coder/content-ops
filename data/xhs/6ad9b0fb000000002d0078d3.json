@@ -1,30 +1,36 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "深度deepAI",
+  "body": "这次 Kimi K3 把模型能力、长任务处理和响应速度一起拉满了！\n\t\n核心能力直接看👇\n🎯 2.8 万亿参数开源：复杂需求深入理解\n📚 1M 上下文：海量资料一次分析，少拆分、少补背景\n💻 编程能力强：读代码、找 Bug、改文件、写功能都能协助\n🖼️ 原生多模态：图片、文档、图表、截图都能理解\n⚡ 自研 KDA 技术：解码提速 6.3 倍\n🧠 逻辑推理更强：复杂问题把思路和步骤拆明白\n\t\n🔥 Kimi K3 活动来袭🔥\n✅能力升级，使用成本更低\n✅兼容 Work Buddy、CC\n\t\nKimi K3 让每一次调用都更值，复杂工作也能快一步完成！\n\t\n便宜的 Kimi K3 直接安排上！\n\t\n#kimi[话题]# #kimik3[话题]# #kimi智能助手[话题]# #kimi3[话题]# #开发者[话题]# #程序员[话题]# #ai代码[话题]# #ai编程[话题]# #agent[话题]#",
+  "cover_ocr": "我去！白菜价\nkimi-k3\n便宜量大\n跑深度推理太强了",
+  "fetched_at": "2026-11-01T09:07:41.013Z",
+  "id": "6ad9b0fb000000002d0078d3",
+  "image_urls": [
+    "http://sns-webpic-qc.xhscdn.com/202611011707/5a75f87bd0c498c7343206c95706c141/spectrum/1040g34o326k91g4qk4105qev5efsj7g71v6sra0!nd_dft_wlteh_webp_3"
   ],
-  "audience_raw" : "",
-  "author" : "深度deepAI",
-  "body" : "这次 Kimi K3 把模型能力、长任务处理和响应速度一起拉满了！\n\t\n核心能力直接看👇\n🎯 2.8 万亿参数开源：复杂需求深入理解\n📚 1M 上下文：海量资料一次分析，少拆分、少补背景\n💻 编程能力强：读代码、找 Bug、改文件、写功能都能协助\n🖼️ 原生多模态：图片、文档、图表、截图都能理解\n⚡ 自研 KDA 技术：解码提速 6.3 倍\n🧠 逻辑推理更强：复杂问题把思路和步骤拆明白\n\t\n🔥 Kimi K3 活动来袭🔥\n✅能力升级，使用成本更低\n✅兼容 Work Buddy、CC\n\t\nKimi K3 让每一次调用都更值，复杂工作也能快一步完成！\n\t\n便宜的 Kimi K3 直接安排上！\n\t\n#kimi[话题]# #kimik3[话题]# #kimi智能助手[话题]# #kimi3[话题]# #开发者[话题]# #程序员[话题]# #ai代码[话题]# #ai编程[话题]# #agent[话题]#",
-  "cover_ocr" : "我去！白菜价\nkimi-k3\n便宜量大\n跑深度推理太强了",
-  "fetched_at" : "2026-11-01T09:07:41.013Z",
-  "id" : "6ad9b0fb000000002d0078d3",
-  "image_urls" : [
-    "http:\/\/sns-webpic-qc.xhscdn.com\/202611011707\/5a75f87bd0c498c7343206c95706c141\/spectrum\/1040g34o326k91g4qk4105qev5efsj7g71v6sra0!nd_dft_wlteh_webp_3"
+  "images": [
+    "data/images/xhs/6ad9b0fb000000002d0078d3/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xhs\/6ad9b0fb000000002d0078d3\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : 2,
-    "comments" : 1,
-    "likes" : 2,
-    "wants" : null
+  "is_pinned": false,
+  "label": {
+    "good": true,
+    "by": "思敏",
+    "reason": "企微截图选帖 2026-11-02：022 顶部列表 C1（Kimi K3）（红色勾选）；只作素材参考，风险词按新规则过滤",
+    "evidence": "022 顶部列表 C1（Kimi K3）",
+    "evidence_type": "red_tick",
+    "labeled_at": "2026-11-02",
+    "use_scope": "style_reference_only"
   },
-  "platform" : "xhs",
-  "source" : "bookmark",
-  "tags" : [
+  "metrics": {
+    "collects": 2,
+    "comments": 1,
+    "likes": 2,
+    "wants": null
+  },
+  "platform": "xhs",
+  "source": "bookmark",
+  "tags": [
     "kimi",
     "kimik3",
     "kimi智能助手",
@@ -35,6 +41,6 @@
     "ai编程",
     "agent"
   ],
-  "title" : "拿下！便宜 Kimi K3 太夯了！",
-  "url" : "https:\/\/www.xiaohongshu.com\/explore\/6ad9b0fb000000002d0078d3?xsec_token=AB-1eTv-YYvQTDtokElWxs0btOXjIR7O-cTdZgl2qVBbE=&xsec_source=pc_user"
+  "title": "拿下！便宜 Kimi K3 太夯了！",
+  "url": "https://www.xiaohongshu.com/explore/6ad9b0fb000000002d0078d3?xsec_token=AB-1eTv-YYvQTDtokElWxs0btOXjIR7O-cTdZgl2qVBbE=&xsec_source=pc_user"
 }
