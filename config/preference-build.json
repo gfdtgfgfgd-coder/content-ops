@@ -1,0 +1,35 @@
+{
+  "paths": {
+    "persona": "skills/simin-persona/SKILL.md",
+    "feedback": "data/wecom/simin-feedback.jsonl",
+    "risk_words": "data/wecom/risk-words.md",
+    "banned_rules": "rules/banned-words-quick.yaml",
+    "platform_rules": "rules/platform-rules.md",
+    "decisions": "docs/01-决策记录.md",
+    "design_rules": "rules/design-rules.md",
+    "cover_palettes": "rules/cover-palettes.json",
+    "title_patterns": "skills/xhs-title-patterns/quick.md",
+    "generation_skill": "skills/xhs-post-generation/SKILL.md",
+    "reference_posts": "data/reference-posts.json",
+    "xhs_data_dir": "data/xhs",
+    "xianyu_data_dir": "data/xianyu",
+    "output": "data/distilled-preferences.json"
+  },
+  "platforms": [
+    {"id": "xhs", "name": "小红书", "role": "xhs_reference"},
+    {"id": "xianyu", "name": "闲鱼", "role": "xianyu_reference"},
+    {"id": "gzh", "name": "公众号", "role": "general"}
+  ],
+  "reference_limits": {
+    "xhs_good_posts": 25,
+    "xianyu_top_posts": 14
+  },
+  "preference_priority": [
+    "current_facts_and_sources",
+    "current_banned_rules",
+    "simin_persona",
+    "historical_templates"
+  ],
+  "policy_decision_id": "D18",
+  "conflict_evidence_ids": ["Q07", "Q14", "Q22", "Q23"]
+}

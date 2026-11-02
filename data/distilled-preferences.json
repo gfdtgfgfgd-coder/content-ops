@@ -1,0 +1,1087 @@
+{
+  "version": 1,
+  "distilled_at": "2026-11-02",
+  "sources": [
+    "simin-persona",
+    "risk-words",
+    "banned-words-quick",
+    "platform-rules",
+    "design-rules",
+    "cover-palettes",
+    "xhs-title-patterns",
+    "xhs-post-generation",
+    "reference-posts",
+    "xhs-data",
+    "xianyu-data"
+  ],
+  "source_hashes": {
+    "skills/simin-persona/SKILL.md": {
+      "sha256": "d91a16b11f12ce7f63348196f59e9705dbe56da4200059c3facac763c11b301c",
+      "bytes": 9189
+    },
+    "data/wecom/simin-feedback.jsonl": {
+      "sha256": "167ba514e8ff67efba4be3b8641386c9ee4d283ad6e44421a84c3a237d6ebb1e",
+      "bytes": 13504
+    },
+    "data/wecom/risk-words.md": {
+      "sha256": "90aee028801219f5a7921f7e4661e387176ff52677d7ec1cab9d3ae3dd086330",
+      "bytes": 3453
+    },
+    "rules/banned-words-quick.yaml": {
+      "sha256": "acb7fb979d347f80ea426a3ecd1e6ff97d44e13f0655de2002fd7cbf038cca1f",
+      "bytes": 3512
+    },
+    "rules/platform-rules.md": {
+      "sha256": "d546e26d36007f5576e6468086589d6a48b7c0ab50c0146ccf588f11a6ad18f3",
+      "bytes": 2376
+    },
+    "docs/01-决策记录.md": {
+      "sha256": "c69fdd6eb893af36004b17a28106a45ed5a12dcf473d9d5509a0c3dda56b108a",
+      "bytes": 4959
+    },
+    "rules/design-rules.md": {
+      "sha256": "e6ab914a80f95298703f2c42318c041d4ff63429596f67b55c9fcde2e20a0f40",
+      "bytes": 4628
+    },
+    "rules/cover-palettes.json": {
+      "sha256": "6e3deca1b4ecebb9aa013522536a2a69f2a01200577de793e7183a3bf43d96df",
+      "bytes": 200
+    },
+    "skills/xhs-title-patterns/quick.md": {
+      "sha256": "7d4ed93d47935d4c17592851dc98bb24798ca5e122b92e0c74b7dd3d62e9f9f1",
+      "bytes": 6025
+    },
+    "skills/xhs-post-generation/SKILL.md": {
+      "sha256": "585ac0ccfc9c8a81bf2be24f69d87b0ebafd848c129bc14d26b8dd7a3392c84e",
+      "bytes": 3360
+    },
+    "data/reference-posts.json": {
+      "sha256": "bd58e68fe388a868be8c7c2ade680893d87806f1143a6fefc37cf90bf7756252",
+      "bytes": 12166
+    },
+    "data/xhs": {
+      "files": 364,
+      "sha256": "8aabdcd50b64ba04ee20492c776077ee3ed4744a8baae256607c1ad212fb07df"
+    },
+    "data/xianyu": {
+      "files": 34,
+      "sha256": "4af91d0f913355cd6482855651243a300caa19f7c58ce7fd119daf1d52683e45"
+    },
+    "config/preference-build.json": {
+      "sha256": "9934353a2c41c6071188a769c4fa1ff1f7b43900f2faea477254cb5dd7f1828d",
+      "bytes": 1225
+    },
+    "scripts/distill-preferences.py": {
+      "sha256": "03615e2c9c4b54c7ab97d768ac656cab6aa66df96e3dd248e23ee2a8e0fc2d6c",
+      "bytes": 21119
+    }
+  },
+  "preference_priority": [
+    "current_facts_and_sources",
+    "current_banned_rules",
+    "simin_persona",
+    "historical_templates"
+  ],
+  "persona": {
+    "identity": "思敏是内容运营，安排模型推广选题、审核图文、要求修改封面与文案，并处理平台审核后的素材调整。她要的是能直接进入运营流程的一套图文：模型与卖点对应，封面清楚，文案简明，同批有变化，风险词已处理。",
+    "standards": [
+      "模型名称是封面主标题，字体大、醒目，一眼可辨。（Q05、Q06、Q25、Q26、Q28、Q29）",
+      "价格优势只保留一个清楚的表达，视觉上也要醒目；套餐等非核心元素可按当前素材替换。（Q07、Q14、Q25）",
+      "背景、主标题、副标题之间有明显层次，不能融为一体。（Q08、Q09、Q28、Q29）",
+      "「限时低价」作为副标题时用独立强调色，不能与背景相近。（Q09）",
+      "封面先适配 1:1；主标题尽量完整占一行，避免模型名被拆碎。（Q04、Q10、Q27）",
+      "卖点必须融入画面，不能沿用参考图里无关的人物、工具箱或品类模块。（Q10、Q11）",
+      "图和文字模块对应；讲生图、生视频、剧本创作，就展示相应内容。（Q11）",
+      "可以参考标题加工作流、卖点合集等结构，但底部说明与辅助文字也要改写。（Q02、Q03）",
+      "同批文案要有多种风格，避免固定开头、固定设问、固定卖点顺序。（Q16、Q17、Q19）",
+      "同批海报要有结构差异，不能只换模型名、颜色或几个句子。（Q20、Q21）",
+      "文案简单明了，一段里不重复同一批适用场景或卖点。（Q18、Q19）",
+      "用新模型的当前卖点替换旧版本内容，不能只改名称。（Q12、Q15）",
+      "文案与图片都过滤风险词，标签区和封面小字也算正文内容。（Q13、Q14、Q22、Q23）",
+      "AI 生成后需要人工复核，去掉明显的套话和重复表达。（Q01、Q18、Q19）",
+      "图与文案成套交付；只有文案不算可发布素材。（Q24）"
+    ],
+    "anti_patterns": [
+      "封面模型名与背景同为浅色，字像融进背景：被要求换背景或模型名字的颜色。（Q08）",
+      "同一段先喊「制作视频、短剧、电商广告」，结尾再列一次「短剧、广告、电商、自媒体」：被直接指出重复。（Q18）",
+      "两篇文案都按「开头促销—列能力—再促销」走，只替换句子：被质疑结构一样。（Q20）",
+      "两张海报使用相同结构，只换文案：被明确要求连海报结构也改变。（Q21）",
+      "新版模型仍沿用旧版本卖点：要求替换为更新后的卖点。（Q12、Q15）",
+      "小红书图片或文案出现具体折扣，或者「询价」：明确要求修改。（Q13、Q14）",
+      "以旧参考帖入选为由保留 API、量大管饱等词：入选仅说明参考价值，后续明确禁词仍需删除。（Q22、Q23）",
+      "Seedance 文案写满血、管饱管够、不卡人脸、秒级：该模型被单独列出限制。（Q17）"
+    ],
+    "evidence_quotes": [
+      {
+        "id": "Q01",
+        "date": "2026-10-19",
+        "quote": "AI写完人工可以检查一下，尽量AI感少一些"
+      },
+      {
+        "id": "Q02",
+        "date": "2026-10-19",
+        "quote": "图一：改颜色 布局可保留（标题+工作流），不做电商品类，直接AI视频泛流量"
+      },
+      {
+        "id": "Q03",
+        "date": "2026-10-19",
+        "quote": "后续改图的时候底下这些文字也改写一下，不用完全一模一样"
+      },
+      {
+        "id": "Q04",
+        "date": "2026-10-22",
+        "quote": "图片制作要求：1:1比例"
+      },
+      {
+        "id": "Q05",
+        "date": "2026-10-22",
+        "quote": "主标题：模型名字"
+      },
+      {
+        "id": "Q06",
+        "date": "2026-10-22",
+        "quote": "主标题字体要大、颜色醒目"
+      },
+      {
+        "id": "Q07",
+        "date": "2026-10-22",
+        "quote": "价格优势字体也要醒目"
+      },
+      {
+        "id": "Q08",
+        "date": "2026-10-27",
+        "quote": "最后这张图得改一下 背景或者kimil3.1换个颜色 有点融为一体了"
+      },
+      {
+        "id": "Q09",
+        "date": "2026-10-30",
+        "quote": "背景不要和主标题副标题颜色相似，要有层次感，副标题：限时低价 这几个字不同颜色"
+      },
+      {
+        "id": "Q10",
+        "date": "2026-10-22",
+        "quote": "这个色彩比较好，seedance的标题拉满一整行，这个女的不要了，然后下面融入我们的卖点"
+      },
+      {
+        "id": "Q11",
+        "date": "2026-10-20",
+        "quote": "那个工具箱不要、标题居中一行展示，下面模块可以换成我们AI社区的AI生图、生视频、剧本创作，提示词模版、模块也对应文字的图画展示"
+      },
+      {
+        "id": "Q12",
+        "date": "2026-10-27",
+        "quote": "换成新模型吧"
+      },
+      {
+        "id": "Q13",
+        "date": "2026-10-30",
+        "quote": "直接安排上 或者其他、询价小红书不能写、"
+      },
+      {
+        "id": "Q14",
+        "date": "2026-10-28",
+        "quote": "这是之前跑的好的，现在图片、文案五折特惠都不能写，可以换成便宜量大、活动价、便宜接入、好价来袭之类的、封面要做好看些，文案你拆解一下"
+      },
+      {
+        "id": "Q15",
+        "date": "2026-10-28",
+        "quote": "3.1的卖点有更新的，你到时候替换下～"
+      },
+      {
+        "id": "Q16",
+        "date": "2026-10-28",
+        "quote": "后面文案要改写更多类似的话术，不然会提示重复素材过多"
+      },
+      {
+        "id": "Q17",
+        "date": "2026-10-29",
+        "quote": "seedance的文案不能写满血、管饱管够、不卡人脸、秒级这种词汇，文案逻辑结构可以参考这些、也可以改写别的，但是字眼不要和这两篇重复太多"
+      },
+      {
+        "id": "Q18",
+        "date": "2026-10-30",
+        "quote": "这里也重复，这个ai还得调教哈哈哈哈"
+      },
+      {
+        "id": "Q19",
+        "date": "2026-10-30",
+        "quote": "还有就是文案要更加简单明了一些」「重复的字眼不要多 多改写一些风格"
+      },
+      {
+        "id": "Q20",
+        "date": "2026-10-30",
+        "quote": "我感觉结构是一样的？」「就是句子换来换去"
+      },
+      {
+        "id": "Q21",
+        "date": "2026-10-30",
+        "quote": "包括海报结构也是一样的"
+      },
+      {
+        "id": "Q22",
+        "date": "2026-10-30",
+        "quote": "小红书和闲鱼都不可以写API"
+      },
+      {
+        "id": "Q23",
+        "date": "2026-10-30",
+        "quote": "不可以写量大管饱 API更是大忌」「把风险词规避下就差不多了"
+      },
+      {
+        "id": "Q24",
+        "date": "2026-10-15",
+        "quote": "有文案没图片也发不了哈哈哈"
+      },
+      {
+        "id": "Q25",
+        "date": "2026-10-26",
+        "quote": "图一那些套餐可以替换成其他、模型名字和价格字体要大就行，其他无所谓"
+      },
+      {
+        "id": "Q26",
+        "date": "2026-10-23",
+        "quote": "kimi字体不够大」「都用kimik3字体都用深色"
+      },
+      {
+        "id": "Q27",
+        "date": "2026-10-23",
+        "quote": "闲鱼都是1:1"
+      },
+      {
+        "id": "Q28",
+        "date": "2026-10-23",
+        "quote": "右边那块文字画面占比缩小或者删除 把sd的主标题拉大占比 那几个卖点也加大"
+      },
+      {
+        "id": "Q29",
+        "date": "2026-10-19",
+        "quote": "让AI重新设计，醒目吸睛"
+      }
+    ],
+    "evidence_limit": "截至客户端当前可加载最早端的记录，未证明更早历史不存在；不代表思敏全部偏好。"
+  },
+  "platform_rules": {
+    "xhs": {
+      "banned": [
+        "最便宜",
+        "全网最低",
+        "史上最低",
+        "第一",
+        "顶级",
+        "独家",
+        "几折",
+        "[0-9]+(?:\\.[0-9]+)?\\s*折",
+        "¥\\s*[0-9]+(?:\\.[0-9]+)?",
+        "￥\\s*[0-9]+(?:\\.[0-9]+)?",
+        "宝子们",
+        "姐妹们",
+        "API",
+        "量大管饱",
+        "询价",
+        "[一二三四五六七八九十零〇两半]+(?:点[一二三四五六七八九十零〇]+)?\\s*折",
+        "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)"
+      ],
+      "model_specific_bans": {
+        "seedance": [
+          "满血",
+          "管饱管够",
+          "不卡人脸",
+          "秒级"
+        ]
+      },
+      "banned_word_rules": [
+        {
+          "word": "最便宜",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "便宜管饱",
+          "reason": "广告法极限词（platform-rules.md）"
+        },
+        {
+          "word": "全网最低",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "价格友好",
+          "reason": "广告法极限词（platform-rules.md）"
+        },
+        {
+          "word": "史上最低",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "价格友好",
+          "reason": "广告法极限词（platform-rules.md）"
+        },
+        {
+          "word": "第一",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "表现突出",
+          "reason": "广告法极限词"
+        },
+        {
+          "word": "顶级",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "高性能",
+          "reason": "广告法极限词"
+        },
+        {
+          "word": "独家",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "专属",
+          "reason": "广告法极限词/未经证明的绝对化表述"
+        },
+        {
+          "word": "几折",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "便宜量大",
+          "reason": "小红书禁止具体折扣（D10）"
+        },
+        {
+          "word": "[0-9]+(?:\\.[0-9]+)?\\s*折",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "便宜量大",
+          "reason": "小红书禁止具体折扣（D10）",
+          "regex": true
+        },
+        {
+          "word": "¥\\s*[0-9]+(?:\\.[0-9]+)?",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "低价",
+          "reason": "小红书禁止具体价格（D10）",
+          "regex": true
+        },
+        {
+          "word": "￥\\s*[0-9]+(?:\\.[0-9]+)?",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "低价",
+          "reason": "小红书禁止具体价格（D10）",
+          "regex": true
+        },
+        {
+          "word": "宝子们",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "大家",
+          "reason": "小红书调性：避免油腻称呼（platform-rules.md）"
+        },
+        {
+          "word": "姐妹们",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "大家",
+          "reason": "小红书调性：避免油腻称呼（platform-rules.md）"
+        },
+        {
+          "word": "API",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu"
+          ],
+          "replace": "模型服务",
+          "reason": "运营反馈小红书和闲鱼都不可写（2026-10-30）"
+        },
+        {
+          "word": "量大管饱",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "便宜量大",
+          "reason": "运营较晚反馈明确禁用，覆盖历史素材用法（2026-10-30 18:55）"
+        },
+        {
+          "word": "询价",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "直接安排上",
+          "reason": "运营明确说询价小红书不能写（2026-10-30）"
+        },
+        {
+          "word": "[一二三四五六七八九十零〇两半]+(?:点[一二三四五六七八九十零〇]+)?\\s*折",
+          "regex": true,
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "活动价",
+          "reason": "图片和文案的具体折扣均不可写，补足中文数字（2026-10-28）"
+        },
+        {
+          "word": "满血",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "models": [
+            "seedance"
+          ],
+          "replace": "",
+          "reason": "Seedance 单独禁词，删除相关承诺后重写（2026-10-29）"
+        },
+        {
+          "word": "管饱管够",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "models": [
+            "seedance"
+          ],
+          "replace": "活动价",
+          "reason": "Seedance 单独禁词（2026-10-29）"
+        },
+        {
+          "word": "不卡人脸",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "models": [
+            "seedance"
+          ],
+          "replace": "",
+          "reason": "Seedance 单独禁词，不换成等义的人脸能力保证（2026-10-29）"
+        },
+        {
+          "word": "秒级",
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "models": [
+            "seedance"
+          ],
+          "replace": "",
+          "reason": "Seedance 单独禁词，不换成秒出等速度承诺（2026-10-29）"
+        },
+        {
+          "word": "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)",
+          "regex": true,
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "",
+          "reason": "D10 禁具体金额，包括中文数字及单位后缀"
+        }
+      ],
+      "platform_allows_api": false,
+      "guidance": "**调性**：普一点，不油腻，不偷袭。白话解释：\n- 普一点 = 像普通用户在分享，不像品牌在喊口号。少用「重磅」「震撼」「炸裂」。\n- 不偷袭 = 不蹭别人的事故、不踩竞品、不借热点骂人。\n\n**价格表达**\n- 原因：具体折扣触发平台广告审核，极限词触发广告法。\n\n**封面（大字报）**：见 `design-rules.md`。\n\n**正文**：3 到 6 行，每行一个点，带 ✅ 或序号均可。末尾标签 5 到 8 个，模型名 + 场景词 + 人群词。\n\n**参考样本**：思敏企微里勾选的那一长条，T04 标注后在 `data/xhs/` 里 `label.good = true`。",
+      "allowed_price_words": [
+        "便宜量大",
+        "活动价",
+        "便宜接入",
+        "好价来袭",
+        "直接安排上"
+      ]
+    },
+    "xianyu": {
+      "banned": [
+        "最便宜",
+        "全网最低",
+        "史上最低",
+        "第一",
+        "顶级",
+        "独家",
+        "API"
+      ],
+      "model_specific_bans": {},
+      "banned_word_rules": [
+        {
+          "word": "最便宜",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "便宜管饱",
+          "reason": "广告法极限词（platform-rules.md）"
+        },
+        {
+          "word": "全网最低",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "价格友好",
+          "reason": "广告法极限词（platform-rules.md）"
+        },
+        {
+          "word": "史上最低",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "价格友好",
+          "reason": "广告法极限词（platform-rules.md）"
+        },
+        {
+          "word": "第一",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "表现突出",
+          "reason": "广告法极限词"
+        },
+        {
+          "word": "顶级",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "高性能",
+          "reason": "广告法极限词"
+        },
+        {
+          "word": "独家",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "专属",
+          "reason": "广告法极限词/未经证明的绝对化表述"
+        },
+        {
+          "word": "API",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu"
+          ],
+          "replace": "模型服务",
+          "reason": "运营反馈小红书和闲鱼都不可写（2026-10-30）"
+        }
+      ],
+      "platform_allows_api": false,
+      "guidance": "- 像个人卖家，直给。标题就是「XX 模型 + 卖点 + 便宜」。\n- 价格可以写具体。\n- 好坏看「想要」人数，T02 抓回后按 `metrics.wants` 排序。\n- 不要「官方」「旗舰」这种词，闲鱼用户不吃。"
+    },
+    "gzh": {
+      "banned": [
+        "最便宜",
+        "全网最低",
+        "史上最低",
+        "第一",
+        "顶级",
+        "独家"
+      ],
+      "model_specific_bans": {},
+      "banned_word_rules": [
+        {
+          "word": "最便宜",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "便宜管饱",
+          "reason": "广告法极限词（platform-rules.md）"
+        },
+        {
+          "word": "全网最低",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "价格友好",
+          "reason": "广告法极限词（platform-rules.md）"
+        },
+        {
+          "word": "史上最低",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "价格友好",
+          "reason": "广告法极限词（platform-rules.md）"
+        },
+        {
+          "word": "第一",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "表现突出",
+          "reason": "广告法极限词"
+        },
+        {
+          "word": "顶级",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "高性能",
+          "reason": "广告法极限词"
+        },
+        {
+          "word": "独家",
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "专属",
+          "reason": "广告法极限词/未经证明的绝对化表述"
+        }
+      ],
+      "platform_allows_api": true,
+      "guidance": "- 长文，可信，有依据。价格数字从 Model Price Watch 取，不手填。\n- 排版走 `gzh-design-skill`。\n- 去 AI 味走 `avoid-ai-writing` + `lieflat-less-ai-tone`。"
+    },
+    "api_term": "API",
+    "api_policy_evidence": {
+      "quote_id": "Q22",
+      "quote": "小红书和闲鱼都不可以写API"
+    }
+  },
+  "design": {
+    "cover_palettes": [
+      {
+        "id": "blue_mint",
+        "background": "#1C79D3",
+        "card": "#FFFEFF",
+        "text": "#000000",
+        "accent": "#6FD0A2"
+      },
+      {
+        "id": "cream_pink",
+        "background": "#EFEFF1",
+        "card": "#EFEFF1",
+        "text": "#000000",
+        "accent": "#FFC9EC"
+      }
+    ],
+    "hierarchy_rules": [
+      "模型名称是封面主标题，字体大、醒目，一眼可辨。（Q05、Q06、Q25、Q26、Q28、Q29）",
+      "「限时低价」作为副标题时用独立强调色，不能与背景相近。（Q09）",
+      "使用 rules/cover-palettes.json 的实测配色；图像模型生成无字背景，本机粗黑体排准确中文。模型名最大，行动词次大，卖点第三层。按本轮 persona 封面优先 1:1；两篇用居中卡片、分区任务两种结构。3:4 保留为通用历史建议，当前链路不默认使用。"
+    ],
+    "aspect_ratio": "封面先适配 1:1；主标题尽量完整占一行，避免模型名被拆碎。（Q04、Q10、Q27）",
+    "persona_precedence": "使用 rules/cover-palettes.json 的实测配色；图像模型生成无字背景，本机粗黑体排准确中文。模型名最大，行动词次大，卖点第三层。按本轮 persona 封面优先 1:1；两篇用居中卡片、分区任务两种结构。3:4 保留为通用历史建议，当前链路不默认使用。"
+  },
+  "title_patterns": {
+    "openers": [
+      "赶紧冲！",
+      "立马冲！",
+      "火速安排！",
+      "速速安排！",
+      "安排！"
+    ],
+    "structures": [
+      {
+        "template": "[动词]！ / [模型名] / [价格区块词] / [一条已核验能力]",
+        "banned_word_hits": []
+      },
+      {
+        "template": "[动词]！ / [模型名] / [价格区块词]，批量[任务] / [场景感受]",
+        "banned_word_hits": []
+      },
+      {
+        "template": "[动词]！ / [模型名] / [等待或成本卖点] / [稳定性卖点]",
+        "banned_word_hits": []
+      },
+      {
+        "template": "[动词]！ / [模型名] / [价格区块词] / [上下文或长程任务能力]",
+        "banned_word_hits": []
+      },
+      {
+        "template": "[职业/使用者]必试！ / [模型名] / [价格区块词] / [代码或推理能力]",
+        "banned_word_hits": []
+      }
+    ],
+    "historical_structures_with_banned_terms": [],
+    "sell_points": [
+      {
+        "phrase_group": "便宜管饱 / 便宜又稳定",
+        "banned_word_hits": []
+      },
+      {
+        "phrase_group": "稳定可靠 / 稳定不掉线",
+        "banned_word_hits": []
+      },
+      {
+        "phrase_group": "响应更快 / 高效创作 / 免排队",
+        "banned_word_hits": []
+      },
+      {
+        "phrase_group": "1M 上下文 / 长程任务",
+        "banned_word_hits": []
+      },
+      {
+        "phrase_group": "代码能力强 / 复杂推理",
+        "banned_word_hits": []
+      }
+    ],
+    "historical_sell_points_with_banned_terms": [
+      {
+        "phrase_group": "量大管饱【已禁】",
+        "banned_word_hits": [
+          "量大管饱"
+        ]
+      }
+    ],
+    "sampled_from": [
+      "6a30b2be000000000f00456d",
+      "6a02c2ed000000003502f752",
+      "6ab236cf0000000036014250",
+      "6a55c3bd000000000f00463e",
+      "6a1cf2a70000000035026f2a",
+      "6aaf8e9a0000000029013e2a",
+      "6a313b740000000011012563",
+      "6a275f9a000000003503a9ee",
+      "6a41bf5a000000000f0063eb",
+      "6a29744a0000000022023498",
+      "6a8278f800000000210209a2",
+      "6a5d6f2b000000001003fcda"
+    ]
+  },
+  "style_references": {
+    "xhs_good_posts": [
+      {
+        "id": "69ec6547000000001f00121b",
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "第一",
+          "API",
+          "量大管饱"
+        ]
+      },
+      {
+        "id": "69f053c700000000350219db",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "69f1a600000000003503946a",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "69fa9ea1000000003503b84e",
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "量大管饱"
+        ]
+      },
+      {
+        "id": "69fc29aa0000000035032e27",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6a028b160000000035038655",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6a02c2ed000000003502f752",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6a1e475a000000003501c657",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6a2f5f5b000000001003cdbc",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6a2fd6860000000011016a10",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6a30b2be000000000f00456d",
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "量大管饱"
+        ]
+      },
+      {
+        "id": "6a41eab4000000000f01f3aa",
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "满血"
+        ]
+      },
+      {
+        "id": "6aba2b7a000000001802fe41",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6ac7598b000000001b02d055",
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "6ac8a878000000001b02c806",
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "6ad9b0fb000000002d0078d3",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6aded0b8000000001601bde0",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6ae04e58000000001601b3e9",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6ae055f3000000001503ba84",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6ae19a71000000003501e174",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6ae19f170000000034029496",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6ae2ca6300000000350135ad",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6ae2d146000000001c037783",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6ae44142000000001200baaa",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
+        "id": "6ae44af7000000001a023d37",
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      }
+    ],
+    "xianyu_top_posts": [
+      {
+        "id": "1093263589829",
+        "wants": 379,
+        "rank": 1,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1094949416166",
+        "wants": 342,
+        "rank": 2,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1065730769775",
+        "wants": 137,
+        "rank": 3,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1091083458741",
+        "wants": 120,
+        "rank": 4,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1092162018871",
+        "wants": 97,
+        "rank": 5,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1093135935473",
+        "wants": 90,
+        "rank": 6,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1067177633990",
+        "wants": 89,
+        "rank": 7,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1063591176059",
+        "wants": 85,
+        "rank": 8,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1092150815755",
+        "wants": 72,
+        "rank": 9,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1096235901541",
+        "wants": 69,
+        "rank": 10,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1093285365122",
+        "wants": 65,
+        "rank": 11,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1065182987996",
+        "wants": 25,
+        "rank": 12,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1094223259860",
+        "wants": 17,
+        "rank": 13,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      },
+      {
+        "id": "1064624924506",
+        "wants": 16,
+        "rank": 14,
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "API"
+        ]
+      }
+    ]
+  },
+  "known_conflicts": {
+    "q7_guanbao": "2026-10-30 15:18 的一般口径允许「便宜管饱」「管饱管够」「便宜量大」，18:55 又禁止「量大管饱」。这里没有把不同字序强行视为同一个词，但今晚生成优先用「便宜量大」「活动价」「便宜接入」「好价来袭」。D10 的历史决策保留，冲突交接到开放问题。",
+    "api_policy": {
+      "evidence": {
+        "id": "Q22",
+        "date": "2026-10-30",
+        "quote": "小红书和闲鱼都不可以写API"
+      },
+      "decision": "**小红书和闲鱼都禁用 API 字样。** 清洗标记、偏好包和生成检查统一执行，不因旧参考帖或 T13 旧示例而放行。"
+    }
+  }
+}
