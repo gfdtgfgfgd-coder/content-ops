@@ -1,32 +1,28 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "亏本冲量！Seedance 2.0 API 嘎嘎香！\n¥\n0\n.01\n\nAPI大玩家",
+  "cover_ocr": "seedance2.0API\n无限\n生成\n稳定快速\n流畅生成\n、无限生成\n次数不限制\n画质出色\n细节更丰富\n安全可靠\n使用更安心\n简单接入 轻松调用 快速生型",
+  "fetched_at": "2026-11-02T10:09:39.610Z",
+  "id": "1065601938068",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i1/2219851738192/O1CN01WylmGC2ANziwWfLcR_!!4611686018427382864-53-xy_item.heic_450x10000Q90.jpg_.webp"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "亏本冲量！Seedance 2.0 API 嘎嘎香！\n¥\n0\n.01\n\nAPI大玩家",
-  "cover_ocr" : "seedance2.0API\n无限\n生成\n稳定快速\n流畅生成\n、无限生成\n次数不限制\n画质出色\n细节更丰富\n安全可靠\n使用更安心\n简单接入 轻松调用 快速生型",
-  "fetched_at" : "2026-11-01T09:10:02.153Z",
-  "id" : "1065601938068",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i1\/2219851738192\/O1CN01WylmGC2ANziwWfLcR_!!4611686018427382864-53-xy_item.heic_450x10000Q90.jpg_.webp"
+  "images": [
+    "data/images/xianyu/1065601938068/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1065601938068\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : null
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 1
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "亏本冲量！Seedance 2.0 API 嘎嘎香！",
-  "url" : "https:\/\/www.goofish.com\/item?id=1065601938068&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "亏本冲量！Seedance 2.0 API 嘎嘎香！",
+  "url": "https://www.goofish.com/item?id=1065601938068&categoryId=50023914"
 }

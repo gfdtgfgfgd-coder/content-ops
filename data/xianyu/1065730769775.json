@@ -1,32 +1,28 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "Seedance 2 白菜价入\n热销第3名\n¥\n2\n.66\n¥100\n\nAPI大玩家",
+  "cover_ocr": "9\nSEEDANCE\nSeedance2\n无需排队\nHOT！\n00\n极速生成\n毫珍级骑应，创惠即刻星現\n稳定高并发\n企业圾操物，轻松盛财為井发\n高质量出图\n细裝精致，面卓越事凡\n米 Seedance2 生成\n◎ 安全可维\n立即开通体验\n全球可用\n《/＞ 簡单易用",
+  "fetched_at": "2026-11-02T09:49:47.425Z",
+  "id": "1065730769775",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i2/2219851738192/O1CN01IfpPjm6oZ7H2XrKe_!!4611686018427382864-0-xy_item.jpg_450x10000Q90.jpg_.webp"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "Seedance 2 白菜价入\n热销第3名\n¥\n2\n.66\n¥100\n\nAPI大玩家",
-  "cover_ocr" : "9\nSEEDANCE\nSeedance2\n无需排队\nHOT！\n00\n极速生成\n毫珍级骑应，创惠即刻星現\n稳定高并发\n企业圾操物，轻松盛财為井发\n高质量出图\n细裝精致，面卓越事凡\n米 Seedance2 生成\n◎ 安全可维\n立即开通体验\n全球可用\n《\/＞ 簡单易用",
-  "fetched_at" : "2026-11-01T09:10:02.152Z",
-  "id" : "1065730769775",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i2\/2219851738192\/O1CN01IfpPjm6oZ7H2XrKe_!!4611686018427382864-0-xy_item.jpg_450x10000Q90.jpg_.webp"
+  "images": [
+    "data/images/xianyu/1065730769775/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1065730769775\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : null
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 137
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "Seedance 2 白菜价入",
-  "url" : "https:\/\/www.goofish.com\/item?id=1065730769775&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "Seedance 2 白菜价入",
+  "url": "https://www.goofish.com/item?id=1065730769775&categoryId=50023914"
 }

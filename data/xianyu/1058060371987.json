@@ -1,32 +1,28 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "Seedance 2.0 API 稳定供应 快到离谱\n¥\n0\n.01\n\nAPI大玩家",
+  "cover_ocr": "限时优惠\nseedance2\nAPI\n3 2000K\n低至85折\n高性能稳定接入\n高可用架构，毫秒级喻应\n灵活易用的 API 调用\n簡洁規范的换口设计，快速上手\n支持快速集成与扩展\n模块化设计，轻松对接现有系统\nAPI\n立即接入 ）\n限时优惠\n低至85折\nwlsterate\n锪定可意\n安全合規\n极速垧皮\n品\n持续升圾",
+  "fetched_at": "2026-11-02T10:10:37.321Z",
+  "id": "1058060371987",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i2/2219851738192/O1CN01d64Rod2ANzibOMBFL_!!4611686018427382864-53-xy_item.heic_450x10000Q90.jpg_.webp"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "Seedance 2.0 API 稳定供应 快到离谱\n¥\n0\n.01\n\nAPI大玩家",
-  "cover_ocr" : "限时优惠\nseedance2\nAPI\n3 2000K\n低至85折\n高性能稳定接入\n高可用架构，毫秒级喻应\n灵活易用的 API 调用\n簡洁規范的换口设计，快速上手\n支持快速集成与扩展\n模块化设计，轻松对接现有系统\nAPI\n立即接入 ）\n限时优惠\n低至85折\nwlsterate\n锪定可意\n安全合規\n极速垧皮\n品\n持续升圾",
-  "fetched_at" : "2026-11-01T09:10:02.153Z",
-  "id" : "1058060371987",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i2\/2219851738192\/O1CN01d64Rod2ANzibOMBFL_!!4611686018427382864-53-xy_item.heic_450x10000Q90.jpg_.webp"
+  "images": [
+    "data/images/xianyu/1058060371987/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1058060371987\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : null
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 6
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "Seedance 2.0 API 稳定供应 快到离谱",
-  "url" : "https:\/\/www.goofish.com\/item?id=1058060371987&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "Seedance 2.0 API 稳定供应 快到离谱",
+  "url": "https://www.goofish.com/item?id=1058060371987&categoryId=50023914"
 }

@@ -1,32 +1,28 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "Kimi K3.1 Pro/高速版优惠出\n复购第3名\n¥\n2\n.88\n71人想要\n\nAPI大玩家",
+  "cover_ocr": "kimi k3.1pro\nhighspeed 高速版三\n便宜管饱\n超强推理\n复分何影 乳粉症剪\n高速响应\n更悅的思考遉露\n长文本处理\n超大上下文 更僅你\n更强的智能\n汊寖理解 精准琥出\n多模态能力\n肥文音核績 全糙助手\nK\nKimik3.1pro\n稳定可靠\n企业投品质 安金无忧",
+  "fetched_at": "2026-11-02T10:08:44.388Z",
+  "id": "1093135935473",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i2/2219851738192/O1CN01lrfDoLIGwvB3thOC_!!4611686018427382864-0-xy_item.jpg_450x10000Q90.jpg_.webp"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "Kimi K3.1 Pro\/高速版优惠出\n复购第3名\n¥\n2\n.88\n71人想要\n\nAPI大玩家",
-  "cover_ocr" : "kimi k3.1pro\nhighspeed 高速版三\n便宜管饱\n超强推理\n复分何影 乳粉症剪\n高速响应\n更悅的思考遉露\n长文本处理\n超大上下文 更僅你\n更强的智能\n汊寖理解 精准琥出\n多模态能力\n肥文音核績 全糙助手\nK\nKimik3.1pro\n稳定可靠\n企业投品质 安金无忧",
-  "fetched_at" : "2026-11-01T09:10:02.153Z",
-  "id" : "1093135935473",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i2\/2219851738192\/O1CN01lrfDoLIGwvB3thOC_!!4611686018427382864-0-xy_item.jpg_450x10000Q90.jpg_.webp"
+  "images": [
+    "data/images/xianyu/1093135935473/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1093135935473\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : 71
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 90
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "Kimi K3.1 Pro\/高速版优惠出",
-  "url" : "https:\/\/www.goofish.com\/item?id=1093135935473&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "Kimi K3.1 Pro/高速版优惠出",
+  "url": "https://www.goofish.com/item?id=1093135935473&categoryId=50023914"
 }

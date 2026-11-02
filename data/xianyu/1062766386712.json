@@ -1,32 +1,28 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "GLM-5.2 API 5-6折 ，量大可谈！\n¥\n0\n.01\n\nAPI大玩家",
+  "cover_ocr": "glm 5.2 AP！\n量大管饱\nE80\n超大用量，畅用无忧\n超感TPM配&，支知滿量请束井发：\n大模型应用从容扩展，越用慈省心。\n强大模型，稳定高效\n基于GLM大模型家族技术升级，\n更强维理与理解能力，晌应快，效果艳。\n灵活易用，全面兼容\n探准OpenAI API格式，接入0门檻：\n完曾文档与SDK支持，开发效率倍增。\n立即接入glm 5.2 APl，开启你的无限可能！",
+  "fetched_at": "2026-11-02T10:10:30.646Z",
+  "id": "1062766386712",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i4/2219851738192/O1CN01uXsLfN2ANzinx4jaO_!!4611686018427382864-53-xy_item.heic_450x10000Q90.jpg_.webp"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "GLM-5.2 API 5-6折 ，量大可谈！\n¥\n0\n.01\n\nAPI大玩家",
-  "cover_ocr" : "glm 5.2 AP！\n量大管饱\nE80\n超大用量，畅用无忧\n超感TPM配&，支知滿量请束井发：\n大模型应用从容扩展，越用慈省心。\n强大模型，稳定高效\n基于GLM大模型家族技术升级，\n更强维理与理解能力，晌应快，效果艳。\n灵活易用，全面兼容\n探准OpenAI API格式，接入0门檻：\n完曾文档与SDK支持，开发效率倍增。\n立即接入glm 5.2 APl，开启你的无限可能！",
-  "fetched_at" : "2026-11-01T09:10:02.153Z",
-  "id" : "1062766386712",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i4\/2219851738192\/O1CN01uXsLfN2ANzinx4jaO_!!4611686018427382864-53-xy_item.heic_450x10000Q90.jpg_.webp"
+  "images": [
+    "data/images/xianyu/1062766386712/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1062766386712\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : null
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 3
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "GLM-5.2 API 5-6折 ，量大可谈！",
-  "url" : "https:\/\/www.goofish.com\/item?id=1062766386712&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "GLM-5.2 API 5-6折 ，量大可谈！",
+  "url": "https://www.goofish.com/item?id=1062766386712&categoryId=50023914"
 }

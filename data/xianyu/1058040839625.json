@@ -1,32 +1,28 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "Kimi 2.6 API KEY，4折用\n¥\n0\n.01\n\nAPI大玩家",
+  "cover_ocr": "KIMI 2.6 API\n低至4折\n高性能推理\n响应更快\n稳定可靠\n适合生产环境\n<>\n接口简单\n开发接入更轻松\n啟問集战\nKIMI 2.6\nAPI\n200ox\n妥服务\nppt勿扰\n《/>代码用\nall\n效冤分析\n企业系统",
+  "fetched_at": "2026-11-02T10:10:44.108Z",
+  "id": "1058040839625",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i1/2219851738192/O1CN01bwSk5Z2ANzib9UVqJ_!!4611686018427382864-53-xy_item.heic_450x10000Q90.jpg_.webp"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "Kimi 2.6 API KEY，4折用\n¥\n0\n.01\n\nAPI大玩家",
-  "cover_ocr" : "KIMI 2.6 API\n低至4折\n高性能推理\n响应更快\n稳定可靠\n适合生产环境\n<>\n接口简单\n开发接入更轻松\n啟問集战\nKIMI 2.6\nAPI\n200ox\n妥服务\nppt勿扰\n《\/>代码用\nall\n效冤分析\n企业系统",
-  "fetched_at" : "2026-11-01T09:10:02.153Z",
-  "id" : "1058040839625",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i1\/2219851738192\/O1CN01bwSk5Z2ANzib9UVqJ_!!4611686018427382864-53-xy_item.heic_450x10000Q90.jpg_.webp"
+  "images": [
+    "data/images/xianyu/1058040839625/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1058040839625\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : null
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 1
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "Kimi 2.6 API KEY，4折用",
-  "url" : "https:\/\/www.goofish.com\/item?id=1058040839625&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "Kimi 2.6 API KEY，4折用",
+  "url": "https://www.goofish.com/item?id=1058040839625&categoryId=50023914"
 }

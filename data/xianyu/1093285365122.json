@@ -1,34 +1,30 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "Seedance2.5高清视频生成\n热销第4名\n¥\n6\n.99\n62人想要\n\nAPI大玩家",
+  "cover_ocr": "seecance 2.0\n高性能 AI 视频模型\n源头白菜价\n《《 旗舰级高质量生成》»\n满血无阀割\n细节丰富\n稳定高井发\n运动自然\nAI赋能•视频创作新未来\n不排队\n高效创作",
+  "fetched_at": "2026-11-02T09:50:32.506Z",
+  "id": "1093285365122",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i1/2219851738192/O1CN01NToxWrULEFC3thOC_!!4611686018427382864-0-xy_item.jpg_Q90.jpg_.webp",
+    "https://img.alicdn.com/bao/uploaded/i1/2219851738192/O1CN01NToxWrULEFC3thOC_!!4611686018427382864-0-xy_item.jpg_790x10000Q90.jpg_.webp"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "Seedance2.5高清视频生成\n热销第4名\n¥\n6\n.99\n62人想要\n\nAPI大玩家",
-  "cover_ocr" : "seecance 2.0\n高性能 AI 视频模型\n源头白菜价\n《《 旗舰级高质量生成》»\n满血无阀割\n细节丰富\n稳定高井发\n运动自然\nAI赋能•视频创作新未来\n不排队\n高效创作",
-  "fetched_at" : "2026-11-01T09:10:02.153Z",
-  "id" : "1093285365122",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i1\/2219851738192\/O1CN01NToxWrULEFC3thOC_!!4611686018427382864-0-xy_item.jpg_Q90.jpg_.webp",
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i1\/2219851738192\/O1CN01NToxWrULEFC3thOC_!!4611686018427382864-0-xy_item.jpg_790x10000Q90.jpg_.webp"
+  "images": [
+    "data/images/xianyu/1093285365122/1.jpg",
+    "data/images/xianyu/1093285365122/2.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1093285365122\/1.jpg",
-    "data\/images\/xianyu\/1093285365122\/2.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : 62
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 65
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "Seedance2.5高清视频生成",
-  "url" : "https:\/\/www.goofish.com\/item?id=1093285365122&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "Seedance2.5高清视频生成",
+  "url": "https://www.goofish.com/item?id=1093285365122&categoryId=50023914"
 }

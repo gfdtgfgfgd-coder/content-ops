@@ -1,32 +1,28 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "不多说｜Seedance 2.0 API 亏本冲量\n¥\n0\n.01\n\nAPI大玩家",
+  "cover_ocr": "Seedance\n2.0AP|无限生成\n稳定快速|流畅生成不限次数\nHD\n稳定可靠 高可用 强防护\n极速响应\n秒级生成体验\n高清流畅\n画质细腻稳定\n多种格式\nMP4/ MOV /GIF\n简单接入\n轻松调用\n>>>\n强大•稳定•安全 •高效",
+  "fetched_at": "2026-11-02T10:08:57.569Z",
+  "id": "1065635547524",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i4/2219851738192/O1CN01HTe2x92ANziz2VAp5_!!4611686018427382864-0-xy_item.jpg_450x10000Q90.jpg_.webp"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "不多说｜Seedance 2.0 API 亏本冲量\n¥\n0\n.01\n\nAPI大玩家",
-  "cover_ocr" : "Seedance\n2.0AP|无限生成\n稳定快速|流畅生成不限次数\nHD\n稳定可靠 高可用 强防护\n极速响应\n秒级生成体验\n高清流畅\n画质细腻稳定\n多种格式\nMP4\/ MOV \/GIF\n简单接入\n轻松调用\n>>>\n强大•稳定•安全 •高效",
-  "fetched_at" : "2026-11-01T09:10:02.153Z",
-  "id" : "1065635547524",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i4\/2219851738192\/O1CN01HTe2x92ANziz2VAp5_!!4611686018427382864-0-xy_item.jpg_450x10000Q90.jpg_.webp"
+  "images": [
+    "data/images/xianyu/1065635547524/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1065635547524\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : null
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 1
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "不多说｜Seedance 2.0 API 亏本冲量",
-  "url" : "https:\/\/www.goofish.com\/item?id=1065635547524&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "不多说｜Seedance 2.0 API 亏本冲量",
+  "url": "https://www.goofish.com/item?id=1065635547524&categoryId=50023914"
 }

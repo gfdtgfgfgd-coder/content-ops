@@ -1,34 +1,30 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "Seedance2.5好用视频模型\n买家评价“满足各类需求”\n¥\n5\n.66\n97人想要\n\nAPI大玩家",
+  "cover_ocr": "规渠道\n超强AI视频生成模型\nSeedance25\n生成中⋯.\n生成中.\n便宜管饱\nD 生成中.\n生成中..\n生成中..\n正版无掺水\nHD\nHD可选超清画质\n不排队\n支持井发\n稳定不掉线\n分牌率\n720P\n面质\n时长\n风格\n1080P\n4K\nAI\n生成中⋯\n生成中⋯\n生成中...\n生成中.\n登陆即用",
+  "fetched_at": "2026-11-02T09:50:00.117Z",
+  "id": "1092162018871",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i3/2219851738192/O1CN01geu87stAgGG3thOC_!!4611686018427382864-0-xy_item.jpg_Q90.jpg_.webp",
+    "https://img.alicdn.com/bao/uploaded/i3/2219851738192/O1CN01geu87stAgGG3thOC_!!4611686018427382864-0-xy_item.jpg_790x10000Q90.jpg_.webp"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "Seedance2.5好用视频模型\n买家评价“满足各类需求”\n¥\n5\n.66\n97人想要\n\nAPI大玩家",
-  "cover_ocr" : "规渠道\n超强AI视频生成模型\nSeedance25\n生成中⋯.\n生成中.\n便宜管饱\nD 生成中.\n生成中..\n生成中..\n正版无掺水\nHD\nHD可选超清画质\n不排队\n支持井发\n稳定不掉线\n分牌率\n720P\n面质\n时长\n风格\n1080P\n4K\nAI\n生成中⋯\n生成中⋯\n生成中...\n生成中.\n登陆即用",
-  "fetched_at" : "2026-11-01T09:10:02.152Z",
-  "id" : "1092162018871",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i3\/2219851738192\/O1CN01geu87stAgGG3thOC_!!4611686018427382864-0-xy_item.jpg_Q90.jpg_.webp",
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i3\/2219851738192\/O1CN01geu87stAgGG3thOC_!!4611686018427382864-0-xy_item.jpg_790x10000Q90.jpg_.webp"
+  "images": [
+    "data/images/xianyu/1092162018871/1.jpg",
+    "data/images/xianyu/1092162018871/2.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1092162018871\/1.jpg",
-    "data\/images\/xianyu\/1092162018871\/2.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : 97
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 97
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "Seedance2.5好用视频模型",
-  "url" : "https:\/\/www.goofish.com\/item?id=1092162018871&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "Seedance2.5好用视频模型",
+  "url": "https://www.goofish.com/item?id=1092162018871&categoryId=50023914"
 }

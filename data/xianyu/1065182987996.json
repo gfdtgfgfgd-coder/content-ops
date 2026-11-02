@@ -1,32 +1,28 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "Seedance 2 视频生成效率提升\n¥\n1\n.66\n¥100\n\nAPI大玩家",
+  "cover_ocr": "seedance2.0API\n•无限生成 全网底价-\n失败秒退\n1080P\n高清视频生成\n实时查看用量\n即梦\n一AI—\n满血稳定\n不排队\n支持真人采集！可参考人脸！",
+  "fetched_at": "2026-11-02T09:53:48.022Z",
+  "id": "1065182987996",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i1/2219851738192/O1CN01mh7BCG2ANzixdbNB5_!!4611686018427382864-53-xy_item.heic_450x10000Q90.jpg_.webp"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "Seedance 2 视频生成效率提升\n¥\n1\n.66\n¥100\n\nAPI大玩家",
-  "cover_ocr" : "seedance2.0API\n•无限生成 全网底价-\n失败秒退\n1080P\n高清视频生成\n实时查看用量\n即梦\n一AI—\n满血稳定\n不排队\n支持真人采集！可参考人脸！",
-  "fetched_at" : "2026-11-01T09:10:02.153Z",
-  "id" : "1065182987996",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i1\/2219851738192\/O1CN01mh7BCG2ANzixdbNB5_!!4611686018427382864-53-xy_item.heic_450x10000Q90.jpg_.webp"
+  "images": [
+    "data/images/xianyu/1065182987996/1.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1065182987996\/1.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : null
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 25
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "Seedance 2 视频生成效率提升",
-  "url" : "https:\/\/www.goofish.com\/item?id=1065182987996&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "Seedance 2 视频生成效率提升",
+  "url": "https://www.goofish.com/item?id=1065182987996&categoryId=50023914"
 }

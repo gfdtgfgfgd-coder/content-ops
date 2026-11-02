@@ -1,36 +1,32 @@
 {
-  "audience" : [
-
+  "audience": [],
+  "audience_raw": "",
+  "author": "API大玩家",
+  "body": "Kimi K3.1 Pro新一代模型\n72小时内发布\n¥\n5\n.88\n38人想要\n\nAPI大玩家",
+  "cover_ocr": "Kimi\nKK3.1\nK\nK\n正版 K3.1 Pro\nHighspeed\n源头低价\n源头低价\n低倍率•量大管饱\n<>\n旗舰编程实力\n100万 Token\n长程 Agent\n100W\n超长上下文\n高速响应\n不排队•稳定调用\n正版模型接入\n版本清晰可查\n主流客户端兼容\n便捷接入\n还有\ndeepseek glm-5.3\nMiniMax-M3\n等模型\nACEA（TGRCUCIP2LN",
+  "fetched_at": "2026-11-02T09:50:26.144Z",
+  "id": "1096235901541",
+  "image_urls": [
+    "https://img.alicdn.com/bao/uploaded/i1/2219851738192/O1CN01zWDkEc6xfHG2Y6wS_!!4611686018427382864-0-xy_item.jpg_Q90.jpg_.webp",
+    "https://img.alicdn.com/bao/uploaded/i1/2219851738192/O1CN01zWDkEc6xfHG2Y6wS_!!4611686018427382864-0-xy_item.jpg_790x10000Q90.jpg_.webp",
+    "https://img.alicdn.com/bao/uploaded/i3/T1HDdoXo8vXXartXjX.gif"
   ],
-  "audience_raw" : "",
-  "author" : "API大玩家",
-  "body" : "Kimi K3.1 Pro新一代模型\n72小时内发布\n¥\n5\n.88\n38人想要\n\nAPI大玩家",
-  "cover_ocr" : "Kimi\nKK3.1\nK\nK\n正版 K3.1 Pro\nHighspeed\n源头低价\n源头低价\n低倍率•量大管饱\n<>\n旗舰编程实力\n100万 Token\n长程 Agent\n100W\n超长上下文\n高速响应\n不排队•稳定调用\n正版模型接入\n版本清晰可查\n主流客户端兼容\n便捷接入\n还有\ndeepseek glm-5.3\nMiniMax-M3\n等模型\nACEA（TGRCUCIP2LN",
-  "fetched_at" : "2026-11-01T09:10:02.153Z",
-  "id" : "1096235901541",
-  "image_urls" : [
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i1\/2219851738192\/O1CN01zWDkEc6xfHG2Y6wS_!!4611686018427382864-0-xy_item.jpg_Q90.jpg_.webp",
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i1\/2219851738192\/O1CN01zWDkEc6xfHG2Y6wS_!!4611686018427382864-0-xy_item.jpg_790x10000Q90.jpg_.webp",
-    "https:\/\/img.alicdn.com\/bao\/uploaded\/i3\/T1HDdoXo8vXXartXjX.gif"
+  "images": [
+    "data/images/xianyu/1096235901541/1.jpg",
+    "data/images/xianyu/1096235901541/2.jpg",
+    "data/images/xianyu/1096235901541/3.jpg"
   ],
-  "images" : [
-    "data\/images\/xianyu\/1096235901541\/1.jpg",
-    "data\/images\/xianyu\/1096235901541\/2.jpg",
-    "data\/images\/xianyu\/1096235901541\/3.jpg"
-  ],
-  "is_pinned" : false,
-  "label" : null,
-  "metrics" : {
-    "collects" : null,
-    "comments" : null,
-    "likes" : null,
-    "wants" : 38
+  "is_pinned": false,
+  "label": null,
+  "metrics": {
+    "collects": null,
+    "comments": null,
+    "likes": null,
+    "wants": 69
   },
-  "platform" : "xianyu",
-  "source" : "bookmark",
-  "tags" : [
-
-  ],
-  "title" : "Kimi K3.1 Pro新一代模型",
-  "url" : "https:\/\/www.goofish.com\/item?id=1096235901541&categoryId=50023914"
+  "platform": "xianyu",
+  "source": "bookmark",
+  "tags": [],
+  "title": "Kimi K3.1 Pro新一代模型",
+  "url": "https://www.goofish.com/item?id=1096235901541&categoryId=50023914"
 }
