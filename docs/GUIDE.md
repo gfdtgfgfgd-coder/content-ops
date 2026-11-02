@@ -148,6 +148,23 @@ python3 scripts/gen-image.py \
 | `gpt-image-2-all` | ¥0.05/次 | 未调用 |
 | `gpt-image-2.5-flare` | ¥0.15/次 | 未调用 |
 
+## 6. 数据清洗与偏好包
+
+先安装 `requirements.txt` 到 `work/.venv`。在仓库根目录按顺序运行：
+
+```bash
+python3 scripts/clean-xhs-data.py --report tmp/clean-xhs.json
+python3 scripts/parse-audience.py --report tmp/audience.json
+python3 scripts/clean-xianyu-data.py --report tmp/clean-xianyu.json
+python3 scripts/distill-preferences.py
+```
+
+清洗只增加 `signal`、解析有明确列表的 `audience`；不改帖子原文、好帖标签或最新 wants。`_notes-index.json` 是另一抓取时点的导航快照，不参与清洗和互动分层，以单帖 JSON 的 `metrics` 为准。闲鱼 `_ranked.md` 仅为缺失 wants 提供按 ID 回填的依据，排序并列按 ID 字典序。
+
+清洗阈值、扫描字段和输入目录见 `config/data-cleaning.json`。风险检测扫描正文、封面 OCR 和标签；标题等字段仅提供模型范围上下文。`--input-dir`、`--output-dir` 可处理副本，`--dry-run` 只报告，`--rules` 可指定词库。人群 raw 只有标题时不补造列表。
+
+偏好包 `data/distilled-preferences.json` 是可重建缓存，来源仍是 `rules/` 与 `skills/`。`config/preference-build.json` 指定来源与引用数量，脚本保留来源哈希、引文、正则和模型范围；默认日期取 persona 证据版本，也可传 `--date YYYY-MM-DD`。不要直接修改缓存。源规则更新后先重跑清洗，再重建偏好包。第二轮应显示 `changed=0`（清洗）或 `changed=false`（偏好包）。GPT 执行提取与检查，Claude 负责偏好、风格和文案判断。
+
 ---
 
 *原始详细文档保留在：`01-决策记录.md`（完整决策列表）。其余 00/02/03/gateway/hanabi/xhs-generation 内容已并入本文件，可归档。*
