@@ -7,7 +7,7 @@ description: 用公司 Claude 与 Qwen 为给定产品名生成小红书文案�
 
 产品名与执行模型分开：用户输入 GLM5.3 是内容主题，写稿和风格终审使用公司 Claude，背景使用已验证的 qwen-image-3.0。不自动换提供方，不接价格监控，不自动发布。
 
-1. 整段读取 simin-persona、quick 标题句式、平台规则、设计规则和 quick 风险 YAML。历史选帖只提供结构参考；其中的能力、价格、活动与风险词不直接继承。
+1. 读取 `data/distilled-preferences.json`（T13 产出，可重建缓存）。缺失时回退到 simin-persona、quick 标题句式、平台规则、设计规则和 quick 风险 YAML，并读取本 Skill。偏好在生成脚本中加载，通用 `/v1/*` 网关仅透传。历史选帖只提供结构参考；其中的能力、价格、活动与风险词不直接继承。版本与哈希写入 manifest，当前文本与封面配色都来自同一偏好版本。
 2. 同时读取本 Skill，优先级为事实边界、当前风险库、思敏偏好、历史模板。D10 原决策不改；当前较晚反馈禁 API / 量大管饱 / 询价，Seedance 另按模型范围检查。封面、正文、标签、适合人群均检查。
 3. 未提供带 claim/source 的已核验事实时，只写以该模型为主题的任务试用建议。不能宣称产品已上线、稳定、便宜、促销、拥有某参数或性能，也不能虚构亲测。建议与实际能力须区分，试用结果由使用者核对。
 4. Claude 返回三行封面标题、约 200 字正文、3–5 个标签与结构说明。首行为行动词，第二行为完整模型名。默认人群为电商商家、广告工作室、短视频创作者，待 T09 动态化。两篇要有不同角度与组织结构。
@@ -16,7 +16,7 @@ description: 用公司 Claude 与 Qwen 为给定产品名生成小红书文案�
 7. 使用 rules/cover-palettes.json 的实测配色；图像模型生成无字背景，本机粗黑体排准确中文。模型名最大，行动词次大，卖点第三层。按本轮 persona 封面优先 1:1；两篇用居中卡片、分区任务两种结构。3:4 保留为通用历史建议，当前链路不默认使用。
 8. 每次写 manifest、草稿、终稿、文案和 PNG。输出目录非空时拒绝覆盖。失败保留已完成部分，manifest 写 failed，不把缺图标为完成；不自动重试收费请求。
 
-使用：`python3 scripts/gen-xhs-post.py --model GLM5.3 --platform xhs --count 2`。首次按 requirements.txt 安装到 .venv；脚本会转到该仓库环境。凭证只在忽略的 work/gateway.env 或环境变量，不写到成品或日志。
+使用：`python3 scripts/gen-xhs-post.py --model GLM5.3 --platform xhs --count 2`。首次按 requirements.txt 安装到 work/.venv（运行包也兼容 .venv）；脚本会转到该仓库环境。凭证只在忽略的 work/gateway.env 或环境变量，不写到成品或日志。
 
 ## 额度不足与复用背景
 

@@ -70,7 +70,7 @@ def main():
         copy(runtime/name, app/name)
 
     content = bundle/'content-ops'
-    for name in ['scripts/gen-xhs-post.py', 'scripts/gen-image.py', 'scripts/check-banned-words.py', 'requirements.txt', 'rules', 'skills/simin-persona', 'skills/xhs-title-patterns', 'skills/xhs-post-generation', 'data/images/backgrounds/company-qwen-2026-11-01.png']:
+    for name in ['scripts/gen-xhs-post.py', 'scripts/gen-image.py', 'scripts/check-banned-words.py', 'requirements.txt', 'rules', 'skills/simin-persona', 'skills/xhs-title-patterns', 'skills/xhs-post-generation', 'data/distilled-preferences.json', 'data/images/backgrounds/company-qwen-2026-11-01.png']:
         copy(ROOT/name, content/name)
     content_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     for name in ['launcher.mjs', '启动Hanabi.command', '配置公司网关.command', 'configure-gateway.py']:

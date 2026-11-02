@@ -10,7 +10,7 @@ import sys
 ROOT=Path(__file__).resolve().parents[1]
 FILES=['scripts/gen-xhs-post.py','scripts/gen-image.py','scripts/check-banned-words.py',
        'rules','skills/simin-persona','skills/xhs-title-patterns','skills/xhs-post-generation',
-       'requirements.txt']
+       'data/distilled-preferences.json','requirements.txt']
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
@@ -18,7 +18,7 @@ def main():
     parser.add_argument('--config',type=Path,default=ROOT/'work/gateway.env')
     parser.add_argument('--background',type=Path,default=ROOT/'data/images/backgrounds/company-qwen-2026-11-01.png')
     args=parser.parse_args()
-    if not args.config.is_file():parser.error('未找到本机网关配置；先按 docs/gateway-image-usage.md 配置')
+    if not args.config.is_file():parser.error('未找到本机网关配置；先按 docs/GUIDE.md 配置')
     target=args.target.expanduser().resolve()
     if target==ROOT:parser.error('运行目录不能与源码目录相同')
     for name in FILES:
