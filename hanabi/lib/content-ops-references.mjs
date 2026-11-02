@@ -272,7 +272,7 @@ export class ContentOpsReferences {
     const focusVersion = ++this.focusVersion;
     this.focusInProgress = true;
     this.root.open = true;
-    document.querySelector('[data-view="caihuo"]')?.click();
+    document.querySelector('[data-view="references"]')?.click();
     try {
       if (target.platform !== this.platform.value) {
         this.platform.value = target.platform;

@@ -273,11 +273,7 @@ export class ContentOpsEditors {
 
 if (typeof document !== 'undefined') {
   const mount = () => {
-    const root = document.querySelector('.content-ops-editors');
-    if (root && !root.dataset.mounted) {
-      root.dataset.mounted = 'true';
-      window.contentOpsEditors = new ContentOpsEditors(root);
-    }
+    if (!window.contentOpsEditors) window.contentOpsEditors = new ContentOpsEditors(document);
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, {once:true});
   else mount();

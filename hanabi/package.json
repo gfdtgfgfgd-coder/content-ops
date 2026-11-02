@@ -1,0 +1,79 @@
+{
+  "name": "content-alchemy-workbench",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "test": "node --check server.mjs && node --check app.js",
+    "start": "node server.mjs",
+    "app": "electron .",
+    "build:mac": "electron-builder --mac dmg --universal"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.17",
+    "marked": "^16.4.2"
+  },
+  "devDependencies": {
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3"
+  },
+  "main": "electron-main.mjs",
+  "build": {
+    "appId": "com.lilith.contentalchemy",
+    "productName": "Hanabi·灵感如火花般闪现",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "app.js",
+      "server.mjs",
+      "lib/content-ops-*.mjs",
+      "lib/**/*.css",
+      "styles.css",
+      "electron-main.mjs",
+      "package.json",
+      "assets/**/*",
+      "!assets/app-icon.iconset/**",
+      "!assets/app-icon-1024.png",
+      "lib/**/*.css"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/app-icon.icns",
+      "identity": null,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "title": "Hanabi·灵感如火花般闪现",
+      "window": {
+        "width": 600,
+        "height": 390
+      },
+      "contents": [
+        {
+          "x": 155,
+          "y": 205,
+          "type": "file"
+        },
+        {
+          "x": 445,
+          "y": 205,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "asarUnpack": []
+  }
+}

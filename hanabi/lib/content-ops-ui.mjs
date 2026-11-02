@@ -12,13 +12,13 @@ configRequest?.then(renderProvider).catch(error=>{const provider=document.queryS
 export class ContentOpsUI {
   constructor({navigate,refresh=async()=>{},openChat}={}){
     if(window.contentOpsUI){Object.assign(window.contentOpsUI,{...(navigate?{navigate}:{}),refresh,...(openChat?{openChat}:{})});return window.contentOpsUI;}
-    Object.assign(this,{navigate,refresh,openChat});this.panel=document.querySelector('#content-ops-panel')||document.querySelector('#view-peizhi');this.form=document.querySelector('#content-ops-form');this.result=document.querySelector('#content-ops-results');this.notice=document.querySelector('#content-ops-status');this.batch=null;this.busy=false;this.timer=null;
+    Object.assign(this,{navigate,refresh,openChat});this.panel=document.querySelector('#content-ops-panel')||document.querySelector('#view-peizhi')||document.querySelector('#view-generate');this.form=document.querySelector('#content-ops-form');this.result=document.querySelector('#content-ops-results');this.notice=document.querySelector('#content-ops-status');this.batch=null;this.busy=false;this.timer=null;
     if(!this.panel||!this.form||!this.result)return;
     window.contentOpsUI=this;
     this.form.addEventListener('submit',event=>{event.preventDefault();void this.submit();});
     document.querySelector('#content-ops-stop').onclick=()=>void this.stop();
     document.querySelector('#content-ops-new').onclick=()=>{this.batch=null;sessionStorage.removeItem('hanabi.content-ops-request');this.render();document.querySelector('#content-ops-model').focus();};
-    document.querySelector('#content-ops-history').onchange=async event=>{if(!event.target.value)return;try{this.batch=(await api('/api/content-ops/batches/'+event.target.value)).batch;this.panel.open=true;this.render();document.querySelector('[data-view="zhihua"]')?.click();this.schedule();}catch(error){this.notice.textContent=error.message;}};
+    document.querySelector('#content-ops-history').onchange=async event=>{if(!event.target.value)return;try{this.batch=(await api('/api/content-ops/batches/'+event.target.value)).batch;this.panel.open=true;this.render();document.querySelector('[data-view="generate"]')?.click();this.schedule();}catch(error){this.notice.textContent=error.message;}};
     this.result.addEventListener('click',async event=>{
       const copy=event.target.closest('[data-content-ops-copy]'),preview=event.target.closest('[data-content-ops-preview]'),chat=event.target.closest('[data-content-ops-chat]'),reference=event.target.closest('[data-content-ops-reference]');
       try{if(copy){await navigator.clipboard.writeText(this.batch.posts[Number(copy.dataset.contentOpsCopy)].text);copy.textContent='已复制';}
@@ -74,4 +74,4 @@ export class ContentOpsUI {
 }
 
 // The current three-view shell also works when the legacy workbench bootstrap fails.
-if(document.querySelector('#view-peizhi')&&!document.querySelector('#content-ops-panel'))new ContentOpsUI();
+if(document.querySelector('#view-generate')&&!window.contentOpsUI)new ContentOpsUI();
