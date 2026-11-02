@@ -29,7 +29,7 @@ python3 scripts/gen-xhs-post.py \
 - `outputs/日期/post-1.png`、`post-2.png`：成图
 
 **依赖：**
-需要配置 `work/gateway.env`：
+需要配置 `scratch/gateway.env`：
 ```
 CONTENT_OPS_API_KEY=your_key
 CONTENT_OPS_BASE_URL=https://your-gateway.com
@@ -63,11 +63,11 @@ python3 scripts/check-banned-words.py \
 
 ```bash
 cd ~/Desktop/content-ops
-python3 -m venv work/.venv
-work/.venv/bin/pip install -r requirements.txt
+python3 -m venv scratch/.venv
+scratch/.venv/bin/pip install -r requirements.txt
 ```
 
-本卡新增的清洗、蒸馏与风险词入口在缺少 PyYAML 时会尝试 `work/.venv/bin/python3`；其他脚本可显式用该解释器运行。
+本卡新增的清洗、蒸馏与风险词入口在缺少 PyYAML 时会尝试 `scratch/.venv/bin/python3`；其他脚本可显式用该解释器运行。
 
 ## 在 Hanabi 中使用
 

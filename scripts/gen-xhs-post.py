@@ -17,10 +17,10 @@ try:
     import yaml
     from PIL import Image, ImageDraw, ImageFont, ImageOps
 except ImportError:
-    local = next((p for p in (ROOT / 'work/.venv/bin/python3', ROOT / '.venv/bin/python') if p.exists()), ROOT / 'work/.venv/bin/python3')
+    local = next((p for p in (ROOT / 'scratch/.venv/bin/python3', ROOT / '.venv/bin/python') if p.exists()), ROOT / 'scratch/.venv/bin/python3')
     if __name__ == '__main__' and local.exists() and Path(sys.executable).absolute() != local.absolute():
         os.execv(str(local), [str(local), str(Path(__file__).resolve()), *sys.argv[1:]])
-    raise SystemExit('缺少 Pillow / PyYAML；按 requirements.txt 安装到 work/.venv')
+    raise SystemExit('缺少 Pillow / PyYAML；按 requirements.txt 安装到 scratch/.venv')
 
 def module(name, filename):
     spec = importlib.util.spec_from_file_location(name, ROOT / 'scripts' / filename)
@@ -360,7 +360,7 @@ def main():
     parser.add_argument('--platform',default='xhs',choices=['xhs'])
     parser.add_argument('--count',type=int,default=2)
     parser.add_argument('--output',type=Path,default=ROOT/'outputs'/datetime.now(ZoneInfo('Asia/Shanghai')).strftime('%Y-%m-%d'))
-    parser.add_argument('--config',type=Path,default=ROOT/'work/gateway.env')
+    parser.add_argument('--config',type=Path,default=ROOT/'scratch/gateway.env')
     parser.add_argument('--preferences',type=Path,default=ROOT/'data/distilled-preferences.json',help='统一偏好包；不存在时回退到已审来源')
     parser.add_argument('--preference-max-chars',type=int,default=32000,help='偏好块字符上限，超限时明确失败，不截断硬规则')
     parser.add_argument('--facts',type=Path,help='可选：带 claim/source 的已核验产品事实 JSON')

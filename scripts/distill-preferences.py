@@ -28,7 +28,7 @@ def load_yaml_module() -> Any:
             import os
 
             os.execv(str(env_python), [str(env_python), str(Path(__file__).resolve()), *sys.argv[1:]])
-        raise SystemExit("缺少 PyYAML，请先按 requirements.txt 安装到 work/.venv")
+        raise SystemExit("缺少 PyYAML，请先按 requirements.txt 安装到 scratch/.venv")
 
 
 def read_text(path: Path) -> str:

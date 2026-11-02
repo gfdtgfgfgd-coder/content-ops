@@ -18,10 +18,10 @@ def load_rules(path=None):
     try:
         import yaml
     except ModuleNotFoundError:
-        runtime = ROOT / "work/.venv/bin/python3"
+        runtime = ROOT / "scratch/.venv/bin/python3"
         if runtime.exists() and Path(sys.executable).resolve() != runtime.resolve():
             os.execv(str(runtime), [str(runtime), *sys.argv])
-        raise SystemExit("缺少 PyYAML，请先安装 requirements.txt（推荐 work/.venv）")
+        raise SystemExit("缺少 PyYAML，请先安装 requirements.txt（推荐 scratch/.venv）")
     with Path(path or RULES).open(encoding="utf-8") as f:
         return yaml.safe_load(f) or []
 

@@ -17,8 +17,8 @@
 - 从置顶两篇提炼的实际参数
 
 ### banned-words-quick.yaml
-风险词库（T05 快速版）：
-- 20 条规则（小红书 12 条、闲鱼 4 条、公众号 4 条）
+风险词库（当前唯一机器规则源，T18 复核版）：
+- 21 条规则（以平台、模型和正则条件组合）
 - 包含替换建议
 - 支持 `scripts/check-banned-words.py` CLI 检查
 
@@ -41,3 +41,4 @@ python3 scripts/check-banned-words.py --platform xhs --model GLM5.3 --text "你�
 - 发现新的禁用词 → 加到 `banned-words-quick.yaml`
 - 平台规则变化 → 更新 `platform-rules.md`
 - 需要新配色 → 加到 `cover-palettes.json`
+- 企微证据仅保留在 `data/wecom/risk-words.md`，不作为机器规则重复读取；新增规则只写入 quick YAML。

@@ -69,7 +69,7 @@ def write_records(records, platform, out_dir, images_root, skip_existing=True):
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--platform",required=True,choices=["xhs","xianyu"]); ap.add_argument("--urls",default=None); ap.add_argument("--records",required=True,help="JSON array extracted by ego-browser"); ap.add_argument("--out-dir",default=None); ap.add_argument("--images-root",default="data/images"); ap.add_argument("--skip-existing",action="store_true"); ap.add_argument("--ranked",default=None)
     a=ap.parse_args(); out=a.out_dir or f"data/{a.platform}"; records=json.loads(Path(a.records).read_text()); done,failed=write_records(records,a.platform,out,a.images_root,a.skip_existing)
-    if failed: Path("work/fetch-failures.json").write_text(json.dumps(failed,ensure_ascii=False,indent=2)+"\n")
+    if failed: Path("scratch/fetch-failures.json").write_text(json.dumps(failed,ensure_ascii=False,indent=2)+"\n")
     if a.platform=="xianyu" and a.ranked:
         rows=[]
         for p in Path(out).glob("*.json"):

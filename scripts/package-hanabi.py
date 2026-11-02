@@ -151,7 +151,7 @@ exec "$HANABI_BUNDLE_DIR/启动Hanabi.command"
     subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', str(applet)], check=True, stdout=subprocess.DEVNULL)
 
     settings = {}
-    for line in (ROOT/'work/gateway.env').read_text().splitlines():
+    for line in (ROOT/'scratch/gateway.env').read_text().splitlines():
         if '=' in line:
             key, value = line.split('=', 1)
             if key in ['CONTENT_OPS_BASE_URL', 'CONTENT_OPS_TEXT_MODEL', 'CONTENT_OPS_IMAGE_MODEL']:
@@ -197,7 +197,7 @@ Node、Python、Pillow、PyYAML、生成规则和已有背景均已随包带上�
 
 启动器沿用现有安全部署脚本；有正在运行的对话或生成任务时会提示，待任务完成再打开。它不会替换现有数据库、上传文件或用户知识档案。
 
-完整 ZIP 是本地程序包，体积超过普通 Git 单文件限制，保留在 releases/。同目录另有源码快照可通过 Git 同步；源码快照需要自行安装运行环境和依赖，不等于完整 ZIP。
+完整 ZIP 是本地程序包，体积超过普通 Git 单文件限制，保留在 hanabi/releases/。同目录另有源码快照可通过 Git 同步；源码快照需要自行安装运行环境和依赖，不等于完整 ZIP。
 ''',encoding='utf-8')
     version_hash = hashlib.sha256(b''.join((source/name).read_bytes() for name in ['server.mjs','app.js','index.html','styles.css'])).hexdigest()[:12]
     manifest = {'format':'hanabi-local-package','version':1,'bundleVersion':args.name+'-'+version_hash,

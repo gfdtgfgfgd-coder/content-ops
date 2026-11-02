@@ -8,7 +8,7 @@ const parse = (value, fallback = {}) => { try { return JSON.parse(value); } catc
 const fail = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
 const now = () => new Date().toISOString();
 const sameRefs = (a = [], b = []) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => x?.platform === b[i]?.platform && String(x?.id).toLowerCase() === String(b[i]?.id).toLowerCase());
-const gatewayEnvPath = root => [join(root, 'tmp/gateway.env'), join(root, 'work/gateway.env')].find(path => existsSync(path)) || join(root, 'tmp/gateway.env');
+const gatewayEnvPath = root => [join(root, 'scratch/gateway.env')].find(path => existsSync(path)) || join(root, 'scratch/gateway.env');
 
 export function validateContentOpsInput(body) {
   if (typeof body?.model !== 'string' || !body.model.trim() || body.model.trim().length > 80 || /[\x00-\x1f\x7f]/u.test(body.model)) throw fail('模型名须为 1–80 个字符，不能含换行。');

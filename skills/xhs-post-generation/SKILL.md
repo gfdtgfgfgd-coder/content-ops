@@ -16,7 +16,7 @@ description: 用公司 Claude 与 Qwen 为给定产品名生成小红书文案�
 7. 使用 rules/cover-palettes.json 的实测配色；图像模型生成无字背景，本机粗黑体排准确中文。模型名最大，行动词次大，卖点第三层。按本轮 persona 封面优先 1:1；两篇用居中卡片、分区任务两种结构。3:4 保留为通用历史建议，当前链路不默认使用。
 8. 每次写 manifest、草稿、终稿、文案和 PNG。输出目录非空时拒绝覆盖。失败保留已完成部分，manifest 写 failed，不把缺图标为完成；不自动重试收费请求。
 
-使用：`python3 scripts/gen-xhs-post.py --model GLM5.3 --platform xhs --count 2`。首次按 requirements.txt 安装到 work/.venv（运行包也兼容 .venv）；脚本会转到该仓库环境。凭证只在忽略的 work/gateway.env 或环境变量，不写到成品或日志。
+使用：`python3 scripts/gen-xhs-post.py --model GLM5.3 --platform xhs --count 2`。首次按 requirements.txt 安装到 scratch/.venv（运行包也兼容 .venv）；脚本会转到该仓库环境。凭证只在忽略的 scratch/gateway.env 或环境变量，不写到成品或日志。
 
 ## 额度不足与复用背景
 

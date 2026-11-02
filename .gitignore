@@ -7,15 +7,10 @@ __pycache__/
 .DS_Store
 *.env
 .venv/
-work/
+scratch/
 
-# Hanabi 应用代码（住在 hanabi/，不进仓库；node_modules 是 symlink）
-hanabi/
-
-# Local runnable Hanabi packages; small source snapshots and checksums stay in Git.
-releases/Hanabi-*/
-releases/*-mac-arm64.zip
-启动Hanabi.app/
+# Hanabi 本地依赖与运行包中的 node_modules 不进 Git；源码和小型发布 ZIP按需强制加入。
+hanabi/node_modules/
+/releases/
 
 # 本机临时脚本与中间产物
-tmp/

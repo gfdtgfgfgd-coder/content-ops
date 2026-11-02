@@ -94,7 +94,7 @@ print(json.dumps(result,ensure_ascii=False))
 `;
 
 async function checkerRisk(root,posts,platform,config){
-  const python=[join(root,'work/.venv/bin/python3'),join(root,'.venv/bin/python')].find(path=>existsSync(path))||'python3';
+  const python=[join(root,'scratch/.venv/bin/python3'),join(root,'.venv/bin/python')].find(path=>existsSync(path))||'python3';
   return await new Promise((resolvePromise,reject)=>{
     const child=spawn(python,['-c',pythonRiskProgram,root],{cwd:root,stdio:['pipe','pipe','pipe'],shell:false});
     let stdout='',settled=false;

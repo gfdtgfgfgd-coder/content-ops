@@ -16,7 +16,7 @@ FILES=['scripts/gen-xhs-post.py','scripts/gen-image.py','scripts/check-banned-wo
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--target',type=Path,default=Path.home()/'Library/Application Support/Content Alchemy/content-ops')
-    parser.add_argument('--config',type=Path,default=ROOT/'work/gateway.env')
+    parser.add_argument('--config',type=Path,default=ROOT/'scratch/gateway.env')
     parser.add_argument('--background',type=Path,default=ROOT/'data/images/backgrounds/company-qwen-2026-11-01.png')
     args=parser.parse_args()
     if not args.config.is_file():parser.error('未找到本机网关配置；先按 docs/GUIDE.md 配置')
@@ -26,7 +26,7 @@ def main():
         source=ROOT/name;destination=target/name;destination.parent.mkdir(parents=True,exist_ok=True)
         if source.is_dir():shutil.copytree(source,destination,dirs_exist_ok=True)
         else:shutil.copy2(source,destination)
-    config=target/'work/gateway.env';config.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(args.config,config);os.chmod(config,0o600)
+    config=target/'scratch/gateway.env';config.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(args.config,config);os.chmod(config,0o600)
     if args.background.is_file():
         background=target/'data/images/backgrounds/company-qwen-2026-11-01.png';background.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(args.background,background)
     else:

@@ -91,7 +91,7 @@
 5. 完成后可复制文案、保存图片、进入燃放预览
 6. 「历史批次」可找回已保存结果；「另做一批」开新请求
 
-**换电脑**：从 `releases/Hanabi-2026-11-01-mac-arm64.zip` 解压，运行「配置公司网关.command」填入公司 Key，双击「启动Hanabi.command」（若弹安全警告：`xattr -dr com.apple.quarantine <解压目录>`）。个人数据库和附件不含在包里。
+**换电脑**：从 `hanabi/releases/Hanabi-2026-11-03-t19-mac-arm64.zip` 解压，运行「配置公司网关.command」填入公司 Key，双击「启动Hanabi.command」（若弹安全警告：`xattr -dr com.apple.quarantine <解压目录>`）。个人数据库和附件不含在包里。
 
 **文件位置**
 
@@ -109,11 +109,11 @@
 
 **首次配置**
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-cp config/gateway.env.example work/gateway.env
-chmod 600 work/gateway.env
-# 编辑 work/gateway.env，填入 CONTENT_OPS_API_KEY / BASE_URL / IMAGE_MODEL
+python3 -m venv scratch/.venv
+scratch/.venv/bin/pip install -r requirements.txt
+cp config/gateway.env.example scratch/gateway.env
+chmod 600 scratch/gateway.env
+# 编辑 scratch/gateway.env，填入 CONTENT_OPS_API_KEY / BASE_URL / IMAGE_MODEL
 ```
 
 **生成**
@@ -132,7 +132,7 @@ python3 scripts/gen-xhs-post.py --model GLM5.3 --count 2 --resume \
 
 **偏好版本**：生成脚本优先读 `data/distilled-preferences.json`，日志输出 `preferences_loaded`，manifest 保存来源、日期、版本和 SHA256。缺包时会明确警告并回退旧来源；损坏或超长包会在收费调用前失败，不截断硬规则。可用 `--preferences <文件>` 指定路径，用 `--preference-max-chars` 调整上限。部分失败批次续跑要求同一偏好哈希，已完成历史保持原版本。Hanabi provider 行显示当前偏好版本。安装/打包脚本会同步偏好包，源规则改动后先蒸馏再安装。
 
-2026-11-02 本机验收使用 `tmp/t14-neutral-test-background.png` 浅灰测试底图，不代表恢复了旧公司背景或调用了新生图。跨机缺少缓存时 `cachedAvailable=false`；新背景仍受 Q9 限制。当前三栏页面的旧 `app.js` 有缺失旧 DOM 的初始化错误；T14 provider 状态独立可读，完整工作台由后续卡处理，不能据版本显示推断整页生成功能已验收。
+2026-11-02 本机验收使用 `scratch/t14-neutral-test-background.png` 浅灰测试底图，不代表恢复了旧公司背景或调用了新生图。跨机缺少缓存时 `cachedAvailable=false`；新背景仍受 Q9 限制。T19 已将页面收敛为生成图文、素材库、思敏偏好、风险词、预览五页；provider 状态与本地网关独立可读。
 
 **文生图（单独调用）**
 ```bash
@@ -154,12 +154,12 @@ python3 scripts/gen-image.py \
 
 ## 6. 数据清洗与偏好包
 
-先安装 `requirements.txt` 到 `work/.venv`。在仓库根目录按顺序运行：
+先安装 `requirements.txt` 到 `scratch/.venv`。在仓库根目录按顺序运行：
 
 ```bash
-python3 scripts/clean-xhs-data.py --report tmp/clean-xhs.json
-python3 scripts/parse-audience.py --report tmp/audience.json
-python3 scripts/clean-xianyu-data.py --report tmp/clean-xianyu.json
+python3 scripts/clean-xhs-data.py --report scratch/clean-xhs.json
+python3 scripts/parse-audience.py --report scratch/audience.json
+python3 scripts/clean-xianyu-data.py --report scratch/clean-xianyu.json
 python3 scripts/distill-preferences.py
 ```
 
@@ -179,4 +179,4 @@ Hanabi「采火」展示小红书364帖、闲鱼34帖，默认30条，按需加�
 
 卡片「引用到下一批」最多选择8条；选择仅保留在当前浏览器会话中，生成时才显式传给脚本。结果里的「本批参考了」来自实际manifest，点击可定位高亮素材，不影响分页。命令行可用 `--references <JSON>`，文件是 `[{"platform":"xhs","id":"帖子ID"}]`；manifest记录标题与来源哈希，失败续跑要求引用一致。默认不引用。
 
-2026-11-02本机运行源码实际位于 `releases/Hanabi-2026-11-01-mac-arm64/app`，业务数据仍在 Application Support/Content Alchemy/content-ops。素材与结果组件可独立于旧app.js运行，旧通用工作台初始化错误留待T19精简；不能据素材库可用推断旧对话和通用预览已恢复。完整ZIP打包模板目录当前缺失，T15仅核验素材白名单及运行安装。
+2026-11-02本机运行源码实际位于 `hanabi/releases/Hanabi-2026-11-03-t19-mac-arm64.zip`（解压后的 `app/`），业务数据仍在 Application Support/Content Alchemy/content-ops。素材与结果组件可独立于旧app.js运行，旧通用工作台已在 T19 收敛为当前五页；素材库与结果组件独立运行。完整ZIP打包模板目录当前缺失，T15仅核验素材白名单及运行安装。

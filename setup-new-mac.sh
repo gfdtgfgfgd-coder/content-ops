@@ -26,18 +26,18 @@ fi
 echo "✓ Node.js $node_version"
 echo "✓ Python $python_version"
 
-if [[ ! -f "tmp/gateway.env" ]]; then
-  mkdir -p tmp
+if [[ ! -f "scratch/gateway.env" ]]; then
+  mkdir -p scratch
   template=""
-  for candidate in config/gateway.env.example tmp/gateway.env.example work/gateway.env.example; do
+  for candidate in config/gateway.env.example scratch/gateway.env.example; do
     if [[ -f "$candidate" ]]; then template="$candidate"; break; fi
   done
   if [[ -n "$template" ]]; then
-    cp "$template" tmp/gateway.env
-    chmod 600 tmp/gateway.env
-    echo "→ 已创建 tmp/gateway.env，请填入 CONTENT_OPS_API_KEY。"
+    cp "$template" scratch/gateway.env
+    chmod 600 scratch/gateway.env
+    echo "→ 已创建 scratch/gateway.env，请填入 CONTENT_OPS_API_KEY。"
   else
-    echo "⚠ 未找到 config/gateway.env.example，请手动创建 tmp/gateway.env。"
+    echo "⚠ 未找到 config/gateway.env.example，请手动创建 scratch/gateway.env。"
   fi
 fi
 
@@ -45,7 +45,7 @@ echo "→ 安装 Hanabi 依赖..."
 (cd hanabi && npm install --omit=optional)
 
 echo "→ 启动 Hanabi..."
-nohup npm --prefix hanabi start >"tmp/hanabi.log" 2>"tmp/hanabi-error.log" &
+nohup npm --prefix hanabi start >"scratch/hanabi.log" 2>"scratch/hanabi-error.log" &
 server_pid=$!
 for i in {1..30}; do
   if curl --fail --silent "http://127.0.0.1:6187/healthz" >/dev/null 2>&1; then
@@ -56,5 +56,5 @@ for i in {1..30}; do
   sleep 1
 done
 
-echo "✗ 服务启动超时，请查看 tmp/hanabi-error.log" >&2
+echo "✗ 服务启动超时，请查看 scratch/hanabi-error.log" >&2
 exit 1

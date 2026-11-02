@@ -97,7 +97,7 @@ export class ContentOpsEditor {
     })();
     try{return await this.rootPromise;}catch(error){this.rootPromise=null;throw error;}
   }
-  python(root){return [join(root,'work/.venv/bin/python3'),join(root,'.venv/bin/python')].find(path=>existsSync(path))||'python3';}
+  python(root){return [join(root,'scratch/.venv/bin/python3'),join(root,'.venv/bin/python')].find(path=>existsSync(path))||'python3';}
   async file(root,path){
     const target=join(root,path),canonical=await realpath(target).catch(()=>null);
     if(!canonical||canonical!==target||!inside(root,canonical)||(await lstat(target)).isSymbolicLink()||!(await stat(target)).isFile())throw fail('编辑文件不存在或路径不是仓库内的普通文件。',503);
