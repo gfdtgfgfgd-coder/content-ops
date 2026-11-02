@@ -16,20 +16,20 @@
   ],
   "source_hashes": {
     "skills/simin-persona/SKILL.md": {
-      "sha256": "d91a16b11f12ce7f63348196f59e9705dbe56da4200059c3facac763c11b301c",
-      "bytes": 9189
+      "sha256": "5927ea8c00c755ed26d582c5580ac2c04d291b898f7d48d5419bddbdda4a7fa2",
+      "bytes": 9483
     },
     "data/wecom/simin-feedback.jsonl": {
       "sha256": "167ba514e8ff67efba4be3b8641386c9ee4d283ad6e44421a84c3a237d6ebb1e",
       "bytes": 13504
     },
     "data/wecom/risk-words.md": {
-      "sha256": "90aee028801219f5a7921f7e4661e387176ff52677d7ec1cab9d3ae3dd086330",
-      "bytes": 3453
+      "sha256": "ece22c264ab9df115da63840d26ea4610ec9a4828632b59b64a1ea6152ef2ef3",
+      "bytes": 4091
     },
     "rules/banned-words-quick.yaml": {
-      "sha256": "acb7fb979d347f80ea426a3ecd1e6ff97d44e13f0655de2002fd7cbf038cca1f",
-      "bytes": 3512
+      "sha256": "e578153bebd89800261548083788ef6911fefae23ea10088d03ae8a75d87e310",
+      "bytes": 4247
     },
     "rules/platform-rules.md": {
       "sha256": "d546e26d36007f5576e6468086589d6a48b7c0ab50c0146ccf588f11a6ad18f3",
@@ -52,8 +52,8 @@
       "bytes": 6025
     },
     "skills/xhs-post-generation/SKILL.md": {
-      "sha256": "c6c6ac021aa34ddfe7b016edfd83a4737659be2852503f1e132742a6dbc9564d",
-      "bytes": 3655
+      "sha256": "6fab318e25455490dd3206a19e62e7ae5f9228a57c79134ac9851edaaaf57909",
+      "bytes": 4166
     },
     "data/reference-posts.json": {
       "sha256": "bd58e68fe388a868be8c7c2ade680893d87806f1143a6fefc37cf90bf7756252",
@@ -299,7 +299,8 @@
             "gzh"
           ],
           "replace": "便宜管饱",
-          "reason": "广告法极限词（platform-rules.md）"
+          "reason": "广告法极限词（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "全网最低",
@@ -310,7 +311,8 @@
             "gzh"
           ],
           "replace": "价格友好",
-          "reason": "广告法极限词（platform-rules.md）"
+          "reason": "广告法极限词（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "史上最低",
@@ -321,7 +323,8 @@
             "gzh"
           ],
           "replace": "价格友好",
-          "reason": "广告法极限词（platform-rules.md）"
+          "reason": "广告法极限词（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "第一",
@@ -332,7 +335,8 @@
             "gzh"
           ],
           "replace": "表现突出",
-          "reason": "广告法极限词"
+          "reason": "广告法极限词",
+          "added_at": "2026-11-02"
         },
         {
           "word": "顶级",
@@ -343,7 +347,8 @@
             "gzh"
           ],
           "replace": "高性能",
-          "reason": "广告法极限词"
+          "reason": "广告法极限词",
+          "added_at": "2026-11-02"
         },
         {
           "word": "独家",
@@ -354,7 +359,8 @@
             "gzh"
           ],
           "replace": "专属",
-          "reason": "广告法极限词/未经证明的绝对化表述"
+          "reason": "广告法极限词/未经证明的绝对化表述",
+          "added_at": "2026-11-02"
         },
         {
           "word": "几折",
@@ -363,7 +369,8 @@
             "xhs"
           ],
           "replace": "便宜量大",
-          "reason": "小红书禁止具体折扣（D10）"
+          "reason": "小红书禁止具体折扣（D10）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "[0-9]+(?:\\.[0-9]+)?\\s*折",
@@ -373,6 +380,7 @@
           ],
           "replace": "便宜量大",
           "reason": "小红书禁止具体折扣（D10）",
+          "added_at": "2026-11-02",
           "regex": true
         },
         {
@@ -383,6 +391,7 @@
           ],
           "replace": "低价",
           "reason": "小红书禁止具体价格（D10）",
+          "added_at": "2026-11-02",
           "regex": true
         },
         {
@@ -393,6 +402,7 @@
           ],
           "replace": "低价",
           "reason": "小红书禁止具体价格（D10）",
+          "added_at": "2026-11-02",
           "regex": true
         },
         {
@@ -402,7 +412,8 @@
             "xhs"
           ],
           "replace": "大家",
-          "reason": "小红书调性：避免油腻称呼（platform-rules.md）"
+          "reason": "小红书调性：避免油腻称呼（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "姐妹们",
@@ -411,7 +422,8 @@
             "xhs"
           ],
           "replace": "大家",
-          "reason": "小红书调性：避免油腻称呼（platform-rules.md）"
+          "reason": "小红书调性：避免油腻称呼（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "API",
@@ -421,7 +433,8 @@
             "xianyu"
           ],
           "replace": "模型服务",
-          "reason": "运营反馈小红书和闲鱼都不可写（2026-10-30）"
+          "reason": "运营反馈小红书和闲鱼都不可写（2026-10-30）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "量大管饱",
@@ -430,7 +443,8 @@
             "xhs"
           ],
           "replace": "便宜量大",
-          "reason": "运营较晚反馈明确禁用，覆盖历史素材用法（2026-10-30 18:55）"
+          "reason": "运营较晚反馈明确禁用，覆盖历史素材用法（2026-10-30 18:55）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "询价",
@@ -439,7 +453,8 @@
             "xhs"
           ],
           "replace": "直接安排上",
-          "reason": "运营明确说询价小红书不能写（2026-10-30）"
+          "reason": "运营明确说询价小红书不能写（2026-10-30）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "[一二三四五六七八九十零〇两半]+(?:点[一二三四五六七八九十零〇]+)?\\s*折",
@@ -449,7 +464,8 @@
             "xhs"
           ],
           "replace": "活动价",
-          "reason": "图片和文案的具体折扣均不可写，补足中文数字（2026-10-28）"
+          "reason": "图片和文案的具体折扣均不可写，补足中文数字（2026-10-28）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "满血",
@@ -461,7 +477,8 @@
             "seedance"
           ],
           "replace": "",
-          "reason": "Seedance 单独禁词，删除相关承诺后重写（2026-10-29）"
+          "reason": "Seedance 单独禁词，删除相关承诺后重写（2026-10-29）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "管饱管够",
@@ -473,7 +490,8 @@
             "seedance"
           ],
           "replace": "活动价",
-          "reason": "Seedance 单独禁词（2026-10-29）"
+          "reason": "Seedance 单独禁词（2026-10-29）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "不卡人脸",
@@ -485,7 +503,8 @@
             "seedance"
           ],
           "replace": "",
-          "reason": "Seedance 单独禁词，不换成等义的人脸能力保证（2026-10-29）"
+          "reason": "Seedance 单独禁词，不换成等义的人脸能力保证（2026-10-29）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "秒级",
@@ -497,7 +516,8 @@
             "seedance"
           ],
           "replace": "",
-          "reason": "Seedance 单独禁词，不换成秒出等速度承诺（2026-10-29）"
+          "reason": "Seedance 单独禁词，不换成秒出等速度承诺（2026-10-29）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)",
@@ -507,7 +527,8 @@
             "xhs"
           ],
           "replace": "",
-          "reason": "D10 禁具体金额，包括中文数字及单位后缀"
+          "reason": "D10 禁具体金额，包括中文数字及单位后缀",
+          "added_at": "2026-11-02"
         }
       ],
       "platform_allows_api": false,
@@ -541,7 +562,8 @@
             "gzh"
           ],
           "replace": "便宜管饱",
-          "reason": "广告法极限词（platform-rules.md）"
+          "reason": "广告法极限词（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "全网最低",
@@ -552,7 +574,8 @@
             "gzh"
           ],
           "replace": "价格友好",
-          "reason": "广告法极限词（platform-rules.md）"
+          "reason": "广告法极限词（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "史上最低",
@@ -563,7 +586,8 @@
             "gzh"
           ],
           "replace": "价格友好",
-          "reason": "广告法极限词（platform-rules.md）"
+          "reason": "广告法极限词（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "第一",
@@ -574,7 +598,8 @@
             "gzh"
           ],
           "replace": "表现突出",
-          "reason": "广告法极限词"
+          "reason": "广告法极限词",
+          "added_at": "2026-11-02"
         },
         {
           "word": "顶级",
@@ -585,7 +610,8 @@
             "gzh"
           ],
           "replace": "高性能",
-          "reason": "广告法极限词"
+          "reason": "广告法极限词",
+          "added_at": "2026-11-02"
         },
         {
           "word": "独家",
@@ -596,7 +622,8 @@
             "gzh"
           ],
           "replace": "专属",
-          "reason": "广告法极限词/未经证明的绝对化表述"
+          "reason": "广告法极限词/未经证明的绝对化表述",
+          "added_at": "2026-11-02"
         },
         {
           "word": "API",
@@ -606,7 +633,8 @@
             "xianyu"
           ],
           "replace": "模型服务",
-          "reason": "运营反馈小红书和闲鱼都不可写（2026-10-30）"
+          "reason": "运营反馈小红书和闲鱼都不可写（2026-10-30）",
+          "added_at": "2026-11-02"
         }
       ],
       "platform_allows_api": false,
@@ -632,7 +660,8 @@
             "gzh"
           ],
           "replace": "便宜管饱",
-          "reason": "广告法极限词（platform-rules.md）"
+          "reason": "广告法极限词（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "全网最低",
@@ -643,7 +672,8 @@
             "gzh"
           ],
           "replace": "价格友好",
-          "reason": "广告法极限词（platform-rules.md）"
+          "reason": "广告法极限词（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "史上最低",
@@ -654,7 +684,8 @@
             "gzh"
           ],
           "replace": "价格友好",
-          "reason": "广告法极限词（platform-rules.md）"
+          "reason": "广告法极限词（platform-rules.md）",
+          "added_at": "2026-11-02"
         },
         {
           "word": "第一",
@@ -665,7 +696,8 @@
             "gzh"
           ],
           "replace": "表现突出",
-          "reason": "广告法极限词"
+          "reason": "广告法极限词",
+          "added_at": "2026-11-02"
         },
         {
           "word": "顶级",
@@ -676,7 +708,8 @@
             "gzh"
           ],
           "replace": "高性能",
-          "reason": "广告法极限词"
+          "reason": "广告法极限词",
+          "added_at": "2026-11-02"
         },
         {
           "word": "独家",
@@ -687,7 +720,8 @@
             "gzh"
           ],
           "replace": "专属",
-          "reason": "广告法极限词/未经证明的绝对化表述"
+          "reason": "广告法极限词/未经证明的绝对化表述",
+          "added_at": "2026-11-02"
         }
       ],
       "platform_allows_api": true,
