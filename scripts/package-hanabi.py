@@ -70,8 +70,13 @@ def main():
         copy(runtime/name, app/name)
 
     content = bundle/'content-ops'
-    for name in ['scripts/gen-xhs-post.py', 'scripts/gen-image.py', 'scripts/check-banned-words.py', 'requirements.txt', 'rules', 'skills/simin-persona', 'skills/xhs-title-patterns', 'skills/xhs-post-generation', 'data/distilled-preferences.json', 'data/images/backgrounds/company-qwen-2026-11-01.png']:
+    for name in ['scripts/gen-xhs-post.py', 'scripts/gen-image.py', 'scripts/check-banned-words.py', 'requirements.txt', 'rules', 'skills/simin-persona', 'skills/xhs-title-patterns', 'skills/xhs-post-generation', 'data/distilled-preferences.json', 'data/reference-posts.json', 'data/xhs', 'data/xianyu', 'data/images/xhs', 'data/images/xianyu', 'config/data-cleaning.json']:
         copy(ROOT/name, content/name)
+    background = Path('data/images/backgrounds/company-qwen-2026-11-01.png')
+    if (ROOT/background).is_file():
+        copy(ROOT/background, content/background)
+    else:
+        print(f'[WARN] 缓存背景不存在，程序包跳过该文件：{background}', file=sys.stderr)
     content_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     for name in ['launcher.mjs', '启动Hanabi.command', '配置公司网关.command', 'configure-gateway.py']:
         copy(TEMPLATES/name, bundle/name)
