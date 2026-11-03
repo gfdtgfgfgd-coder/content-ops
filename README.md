@@ -16,7 +16,7 @@
 | 项 | 值 |
 |---|---|
 | 更新日期 | 2026-11-03 |
-| 阶段 | T17、T13、T14、T15、T18、T19、T20 完成；下一张 T09（T16 已完成） |
+| 阶段 | T17、T13、T14、T15、T18、T19、T20、T21 完成；下一张 T09（T16 已完成） |
 | 标题与版式 | 12 条样本，5 组开场 / 卖点 / 模板；真实封面取色，Claude 已校核 |
 | 图像通路 | 公司 qwen-image-3.0 已实测出图；配置见 docs/GUIDE.md |
 | 风险词 | 21 条 quick 规则；偏好包保留正则与模型范围，小红书和闲鱼都禁 API（D18） |
@@ -25,7 +25,7 @@
 | 使用者 | lilith 一人；做顺了同事（阮思敏，运营）会用 |
 | 生成脚本 | GLM5.3 两套 + Kimi 一套已产出；缓存背景可用，新图需充值，见 docs/GUIDE.md |
 | 界面 | Hanabi 6187 已精简为生成图文、素材库、思敏偏好、风险词、预览五页；素材库可浏览398帖、454图 |
-| 本轮交付 | T20：根目录、规则源、发布物、工作区和 docs 已统一清理；详见 [T20-content-ops根目录整体精简](tasks/archive/T20-content-ops根目录整体精简.md) |
+| 本轮交付 | T21：四图视觉对照与两条差异化 GLM5.3 生图提示词；未生图、未做平台检测，详见 [T21 任务卡](tasks/archive/T21-GLM53封面分析与双提示词.md) 和 [提示词](outputs/2026-11-03/glm53-cover-prompts.md) |
 | Hanabi 程序包 | T19 精简版源码与本地 ZIP 已生成；打包说明见 [hanabi/releases/README.md](hanabi/releases/README.md) |
 
 ## 目录
@@ -61,7 +61,7 @@ docs/                  文档
 tasks/                 任务卡
   README.md            进度表
   T09-人群标签.md      待开始任务卡
-  T20-content-ops根目录整体精简.md  当前任务卡
+  archive/             已完成任务卡
 scratch/               工作区（不进 git）
   gateway.env          公司网关配置
   .venv/               Python 虚拟环境
