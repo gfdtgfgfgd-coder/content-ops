@@ -1,4 +1,4 @@
-# T18 复核 2026-11-02：21 条已有规则；新增禁词 0 条。added_at 是本次补录元数据的日期，不是首次提出禁词的日期；证据时间保留在 reason 与 data/wecom/risk-words.md。
+# T18 复核 2026-11-02：22 条规则；T35 于 2026-11-03 增加境外模型名对外禁写规则。added_at 是本次补录元数据的日期，不是首次提出禁词的日期；证据时间保留在 reason 与 data/wecom/risk-words.md。
 # T05 简化版：今天生成链路使用。来源：D10、platform-rules.md、广告法常见极限词。
 - word: 最便宜
   level: ban
@@ -146,3 +146,12 @@
   replace: ''
   reason: D10 禁具体金额，包括中文数字及单位后缀
   added_at: "2026-11-02"
+
+# T35 2026-11-03：境外模型品牌/型号不得进入任何对外文案；群公告按 gzh 口径检查。
+- word: '(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])'
+  regex: true
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 指定模型
+  reason: 境外模型品牌和型号不得写入对外可见内容（T35，2026-11-03）
+  added_at: "2026-11-03"

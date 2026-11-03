@@ -18,7 +18,7 @@
 
 ### banned-words-quick.yaml
 风险词库（当前唯一机器规则源，T18 复核版）：
-- 21 条规则（以平台、模型和正则条件组合）
+- 22 条规则（以平台、模型和正则条件组合）
 - 包含替换建议
 - 支持 `scripts/check-banned-words.py` CLI 检查
 
