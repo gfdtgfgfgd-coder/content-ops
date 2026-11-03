@@ -10,7 +10,7 @@
 
 ```
 5 产出层   outputs/<日期>/          小红书图文 / 闲鱼帖 / 公众号 HTML
-4 生成层   scripts/gen-*            Claude 写稿 → 去AI味 → 风险词过滤 → 文生图
+4 生成层   scripts/gen-*            文案模型写稿 → 去AI味 → 风险词过滤 → 文生图
 3 规则层   rules/ + skills/         平台规则 / 设计规则 / 禁词 / 思敏偏好 / 配色
 2 学习层   scripts/clean-* · distill-preferences · parse-audience
                                     从 data/ 提炼标题句式、版式特征、人群标签
@@ -21,7 +21,8 @@
 
 | 环节 | 用谁 |
 |---|---|
-| 规划、规则、风格判断、文案 | Claude（公司网关） |
+| 规划、规则、风格判断 | 规划与复核 agent |
+| 文案写稿 | 公司网关文案模型（脚本硬校验模型名含 claude） |
 | 抓取、批量脚本、跑任务卡 | GPT（Codex 桌面版） |
 | 去 AI 味 | `avoid-ai-writing` 技能，不够接 Gemini |
 | 文生图 | `qwen-image-3.0`（公司网关，已实测） |
@@ -57,10 +58,10 @@
 | # | 决定 |
 |---|---|
 | D1 | 不重写 Hanabi，新建薄仓库 content-ops，每个能力独立成脚本 |
-| D3 | Claude 规划 + 纠偏，Codex 执行，lilith 拍板 |
+| D3 | 规划与复核 agent 负责规划纠偏，Codex 执行，lilith 拍板 |
 | D5 | 抓取用 Codex 操控 ego 浏览器（已登录态），不用接口爬虫 |
 | D7 | 闲鱼好坏用「想要数」；小红书好坏用思敏企微红勾 / 单独截出 |
-| D9 | 文案 = Claude；批量执行 = GPT；去AI味 = avoid-ai-writing 技能；图 = 公司网关图像模型 |
+| D9 | 文案 = 公司网关文案模型；批量执行 = GPT；去AI味 = avoid-ai-writing 技能；图 = 公司网关图像模型 |
 | D10 | 价格区块词：允许「便宜管饱」「便宜量大」「活动价」；禁具体折扣和金额 |
 | D14 | 思敏偏好以 `skills/simin-persona/SKILL.md` 形式沉淀 |
 | D16 | 允许改 Hanabi，接 content-ops 生成脚本，不重构整个项目 |
@@ -176,7 +177,7 @@ python3 scripts/distill-preferences.py
 
 清洗阈值、扫描字段和输入目录见 `config/data-cleaning.json`。风险检测扫描正文、封面 OCR 和标签；标题等字段仅提供模型范围上下文。`--input-dir`、`--output-dir` 可处理副本，`--dry-run` 只报告，`--rules` 可指定词库。人群 raw 只有标题时不补造列表。
 
-偏好包 `data/distilled-preferences.json` 是可重建缓存，来源仍是 `rules/` 与 `skills/`。`config/preference-build.json` 指定来源与引用数量，脚本保留来源哈希、引文、正则和模型范围；默认日期取 persona 证据版本，也可传 `--date YYYY-MM-DD`。不要直接修改缓存。源规则更新后先重跑清洗，再重建偏好包。第二轮应显示 `changed=0`（清洗）或 `changed=false`（偏好包）。GPT 执行提取与检查，Claude 负责偏好、风格和文案判断。
+偏好包 `data/distilled-preferences.json` 是可重建缓存，来源仍是 `rules/` 与 `skills/`。`config/preference-build.json` 指定来源与引用数量，脚本保留来源哈希、引文、正则和模型范围；默认日期取 persona 证据版本，也可传 `--date YYYY-MM-DD`。不要直接修改缓存。源规则更新后先重跑清洗，再重建偏好包。第二轮应显示 `changed=0`（清洗）或 `changed=false`（偏好包）。GPT 执行提取与检查，规划与复核 agent 负责偏好与风格判断。
 
 ---
 

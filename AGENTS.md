@@ -1,6 +1,6 @@
 # AGENTS.md · 干活规矩
 
-适用于 Codex、Claude 和任何接手的 agent。
+适用于 Codex、规划与复核 agent 和任何接手的 agent。
 
 ## 开工
 
