@@ -84,7 +84,7 @@
 
 ## 4. Hanabi 怎么用
 
-本机地址：`http://127.0.0.1:6187`（后台 LaunchAgent 已安装，关终端不影响）。
+本机地址：`http://127.0.0.1:6187`（这台机器已装 LaunchAgent `com.lilith.hanabi.server`，关终端不影响；该 plist 未进 git、路径写死 `/Users/mac`，换机要单独装）。
 
 **生成小红书图文**
 1. 点左上「Hanabi／内容工作台」→ 展开「生成小红书图文」
@@ -94,7 +94,7 @@
 5. 完成后可复制文案、保存图片、进入燃放预览
 6. 「历史批次」可找回已保存结果；「另做一批」开新请求
 
-**换电脑**：克隆仓库后跑 `zsh setup-new-mac.sh`（安装依赖、配置 LaunchAgent、启动服务并打开 `http://127.0.0.1:6187`）。不再需要解压 ZIP。旧版曾在 `hanabi/releases/` 放打包 ZIP，里面同时是 app 与 content-ops 的双份副本（套娃），已删除；说明见 `hanabi/releases/README.md`。个人数据库与附件始终不含在仓库里。
+**换电脑**：克隆仓库后跑 `zsh setup-new-mac.sh`。它做四件事：检查 Node ≥22.13 与 Python ≥3.9、从 `config/gateway.env.example` 复制出 `scratch/gateway.env`、`npm install` Hanabi 依赖、后台 `npm start` 并轮询 `/healthz` 后打开 6187。**它不装 Python 依赖（需自己建 `scratch/.venv`），也不装 LaunchAgent**——重启后要重跑脚本，或手动加载本机 plist。不再需要解压 ZIP。旧版曾在 `hanabi/releases/` 放打包 ZIP，里面同时是 app 与 content-ops 的双份副本（套娃），已删除；说明见 `hanabi/releases/README.md`。个人数据库与附件始终不含在仓库里。
 
 **文件位置**
 
