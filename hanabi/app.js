@@ -4,15 +4,26 @@ import { mountContentOpsReferences } from '/lib/content-ops-references.mjs';
 const views = ['generate', 'references', 'persona', 'banned', 'preview'];
 const showView = (name) => {
   const view = views.includes(name) ? name : 'generate';
-  for (const panel of document.querySelectorAll('.view-panel')) panel.hidden = panel.id !== `view-${view}`;
-  for (const button of document.querySelectorAll('[data-view]')) button.classList.toggle('active', button.dataset.view === view);
+  const changed = !document.querySelector(`#view-${view}`)?.classList.contains('active');
+  for (const panel of document.querySelectorAll('.view-panel')) {
+    panel.hidden = panel.id !== `view-${view}`;
+    panel.classList.toggle('active', !panel.hidden);
+  }
+  for (const button of document.querySelectorAll('[data-view]')) {
+    const active = button.dataset.view === view;
+    button.classList.toggle('active', active);
+    if (active) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
+  }
   history.replaceState(null, '', `#${view}`);
+  if (changed) window.scrollTo({ top:0, behavior:'instant' });
 };
 document.addEventListener('click', (event) => {
   const button = event.target.closest('[data-view]');
   if (button) { event.preventDefault(); showView(button.dataset.view); }
 });
 window.addEventListener('popstate', () => showView(location.hash.slice(1)));
+window.addEventListener('hashchange', () => showView(location.hash.slice(1)));
 
 const preview = document.querySelector('#preview-content');
 window.addEventListener('content-ops:preview', (event) => {
@@ -44,9 +55,5 @@ const contentOpsUI = new ContentOpsUI({ navigate: (view, detail) => {
 }, refresh: async () => {} });
 mountContentOpsReferences();
 
-for (const name of ['persona', 'banned']) {
-  const panel = document.querySelector(`#view-${name}`);
-  panel?.addEventListener('click', () => {});
-}
 showView(location.hash.slice(1) || 'generate');
 void api('/healthz').catch(() => {});

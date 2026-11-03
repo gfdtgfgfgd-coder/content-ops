@@ -30,8 +30,8 @@
 .editor-quotes td:nth-child(1),.editor-quotes td:nth-child(2) { white-space:nowrap; font-variant-numeric:tabular-nums; }
 .editor-quotes td:last-child { min-width:280px; }
 .editor-table-scroll { margin:8px 0 14px; border-top:1px solid var(--line); }
-.editor-table-scroll table { min-width:760px; }
-.editor-word { font-weight:600; white-space:nowrap; }
+.editor-table-scroll table { min-width:1000px; table-layout:fixed; }
+.editor-word { font-weight:600; white-space:normal; overflow-wrap:anywhere; }
 .editor-table-scroll td:nth-child(2),.editor-table-scroll td:nth-child(3) { white-space:nowrap; }
 .editor-table-scroll td:nth-child(6) { min-width:180px; }
 .editor-form { display:grid; gap:10px; max-width:760px; padding:12px 0 4px; }
@@ -64,6 +64,14 @@
   .editor-section h2 { align-items:flex-start; }
   .editor-form-grid { grid-template-columns:minmax(0,1fr); }
   .editor-form-grid fieldset,.editor-form-wide { grid-column:auto; }
-  .editor-table-scroll table { min-width:700px; }
   .editor-form :is(input:not([type=checkbox]),textarea,select) { min-height:44px; }
 }
+
+/* Regex rules must wrap within their column instead of consuming the whole table. */
+.editor-table-scroll thead th:nth-child(1) { width:18%; }
+.editor-table-scroll thead th:nth-child(2) { width:6%; }
+.editor-table-scroll thead th:nth-child(3) { width:15%; }
+.editor-table-scroll thead th:nth-child(4) { width:14%; }
+.editor-table-scroll thead th:nth-child(5) { width:14%; }
+.editor-table-scroll thead th:nth-child(6) { width:25%; }
+.editor-table-scroll thead th:nth-child(7) { width:8%; }
