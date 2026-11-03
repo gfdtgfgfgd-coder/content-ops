@@ -1,0 +1,24 @@
+{
+  "_note": "仓库体量预算。scripts/doctor.py 读这份文件判断仓库是否开始熵增。改预算要在这里改并写进决策记录，不要在别处开口子。",
+  "tracked_files_max": 90,
+  "tracked_kb_max": 2100,
+  "single_file_kb_max": 400,
+  "scratch_kb_max": 204800,
+  "scratch_keep_dirs": 2,
+  "duplicate_min_kb": 1,
+  "layers": {
+    "data": "数据层：只放派生物，一个事实一个文件",
+    "rules": "规则层：词库、配色、平台口径",
+    "scripts": "服务层：抓取/清洗/生成/检查，一个能力一个入口",
+    "api": "接口层：本地网关，纯透传",
+    "ui": "表现层：Hanabi 前端"
+  },
+  "scripts_entry_allow": [
+    "fetch.py",
+    "build.py",
+    "generate.py",
+    "check.py",
+    "doctor.py",
+    "ocr-covers.swift"
+  ]
+}
