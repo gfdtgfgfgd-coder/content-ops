@@ -27,7 +27,7 @@
 | 界面 | Hanabi 6187 五页布局已修复；ego-lite 实测 1440/768/390px，无整页横向溢出；素材库可浏览398帖、454图 |
 | 本轮交付 | T29：修复主区被挤成8px、导航断行、页面显隐冲突及风险词长正则撑列；五页与素材分页、引用、表单、图文预览已验收，详见 [T29任务卡](tasks/archive/T29-Hanabi布局修复.md) |
 | 最近内容交付 | T28：Kimi闲鱼双方图中段沿品牌黑白灰＋蓝色；顶部型号/价词设专属黄粉紫、朱红暖黄，不扩散至场景。占位与卖点保留，预设色值对比4.882—12.238:1。未生图或做平台检测，详见 [T28任务卡](tasks/archive/T28-Kimi品牌调性与标题对比.md) 和 [闲鱼方图提示词](outputs/2026-11-03/kimi31-xianyu-square-prompts.md) |
-| Hanabi 程序包 | T19 精简版源码与本地 ZIP 已生成；打包说明见 [hanabi/releases/README.md](hanabi/releases/README.md) |
+| Hanabi 程序包 | 源码即仓库内 `hanabi/`，换机跑 `zsh setup-new-mac.sh`；不再发布 ZIP（旧 ZIP 是 app 与 content-ops 双份副本，已删），说明见 [hanabi/releases/README.md](hanabi/releases/README.md) |
 
 ## 目录
 

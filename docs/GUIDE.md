@@ -12,7 +12,8 @@
 5 产出层   outputs/<日期>/          小红书图文 / 闲鱼帖 / 公众号 HTML
 4 生成层   scripts/gen-*            Claude 写稿 → 去AI味 → 风险词过滤 → 文生图
 3 规则层   rules/ + skills/         平台规则 / 设计规则 / 禁词 / 思敏偏好 / 配色
-2 学习层   scripts/learn-*          从 data/ 提炼标题句式、版式特征、人群标签
+2 学习层   scripts/clean-* · distill-preferences · parse-audience
+                                    从 data/ 提炼标题句式、版式特征、人群标签
 1 采集层   scripts/fetch-*          ego 浏览器抓小红书 / 闲鱼 / 企微截图 OCR
 ```
 
@@ -74,6 +75,7 @@
 | Q7 | D10 允许「便宜管饱」，但 2026-10-30 18:55 禁「量大管饱」；口径是否统一扩展？ | 开放：生成先用便宜量大/活动价，等 lilith 决定 |
 | Q8 | 企微更早历史尚有缺口，未读取到 2024 年记录 | T17-C 已补采 77 屏并复查到客户端当前最早可加载端（2026-10-15 14:18）；更早历史未证明不存在 |
 | Q9 | 公司网关余额约 0.05，Qwen 单次预扣 0.25，新背景生图受阻 | 阻塞中：补充额度后可用「生成新背景」 |
+| Q10 | D8 的隐私口径（企微原文只留本机、进 git 的只有提炼物）是否同样适用于 ChatGPT 对话原文？ | 开放：T31 暂按 D8 类推执行，原文放 `data/gpt-chat/raw/` 并 gitignore，等 lilith 确认 |
 
 历史已关闭问题见 `docs/01-决策记录.md`。
 
@@ -91,14 +93,14 @@
 5. 完成后可复制文案、保存图片、进入燃放预览
 6. 「历史批次」可找回已保存结果；「另做一批」开新请求
 
-**换电脑**：从 `hanabi/releases/Hanabi-2026-11-03-t19-mac-arm64.zip` 解压，运行「配置公司网关.command」填入公司 Key，双击「启动Hanabi.command」（若弹安全警告：`xattr -dr com.apple.quarantine <解压目录>`）。个人数据库和附件不含在包里。
+**换电脑**：克隆仓库后跑 `zsh setup-new-mac.sh`（安装依赖、配置 LaunchAgent、启动服务并打开 `http://127.0.0.1:6187`）。不再需要解压 ZIP。旧版曾在 `hanabi/releases/` 放打包 ZIP，里面同时是 app 与 content-ops 的双份副本（套娃），已删除；说明见 `hanabi/releases/README.md`。个人数据库与附件始终不含在仓库里。
 
 **文件位置**
 
 | 项目 | 路径 |
 |---|---|
 | content-ops 源码与规则 | `~/Desktop/content-ops`（Git 同步） |
-| Hanabi 最新开发源码 | `~/Documents/ChatGPT/【探索】/content-alchemy` |
+| Hanabi 源码 | `hanabi/`（本仓库内，源码即发布物，不再另发 ZIP） |
 | Hanabi 运行副本 | `~/Library/Application Support/Content Alchemy/runtime` |
 | 生成成品 | `~/Library/Application Support/Content Alchemy/content-ops/outputs/<日期>/hanabi/<批次ID>/` |
 | 数据库与图片附件 | `~/Library/Application Support/Content Alchemy/library.sqlite` + `uploads/` |
@@ -129,6 +131,13 @@ python3 scripts/gen-xhs-post.py --model GLM5.3 --platform xhs --count 2
 python3 scripts/gen-xhs-post.py --model GLM5.3 --count 2 --resume \
   --background data/images/backgrounds/company-qwen-2026-11-01.png
 ```
+
+**事实通道 `--facts`**（写实能力的入口）
+```bash
+python3 scripts/gen-xhs-post.py --model GLM5.3 --count 2 \
+  --facts data/corpus/glm-5.3/facts.json
+```
+`facts.json` 结构：`{"model": "GLM5.3", "verified_claims": [{"claim": "断言", "source": "官方链接"}]}`。脚本校验 `model` 与 `--model` 一致、每条 claim 必须带 `source`，校验不过在收费调用前就失败。不传 `--facts` 时脚本只能写「任务试用建议」，不得写产品能力、性能或价格——这是 `skills/xhs-post-generation/SKILL.md` 第 3 条在代码里的落点。旧文档漏写了这个参数，导致此前只能靠提示词里那句「仅输入模型名」兜底。
 
 **偏好版本**：生成脚本优先读 `data/distilled-preferences.json`，日志输出 `preferences_loaded`，manifest 保存来源、日期、版本和 SHA256。缺包时会明确警告并回退旧来源；损坏或超长包会在收费调用前失败，不截断硬规则。可用 `--preferences <文件>` 指定路径，用 `--preference-max-chars` 调整上限。部分失败批次续跑要求同一偏好哈希，已完成历史保持原版本。Hanabi provider 行显示当前偏好版本。安装/打包脚本会同步偏好包，源规则改动后先蒸馏再安装。
 
@@ -179,4 +188,4 @@ Hanabi「采火」展示小红书364帖、闲鱼34帖，默认30条，按需加�
 
 卡片「引用到下一批」最多选择8条；选择仅保留在当前浏览器会话中，生成时才显式传给脚本。结果里的「本批参考了」来自实际manifest，点击可定位高亮素材，不影响分页。命令行可用 `--references <JSON>`，文件是 `[{"platform":"xhs","id":"帖子ID"}]`；manifest记录标题与来源哈希，失败续跑要求引用一致。默认不引用。
 
-2026-11-02本机运行源码实际位于 `hanabi/releases/Hanabi-2026-11-03-t19-mac-arm64.zip`（解压后的 `app/`），业务数据仍在 Application Support/Content Alchemy/content-ops。素材与结果组件可独立于旧app.js运行，旧通用工作台已在 T19 收敛为当前五页；素材库与结果组件独立运行。完整ZIP打包模板目录当前缺失，T15仅核验素材白名单及运行安装。
+2026-11-03 更正：运行源码就是仓库里的 `hanabi/`（index.html、app.js、server.mjs、lib/、styles.css），不再有 releases 下的 ZIP，也没有「解压后的 app/」这一层。业务数据仍在 Application Support/Content Alchemy/content-ops。素材与结果组件可独立于旧 app.js 运行，旧通用工作台已在 T19 收敛为当前五页。
