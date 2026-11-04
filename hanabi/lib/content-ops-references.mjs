@@ -80,11 +80,9 @@ export class ContentOpsReferences {
     for (const filter of [this.modelCategory,this.layoutStyle]) filter.addEventListener('change',()=>{this.focusVersion++;void this.load(true);});
     this.more.addEventListener('click', () => void this.load());
     this.clearSelection.addEventListener('click', () => {
-      this.selectedReferences = [];
-      this.selectedKeys.clear();
-      this.saveSelection();
-      this.refreshBadges();
+      this.clearSelectionNow();
     });
+    root.querySelector('#content-ops-ref-generate')?.addEventListener('click', () => document.querySelector('[data-view="generate"]')?.click());
     root.addEventListener('click', event => this.handleClick(event));
     root.addEventListener('toggle', event => {
       const disclosure = event.target;
@@ -405,6 +403,22 @@ export class ContentOpsReferences {
 
   getSelection() { return this.selectedReferences.map(({platform,id}) => ({platform,id})); }
 
+  clearSelectionNow() {
+    this.selectedReferences = [];
+    this.selectedKeys.clear();
+    this.saveSelection();
+    this.refreshBadges();
+  }
+
+  removeSelection(reference) {
+    if (!reference) return;
+    const key = keyOf(reference);
+    this.selectedReferences = this.selectedReferences.filter(item => keyOf(item) !== key);
+    this.selectedKeys.delete(key);
+    this.saveSelection();
+    this.refreshBadges();
+  }
+
   refreshBadges() {
     for (const card of this.root.querySelectorAll('.ref-card')) {
       const post = this.findPost(card);
@@ -417,6 +431,8 @@ export class ContentOpsReferences {
     }
     this.selectionLabel.textContent = this.selectedReferences.length ? `下批引用 ${this.selectedReferences.length} 条` : '';
     this.clearSelection.hidden = !this.selectedReferences.length;
+    const generate = this.root.querySelector('#content-ops-ref-generate');
+    if (generate) generate.hidden = !this.selectedReferences.length;
     window.dispatchEvent(new CustomEvent('content-ops:reference-selection',{detail:{references:this.getSelection()}}));
   }
 

@@ -4,6 +4,7 @@ const styleLabels={bold_typo:'撞色大字报',code_ide:'极客代码屏',card_3
 const copyFormatLabels={all_variations:'全套多样化',format_1:'极简转化',format_2:'工具场景',format_3:'精准圈人'};
 export const copiesForPost=post=>Array.isArray(post?.copies)&&post.copies.length?post.copies:(post?.text?[{index:1,text:post.text}]:[]);
 export const selectedCopy=(post,position=0)=>copiesForPost(post)[position]||copiesForPost(post)[0]||{text:''};
+const hydratedReferences=(references,liveReferences)=>Array.isArray(references)?references.map(ref=>liveReferences.find(item=>item.platform===ref.platform&&String(item.id)===String(ref.id))||ref):[];
 const richText=text=>esc(text).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
 // Display is derived from the saved Markdown; copying always uses the untouched text.
 export function parsePostText(text=''){
@@ -39,6 +40,13 @@ export class ContentOpsUI {
     Object.assign(this,{refresh,openChat});this.panel=document.querySelector('#content-ops-panel')||document.querySelector('#view-peizhi')||document.querySelector('#view-generate');this.form=document.querySelector('#content-ops-form');this.result=document.querySelector('#content-ops-results');this.notice=document.querySelector('#content-ops-status');this.batch=null;this.selectedCopies=new Map();this.busy=false;this.timer=null;
     if(!this.panel||!this.form||!this.result)return;
     window.contentOpsUI=this;
+    this.selectedRefs=document.querySelector('#content-ops-selected-refs');
+    this.referenceHint=document.querySelector('#content-ops-reference-hint');
+    this.liveReferences=[];
+    this.referenceLoadVersion=0;
+    this.historicalReferences=false;
+    window.addEventListener('content-ops:reference-selection',event=>{this.historicalReferences=false;void this.loadReferenceCards(event.detail?.references||[]);});
+    document.addEventListener('content-ops:view',()=>this.renderReferenceCards());
     this.form.addEventListener('submit',event=>{event.preventDefault();void this.submit();});
     this.form.addEventListener('input',()=>{this.formEdited=true;if(!this.batch&&!this.busy)this.render();});
     this.imageDialog=document.createElement('dialog');this.imageDialog.className='ops-image-dialog';this.imageDialog.setAttribute('aria-label','封面原图');
@@ -49,14 +57,14 @@ export class ContentOpsUI {
     document.querySelector('#content-ops-style-mode')?.addEventListener('change',()=>this.syncStyleFields());
     document.querySelector('#content-ops-stop').onclick=()=>void this.stop();
     document.querySelector('#content-ops-new').onclick=()=>{clearTimeout(this.timer);this.batch=null;document.querySelector('#content-ops-history').value='';sessionStorage.removeItem('hanabi.content-ops-request');this.render();document.querySelector('#content-ops-model').focus();};
-    document.querySelector('#content-ops-history').onchange=async event=>{if(!event.target.value||this.busy||this.batch?.status==='running')return;try{this.batch=(await api('/api/content-ops/batches/'+event.target.value)).batch;this.panel.open=true;this.applyBatchToForm(this.batch);this.render();document.querySelector('[data-view="generate"]')?.click();this.schedule();}catch(error){this.notice.textContent=error.message;}};
+    document.querySelector('#content-ops-history').onchange=async event=>{if(!event.target.value||this.busy||this.batch?.status==='running')return;try{this.batch=(await api('/api/content-ops/batches/'+event.target.value)).batch;this.panel.open=true;this.applyBatchToForm(this.batch);this.historicalReferences=true;await this.loadReferenceCards(this.batch.references||[]);this.render();document.querySelector('[data-view="generate"]')?.click();this.schedule();}catch(error){this.notice.textContent=error.message;}};
     this.result.addEventListener('click',async event=>{
       const tab=event.target.closest('[data-copy-version]'),copy=event.target.closest('[data-content-ops-copy]'),zoom=event.target.closest('[data-content-ops-zoom]'),chat=event.target.closest('[data-content-ops-chat]'),reference=event.target.closest('[data-content-ops-reference]');
       try{if(tab){const post=this.batch.posts[Number(tab.dataset.copyPost)];this.selectedCopies.set(`${this.batch.id}:${post.index}`,Number(tab.dataset.copyVersion));this.render();}
       if(copy){await navigator.clipboard.writeText(this.currentCopy(this.batch.posts[Number(copy.dataset.contentOpsCopy)]).text);copy.textContent='已复制';}
       if(zoom){const post=this.batch.posts[Number(zoom.dataset.contentOpsZoom)],image=this.imageDialog.querySelector('img'),save=this.imageDialog.querySelector('a');image.src=post.image;image.alt=`${this.batch.model} 第 ${post.index} 篇封面原图`;save.href=post.image;save.download=`${this.batch.model}-${post.index}.png`;this.imageDialog.showModal();}
       if(chat)await this.openChat(this.batch.chatId);
-      if(reference)window.dispatchEvent(new CustomEvent('content-ops:reference-focus',{detail:this.batch.references[Number(reference.dataset.contentOpsReference)]}));}catch(error){this.notice.textContent=error.message;}
+      if(reference)window.dispatchEvent(new CustomEvent('content-ops:reference-focus',{detail:hydratedReferences(this.batch.references,this.liveReferences)[Number(reference.dataset.contentOpsReference)]}));}catch(error){this.notice.textContent=error.message;}
     });
     this.result.addEventListener('keydown',event=>{
       const tab=event.target.closest('[data-copy-version]');if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
@@ -65,9 +73,43 @@ export class ContentOpsUI {
       event.preventDefault();tabs[next].click();this.result.querySelector(`[data-copy-post="${tab.dataset.copyPost}"][data-copy-version="${next}"]`)?.focus();
     });
     this.syncStyleFields();this.render();
+    const initial=window.contentOpsReferences?.getSelection?.()||[];void this.loadReferenceCards(initial);
+    document.querySelector('#content-ops-ref-generate')?.addEventListener('click',()=>document.querySelector('[data-view="generate"]')?.click());
     void this.init();
   }
   currentCopy(post){return selectedCopy(post,this.selectedCopies.get(`${this.batch.id}:${post.index}`)||0);}
+  async loadReferenceCards(references){
+    const version=++this.referenceLoadVersion;
+    const keys=new Map((Array.isArray(references)?references:[]).filter(ref=>ref?.platform&&ref?.id).map(ref=>[`${ref.platform}:${ref.id}`,ref]));
+    const hydrated=[];
+    for(const platform of ['xhs','xianyu']){
+      const ids=[...keys.values()].filter(ref=>ref.platform===platform).map(ref=>String(ref.id));
+      if(!ids.length)continue;
+      try{const data=await api(`/api/content-ops/references?${new URLSearchParams({platform,ids:ids.join(','),limit:String(ids.length)})}`);hydrated.push(...data.posts);}
+      catch{hydrated.push(...[...keys.values()].filter(ref=>ref.platform===platform));}
+    }
+    const byKey=new Map(hydrated.map(ref=>[`${ref.platform}:${ref.id}`,ref]));
+    if(version!==this.referenceLoadVersion)return;
+    this.liveReferences=[...keys.values()].map(ref=>byKey.get(`${ref.platform}:${ref.id}`)||ref);
+    this.renderReferenceCards();
+  }
+  renderReferenceCards(){
+    if(!this.selectedRefs)return;
+    const references=this.liveReferences,visible=document.querySelector('#view-generate')?.classList.contains('active');
+    this.selectedRefs.innerHTML=references.length?`<div class="selected-refs-heading"><strong>${this.historicalReferences?'本批引用素材':'已引用参考素材'} · ${references.length} 张</strong>${this.historicalReferences?'':'<button type="button" class="text-button" data-ref-clear>清空引用</button>'}</div><div class="selected-refs-grid">${references.map((ref,index)=>`<article class="selected-ref-card"><button type="button" class="selected-ref-open" data-ref-open="${index}" aria-label="在素材库定位 ${esc(ref.title||ref.id)}"><img src="${esc(ref.image||'')}" alt="" ${ref.image?'':'hidden'}><span class="selected-ref-no-image" ${ref.image?'hidden':''}>暂无封面</span><span class="ops-platform-badge">${ref.platform==='xianyu'?'闲鱼':'小红书'}</span><strong>${esc(ref.title||ref.id)}</strong></button>${this.historicalReferences?'':'<button type="button" class="selected-ref-remove" data-ref-remove="'+index+'">移除</button>'}</article>`).join('')}</div><p class="selected-refs-note">AI 视觉模型将读取以上封面作为构图、配色与字形排版参考</p>`:`<p>未指定参考素材，系统将自动匹配同平台高赞爆款 <button type="button" class="text-button" data-ref-pick>去素材库挑选 →</button></p>`;
+    const count=references.length;
+    if(this.referenceHint)this.referenceHint.textContent=count?`当前已就绪 ${count} 张参考封面图，多模态模型将深度分析其视觉特征。`:'未指定参考素材，系统将自动匹配同平台高赞爆款。';
+    if(!this.selectedRefs.dataset.bound){
+      this.selectedRefs.dataset.bound='true';this.selectedRefs.addEventListener('click',event=>{
+        if(event.target.closest('[data-ref-pick]'))document.querySelector('[data-view="references"]')?.click();
+        const open=event.target.closest('[data-ref-open]');if(open){const ref=this.liveReferences[Number(open.dataset.refOpen)];if(ref)window.dispatchEvent(new CustomEvent('content-ops:reference-focus',{detail:ref}));}
+        const remove=event.target.closest('[data-ref-remove]');if(remove){const index=Number(remove.dataset.refRemove);window.contentOpsReferences?.removeSelection?.(this.liveReferences[index]);}
+        if(event.target.closest('[data-ref-clear]'))window.contentOpsReferences?.clearSelectionNow?.();
+      });
+    }
+    this.selectedRefs.hidden=!visible;
+    if(this.referenceHint)this.referenceHint.hidden=!visible;
+  }
   syncStyleFields(){
     const manual=document.querySelector('#content-ops-style-mode')?.value==='manual';
     const presetField=document.querySelector('#content-ops-style-preset-field');
@@ -100,7 +142,7 @@ export class ContentOpsUI {
     const request=storedRequest();
     const requested=request&&(data.batches||[]).find(batch=>batch.id===request.batchId);
     this.batch=requested||(data.batches||[]).find(batch=>batch.status==='running')||null;
-    if(this.batch){this.panel.open=true;this.applyBatchToForm(this.batch);this.render();this.schedule();}
+    if(this.batch){this.panel.open=true;this.applyBatchToForm(this.batch);this.historicalReferences=true;await this.loadReferenceCards(this.batch.references||[]);this.render();this.schedule();}
     else {this.render();if(!config.available||!config.configured)this.notice.textContent='本机生成脚本或公司网关未配置，请检查使用说明。';}
   }catch(error){this.notice.textContent=error.message;}}
   async refreshConfig(){
@@ -138,7 +180,7 @@ export class ContentOpsUI {
   async poll(){try{const before=this.batch.status;this.batch=(await api('/api/content-ops/batches/'+this.batch.id)).batch;this.render();if(this.batch.status!==before){await this.refresh();const data=await api('/api/content-ops/batches');this.renderHistory(data.batches||[]);}}catch(error){this.notice.textContent='读取进度失败，可刷新恢复：'+error.message;}this.schedule();}
   async stop(){if(!this.batch)return;try{await api('/api/content-ops/batches/'+this.batch.id+'/stop',{});this.notice.textContent='正在停止，已有结果保留。';this.schedule();}catch(error){this.notice.textContent=error.message;}}
   render(){
-    const references=Array.isArray(this.batch?.references)?this.batch.references:[];
+    const references=hydratedReferences(this.batch?.references,this.liveReferences);
     window.dispatchEvent(new CustomEvent('content-ops:references',{detail:{references}}));
     const running=this.batch?.status==='running',locked=Boolean(this.busy||running);
     document.querySelector('#content-ops-submit').disabled=locked;document.querySelector('#content-ops-stop').hidden=!running;document.querySelector('#content-ops-new').hidden=!this.batch||locked;
@@ -165,7 +207,7 @@ export class ContentOpsUI {
     const copyFormat=this.batch?.copyFormat||document.querySelector('#content-ops-copy-format').value;
     document.querySelector('#content-ops-copy-hint').textContent=`输入 ${imageCount} 张图时，自动生成 ${imageCount*multiplier} 套不同切入角度的文案供挑选`;
     const summary=`<div class="ops-batch-summary"><div class="ops-batch-spec"><strong>${platform==='xianyu'?'闲鱼 · 宝贝':'小红书 · 图文笔记'}</strong><span>${platform==='xianyu'?'1:1 · 1080 × 1080':'3:4 · 1080 × 1440'}</span></div><p><strong>文案配比</strong><span>${imageCount} 张图 × ${multiplier} = ${imageCount*multiplier} 篇 · ${esc(copyFormatLabels[copyFormat]||copyFormat)}</span></p><p><strong>封面风格</strong><span>${esc(style)}</span></p><p><strong>${this.batch?'本批需求':'当前需求'}</strong><span>${brief||'未填写额外需求，按模型与参考帖生成。'}</span></p></div>`;
-    const referenceLinks=references.length?`<p class="content-ops-reference-links">本批参考：${references.map((ref,index)=>`<button type="button" class="ref-text-button" data-content-ops-reference="${index}">${esc(ref.title||ref.id)}</button>`).join('')}</p>`:'';
+    const referenceLinks=references.length?`<section class="content-ops-reference-links"><strong>本批参考素材</strong><div class="content-ops-preview-refs">${references.map((ref,index)=>`<button type="button" class="content-ops-preview-ref" data-content-ops-reference="${index}">${ref.image?`<img src="${esc(ref.image)}" alt="">`:''}<span class="ops-platform-badge">${ref.platform==='xianyu'?'闲鱼':'小红书'}</span><span>${esc(ref.title||ref.id)}</span></button>`).join('')}</div></section>`:'';
     const cards=this.batch?`<div class="content-ops-post-grid">${this.batch.posts.map((post,index)=>{
       const xianyu=platform==='xianyu',versions=copiesForPost(post),current=this.currentCopy(post);
       const tabs=versions.length>1?`<div class="ops-copy-tabs" role="tablist" aria-label="第 ${post.index} 张封面的文案版本">${versions.map((version,i)=>`<button type="button" role="tab" id="ops-copy-tab-${post.index}-${i}" aria-selected="${version===current}" aria-controls="ops-copy-panel-${post.index}" tabindex="${version===current?0:-1}" data-copy-post="${index}" data-copy-version="${i}" title="${esc(copyFormatLabels[version.copyFormat]||'文案版本')}">文案 ${String.fromCharCode(65+i)}</button>`).join('')}</div>`:'';
