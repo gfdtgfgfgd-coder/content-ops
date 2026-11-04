@@ -3,7 +3,7 @@ import DOMPurify from '/node_modules/dompurify/dist/purify.es.mjs';
 import { ContentOpsUI } from '/lib/content-ops-ui.mjs';
 import { mountContentOpsReferences } from '/lib/content-ops-references.mjs';
 
-const views = ['generate', 'references', 'persona', 'banned', 'preview', 'rules', 'documents'];
+const views = ['generate', 'references', 'persona', 'banned', 'rules', 'documents'];
 const showView = (name) => {
   const view = ['persona', 'banned'].includes(name) ? 'rules' : views.includes(name) ? name : 'generate';
   const changed = !document.querySelector(`#view-${view}`)?.classList.contains('active');
@@ -27,23 +27,6 @@ document.addEventListener('click', (event) => {
 });
 window.addEventListener('popstate', () => showView(location.hash.slice(1)));
 window.addEventListener('hashchange', () => showView(location.hash.slice(1)));
-
-const preview = document.querySelector('#preview-content');
-window.addEventListener('content-ops:preview', (event) => {
-  const batch = event.detail?.batch;
-  if (!preview || !batch) return;
-  preview.replaceChildren();
-  for (const post of batch.posts || []) {
-    const card = document.createElement('article');
-    card.className = `content-ops-post content-ops-post--${batch.platform}`;
-    const title = document.createElement('h3'); title.textContent = `${batch.model} · 第 ${post.index} 篇`;
-    const text = document.createElement('pre'); text.textContent = post.text || post.progressMessage || '';
-    card.append(title, text);
-    if (post.image) { const image = document.createElement('img'); image.src = post.image; image.alt = title.textContent; card.prepend(image); }
-    preview.append(card);
-  }
-  showView('preview');
-});
 
 const api = async (path, options = {}) => {
   const response = await fetch(path, { cache: 'no-store', ...options });
@@ -193,10 +176,7 @@ connectionsForm.addEventListener('submit', async event => {
 });
 void refreshConnections().catch(connectionError);
 
-const contentOpsUI = new ContentOpsUI({ navigate: (view, detail) => {
-  if (detail?.jobId) window.dispatchEvent(new CustomEvent('content-ops:preview', { detail: { batch: contentOpsUI.batch } }));
-  showView(view === 'preview' ? 'preview' : 'generate');
-}, refresh: async () => {} });
+const contentOpsUI = new ContentOpsUI();
 mountContentOpsReferences();
 
 showView(location.hash.slice(1) || 'generate');

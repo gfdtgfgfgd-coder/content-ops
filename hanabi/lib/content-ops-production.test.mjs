@@ -7,6 +7,7 @@ import { cp, readFile, readdir, writeFile, mkdir, mkdtemp, rm, symlink } from 'n
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ContentOpsProduction, validateContentOpsInput } from './content-ops-production.mjs';
+import { parsePostText, renderPostContent } from './content-ops-ui.mjs';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const input = {model:'Kimi K3.1 Pro',platform:'xhs',count:1,backgroundMode:'fresh',requestId:'offline-test-123'};
 
@@ -338,4 +339,24 @@ test('references block another live process lock and recover a lock left by an e
   await writeFile(path,JSON.stringify({pid:child.pid,token:'stale-writer'}));
   assert.equal((await store.addReference({title:'恢复'})).title,'恢复');
   await assert.rejects(()=>stat(path),{code:'ENOENT'});
+});
+
+
+test('platform card presentation preserves Markdown paragraphs, tags and legacy plain copy',()=>{
+  const source='# 标题 · 型号\r\n\r\n第一段\r\n短行\r\n\r\n第二段 #正文话题\r\n\r\n#标签一 #GLM5.3\r\n#标签二\r\n';
+  assert.deepEqual(parsePostText(source),{title:'标题 · 型号',body:'第一段\n短行\n\n第二段 #正文话题',tags:['#标签一','#GLM5.3','#标签二']});
+  assert.deepEqual(parsePostText('旧版标题\n\n正文'),{title:'旧版标题',body:'正文',tags:[]});
+  assert.deepEqual(parsePostText(),{title:'',body:'',tags:[]});
+  const html=renderPostContent(source);
+  assert.match(html,/<h3[^>]*>标题 · 型号<\/h3>/);
+  assert.match(html,/<p>第一段\n短行<\/p><p>第二段 #正文话题<\/p>/);
+  assert.match(html,/<span>#GLM5.3<\/span>/);
+});
+
+test('platform card content escapes untrusted title, copy and tags without losing literal text',()=>{
+  const html=renderPostContent('# <img src=x onerror=alert(1)>\n\n<script>alert(1)</script> & 原文\n\n#<svg/onload=alert(1)>');
+  assert.doesNotMatch(html,/<img|<script|<svg/);
+  assert.match(html,/&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.match(html,/&lt;script&gt;alert\(1\)&lt;\/script&gt; &amp; 原文/);
+  assert.match(html,/#&lt;svg\/onload=alert\(1\)&gt;/);
 });
