@@ -214,7 +214,7 @@ function mountDocumentViews() {
       }
     }
     if(view==='rules'){
-      const editor=document.querySelector('#view-persona');
+      const editor=editors.get('persona');
       const button=syncButton.cloneNode(true);button.addEventListener('click',()=>void openSpecSync({trigger:'manual'}));
       editor.querySelector('.content-ops-editors').prepend(button);
     }

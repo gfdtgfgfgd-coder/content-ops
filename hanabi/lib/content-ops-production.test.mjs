@@ -156,12 +156,14 @@ test('spec sync apply rebuilds the bundle and commits only the canonical spec an
   execFileSync('git',['clone','--quiet','--shared',root,dir]);
   execFileSync('git',['-C',dir,'config','user.name','Hanabi Test']);
   execFileSync('git',['-C',dir,'config','user.email','hanabi-test@localhost']);
+  execFileSync('git',['-C',dir,'config','core.hooksPath','/dev/null']);
   await copyFile(join(root,'rules/content-spec.md'),join(dir,'rules/content-spec.md'));
   await copyFile(join(root,'scripts/lib/preferences.py'),join(dir,'scripts/lib/preferences.py'));
   await copyFile(join(root,'config/preference-build.json'),join(dir,'config/preference-build.json'));
   await copyFile(join(root,'data/distilled-preferences.json'),join(dir,'data/distilled-preferences.json'));
+  await writeFile(join(dir,'rules/content-spec.md'),`${await readFile(join(dir,'rules/content-spec.md'),'utf8')}\n`);
   execFileSync('git',['-C',dir,'add','rules/content-spec.md','scripts/lib/preferences.py','config/preference-build.json','data/distilled-preferences.json']);
-  execFileSync('git',['-C',dir,'commit','--quiet','-m','测试夹具同步规范构建源']);
+  execFileSync('git',['-C',dir,'-c','core.hooksPath=/dev/null','-c','commit.gpgsign=false','commit','--quiet','-m','测试夹具同步规范构建源']);
   const original=await readFile(join(dir,'rules/content-spec.md'),'utf8');
   const updated=original.replace('先确认任务事实、目标平台和账号身份，再开始写稿。', '先确认任务事实、目标平台和账号身份，再开始写稿。同步写入测试标记。');
   const editor=new ContentOpsEditor({root:dir,run:(command,args,options)=>editorCommand(command,args,{
