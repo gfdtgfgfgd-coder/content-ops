@@ -46,6 +46,12 @@ const json = value => JSON.stringify(value, null, 2);
 const send = (res, status, value, headers = {}) => { const body = Buffer.from(typeof value === 'string' ? value : json(value)); res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': body.length, ...headers }); res.end(body); };
 const error = (res, err) => send(res, err.statusCode || 500, { error: err.message || '服务器错误' });
 const body = async (req, limit = 2 * 1024 * 1024) => { const chunks = []; let size = 0; for await (const chunk of req) { size += chunk.length; if (size > limit) { chunks.length = 0; continue; } chunks.push(chunk); } if (size > limit) throw Object.assign(new Error('请求体过大。'), { statusCode: 413 }); try { const text = Buffer.concat(chunks).toString('utf8'); return text ? JSON.parse(text) : {}; } catch { throw Object.assign(new Error('JSON 请求体无效。'), { statusCode: 400 }); } };
+const localJsonRequest = req => {
+  const port=server.address()?.port||PORT, host=req.headers.host||'';
+  const allowedHosts=new Set([`127.0.0.1:${port}`,`localhost:${port}`]);
+  if(!allowedHosts.has(host)||req.headers.origin&&req.headers.origin!==`http://${host}`||req.headers['sec-fetch-site']==='cross-site')return false;
+  return /^application\/json(?:;|$)/iu.test(req.headers['content-type']||'');
+};
 const env = () => loadGatewaySettings(REPO_ROOT);
 const gateway = async (req, res, pathname) => { const cfg = await env(); if (!cfg.CONTENT_OPS_BASE_URL || !cfg.CONTENT_OPS_API_KEY) return send(res, 503, { error: '本机网关未配置，请设置 scratch/gateway.env。' }); const base = String(cfg.CONTENT_OPS_BASE_URL).replace(/\/$/u, ''); const target = `${base}${pathname.startsWith('/v1') ? pathname.slice(3) || '/' : pathname}`; const headers = {}; for (const [key, value] of Object.entries(req.headers)) if (!['host', 'content-length', 'authorization'].includes(key)) headers[key] = value; headers.authorization = `Bearer ${cfg.CONTENT_OPS_API_KEY}`; const init = { method: req.method, headers }; if (!['GET', 'HEAD'].includes(req.method)) init.body = await collect(req); let upstream; try { upstream = await fetch(target, init); } catch (err) { return send(res, 502, { error: `公司网关连接失败：${err.message}` }); } res.writeHead(upstream.status, Object.fromEntries([...upstream.headers].filter(([key]) => !['content-length', 'connection', 'transfer-encoding'].includes(key)))); if (upstream.body) { for await (const chunk of upstream.body) res.write(chunk); } res.end(); };
 const collect = async req => { const chunks = []; for await (const chunk of req) chunks.push(chunk); return Buffer.concat(chunks); };
@@ -74,8 +80,13 @@ async function route(req, res) {
       const content=await readFile(join(REPO_ROOT,relative),'utf8');
       return send(res,200,{name,path:relative,content},{'Cache-Control':'no-store'});
     }
-    if (pathname === '/api/content-ops/spec-sync/analyze' && req.method === 'POST') return send(res, 200, await editor.analyzeSpecSync(await body(req)));
-    if (pathname === '/api/content-ops/spec-sync/apply' && req.method === 'POST') return send(res, 200, await editor.applySpecSync(await body(req)));
+    if (pathname.startsWith('/api/content-ops/spec-sync/')) {
+      if(!['/api/content-ops/spec-sync/analyze','/api/content-ops/spec-sync/apply'].includes(pathname))return send(res,404,{error:'接口不存在。'});
+      if(req.method!=='POST')return send(res,405,{error:'方法不支持。'});
+      if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机 Hanabi 页面提交 JSON 同步请求。'});
+      const payload=await body(req,256*1024);
+      return send(res,200,pathname.endsWith('/analyze')?await editor.analyzeSpecSync(payload):await editor.applySpecSync(payload),{'Cache-Control':'no-store'});
+    }
     if (req.method === 'POST' && pathname === '/api/content-ops/generate') return send(res, 200, await production.create(await body(req)));
     if (req.method === 'GET' && pathname === '/api/content-ops/batches') return send(res, 200, { batches: production.list() });
     const batchMatch = pathname.match(/^\/api\/content-ops\/batches\/([^/]+)(?:\/(stop))?$/u);
@@ -99,9 +110,9 @@ async function route(req, res) {
     }
     if (req.method === 'GET' && pathname.startsWith('/api/content-ops/image/')) { const imagePath = referenceImageRequestPath(req.url); const image = await references.image(imagePath); const bytes = await readFile(image.path); res.writeHead(200, { 'Content-Type': image.mimeType, 'Content-Length': bytes.length, 'Cache-Control': 'no-store' }); return res.end(bytes); }
     if (req.method === 'GET' && pathname === '/api/content-ops/persona') return send(res, 200, await editor.persona(), { 'Cache-Control': 'no-store' });
-    if (req.method === 'POST' && pathname === '/api/content-ops/persona') return send(res, 200, await editor.mutate('persona', await body(req)), { 'Cache-Control': 'no-store' });
+    if (req.method === 'POST' && pathname === '/api/content-ops/persona') { if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机 Hanabi 页面提交 JSON。'});return send(res, 200, await editor.mutate('persona', await body(req)), { 'Cache-Control': 'no-store' }); }
     if (req.method === 'GET' && pathname === '/api/content-ops/banned-words') return send(res, 200, await editor.bannedWords(), { 'Cache-Control': 'no-store' });
-    if (req.method === 'POST' && pathname === '/api/content-ops/banned-words') return send(res, 200, await editor.mutate('words', await body(req)), { 'Cache-Control': 'no-store' });
+    if (req.method === 'POST' && pathname === '/api/content-ops/banned-words') { if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机 Hanabi 页面提交 JSON。'});return send(res, 200, await editor.mutate('words', await body(req)), { 'Cache-Control': 'no-store' }); }
     const uploadMatch = pathname.match(/^\/api\/uploads\/([0-9a-f-]+)\.png$/iu); if (req.method === 'GET' && uploadMatch) { const file = join(UPLOAD_DIR, `${uploadMatch[1]}.png`); const info = await stat(file).catch(() => null); if (!info?.isFile()) return send(res, 404, { error: '图片不存在。' }); const bytes = await readFile(file); res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': bytes.length, 'Cache-Control': 'private, max-age=31536000, immutable' }); return res.end(bytes); }
     return staticFile(req, res, pathname);
   } catch (err) { return error(res, err); }

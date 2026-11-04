@@ -1,9 +1,10 @@
 // Offline integration regressions; schema is read from the real server, not copied.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { EventEmitter } from 'node:events';
-import { cp, readFile, readdir, writeFile, mkdir, mkdtemp, rm, symlink } from 'node:fs/promises';
+import { cp, copyFile, readFile, readdir, writeFile, mkdir, mkdtemp, rm, symlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ContentOpsProduction, validateContentOpsInput } from './content-ops-production.mjs';
@@ -77,8 +78,10 @@ test('existing DB migrates, brief and manual style persist, single argv is safe,
 
 // Configuration tests use fake keys, isolated files and mocked upstream responses.
 import { ContentOpsConnections, loadGatewaySettings } from './content-ops-connections.mjs';
+import { ContentOpsEditor, editorCommand } from './content-ops-editor.mjs';
+import { execFileSync } from 'node:child_process';
 import { stat } from 'node:fs/promises';
-const connectionInput = { baseUrl:'https://offline.invalid/v1/', apiKey:'', textModel:'text-test', visionModel:'vision-test', imageModel:'image-test' };
+const connectionInput = { baseUrl:'https://offline.invalid/v1/', apiKey:'', textModel:'text-test', visionModel:'vision-test', imageModel:'image-test', analysisModel:'analysis-test' };
 async function connectionFixture(t, fetchRequest) {
   const dir = await mkdtemp(join(root,'scratch/t38-config-'));
   await mkdir(join(dir,'scratch'));
@@ -93,11 +96,13 @@ test('connections masks keys, atomically saves, preserves unrelated env, reads m
   const {service,path,dir}=await connectionFixture(t,modelsOK);
   const before=await service.get();assert.equal(before.connection.state,'untested');assert.equal(before.apiKey,'••••••••');
   assert.equal(before.visionModel,'claude-sonnet-4-6');
+  assert.equal(before.analysisModel,'claude-sonnet-4-6');
   const saved=await service.save(connectionInput);
   assert.equal(saved.ok,true);assert.equal(saved.connection.state,'ok');assert.equal((await service.get()).connection.state,'ok');
   assert.equal(JSON.stringify(saved).includes('last-test-key'),false);
   const raw=await readFile(path,'utf8');assert.match(raw,/# keep comment/);assert.match(raw,/OTHER=keep/);
   assert.match(raw,/CONTENT_OPS_VISION_MODEL=vision-test/);
+  assert.match(raw,/CONTENT_OPS_ANALYSIS_MODEL=analysis-test/);
   assert.equal(raw.match(/CONTENT_OPS_API_KEY=/g).length,1);assert.match(raw,/CONTENT_OPS_API_KEY=last-test-key/);
   assert.equal((await stat(path)).mode&0o777,0o600);
   assert.equal((await loadGatewaySettings(dir,{CONTENT_OPS_BASE_URL:'https://inherited.invalid',OTHER:'override'})).CONTENT_OPS_BASE_URL,'https://offline.invalid/v1');
@@ -118,6 +123,58 @@ test('connections rejects malformed/injected config before file mutation or upst
     assert.equal(await readFile(path,'utf8'),before);
   }
   assert.equal(calls,0);
+});
+
+test('spec analysis uses the configured analysis model and carries source, prior draft, and user feedback across rounds', async t => {
+  const dir=await mkdtemp(join(root,'scratch/spec-analysis-'));
+  t.after(()=>rm(dir,{recursive:true,force:true}));
+  execFileSync('git',['clone','--quiet','--shared',root,dir]);
+  await mkdir(join(dir,'scratch'),{recursive:true});
+  await writeFile(join(dir,'scratch/gateway.env'),'CONTENT_OPS_BASE_URL=https://analysis.invalid/v1\nCONTENT_OPS_API_KEY=fake-key-only\nCONTENT_OPS_ANALYSIS_MODEL=analysis-test\n');
+  const spec=await readFile(join(dir,'rules/content-spec.md'),'utf8');
+  const calls=[];
+  const editor=new ContentOpsEditor({root:dir,fetchRequest:async(url,init)=>{
+    calls.push({url,init});
+    const request=JSON.parse(init.body), prompt=request.messages[0].content;
+    return Response.json({choices:[{message:{content:JSON.stringify({summary:`round-${calls.length}`,updatedContent:spec})}}]});
+  }});
+  const first=await editor.analyzeSpecSync({trigger:'persona_add',addedItem:{id:'Q999',text:'示例新增偏好'}});
+  assert.equal(first.summary,'round-1');assert.equal(first.before,spec);assert.equal(calls.length,1);
+  assert.equal(calls[0].url,'https://analysis.invalid/v1/chat/completions');
+  assert.equal(JSON.parse(calls[0].init.body).model,'analysis-test');
+  assert.match(JSON.parse(calls[0].init.body).messages[0].content,/示例新增偏好/u);
+  const second=await editor.analyzeSpecSync({trigger:'manual',previousDraft:first.updatedContent,feedback:'保留原有章节，语气更简洁'});
+  assert.equal(second.summary,'round-2');assert.equal(calls.length,2);
+  const secondPrompt=JSON.parse(calls[1].init.body).messages[0].content;
+  assert.match(secondPrompt,/上一版草案/u);assert.match(secondPrompt,/保留原有章节，语气更简洁/u);
+  assert.match(secondPrompt,/风险词原料/u);assert.match(secondPrompt,/当前内容生产规范/u);
+});
+
+test('spec sync apply rebuilds the bundle and commits only the canonical spec and derived bundle', async t => {
+  const dir=await mkdtemp(join(root,'scratch/spec-apply-'));
+  t.after(()=>rm(dir,{recursive:true,force:true}));
+  execFileSync('git',['clone','--quiet','--shared',root,dir]);
+  execFileSync('git',['-C',dir,'config','user.name','Hanabi Test']);
+  execFileSync('git',['-C',dir,'config','user.email','hanabi-test@localhost']);
+  await copyFile(join(root,'rules/content-spec.md'),join(dir,'rules/content-spec.md'));
+  await copyFile(join(root,'scripts/lib/preferences.py'),join(dir,'scripts/lib/preferences.py'));
+  await copyFile(join(root,'config/preference-build.json'),join(dir,'config/preference-build.json'));
+  await copyFile(join(root,'data/distilled-preferences.json'),join(dir,'data/distilled-preferences.json'));
+  execFileSync('git',['-C',dir,'add','rules/content-spec.md','scripts/lib/preferences.py','config/preference-build.json','data/distilled-preferences.json']);
+  execFileSync('git',['-C',dir,'commit','--quiet','-m','测试夹具同步规范构建源']);
+  const original=await readFile(join(dir,'rules/content-spec.md'),'utf8');
+  const updated=original.replace('先确认任务事实、目标平台和账号身份，再开始写稿。', '先确认任务事实、目标平台和账号身份，再开始写稿。同步写入测试标记。');
+  const editor=new ContentOpsEditor({root:dir,run:(command,args,options)=>editorCommand(command,args,{
+    ...options,env:{...process.env,PYTHONPATH:join(root,'scratch/.venv/lib/python3.11/site-packages')}
+  })});
+  const result=await editor.applySpecSync({updatedContent:updated,revision:createHash('sha256').update(original).digest('hex'),summary:'测试确认写入'});
+  assert.equal(result.ok,true);
+  assert.match(result.content,/最近更新时间：/u);
+  assert.equal(execFileSync('git',['-C',dir,'status','--porcelain'],{encoding:'utf8'}),'');
+  const committed=execFileSync('git',['-C',dir,'show','--pretty=format:','--name-only','HEAD'],{encoding:'utf8'}).trim().split('\n').sort();
+  assert.deepEqual(committed,['data/distilled-preferences.json','rules/content-spec.md']);
+  const bundle=JSON.parse(await readFile(join(dir,'data/distilled-preferences.json'),'utf8'));
+  assert.equal(bundle.sources.includes('content-spec'),true);
 });
 
 test('failed probes remain failed on GET and never expose upstream body or credentials',async t=>{
@@ -193,13 +250,13 @@ test('documents HTTP serves canonical Markdown and rejects arbitrary file names'
       child.once('error',reject);child.once('exit',code=>reject(new Error(`Local HTTP server exited ${code}`)));
       child.stdout.on('data',chunk=>{text+=chunk;const match=text.match(/listening on (http:\/\/127\.0\.0\.1:\d+)/u);if(match){clearTimeout(timer);resolve(match[1]);}});
     });
-    const sources={'platform-rules':'rules/platform-rules.md','design-rules':'rules/design-rules.md',guide:'docs/GUIDE.md',decisions:'docs/01-决策记录.md',sources:'data/sources/README.md',corpus:'data/model-corpus.md'};
+    const sources={'content-spec':'rules/content-spec.md',guide:'docs/GUIDE.md',corpus:'data/model-corpus.md'};
     for(const [name,path] of Object.entries(sources)){
       const response=await fetch(`${url}/api/content-ops/documents?doc=${name}`);
       assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
       const result=await response.json();assert.equal(result.path,path);assert.equal(result.content,await readFile(join(root,path),'utf8'));
     }
-    for(const query of ['','doc=../../scratch/gateway.env','doc=toString','doc=__proto__','doc=guide&doc=sources','doc=guide&extra=1']) {
+    for(const query of ['','doc=../../scratch/gateway.env','doc=toString','doc=__proto__','doc=guide&doc=corpus','doc=guide&extra=1']) {
       const response=await fetch(`${url}/api/content-ops/documents?${query}`);assert.equal(response.status,400,query);
       assert.doesNotMatch(await response.text(),/CONTENT_OPS_API_KEY|Bearer/u);
     }

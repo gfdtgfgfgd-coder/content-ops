@@ -7,6 +7,6 @@ description: 制作或复核小红书模型推广标题与封面时，参考已�
 
 读取同目录 [quick.md](quick.md)，使用其中固定样本 ID、开场与结构模板，不另维护一份句式表。
 
-生成时同时应用 [思敏偏好](../simin-persona/SKILL.md)、[平台规则](../../rules/platform-rules.md) 和 [风险词源表](../../rules/banned-words-quick.yaml)。历史原文和标注【已禁】的表达仅用于核对来源；当前规则优先。模型能力须另有事实依据，同批标题与海报结构须有变化。
+生成时同时应用 [运营偏好](../simin-persona/SKILL.md)、[内容生产规范](../../rules/content-spec.md) 和 [风险词源表](../../rules/banned-words-quick.yaml)。历史原文和标注【已禁】的表达仅用于核对来源；当前规则优先。模型能力须另有事实依据，同批标题与海报结构须有变化。
 
 机器读取用 `scripts/build.py distill` 重建的 `data/distilled-preferences.json`；修改来源后重建，避免手改派生文件。

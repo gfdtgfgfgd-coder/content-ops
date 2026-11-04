@@ -347,6 +347,9 @@ def build_bundle(root: Path, config_path: Path, output_date: str | None) -> dict
     if api_evidence_id is None:
         raise ValueError("两平台禁词规则没有对应的反馈引文")
     platform_source = read_text(source_paths["content_spec"])
+    api_decision_match = re.search(r"小红书与闲鱼[^。\n]*API[^。\n]*。", platform_source, re.IGNORECASE)
+    if not api_decision_match:
+        raise ValueError("内容生产规范缺少小红书与闲鱼的 API 表达边界")
     platform_bundles = {}
     for entry in config["platforms"]:
         platform = entry["id"]
@@ -389,7 +392,7 @@ def build_bundle(root: Path, config_path: Path, output_date: str | None) -> dict
         "style_references": {"xhs_good_posts": xhs_posts, "xianyu_top_posts": xianyu_posts},
         "known_conflicts": {
             "q7_guanbao": q7_match.group(1),
-            "api_policy": {"evidence": quote_by_id[api_evidence_id], "decision": decision_match.group(1)},
+            "api_policy": {"evidence": quote_by_id[api_evidence_id], "decision": api_decision_match.group(0)},
         },
     }
 
@@ -465,7 +468,7 @@ def load_preferences(path, platform, max_chars):
                    'title_patterns':{'openers':titles['openers'],'structures':titles['structures']},
                    'design':design,'known_conflicts':data.get('known_conflicts',{}),
                    'preference_priority':data.get('preference_priority',[])}
-        block = '=== 思敏偏好（当前审核标准）===\n' + json.dumps(context,ensure_ascii=False,indent=2) + '\n=== 偏好块结束 ==='
+        block = '=== 运营偏好（当前审核标准）===\n' + json.dumps(context,ensure_ascii=False,indent=2) + '\n=== 偏好块结束 ==='
         snapshots = {'data/distilled-preferences.json':raw}
         version = {'source':'distilled-preferences.json','distilled_at':data['distilled_at'],'version':data['version'],
                    'sha256':hashlib.sha256(raw.encode()).hexdigest()}

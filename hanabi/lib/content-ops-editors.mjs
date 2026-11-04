@@ -173,7 +173,7 @@ export class ContentOpsEditors {
     }
     const latestUpdate = words.map(item => item.added_at || item.updated_at || '').filter(Boolean).sort().at(-1) || '';
     this.root.querySelector('#banned-count').textContent = `${words.length} 条${latestUpdate ? ` · 更新时间 ${latestUpdate}` : ''}`;
-    this.bannedStatus.textContent = `已读取 ${words.length} 条只读风控规则${latestUpdate ? `（最近更新：${latestUpdate}，最新词条已置顶）` : ''}。`;
+    this.bannedStatus.textContent = `已读取 ${words.length} 条风险规则；词库只增不删${latestUpdate ? `（最近更新：${latestUpdate}，最新词条已置顶）` : ''}。`;
     this.wordsBody.replaceChildren();
     const sortedWords = words.map((entry, index) => ({entry, index})).sort((a, b) => String(b.entry.added_at || b.entry.updated_at || '').localeCompare(String(a.entry.added_at || a.entry.updated_at || '')) || a.index - b.index).map(item => item.entry);
     for (const entry of sortedWords) {

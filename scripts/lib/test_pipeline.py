@@ -120,10 +120,13 @@ class PipelineTests(unittest.TestCase):
             xianyu = preferences.load_preferences(ROOT / 'data/distilled-preferences.json', 'xianyu', 40000)
             self.assertIn('xianyu',xianyu[0])
             fallback = preferences.load_preferences(self.base / 'missing.json', 'xhs', 40000)
-        self.assertIn('思敏偏好', block)
+        self.assertIn('运营偏好', block)
         self.assertEqual(version['source'], 'distilled-preferences.json')
         self.assertEqual(fallback[1]['source'], 'fallback')
         self.assertTrue(palettes and rules and snapshots)
+        bundle = preferences.build_bundle(ROOT, ROOT / 'config/preference-build.json', '2026-11-04')
+        self.assertIn('小红书与闲鱼', bundle['known_conflicts']['api_policy']['decision'])
+        self.assertIn('API', bundle['known_conflicts']['api_policy']['decision'])
         with self.assertRaises(ValueError), redirect_stdout(io.StringIO()):
             preferences.load_preferences(ROOT / 'data/distilled-preferences.json', 'xhs', 1)
 

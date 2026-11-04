@@ -1,20 +1,11 @@
 # 规则库使用说明
 
-本目录存放平台规则、设计规范、禁用词等约束。
+本目录存放内容生产规范、机器风险词规则与封面配色数据。
 
 ## 文件清单
 
-### platform-rules.md
-各平台（小红书、闲鱼、公众号）的发布规则：
-- 什么能说、什么不能说
-- 价格表达方式（小红书用区块词，闲鱼可写折扣）
-- 标签规则、字数限制
-
-### design-rules.md
-大字报配色与排版规则：
-- 字号层次（标题、副标题、说明文字）
-- 配色方案（背景、强调色、文字色）
-- 从置顶两篇提炼的实际参数
+### content-spec.md
+内容生产唯一规范，按写稿、做图、平台适配和参考素材选用顺序组织。工程操作见 `docs/GUIDE.md`。
 
 ### banned-words-quick.yaml
 风险词库（机器检查唯一事实源）：
@@ -39,6 +30,6 @@ python3 scripts/check.py words --platform xhs --model GLM5.3 --text "你的文�
 ## 维护
 
 - 发现新的禁用词 → 加到 `banned-words-quick.yaml`
-- 平台规则变化 → 更新 `platform-rules.md`
+- 业务规则变化 → 更新 `content-spec.md`
 - 需要新配色 → 加到 `cover-palettes.json`
 - 企微证据仅保留在 `data/wecom/risk-words.md`，不作为机器规则重复读取；新增规则只写入 quick YAML。

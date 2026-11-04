@@ -289,7 +289,7 @@ mountDocumentViews();
 const syncDialog=document.querySelector('#spec-sync-dialog');
 let syncDraft=null;
 async function openSpecSync(input){
-  syncDialog.showModal();
+  if(!syncDialog.open)syncDialog.showModal();
   syncDialog.querySelector('#spec-sync-status').textContent='正在调用分析模型…';
   syncDialog.querySelector('[data-spec-sync-apply]').disabled=true;
   if(input.trigger==='manual')showView('content-spec',{replace:false,restore:false});
@@ -305,7 +305,7 @@ async function analyzeSpec(input){
   syncDialog.querySelector('[data-spec-sync-apply]').disabled=false;
 }
 document.addEventListener('content-ops:spec-sync',event=>void openSpecSync(event.detail));
-syncDialog.querySelector('[data-spec-sync-close]').addEventListener('click',()=>syncDialog.close());
+syncDialog.querySelector('[data-spec-sync-close]').addEventListener('click',()=>{syncDraft=null;syncDialog.close();});
 syncDialog.querySelector('[data-spec-sync-cancel]').addEventListener('click',()=>{syncDraft=null;syncDialog.close();});
 syncDialog.querySelector('[data-spec-sync-reanalyze]').addEventListener('click',async()=>{
   if(!syncDraft)return;const feedback=syncDialog.querySelector('[name="feedback"]').value.trim();
@@ -317,7 +317,7 @@ syncDialog.querySelector('[data-spec-sync-reanalyze]').addEventListener('click',
 });
 syncDialog.querySelector('[data-spec-sync-apply]').addEventListener('click',async event=>{
   if(!syncDraft)return;const button=event.currentTarget;button.disabled=true;
-  try{const saved=await api('/api/content-ops/spec-sync/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({updatedContent:syncDraft.updatedContent,revision:syncDraft.revision,summary:syncDraft.summary})});syncDialog.querySelector('#spec-sync-status').textContent=`已同步并提交 ${saved.commit}。`;await api('/api/content-ops/documents?doc=content-spec');setTimeout(()=>syncDialog.close(),700);}
+  try{const saved=await api('/api/content-ops/spec-sync/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({updatedContent:syncDraft.updatedContent,revision:syncDraft.revision,summary:syncDraft.summary})});syncDialog.querySelector('#spec-sync-status').textContent=`已同步并提交 ${saved.commit}。`;showView('content-spec',{replace:false,restore:false});setTimeout(()=>{syncDraft=null;syncDialog.close();},700);}
   catch(error){syncDialog.querySelector('#spec-sync-status').textContent=`同步失败：${error.message}`;button.disabled=false;}
 });
 
@@ -347,7 +347,6 @@ const refreshConnections = async () => {
   fields.textModel.value = config.textModel || 'claude-sonnet-4-6';
   fields.visionModel.value = config.visionModel || 'claude-sonnet-4-6';
   fields.imageModel.value = config.imageModel || 'qwen-image-3.0';
-  fields.analysisModel.value = config.analysisModel || 'claude-sonnet-4-6';
   fields.analysisModel.value = config.analysisModel || 'claude-sonnet-4-6';
   renderConnectionState(config);
 };

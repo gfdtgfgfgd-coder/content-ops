@@ -59,7 +59,7 @@ STYLE_PRESETS = {
     },
 }
 
-# Machine contract for the three structures in rules/platform-rules.md.
+# Machine contract for the three body structures in rules/content-spec.md.
 COPY_FORMATS = {
     'format_1': ('intro', 'selling_points', 'price', 'hook'),
     'format_2': ('intro', 'selling_points', 'price', 'compatibility', 'scenarios', 'hook'),
