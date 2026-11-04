@@ -52,3 +52,15 @@
 {"post_id":null,"feedback":"constraint","quote":"「右边那块文字画面占比缩小或者删除 把sd的主标题拉大占比 那几个卖点也加大」","date":"2026-10-23","evidence_id":"Q28","category":"运营修改要求"}
 {"post_id":null,"feedback":"constraint","quote":"「让AI重新设计，醒目吸睛」","date":"2026-10-19","evidence_id":"Q29","category":"运营修改要求"}
 {"post_id":"6aded0b8000000001601bde0","feedback":"good","quote":null,"date":null,"verified_at":"2026-11-02","evidence":"企微截图040：思敏左侧灰色消息气泡内的单帖内容","note":"本机视觉复核并匹配本地帖子；原选择日期未显示，无逐帖口头评价，不虚构引语"}
+{"post_id":null,"feedback":"constraint","quote":"「给图一图二图三补文案，可参考图四图五的格式，尽量减少出现一样的词语，文案多种风格：1.开头简单引入、卖点、价格板块、钩子；2.开头简单引入、卖点、价格板块、兼容cc、使用场景简单写几个、钩子/行动；3.开头简单引入、卖点、价格板块、兼容cc、使用人群、钩子/行动」","date":"2026-11-04","evidence_id":"Q30","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「格式是对的方向也是对的，但是感觉用词有点拗口第一眼看不懂，不太适合放在小红书这种信息多的平台，记得要能通过小红书聚光投流规范」","date":"2026-11-04","evidence_id":"Q31","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「感觉你的卖点都写得差不多，还是容易通不过小红书的聚光投流规范，你不如先搜索总结特点和优点，比如一个特点和优点找n个形容，然后再每篇用其中的一个形容」","date":"2026-11-04","evidence_id":"Q32","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「标题超过20个字了」","date":"2026-11-04","evidence_id":"Q33","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「再看看怎么缩短成两行字」","date":"2026-11-04","evidence_id":"Q34","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「Cursor、OpenAI 及 Hermes Agent 这种真的能通过小红书审核吗」","date":"2026-11-04","evidence_id":"Q35","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「把图片上的文字换成glm5.3的，也要有两个钩子，发散一下」「自己改bug不爽，爽的是ai改bug」「有没有发现原图的每行字都不超过七个」","date":"2026-11-04","evidence_id":"Q36","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「有点点长，四个主能力也不够突出，文案需要简单明了些」「价格优势那块，可以看看再改改」","date":"2026-11-04","evidence_id":"Q37","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「赶紧安排 有种给用户洗脑的引导感 需要这种感觉」「xx！xxxx，这种格式还有没有；价格打下来了 没人来测试吗？这种让人想占便宜的句子还有没有」","date":"2026-11-04","evidence_id":"Q38","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「标题emoji怎么还跟kimi的一样，要换一换」","date":"2026-11-04","evidence_id":"Q39","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「Token违禁词。融合一下图片这三个主要卖点。文案还是有点长、有点啰嗦，重新改改这三篇」","date":"2026-11-04","evidence_id":"Q40","category":"协作对话框记录"}
+{"post_id":null,"feedback":"constraint","quote":"「又挖到神奇改成挖到宝了 神奇容易卡审核」","date":"2026-11-04","evidence_id":"Q41","category":"协作对话框记录"}

@@ -1,6 +1,8 @@
 const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
 const keyOf = reference => `${reference.platform}:${reference.id}`;
 const metric = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) ? Number(value).toLocaleString('zh-CN') : '—';
+const modelOptions = [['GLM','GLM'],['Kimi','Kimi'],['Seedance/视频','Seedance/视频'],['其他','其他']];
+const layoutOptions = [['bold_typo','撞色大字报'],['code_ide','极客代码屏'],['card_3d','3D卡片流程'],['comparison','痛点对比'],['other','通用日常']];
 const platforms = new Set(['xhs', 'xianyu']);
 const imagePath = value => typeof value === 'string' && /^\/api\/content-ops\/image\/(xhs|xianyu)\/[^/?#]+\/[^/?#]+$/.test(value) ? value : '';
 const imageList = post => [...new Set([post.image, ...(Array.isArray(post.images) ? post.images : [])].map(imagePath).filter(Boolean))];
@@ -21,6 +23,8 @@ export class ContentOpsReferences {
     this.fetcher = fetcher;
     this.platform = root.querySelector('#content-ops-ref-platform');
     this.sort = root.querySelector('#content-ops-ref-sort');
+    this.modelCategory = this.addFilter('模型分类', 'model_category', [['all','全部模型'],...modelOptions]);
+    this.layoutStyle = this.addFilter('版式流派', 'layout_style', [['all','全部版式'],...layoutOptions]);
     this.grid = root.querySelector('#content-ops-ref-grid');
     this.pinnedGrid = root.querySelector('#content-ops-ref-pinned');
     this.status = root.querySelector('#content-ops-ref-status');
@@ -42,12 +46,14 @@ export class ContentOpsReferences {
     this.total = null;
     this.loading = false;
     this.exhausted = false;
+    this.mountEditor();
     this.platform.addEventListener('change', () => {
       this.focusVersion++;
       this.updateSortOptions();
       void this.load(true);
     });
     this.sort.addEventListener('change', () => { this.focusVersion++; void this.load(true); });
+    for (const filter of [this.modelCategory,this.layoutStyle]) filter.addEventListener('change',()=>{this.focusVersion++;void this.load(true);});
     this.more.addEventListener('click', () => void this.load());
     this.clearSelection.addEventListener('click', () => {
       this.selectedReferences = [];
@@ -76,6 +82,149 @@ export class ContentOpsReferences {
     void this.load(true);
   }
 
+  addFilter(labelText, name, options) {
+    const label=document.createElement('label');label.append(document.createTextNode(labelText));
+    const select=document.createElement('select');select.id=`content-ops-ref-${name}`;
+    for(const [value,title] of options){const option=document.createElement('option');option.value=value;option.textContent=title;select.append(option);}
+    label.append(select);this.root.querySelector('.ref-toolbar').insertBefore(label,this.root.querySelector('#content-ops-ref-total'));return select;
+  }
+
+  mountEditor() {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'ref-button ref-add'; button.textContent = '➕ 添加素材';
+    this.root.querySelector('.ref-toolbar').append(button);
+    button.addEventListener('click', () => this.openEditor());
+    this.dialog = document.createElement('dialog');
+    this.dialog.className = 'ref-editor'; this.dialog.setAttribute('aria-labelledby', 'ref-editor-title');
+    const options = rows => rows.map(([value,label]) => `<option value="${esc(value)}">${esc(label)}</option>`).join('');
+    this.dialog.innerHTML = `<form class="ref-editor-form">
+      <header><h2 id="ref-editor-title">添加素材</h2><button type="button" class="ref-text-button" data-ref-close aria-label="关闭素材编辑器">关闭</button></header>
+      <label>平台<select name="platform">${options([['xhs','小红书'],['xianyu','闲鱼']])}</select></label>
+      <div class="ref-upload" tabindex="0" role="button" aria-label="选择或拖拽封面图片" data-ref-drop><strong>封面图片（选填）</strong><span>点击选择或拖拽一张 PNG / JPEG / WebP，最大 15MB</span><input type="file" name="upload" accept="image/png,image/jpeg,image/webp" hidden></div>
+      <div class="ref-editor-preview" hidden><img alt="封面预览"><button type="button" class="ref-text-button" data-ref-remove>移除图片</button><span data-ref-image-note></span></div>
+      <label>标题（选填）<input name="title" maxlength="200000"></label>
+      <label>正文内容（选填）<textarea name="body" rows="6" maxlength="200000"></textarea></label>
+      <label>封面字样 / OCR（选填）<textarea name="cover_ocr" rows="2" maxlength="200000"></textarea></label>
+      <label>模型 / 型号（选填）<input name="model" maxlength="200000"></label>
+      <div class="ref-editor-columns"><label>模型分类<select name="model_category">${options(modelOptions)}</select></label><label>版式流派<select name="layout_style">${options(layoutOptions)}</select></label></div>
+      <label class="ref-editor-good"><input type="checkbox" name="good">设为精选</label>
+      <p class="ref-editor-status" role="status" aria-live="polite"></p>
+      <footer><button type="button" class="ref-button" data-ref-close>取消</button><button type="submit" class="ref-button ref-add">保存素材</button></footer>
+    </form>`;
+    this.root.append(this.dialog);
+    this.form = this.dialog.querySelector('form');
+    this.editorStatus = this.dialog.querySelector('.ref-editor-status');
+    this.preview = this.dialog.querySelector('.ref-editor-preview');
+    this.dialog.querySelectorAll('[data-ref-close]').forEach(close => close.addEventListener('click', () => { if (!this.mutating) this.dialog.close(); }));
+    this.dialog.addEventListener('cancel', event => { if (this.mutating) event.preventDefault(); });
+    this.form.addEventListener('submit', event => { event.preventDefault(); void this.saveEditor(); });
+    this.form.elements.upload.addEventListener('click', event => event.stopPropagation());
+    this.form.elements.upload.addEventListener('change', event => void this.chooseImage(event.target.files));
+    const drop = this.dialog.querySelector('[data-ref-drop]');
+    drop.addEventListener('click', () => { if (!this.mutating) this.form.elements.upload.click(); });
+    drop.addEventListener('keydown', event => { if (['Enter',' '].includes(event.key)) { event.preventDefault(); drop.click(); } });
+    for (const name of ['dragover','dragleave','drop']) drop.addEventListener(name, event => {
+      event.preventDefault(); drop.classList.toggle('ref-upload--active', name === 'dragover');
+      if (name === 'drop' && !this.mutating) void this.chooseImage(event.dataTransfer.files);
+    });
+    this.dialog.querySelector('[data-ref-remove]').addEventListener('click', () => {
+      if (this.mutating) return;
+      this.imageVersion++; this.readingImage = false; this.editorImage = null; this.hasImage = false;
+      this.form.elements.upload.value = ''; this.showPreview('');
+    });
+  }
+
+  openEditor(post = null) {
+    if (this.mutating) return;
+    this.editing = post; this.form.reset(); this.editorStatus.textContent = '';
+    this.dialog.querySelector('h2').textContent = post ? '编辑素材' : '添加素材';
+    this.form.elements.platform.value = post?.platform || this.platform.value;
+    for (const name of ['title','cover_ocr','model']) this.form.elements[name].value = post?.[name] || '';
+    this.form.elements.body.value = post?.body_full || '';
+    this.form.elements.model_category.value = post?.model_category || '其他';
+    this.form.elements.layout_style.value = post?.layout_style || 'other';
+    this.form.elements.good.checked = post?.label_good === true;
+    this.editorImage = undefined; this.hasImage = Boolean(post && imageList(post).length);
+    this.imageVersion = (this.imageVersion || 0) + 1; this.readingImage = false;
+    this.showPreview(post ? imageList(post)[0] : '');
+    this.dialog.showModal();
+  }
+
+  showPreview(source) {
+    this.preview.hidden = !source;
+    const image = this.preview.querySelector('img');
+    if (source) image.src = source; else image.removeAttribute('src');
+    const count = this.editorImage === undefined && this.editing ? imageList(this.editing).length : 1;
+    this.preview.querySelector('[data-ref-image-note]').textContent = count > 1 ? `共 ${count} 张；上传会替换封面，移除会删除全部图片` : '';
+  }
+
+  async chooseImage(files) {
+    if (files.length !== 1) { this.editorStatus.textContent = '请选择一张封面图片。'; return; }
+    const file = files[0], version = ++this.imageVersion;
+    this.readingImage = false;
+    if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 15 * 1024 * 1024) {
+      this.editorStatus.textContent = '仅支持 PNG / JPEG / WebP，图片不能超过 15MB。'; return;
+    }
+    this.readingImage = true; this.editorStatus.textContent = '正在读取图片…';
+    try {
+      const source = await new Promise((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('图片读取失败，请重新选择。')); reader.readAsDataURL(file); });
+      if (version !== this.imageVersion) return;
+      this.editorImage = source; this.hasImage = true; this.showPreview(source); this.editorStatus.textContent = '';
+    } catch (error) { if (version === this.imageVersion) this.editorStatus.textContent = error.message; }
+    finally { if (version === this.imageVersion) this.readingImage = false; }
+  }
+
+  async mutationRequest(path, payload) {
+    const response = await this.fetcher(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '保存失败，请稍后重试。');
+    return data;
+  }
+
+  reconcileSelection(old, replacement) {
+    if (!old) return;
+    this.selectedReferences = this.selectedReferences.flatMap(reference => keyOf(reference) === keyOf(old) ? replacement ? [{id:replacement.id,platform:replacement.platform}] : [] : [reference]);
+    this.selectedKeys = new Set(this.selectedReferences.map(keyOf));
+    this.saveSelection(); this.refreshBadges();
+  }
+
+  async refreshAfterMutation(message) {
+    const count = this.posts.length;
+    await this.load(true);
+    const version = this.requestVersion;
+    while (!this.loadError && !this.exhausted && this.posts.length < count && version === this.requestVersion) await this.load();
+    if (!this.loadError) this.status.textContent = message;
+  }
+
+  async saveEditor() {
+    if (this.mutating || this.readingImage) { this.editorStatus.textContent = '请等待当前操作完成。'; return; }
+    const payload = {};
+    for (const name of ['platform','title','body','cover_ocr','model','model_category','layout_style']) payload[name] = this.form.elements[name].value;
+    payload.label = {good:this.form.elements.good.checked};
+    if (!this.hasImage && !payload.title.trim() && !payload.body.trim()) { this.editorStatus.textContent = '请至少提供图片、标题或正文中的一项。'; return; }
+    if (this.editorImage !== undefined) payload.image = this.editorImage;
+    const old = this.editing;
+    this.mutating = true; this.form.querySelectorAll('button,input,textarea,select').forEach(element => element.disabled = true);
+    this.editorStatus.textContent = '正在保存…';
+    try {
+      const data = await this.mutationRequest(`/api/content-ops/references${old ? `/${encodeURIComponent(old.id)}/edit` : ''}`, payload);
+      this.reconcileSelection(old, data.reference); this.dialog.close();
+      await this.refreshAfterMutation('素材已保存；列表已按当前筛选与排序更新。');
+    } catch (error) { this.editorStatus.textContent = error.message; }
+    finally { this.mutating = false; this.form.querySelectorAll('button,input,textarea,select').forEach(element => element.disabled = false); }
+  }
+
+  async deletePost(post) {
+    if (!window.confirm('确定要删除该素材吗？')) return;
+    this.mutating = true;
+    try {
+      await this.mutationRequest(`/api/content-ops/references/${encodeURIComponent(post.id)}/delete`, {});
+      this.reconcileSelection(post, null);
+      await this.refreshAfterMutation('素材及本地图片已删除。');
+    } catch (error) { this.status.textContent = `删除失败：${error.message}`; }
+    finally { this.mutating = false; }
+  }
+
   updateSortOptions() {
     const wanted = this.sort.querySelector('option[value="wanted"]');
     wanted.hidden = wanted.disabled = this.platform.value !== 'xianyu';
@@ -98,13 +247,14 @@ export class ContentOpsReferences {
     const version = this.requestVersion;
     this.controller = new AbortController();
     this.loading = true;
+    this.loadError = false;
     this.root.setAttribute('aria-busy', 'true');
     this.more.disabled = true;
     this.more.textContent = '正在加载…';
     this.status.textContent = '正在读取素材…';
     this.totalLabel.textContent = this.total == null ? '正在读取' : `${this.total} 条`;
     this.progress.textContent = this.total == null ? '' : `已显示 ${this.posts.length} / ${this.total}`;
-    const query = new URLSearchParams({platform:this.platform.value, sort:this.sort.value, offset:String(this.nextOffset), limit:'30'});
+    const query = new URLSearchParams({platform:this.platform.value, sort:this.sort.value, model_category:this.modelCategory.value, layout_style:this.layoutStyle.value, offset:String(this.nextOffset), limit:'30'});
     try {
       const response = await this.fetcher(`/api/content-ops/references?${query}`, {signal:this.controller.signal});
       const data = await response.json();
@@ -121,11 +271,12 @@ export class ContentOpsReferences {
       this.grid.insertAdjacentHTML('beforeend', additions.map(post => this.card(post)).join(''));
       if (this.pinned && (known.has(keyOf(this.pinned)) || additions.some(post => keyOf(post) === keyOf(this.pinned)))) this.pinned = null;
       this.renderPinned();
-      this.status.textContent = this.total === 0 ? '这个平台还没有可浏览的素材。' : '';
+      this.status.textContent = this.total === 0 ? '当前筛选组合没有匹配素材，请调整模型或版式。' : '版式优先使用人工标注，未标注时按封面 OCR 与标题推断。';
       this.totalLabel.textContent = `${this.total} 条`;
       this.progress.textContent = `已显示 ${this.posts.length} / ${this.total}`;
     } catch (error) {
       if (version !== this.requestVersion || error.name === 'AbortError') return;
+      this.loadError = true;
       if (reset) this.grid.replaceChildren();
       this.status.replaceChildren(document.createTextNode(`素材读取失败：${error.message}。`));
       const retry = document.createElement('button');
@@ -170,7 +321,8 @@ export class ContentOpsReferences {
         <div class="ref-badges">${this.badges(post)}</div>
         <h2 class="ref-title">${esc(post.title || '无标题')}</h2>
         <button class="ref-text-button" type="button" data-ref-select aria-pressed="${this.selectedKeys.has(keyOf(post))}">${this.selectedKeys.has(keyOf(post)) ? '移出下一批引用' : '引用到下一批'}</button>
-        <dl class="ref-facts"><div><dt>模型</dt><dd>${esc(post.model || '—')}</dd></div><div><dt>互动层级</dt><dd>${esc(post.engagement_tier || '—')}</dd></div><div><dt>采集时间</dt><dd>${esc(post.fetched_at || '—')}</dd></div><div><dt>参考状态</dt><dd>${post.clean_for_style_reference === true ? '可用于风格参考' : post.clean_for_style_reference === false ? '需先核对风险' : '—'}</dd></div></dl>
+        <button class="ref-text-button" type="button" data-ref-edit>编辑</button><button class="ref-text-button ref-delete" type="button" data-ref-delete>删除</button>
+        <dl class="ref-facts"><div><dt>模型</dt><dd>${esc(post.model || post.model_category || '—')}</dd></div><div><dt>版式</dt><dd>${esc(Object.fromEntries(layoutOptions)[post.layout_style] || '通用日常')}（${post.classification_method === 'manual' ? '人工标注' : '自动推断'}）</dd></div><div><dt>互动层级</dt><dd>${esc(post.engagement_tier || '—')}</dd></div><div><dt>采集时间</dt><dd>${esc(post.fetched_at || '—')}</dd></div><div><dt>参考状态</dt><dd>${post.clean_for_style_reference === true ? '可用于风格参考' : post.clean_for_style_reference === false ? '需先核对风险' : '—'}</dd></div></dl>
         <section class="ref-copy-section"><h3>封面文字</h3><p class="ref-ocr">${esc(post.cover_ocr || '—')}</p></section>
         <section class="ref-copy-section"><h3>正文</h3><p class="ref-text">${esc(preview || '—')}</p>${body !== preview ? '<button class="ref-text-button ref-expand" type="button" data-ref-expand aria-expanded="false">展开全文</button>' : ''}</section>
         <p class="ref-tags">${esc(tags || '标签：—')}</p>
@@ -184,6 +336,14 @@ export class ContentOpsReferences {
   }
 
   handleClick(event) {
+    const action = event.target.closest('[data-ref-edit],[data-ref-delete]');
+    if (action) {
+      const post = this.findPost(action.closest('.ref-card'));
+      if (!post || this.mutating) return;
+      if (action.hasAttribute('data-ref-edit')) this.openEditor(post);
+      else void this.deletePost(post);
+      return;
+    }
     const select = event.target.closest('[data-ref-select]');
     if (select) {
       const card = select.closest('.ref-card');

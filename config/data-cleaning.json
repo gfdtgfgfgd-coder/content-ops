@@ -1,20 +1,40 @@
 {
   "version": 1,
   "rules": "rules/banned-words-quick.yaml",
-  "scan_fields": ["body", "cover_ocr", "tags"],
-  "model_context_fields": ["title", "body", "cover_ocr", "tags"],
+  "scan_fields": [
+    "body",
+    "cover_ocr",
+    "tags"
+  ],
+  "model_context_fields": [
+    "title",
+    "body",
+    "cover_ocr",
+    "tags"
+  ],
   "profiles": {
     "xhs": {
       "platform": "xhs",
       "input_dir": "data/xhs",
-      "policy_flags": {"platform_allows_api": false},
-      "high_metrics": {"likes": 50, "collects": 20},
-      "interaction_metrics": ["likes", "collects", "comments"]
+      "policy_flags": {
+        "platform_allows_api": false
+      },
+      "high_metrics": {
+        "likes": 50,
+        "collects": 20
+      },
+      "interaction_metrics": [
+        "likes",
+        "collects",
+        "comments"
+      ]
     },
     "xianyu": {
       "platform": "xianyu",
       "input_dir": "data/xianyu",
-      "policy_flags": {"platform_allows_api": false},
+      "policy_flags": {
+        "platform_allows_api": false
+      },
       "ranked_file": "data/xianyu/_ranked.md",
       "wants_field": "wants",
       "top_count": 5,
@@ -27,5 +47,17 @@
     "output_field": "audience",
     "list_pattern": "适合人群\\s*[：:]\\s*(.+)",
     "separator_pattern": "[、，,；;\\n]+"
-  }
+  },
+  "posts_file": "data/posts.jsonl",
+  "migration_expected_counts": {
+    "xhs": 364,
+    "xianyu": 34
+  },
+  "migration_indexes": [
+    {
+      "platform": "xhs",
+      "index": "data/xhs/_notes-index.json",
+      "urls": "data/xhs/_urls.txt"
+    }
+  ]
 }

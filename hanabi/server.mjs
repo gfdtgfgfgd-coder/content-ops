@@ -9,11 +9,16 @@ import { fileURLToPath } from 'node:url';
 import { ContentOpsProduction } from './lib/content-ops-production.mjs';
 import { ContentOpsReferenceStore, referenceImageRequestPath } from './lib/content-ops-reference-store.mjs';
 import { ContentOpsEditor } from './lib/content-ops-editor.mjs';
+import { ContentOpsConnections, loadGatewaySettings } from './lib/content-ops-connections.mjs';
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.CONTENT_ALCHEMY_PORT || 6187);
 const HOST = '127.0.0.1';
 const REPO_ROOT = resolve(ROOT, '..');
+const DOCUMENTS = Object.freeze({
+  'platform-rules': 'rules/platform-rules.md', 'design-rules': 'rules/design-rules.md',
+  guide: 'docs/GUIDE.md', decisions: 'docs/01-决策记录.md', sources: 'data/sources/README.md'
+});
 const APP_DATA = process.env.CONTENT_ALCHEMY_DATA_DIR || join(homedir(), 'Library', 'Application Support', 'Content Alchemy');
 const UPLOAD_DIR = join(APP_DATA, 'uploads');
 const DB_PATH = process.env.CONTENT_OPS_DB_PATH || join(APP_DATA, 'content-ops.sqlite');
@@ -32,6 +37,7 @@ db.exec(`PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS content_ops_batches
  progress_message TEXT NOT NULL DEFAULT '', attachments TEXT NOT NULL DEFAULT '[]',
  created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 ); CREATE INDEX IF NOT EXISTS jobs_batch ON analysis_jobs(batch_id,position);`);
+const connections = new ContentOpsConnections({ root: REPO_ROOT });
 const production = new ContentOpsProduction({ db, root: REPO_ROOT, uploadDir: UPLOAD_DIR });
 const references = new ContentOpsReferenceStore({ root: REPO_ROOT });
 const editor = new ContentOpsEditor({ root: REPO_ROOT, runtimeRoot: existsSync(runtimeRoot) ? runtimeRoot : null });
@@ -39,8 +45,8 @@ const editor = new ContentOpsEditor({ root: REPO_ROOT, runtimeRoot: existsSync(r
 const json = value => JSON.stringify(value, null, 2);
 const send = (res, status, value, headers = {}) => { const body = Buffer.from(typeof value === 'string' ? value : json(value)); res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': body.length, ...headers }); res.end(body); };
 const error = (res, err) => send(res, err.statusCode || 500, { error: err.message || '服务器错误' });
-const body = async req => { let text = ''; for await (const chunk of req) { text += chunk; if (Buffer.byteLength(text) > 2 * 1024 * 1024) throw Object.assign(new Error('请求体过大。'), { statusCode: 413 }); } try { return text ? JSON.parse(text) : {}; } catch { throw Object.assign(new Error('JSON 请求体无效。'), { statusCode: 400 }); } };
-const env = async () => { let raw = await readFile(join(REPO_ROOT, 'scratch/gateway.env'), 'utf8').catch(() => ''); const values = {}; for (const line of raw.split(/\r?\n/u)) { const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/u); if (match) values[match[1]] = match[2].replace(/^['"]|['"]$/gu, ''); } return { ...values, ...process.env }; };
+const body = async (req, limit = 2 * 1024 * 1024) => { const chunks = []; let size = 0; for await (const chunk of req) { size += chunk.length; if (size > limit) { chunks.length = 0; continue; } chunks.push(chunk); } if (size > limit) throw Object.assign(new Error('请求体过大。'), { statusCode: 413 }); try { const text = Buffer.concat(chunks).toString('utf8'); return text ? JSON.parse(text) : {}; } catch { throw Object.assign(new Error('JSON 请求体无效。'), { statusCode: 400 }); } };
+const env = () => loadGatewaySettings(REPO_ROOT);
 const gateway = async (req, res, pathname) => { const cfg = await env(); if (!cfg.CONTENT_OPS_BASE_URL || !cfg.CONTENT_OPS_API_KEY) return send(res, 503, { error: '本机网关未配置，请设置 scratch/gateway.env。' }); const base = String(cfg.CONTENT_OPS_BASE_URL).replace(/\/$/u, ''); const target = `${base}${pathname.startsWith('/v1') ? pathname.slice(3) || '/' : pathname}`; const headers = {}; for (const [key, value] of Object.entries(req.headers)) if (!['host', 'content-length', 'authorization'].includes(key)) headers[key] = value; headers.authorization = `Bearer ${cfg.CONTENT_OPS_API_KEY}`; const init = { method: req.method, headers }; if (!['GET', 'HEAD'].includes(req.method)) init.body = await collect(req); let upstream; try { upstream = await fetch(target, init); } catch (err) { return send(res, 502, { error: `公司网关连接失败：${err.message}` }); } res.writeHead(upstream.status, Object.fromEntries([...upstream.headers].filter(([key]) => !['content-length', 'connection', 'transfer-encoding'].includes(key)))); if (upstream.body) { for await (const chunk of upstream.body) res.write(chunk); } res.end(); };
 const collect = async req => { const chunks = []; for await (const chunk of req) chunks.push(chunk); return Buffer.concat(chunks); };
 
@@ -49,17 +55,51 @@ async function route(req, res) {
   if (pathname === '/v1' || pathname.startsWith('/v1/')) return gateway(req, res, pathname);
   if (req.method === 'GET' && pathname === '/healthz') return send(res, 200, { ok: true, service: 'hanabi', port: PORT });
   try {
-    if (req.method === 'GET' && pathname === '/api/content-ops/config') return send(res, 200, await production.config());
+    if (pathname === '/api/connections') {
+      const headers = { 'Cache-Control': 'no-store' };
+      res.setHeader('Cache-Control', 'no-store');
+      if (![`${HOST}:${PORT}`, `localhost:${PORT}`].includes(req.headers.host)) return send(res, 403, { error: '请通过本机 Hanabi 地址访问接口配置。' }, headers);
+      if (req.method === 'GET') return send(res, 200, await connections.get(), headers);
+      if (req.method === 'POST') {
+        if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) return send(res, 403, { error: '仅允许当前 Hanabi 页面修改接口配置。' }, headers);
+        if (!/^application\/json(?:;|$)/iu.test(req.headers['content-type'] || '')) return send(res, 415, { error: '请使用 JSON 提交配置。' }, headers);
+        return send(res, 200, await connections.save(await body(req)), headers);
+      }
+      return send(res, 405, { error: '方法不支持。' }, headers);
+    }
+    if (req.method === 'GET' && pathname === '/api/content-ops/config') return send(res, 200, await production.config(), { 'Cache-Control': 'no-store' });
+    if (req.method === 'GET' && pathname === '/api/content-ops/documents') {
+      const name=parsed.searchParams.get('doc'),relative=Object.hasOwn(DOCUMENTS,name)?DOCUMENTS[name]:null;
+      if(!relative||parsed.searchParams.size!==1)return send(res,400,{error:'文档名称无效。'});
+      const content=await readFile(join(REPO_ROOT,relative),'utf8');
+      return send(res,200,{name,path:relative,content},{'Cache-Control':'no-store'});
+    }
     if (req.method === 'POST' && pathname === '/api/content-ops/generate') return send(res, 200, await production.create(await body(req)));
     if (req.method === 'GET' && pathname === '/api/content-ops/batches') return send(res, 200, { batches: production.list() });
     const batchMatch = pathname.match(/^\/api\/content-ops\/batches\/([^/]+)(?:\/(stop))?$/u);
     if (batchMatch) { const id = decodeURIComponent(batchMatch[1]); if (req.method === 'GET' && !batchMatch[2]) return send(res, 200, { batch: production.public(production.get(id)) }); if (req.method === 'POST' && batchMatch[2] === 'stop') return send(res, 200, { batch: production.stop(id) }); }
-    if (req.method === 'GET' && pathname === '/api/content-ops/references') return send(res, 200, await references.list(parsed.searchParams));
-    if (req.method === 'GET' && pathname.startsWith('/api/content-ops/image/')) { const imagePath = referenceImageRequestPath(req.url); const image = await references.image(imagePath); const bytes = await readFile(image.path); res.writeHead(200, { 'Content-Type': image.mimeType, 'Content-Length': bytes.length, 'Cache-Control': 'public, max-age=3600' }); return res.end(bytes); }
-    if (req.method === 'GET' && pathname === '/api/content-ops/persona') return send(res, 200, await editor.persona());
-    if (req.method === 'POST' && pathname === '/api/content-ops/persona') return send(res, 200, await editor.mutate('persona', await body(req)));
-    if (req.method === 'GET' && pathname === '/api/content-ops/banned-words') return send(res, 200, await editor.bannedWords());
-    if (req.method === 'POST' && pathname === '/api/content-ops/banned-words') return send(res, 200, await editor.mutate('words', await body(req)));
+    if (req.method === 'GET' && pathname === '/api/content-ops/references') return send(res, 200, await references.list(parsed.searchParams), { 'Cache-Control': 'no-store' });
+    const referenceMatch = pathname.match(/^\/api\/content-ops\/references(?:\/([^/]+)(?:\/(edit|delete))?)?$/u);
+    if (referenceMatch) {
+      const [, rawId, action] = referenceMatch;
+      let id = null;
+      try { if (rawId) id = decodeURIComponent(rawId); } catch { return send(res, 400, { error: '素材 ID 无效。' }); }
+      const create = !id && req.method === 'POST';
+      const update = id && (req.method === 'PUT' && !action || req.method === 'POST' && action === 'edit');
+      const remove = id && (req.method === 'DELETE' && !action || req.method === 'POST' && action === 'delete');
+      const headers = { 'Cache-Control': 'no-store' };
+      if (!create && !update && !remove) return send(res, 405, { error: '方法不支持。' }, headers);
+      if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` || req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { error: '仅允许当前 Hanabi 页面修改素材。' }, headers);
+      if (!remove && !/^application\/json(?:;|$)/iu.test(req.headers['content-type'] || '')) return send(res, 415, { error: '请使用 JSON 提交素材。' }, headers);
+      if (remove) return send(res, 200, { deleted: await references.deleteReference(id) }, headers);
+      const payload = await body(req, 21 * 1024 * 1024);
+      return send(res, create ? 201 : 200, { reference: create ? await references.addReference(payload) : await references.updateReference(id, payload) }, headers);
+    }
+    if (req.method === 'GET' && pathname.startsWith('/api/content-ops/image/')) { const imagePath = referenceImageRequestPath(req.url); const image = await references.image(imagePath); const bytes = await readFile(image.path); res.writeHead(200, { 'Content-Type': image.mimeType, 'Content-Length': bytes.length, 'Cache-Control': 'no-store' }); return res.end(bytes); }
+    if (req.method === 'GET' && pathname === '/api/content-ops/persona') return send(res, 200, await editor.persona(), { 'Cache-Control': 'no-store' });
+    if (req.method === 'POST' && pathname === '/api/content-ops/persona') return send(res, 200, await editor.mutate('persona', await body(req)), { 'Cache-Control': 'no-store' });
+    if (req.method === 'GET' && pathname === '/api/content-ops/banned-words') return send(res, 200, await editor.bannedWords(), { 'Cache-Control': 'no-store' });
+    if (req.method === 'POST' && pathname === '/api/content-ops/banned-words') return send(res, 200, await editor.mutate('words', await body(req)), { 'Cache-Control': 'no-store' });
     const uploadMatch = pathname.match(/^\/api\/uploads\/([0-9a-f-]+)\.png$/iu); if (req.method === 'GET' && uploadMatch) { const file = join(UPLOAD_DIR, `${uploadMatch[1]}.png`); const info = await stat(file).catch(() => null); if (!info?.isFile()) return send(res, 404, { error: '图片不存在。' }); const bytes = await readFile(file); res.writeHead(200, { 'Content-Type': 'image/png', 'Content-Length': bytes.length, 'Cache-Control': 'private, max-age=31536000, immutable' }); return res.end(bytes); }
     return staticFile(req, res, pathname);
   } catch (err) { return error(res, err); }
@@ -70,12 +110,12 @@ async function staticFile(req, res, pathname) {
   let path = pathname === '/' ? '/index.html' : pathname; try { path = decodeURIComponent(path); } catch { return send(res, 400, { error: '路径无效。' }); }
   const file = resolve(ROOT, `.${path}`); if (!file.startsWith(`${ROOT}/`) || file.includes('\0')) return send(res, 400, { error: '路径无效。' });
   const info = await stat(file).catch(() => null); if (!info?.isFile()) return send(res, 404, { error: '文件不存在。' });
-  const bytes = await readFile(file), types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' }; res.writeHead(200, { 'Content-Type': types[extname(file).toLowerCase()] || 'application/octet-stream', 'Content-Length': bytes.length, 'Cache-Control': 'no-cache' }); if (req.method === 'GET') res.end(bytes); else res.end();
+  const bytes = await readFile(file), types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' }; res.writeHead(200, { 'Content-Type': types[extname(file).toLowerCase()] || 'application/octet-stream', 'Content-Length': bytes.length, 'Cache-Control': 'no-store' }); if (req.method === 'GET') res.end(bytes); else res.end();
 }
 
 const server = createServer((req, res) => void route(req, res));
 server.on('error', err => { console.error(err); process.exitCode = 1; });
 await production.recover();
-server.listen(PORT, HOST, () => console.log(`Hanabi content-ops listening on http://${HOST}:${PORT}`));
+server.listen(PORT, HOST, () => console.log(`Hanabi content-ops listening on http://${HOST}:${server.address().port}`));
 const shutdown = async () => { await production.shutdown(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500).unref(); };
 process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);

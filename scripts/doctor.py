@@ -26,11 +26,35 @@ def load_budget(path=None):
         return json.load(f)
 
 
-def tracked_files():
-    out = subprocess.run(
-        ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True
-    ).stdout
-    return [p for p in out.decode("utf-8").split("\0") if p]
+def tracked_files(staged=False):
+    arguments = ['git', 'ls-files', '-z']
+    if not staged:
+        arguments += ['--cached', '--others', '--exclude-standard']
+    out = subprocess.run(arguments, cwd=ROOT, capture_output=True, check=True).stdout
+    files = sorted(set(p for p in out.decode('utf-8').split('\0') if p))
+    return files if staged else [p for p in files if (ROOT / p).is_file()]
+
+
+def staged_contents(files):
+    entries = subprocess.check_output(['git', 'ls-files', '-s', '-z'], cwd=ROOT).decode('utf-8').split('\0')
+    objects = {}
+    for entry in filter(None, entries):
+        metadata, path = entry.split('\t', 1)
+        mode, digest, stage = metadata.split()
+        if stage != '0':
+            raise ValueError('索引存在未解决冲突：' + path)
+        objects[path] = digest
+    payload = ''.join(objects[path] + '\n' for path in files).encode('ascii')
+    raw = subprocess.run(['git', 'cat-file', '--batch'], cwd=ROOT, input=payload,
+                         capture_output=True, check=True).stdout
+    result, offset = {}, 0
+    for path in files:
+        end = raw.index(b'\n', offset)
+        size = int(raw[offset:end].rsplit(b' ', 1)[1])
+        offset = end + 1
+        result[path] = raw[offset:offset + size]
+        offset += size + 1
+    return result
 
 
 def size_of(rel):
@@ -53,9 +77,11 @@ def duplicate_groups(files, min_bytes):
     return [sorted(v) for v in by_hash.values() if len(v) > 1]
 
 
-def dir_bytes(path):
+def dir_bytes(path, ignore_hidden=True):
     total = 0
     for p in Path(path).rglob("*"):
+        if ignore_hidden and any(part.startswith(".") for part in p.relative_to(path).parts):
+            continue
         try:
             if p.is_file():
                 total += p.stat().st_size
@@ -68,7 +94,7 @@ def prune_scratch(keep):
     base = ROOT / "scratch"
     if not base.is_dir():
         return []
-    dirs = [d for d in base.iterdir() if d.is_dir()]
+    dirs = [d for d in base.iterdir() if d.is_dir() and not d.name.startswith(".")]
     dirs.sort(key=lambda d: d.stat().st_mtime, reverse=True)
     removed = []
     for d in dirs[keep:]:
@@ -78,9 +104,11 @@ def prune_scratch(keep):
     return removed
 
 
-def check(budget):
-    files = tracked_files()
-    total = sum(size_of(f) for f in files)
+def check(budget, staged=False):
+    files = tracked_files(staged)
+    content = staged_contents(files) if staged else None
+    size_for = (lambda name: len(content[name])) if staged else size_of
+    total = sum(size_for(f) for f in files)
     errors, warnings = [], []
 
     limit = budget["tracked_files_max"]
@@ -91,13 +119,20 @@ def check(budget):
     if total_kb > kb_limit:
         errors.append(f"跟踪体量 {total_kb:.0f} KB，预算 {kb_limit} KB；超出 {total_kb - kb_limit:.0f} KB")
 
-    big = sorted(((size_of(f), f) for f in files), reverse=True)
+    big = sorted(((size_for(f), f) for f in files), reverse=True)
     cap = budget["single_file_kb_max"] * 1024
     for size, rel in big:
         if size > cap:
             errors.append(f"单文件超限 {size / 1024:.0f} KB > {cap // 1024} KB：{rel}")
 
-    dups = duplicate_groups(files, budget["duplicate_min_kb"] * 1024)
+    if staged:
+        groups = defaultdict(list)
+        for name in files:
+            if size_for(name) >= budget['duplicate_min_kb'] * 1024:
+                groups[hashlib.sha256(content[name]).hexdigest()].append(name)
+        dups = [sorted(group) for group in groups.values() if len(group) > 1]
+    else:
+        dups = duplicate_groups(files, budget['duplicate_min_kb'] * 1024)
     for group in dups:
         errors.append("完全重复：" + " = ".join(group))
 
@@ -106,11 +141,10 @@ def check(budget):
         errors.append(f"scratch {scratch_kb / 1024:.0f} MB，预算 {budget['scratch_kb_max'] / 1024:.0f} MB")
 
     allow = set(budget.get("scripts_entry_allow") or [])
-    scripts = ROOT / "scripts"
-    if scripts.is_dir():
-        for entry in sorted(scripts.glob("*.py")) + sorted(scripts.glob("*.swift")):
-            if entry.name not in allow:
-                warnings.append(f"服务层多出的入口：scripts/{entry.name}（白名单只有 {', '.join(sorted(allow))}）")
+    for name in files:
+        path = Path(name)
+        if path.parent.as_posix() == 'scripts' and path.suffix in ('.py', '.swift', '.sh', '.js', '.mjs', '.command') and path.name not in allow:
+            errors.append(f'服务层多出的入口：{name}（白名单只有 {", ".join(sorted(allow))}）')
 
     per_dir = Counter()
     for rel in files:
@@ -133,17 +167,18 @@ def check(budget):
 
 def main():
     parser = argparse.ArgumentParser(description="仓库体量闸门")
+    parser.add_argument("--staged", action="store_true", help="检查 Git 索引字节，用于 pre-commit")
     parser.add_argument("--json", action="store_true", help="输出 JSON")
     parser.add_argument("--prune-scratch", action="store_true", help="只保留最近 N 个 scratch 目录")
     parser.add_argument("--budget", help="预算文件路径")
     args = parser.parse_args()
 
-    budget = load_budget(args.budget)
+    budget = (json.loads(subprocess.check_output(['git', 'show', ':config/repo-budget.json'], cwd=ROOT))
+              if args.staged and not args.budget else load_budget(args.budget))
     removed = prune_scratch(budget["scratch_keep_dirs"]) if args.prune_scratch else None
-    report = check(budget)
+    report = check(budget, args.staged)
     if removed is not None:
-        report["scratch_removed"] = removed
-        report = check(budget)
+        report['scratch_removed'] = removed
 
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))

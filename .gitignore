@@ -12,5 +12,6 @@ scratch/
 # Hanabi 本地依赖与运行包中的 node_modules 不进 Git；源码和小型发布 ZIP按需强制加入。
 hanabi/node_modules/
 /releases/
+*.app
 
 # 本机临时脚本与中间产物

@@ -1,0 +1,151 @@
+生成链路解防御验收 | 2026-11-03 Asia/Shanghai
+真实文字生成1次；其余单元/集成/浏览器测试未调用付费模型。
+源：outputs/2026-11-03/t37/kimi-brief/manifest.json及scratch/t37/*。此日志由原始记录与以下复跑命令汇编。
+真实生成命令：
+python3 scripts/generate.py copy --model 'Kimi K3.1 Pro' --count 1 --brief 'Kimi K3.1 Pro 编程与长程 Agent 全面升级，支持 100 万超长上下文，成本低便宜量大，适合程序员和独立开发者。' --output outputs/2026-11-03/t37/kimi-brief --background scratch/t14-primary-final/background-1.png
+真实生成 exit=0，manifest.status=completed；copy_calls=1；reference_mode=automatic；refs=3（人工good）；image calls=0（复用背景）。
+用量：{"model": "claude-sonnet-4-6", "usage": {"prompt_tokens": 7428, "completion_tokens": 359, "total_tokens": 7787, "usage_semantic": "openai", "usage_source": "anthropic", "prompt_tokens_details": {"cached_tokens": 0, "cached_creation_tokens": 7131, "text_tokens": 0, "audio_tokens": 0, "image_tokens": 0}, "completion_tokens_details": {"text_tokens": 0, "audio_tokens": 0, "image_tokens": 0, "reasoning_tokens": 0}, "input_tokens": 7428, "claude_cache_creation_5_m_tokens": 7131}}
+
+=== real-generation.log ===
+{"event": "preferences_loaded", "source": "distilled-preferences.json", "distilled_at": "2026-11-02", "version": 1, "sha256": "669d36a052ba56aa23e112818fdea74fdb9e9ac2f659574cf15cdaa18f256d53", "characters": 11148}
+{"event": "post_completed", "index": 1, "count": 1}
+{"status": "completed", "output": "/Users/mac/Desktop/content-ops/outputs/2026-11-03/t37/kimi-brief", "count": 1}
+
+
+=== python-tests.log ===
+test_staged_bytes_and_entry_allowlist (lib.test_pipeline.DoctorTests.test_staged_bytes_and_entry_allowlist) ... ok
+test_automatic_references_same_platform_and_manual_override (lib.test_pipeline.PipelineTests.test_automatic_references_same_platform_and_manual_override) ... ok
+test_brief_validation_and_resume_input_identity (lib.test_pipeline.PipelineTests.test_brief_validation_and_resume_input_identity) ... 生成失败：需求须为不超过1000字的文本，不能含控制字符
+生成失败：需求须为不超过1000字的文本，不能含控制字符
+ok
+test_clean_all_separate_output_is_idempotent (lib.test_pipeline.PipelineTests.test_clean_all_separate_output_is_idempotent) ... ok
+test_clean_dry_run_does_not_write (lib.test_pipeline.PipelineTests.test_clean_dry_run_does_not_write) ... ok
+test_copy_pipeline_offline_and_resume (lib.test_pipeline.PipelineTests.test_copy_pipeline_offline_and_resume) ... 生成失败：续跑的需求或产品资料已改变，请使用新目录
+ok
+test_counts_and_unique_ids (lib.test_pipeline.PipelineTests.test_counts_and_unique_ids) ... ok
+test_duplicate_rejected_without_overwriting (lib.test_pipeline.PipelineTests.test_duplicate_rejected_without_overwriting) ... ok
+test_image_cli_mocked_no_network (lib.test_pipeline.PipelineTests.test_image_cli_mocked_no_network) ... ok
+test_ingest_checkpoint_without_images (lib.test_pipeline.PipelineTests.test_ingest_checkpoint_without_images) ... ok
+test_invalid_count_fails_before_paid_call (lib.test_pipeline.PipelineTests.test_invalid_count_fails_before_paid_call) ... 生成失败：目前只支持小红书，数量须为 1–10
+ok
+test_invalid_facts_fail_before_paid_call (lib.test_pipeline.PipelineTests.test_invalid_facts_fail_before_paid_call) ... 生成失败：每条产品事实必须有 claim 和 source
+ok
+test_migration_differences_keep_all_legacy (lib.test_pipeline.PipelineTests.test_migration_differences_keep_all_legacy) ... ok
+test_preferences_loader_and_fallback (lib.test_pipeline.PipelineTests.test_preferences_loader_and_fallback) ... [WARN] distilled-preferences.json 不存在，回退到分散文件加载，建议先跑 T13
+ok
+test_reference_selection_hashes_and_missing (lib.test_pipeline.PipelineTests.test_reference_selection_hashes_and_missing) ... ok
+test_relaxed_voice_title_dynamic_audience_and_cover_risk (lib.test_pipeline.PipelineTests.test_relaxed_voice_title_dynamic_audience_and_cover_risk) ... ok
+test_store_roundtrip_and_order (lib.test_pipeline.PipelineTests.test_store_roundtrip_and_order) ... ok
+test_word_output_semantics (lib.test_pipeline.PipelineTests.test_word_output_semantics) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.396s
+
+OK
+
+
+=== npm-tests.log ===
+
+> content-alchemy-workbench@0.1.0 test
+> node --check server.mjs && node --check app.js && node --check lib/content-ops-ui.mjs && node --test lib/content-ops-production.test.mjs
+
+TAP version 13
+# (node:19188) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: brief validates type, length, controls; old input stays compatible
+ok 1 - brief validates type, length, controls; old input stays compatible
+  ---
+  duration_ms: 0.600458
+  type: 'test'
+  ...
+# Subtest: existing DB migrates, brief persists, single argv is safe, idempotency includes brief, history escapes client-side
+ok 2 - existing DB migrates, brief persists, single argv is safe, idempotency includes brief, history escapes client-side
+  ---
+  duration_ms: 13.806
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 45.53975
+
+
+=== node-full-regression.log ===
+(node:19163) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "counts": {
+    "xhs": 364,
+    "xianyu": 34
+  },
+  "images": 454,
+  "production_status": "completed",
+  "spawn_calls": 1,
+  "entry": [
+    "/var/folders/k1/phkn5z092f74l8dxfbbgwgnh0000gn/T/t36-node-5GB0qY/scripts/generate.py",
+    "copy"
+  ],
+  "paid_calls": 0
+}
+
+
+=== browser-check.json ===
+{
+  "mode": "browser POST intercepted, no paid calls; backend tested separately",
+  "payload": {
+    "brief": "Kimi K3.1 Pro 编程与长程 Agent 全面升级，支持 100 万超长上下文，成本低便宜量大，适合程序员和独立开发者。",
+    "model": "Kimi K3.1 Pro",
+    "platform": "xhs",
+    "count": 1,
+    "backgroundMode": "fresh",
+    "references": [],
+    "requestId": "bc9f78eb-2f19-407e-a379-40e2edd66ac4"
+  },
+  "requests": 1,
+  "summary": "本批需求：Kimi K3.1 Pro 编程与长程 Agent 全面升级，支持 100 万超长上下文，成本低便宜量大，适合程序员和独立开发者。",
+  "overflow": false
+}
+
+=== http-validation.log ===
+{"status":400,"error":"需求须为不超过1000字的文本，不能含控制字符。"}
+{"status":400,"error":"需求须为不超过1000字的文本，不能含控制字符。"}
+{"status":400,"error":"需求须为不超过1000字的文本，不能含控制字符。"}
+invalid briefs did not create batches or paid requests
+
+
+$ python3 scripts/check.py words --file /Users/mac/Desktop/content-ops/outputs/2026-11-03/t37/kimi-brief/post-1.md --platform xhs --model Kimi K3.1 Pro --json
+exit=0
+[]
+
+
+$ python3 scripts/check.py words --file /dev/stdin --platform xhs --model Kimi K3.1 Pro --json
+exit=0
+[]
+
+
+$ git diff --check
+exit=0
+
+
+$ python3 scripts/doctor.py
+exit=1
+跟踪文件 492 / 90
+跟踪体量 3242.4 KB / 2100 KB
+scratch 223.8 MB / 200 MB
+最大文件：data/posts.jsonl 811.4KB，hanabi/assets/app-icon-1024.png 372.4KB，hanabi/styles.css 183.5KB，data/xhs/_notes-index.json 130.7KB，hanabi/package-lock.json 125.4KB
+  提醒 data/ 有 413 个跟踪文件，考虑合并成一个入口或一个文件
+  提醒 hanabi/ 有 23 个跟踪文件，考虑合并成一个入口或一个文件
+  超限 跟踪文件 492 个，预算 90；超出 402
+  超限 跟踪体量 3242 KB，预算 2100 KB；超出 1142 KB
+  超限 单文件超限 811 KB > 400 KB：data/posts.jsonl
+  超限 scratch 224 MB，预算 200 MB
+未通过
+
+全部可见文字检查的输入：从manifest.posts逐篇连接title_lines、body、tags、audience、cover_subtitle、cover_highlight，作为stdin传给check.py words --file /dev/stdin。
+工作区中仅本轮6198隔离服务已停止；未重启现有6187服务。
+风险词0命中仅表示本地词库通过；未核验简报外性能承诺，待规划复核。doctor未通过，未提交/push。

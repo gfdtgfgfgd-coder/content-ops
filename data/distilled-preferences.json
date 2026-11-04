@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "distilled_at": "2026-11-02",
+  "distilled_at": "2026-11-04",
   "sources": [
     "simin-persona",
     "risk-words",
@@ -16,64 +16,60 @@
   ],
   "source_hashes": {
     "skills/simin-persona/SKILL.md": {
-      "sha256": "5927ea8c00c755ed26d582c5580ac2c04d291b898f7d48d5419bddbdda4a7fa2",
-      "bytes": 9483
+      "sha256": "3801cdc1a0cbd6d5b6175de26cd2365d120ab0a2262d7c11b1dc40d22b8bd691",
+      "bytes": 14052
     },
     "data/wecom/simin-feedback.jsonl": {
-      "sha256": "167ba514e8ff67efba4be3b8641386c9ee4d283ad6e44421a84c3a237d6ebb1e",
-      "bytes": 13504
+      "sha256": "f315aa09d92da20cc7667751bc8db3f05796bb870b80af9460cbb6c57303764e",
+      "bytes": 16719
     },
     "data/wecom/risk-words.md": {
-      "sha256": "ece22c264ab9df115da63840d26ea4610ec9a4828632b59b64a1ea6152ef2ef3",
-      "bytes": 4091
+      "sha256": "4d411f541276cc19392a04b140781623f6fff85b57040f6c650b269d5d8e8843",
+      "bytes": 4700
     },
     "rules/banned-words-quick.yaml": {
-      "sha256": "e578153bebd89800261548083788ef6911fefae23ea10088d03ae8a75d87e310",
-      "bytes": 4247
+      "sha256": "ccf165d95a11ec070ed11ea99049043e58d272d4b39c0cf898f8eee319f50cf7",
+      "bytes": 5568
     },
     "rules/platform-rules.md": {
-      "sha256": "d546e26d36007f5576e6468086589d6a48b7c0ab50c0146ccf588f11a6ad18f3",
-      "bytes": 2376
+      "sha256": "6b71013c682733e3ffac2b19bc1df08d33eb0235d2c10b0770fd8c41dd107898",
+      "bytes": 6055
     },
     "docs/01-决策记录.md": {
-      "sha256": "c69fdd6eb893af36004b17a28106a45ed5a12dcf473d9d5509a0c3dda56b108a",
-      "bytes": 4959
+      "sha256": "85758754eeae0325d062f29c42df650c357f0daba4f19ea3d45a61baee9b357c",
+      "bytes": 8189
     },
     "rules/design-rules.md": {
-      "sha256": "e6ab914a80f95298703f2c42318c041d4ff63429596f67b55c9fcde2e20a0f40",
-      "bytes": 4628
+      "sha256": "894a63ed0d40dc6e34cf9cbe69c0984b7dc34f6275e47993f1f42fd19e0cdc99",
+      "bytes": 12909
     },
     "rules/cover-palettes.json": {
       "sha256": "6e3deca1b4ecebb9aa013522536a2a69f2a01200577de793e7183a3bf43d96df",
       "bytes": 200
     },
     "skills/xhs-title-patterns/quick.md": {
-      "sha256": "7d4ed93d47935d4c17592851dc98bb24798ca5e122b92e0c74b7dd3d62e9f9f1",
-      "bytes": 6025
+      "sha256": "2da60431399234b01eb770ecb0a497d948306a0c0d146b4ab28d0d477c771e1f",
+      "bytes": 6060
     },
     "skills/xhs-post-generation/SKILL.md": {
-      "sha256": "6fab318e25455490dd3206a19e62e7ae5f9228a57c79134ac9851edaaaf57909",
-      "bytes": 4166
+      "sha256": "f4689a8afd58b86dce6406bee9a511a3e842d300404ed4278443049fb6deba91",
+      "bytes": 8577
     },
     "data/reference-posts.json": {
-      "sha256": "bd58e68fe388a868be8c7c2ade680893d87806f1143a6fefc37cf90bf7756252",
-      "bytes": 12166
+      "sha256": "273a5e11e5e4e22a909c010f62424c39bc203cf7fda2ff7c2241eb2049f5a6f5",
+      "bytes": 12714
     },
-    "data/xhs": {
-      "files": 364,
-      "sha256": "8aabdcd50b64ba04ee20492c776077ee3ed4744a8baae256607c1ad212fb07df"
-    },
-    "data/xianyu": {
-      "files": 34,
-      "sha256": "4af91d0f913355cd6482855651243a300caa19f7c58ce7fd119daf1d52683e45"
+    "data/posts.jsonl": {
+      "sha256": "dbb1f73aaf932445725505be65997bbf9f52f94a3e00b56e7768d4dca6764549",
+      "bytes": 835777
     },
     "config/preference-build.json": {
-      "sha256": "9934353a2c41c6071188a769c4fa1ff1f7b43900f2faea477254cb5dd7f1828d",
-      "bytes": 1225
+      "sha256": "26b105f0f4b5843e2272849158954ead799a18da65c72b4921494a83969cd0f5",
+      "bytes": 1330
     },
-    "scripts/distill-preferences.py": {
-      "sha256": "03615e2c9c4b54c7ab97d768ac656cab6aa66df96e3dd248e23ee2a8e0fc2d6c",
-      "bytes": 21119
+    "scripts/lib/preferences.py": {
+      "sha256": "b2c598bdf5cd5e2708f71405f420a1df8c79ebce2c7125fac2ed906904db97df",
+      "bytes": 24171
     }
   },
   "preference_priority": [
@@ -99,7 +95,14 @@
       "用新模型的当前卖点替换旧版本内容，不能只改名称。（Q12、Q15）",
       "文案与图片都过滤风险词，标签区和封面小字也算正文内容。（Q13、Q14、Q22、Q23）",
       "AI 生成后需要人工复核，去掉明显的套话和重复表达。（Q01、Q18、Q19）",
-      "图与文案成套交付；只有文案不算可发布素材。（Q24）"
+      "图与文案成套交付；只有文案不算可发布素材。（Q24）",
+      "小红书文案用词必须是大白话、第一眼看得懂，符合聚光投流规范；先按模型真实特点准备「1个特点对N个不同形容」，每篇各取一个，避免同批卖点雷同。（Q30、Q31、Q32）",
+      "小红书标题严格不超过 20 个字（含标点与 emoji）；不同模型或批次的标题与正文 emoji 必须更换区分，不沿用上一批模型的相同 emoji。（Q33、Q39）",
+      "开头简单引入控制在手机端两行字以内（约 25–34 字），避免多出几个字掉到第三行。（Q34）",
+      "核心卖点紧扣当前模型的 3–4 个真实主能力（如 Kimi K3.1 Pro 的长程代码工程、原生 3D 建模、金融财报降幻觉、通用长程 Agent；GLM-5.3 的生产级长程编程、涌现级代码安全审计、长程通用 Agent），每条一句话简单明了，不啰嗦。（Q37、Q40）",
+      "价格板块用短句分行突出「能力升级、开销降低」的反差感；支持三种递进模块结构（基础四段式／加接入与场景／加接入与人群），并与选定封面图文字呼应。（Q30、Q37）",
+      "封面大字报每行严格不超过 7 个字（如 5字强引导＋模型名＋4字利益钩子＋6–7字痛点或反问钩子），带双重钩子；首行偏好「赶紧安排！」等洗脑强引导词或「xx！xxxx」惊叹句式，尾行偏好「价格打下来了＋没人来测试吗？」等让人想占便宜的反问句。（Q36、Q38）",
+      "兼容生态优先写 CC 及国内合规工具（如 ZCode、Trae、WorkBuddy、扣子等）或用「主流代码编辑器、常见智能体工作台」概括；正文与封面全面规避 Token、神器/神奇及境外未备案工具名。（Q35、Q40、Q41）"
     ],
     "anti_patterns": [
       "封面模型名与背景同为浅色，字像融进背景：被要求换背景或模型名字的颜色。（Q08）",
@@ -109,7 +112,13 @@
       "新版模型仍沿用旧版本卖点：要求替换为更新后的卖点。（Q12、Q15）",
       "小红书图片或文案出现具体折扣，或者「询价」：明确要求修改。（Q13、Q14）",
       "以旧参考帖入选为由保留 API、量大管饱等词：入选仅说明参考价值，后续明确禁词仍需删除。（Q22、Q23）",
-      "Seedance 文案写满血、管饱管够、不卡人脸、秒级：该模型被单独列出限制。（Q17）"
+      "Seedance 文案写满血、管饱管够、不卡人脸、秒级：该模型被单独列出限制。（Q17）",
+      "用词拗口、堆砌书面技术黑话，第一眼看不懂，或同批多篇文案把相同四个卖点翻来覆去换句式写。（Q31、Q32）",
+      "小红书标题超过 20 个字，或开头引入段过长导致手机端多出几个字掉到第三行。（Q33、Q34）",
+      "封面大字单行超过 7 个字，或把爽点写成「自己改Bug太爽了」（自己改Bug不爽，爽的是让AI替我改Bug，应写「Bug让AI自己修」）。（Q36）",
+      "卖点脱离模型核心差异化主能力、单条解释过长啰嗦，或换新模型写文案时仍照搬上一个模型的标题与列表 emoji。（Q37、Q39、Q40）",
+      "兼容工具直接堆砌 OpenAI、Cursor、Hermes Agent 等境外或易卡审第三方品牌词。（Q35）",
+      "文案或封面出现「Token」（违禁词）或「神器 / 神奇」（易卡审核，应改为「挖到宝了」）。（Q40、Q41）"
     ],
     "evidence_quotes": [
       {
@@ -256,6 +265,66 @@
         "id": "Q29",
         "date": "2026-10-19",
         "quote": "让AI重新设计，醒目吸睛"
+      },
+      {
+        "id": "Q30",
+        "date": "2026-11-04",
+        "quote": "给图一图二图三补文案，可参考图四图五的格式，尽量减少出现一样的词语，文案多种风格：1.开头简单引入、卖点、价格板块、钩子；2.开头简单引入、卖点、价格板块、兼容cc、使用场景简单写几个、钩子/行动；3.开头简单引入、卖点、价格板块、兼容cc、使用人群、钩子/行动"
+      },
+      {
+        "id": "Q31",
+        "date": "2026-11-04",
+        "quote": "格式是对的方向也是对的，但是感觉用词有点拗口第一眼看不懂，不太适合放在小红书这种信息多的平台，记得要能通过小红书聚光投流规范"
+      },
+      {
+        "id": "Q32",
+        "date": "2026-11-04",
+        "quote": "感觉你的卖点都写得差不多，还是容易通不过小红书的聚光投流规范，你不如先搜索总结特点和优点，比如一个特点和优点找n个形容，然后再每篇用其中的一个形容"
+      },
+      {
+        "id": "Q33",
+        "date": "2026-11-04",
+        "quote": "标题超过20个字了"
+      },
+      {
+        "id": "Q34",
+        "date": "2026-11-04",
+        "quote": "再看看怎么缩短成两行字"
+      },
+      {
+        "id": "Q35",
+        "date": "2026-11-04",
+        "quote": "Cursor、OpenAI 及 Hermes Agent 这种真的能通过小红书审核吗"
+      },
+      {
+        "id": "Q36",
+        "date": "2026-11-04",
+        "quote": "把图片上的文字换成glm5.3的，也要有两个钩子，发散一下」「自己改bug不爽，爽的是ai改bug」「有没有发现原图的每行字都不超过七个"
+      },
+      {
+        "id": "Q37",
+        "date": "2026-11-04",
+        "quote": "有点点长，四个主能力也不够突出，文案需要简单明了些」「价格优势那块，可以看看再改改"
+      },
+      {
+        "id": "Q38",
+        "date": "2026-11-04",
+        "quote": "赶紧安排 有种给用户洗脑的引导感 需要这种感觉」「xx！xxxx，这种格式还有没有；价格打下来了 没人来测试吗？这种让人想占便宜的句子还有没有"
+      },
+      {
+        "id": "Q39",
+        "date": "2026-11-04",
+        "quote": "标题emoji怎么还跟kimi的一样，要换一换"
+      },
+      {
+        "id": "Q40",
+        "date": "2026-11-04",
+        "quote": "Token违禁词。融合一下图片这三个主要卖点。文案还是有点长、有点啰嗦，重新改改这三篇"
+      },
+      {
+        "id": "Q41",
+        "date": "2026-11-04",
+        "quote": "又挖到神奇改成挖到宝了 神奇容易卡审核"
       }
     ],
     "evidence_limit": "截至客户端当前可加载最早端的记录，未证明更早历史不存在；不代表思敏全部偏好。"
@@ -279,7 +348,11 @@
         "量大管饱",
         "询价",
         "[一二三四五六七八九十零〇两半]+(?:点[一二三四五六七八九十零〇]+)?\\s*折",
-        "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)"
+        "(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)",
+        "(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])",
+        "(?<![A-Za-z])token(?:s)?(?![A-Za-z])",
+        "(?:神器|神奇)",
+        "(?<![A-Za-z])(?:Cursor|Hermes\\s*Agent)(?![A-Za-z])"
       ],
       "model_specific_bans": {
         "seedance": [
@@ -529,10 +602,56 @@
           "replace": "",
           "reason": "D10 禁具体金额，包括中文数字及单位后缀",
           "added_at": "2026-11-02"
+        },
+        {
+          "word": "(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])",
+          "regex": true,
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "指定模型",
+          "reason": "境外模型品牌和型号不得写入对外可见内容（T35，2026-11-03）",
+          "added_at": "2026-11-03"
+        },
+        {
+          "word": "(?<![A-Za-z])token(?:s)?(?![A-Za-z])",
+          "regex": true,
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "额度",
+          "reason": "小红书违禁词，易触发代币风控，统一替换为额度/算力/开销（Q40，2026-11-04）",
+          "added_at": "2026-11-04"
+        },
+        {
+          "word": "(?:神器|神奇)",
+          "regex": true,
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "挖到宝了",
+          "reason": "容易卡小红书夸大宣传审核，统一替换为挖到宝了/新搭子（Q41，2026-11-04）",
+          "added_at": "2026-11-04"
+        },
+        {
+          "word": "(?<![A-Za-z])(?:Cursor|Hermes\\s*Agent)(?![A-Za-z])",
+          "regex": true,
+          "level": "ban",
+          "platform": [
+            "xhs"
+          ],
+          "replace": "主流编程工具",
+          "reason": "第三方海外工具名易卡小红书聚光投流审核，替换为CC或国内合规工具/主流编程工具（Q35，2026-11-04）",
+          "added_at": "2026-11-04"
         }
       ],
       "platform_allows_api": false,
-      "guidance": "**调性**：普一点，不油腻，不偷袭。白话解释：\n- 普一点 = 像普通用户在分享，不像品牌在喊口号。少用「重磅」「震撼」「炸裂」。\n- 不偷袭 = 不蹭别人的事故、不踩竞品、不借热点骂人。\n\n**价格表达**\n- 原因：具体折扣触发平台广告审核，极限词触发广告法。\n\n**封面（大字报）**：见 `design-rules.md`。\n\n**正文**：3 到 6 行，每行一个点，带 ✅ 或序号均可。末尾标签 5 到 8 个，模型名 + 场景词 + 人群词。\n\n**参考样本**：思敏企微里勾选的那一长条，T04 标注后在 `data/xhs/` 里 `label.good = true`。",
+      "guidance": "**调性**：普一点，不油腻，不偷袭。白话解释：\n- 普一点 = 像普通用户在分享，不像品牌在喊口号。少用「重磅」「震撼」「炸裂」。\n- 不偷袭 = 不蹭别人的事故、不踩竞品、不借热点骂人。\n\n**价格表达**\n- D10 基础可选话术：便宜管饱、管饱管够；「便宜量大」也在用户候选中。\n- 用户补充候选：白菜价、便宜量大、便宜接入、便宜畅玩、便宜敞开用、便宜放开跑、真香价、优惠价、特惠价。按场景选用，不要求四字，单行保持字号色块协调。\n\n**封面（大字报）**：见 `design-rules.md`。\n\n**正文（移动端短句）**（Lilith 2026-11-03 / 2026-11-04 更新）：\n- **标题与开头字数**：小红书标题严格控制在 20 字以内（含标点与 emoji）；不同模型批次必须更换标题与列表 emoji，不与上一模型雷同。开头引入句控制在手机端两行以内（约 25–34 字），避免多出几个字掉到第三行。\n- **三种递进结构与极简表达**：支持三类常用结构——① 开头简单引入＋卖点＋价格板块＋钩子；② 开头简单引入＋卖点＋价格板块＋能接到哪里用（兼容 CC 及 ZCode、Trae、WorkBuddy、扣子等国内合规工具）＋适用场景＋钩子；③ 开头简单引入＋卖点＋价格板块＋能接到哪里用＋适用人群＋钩子。每条卖点一句话点透（约 15–22 字），不啰嗦；价格板块用两行短句突出「能力升级、开销降低 / 路径更短更省额度」的反差感，并与封面图文字呼应。\n\n每行以 15–20 字为参考，上限 20 字，短句分行；一个意思可占数行，段与段之间必须空一行。卖点直接短句成段，或用少量 `▫️` / `▪️` 点缀，不要求每行 emoji。严禁连续多行「emoji + 四字标题 + 冒号 + 长句说明」的简历/PPT 排版。\n\n正文不单列「适合人群：……」说明书尾巴；人群自然融入结尾行动号召。`audience` 保留在投放元数据，不由 Markdown 渲染器另行拼接。末尾标签包含完整模型名及相关场景/人群词；数量由生成任务的结构约束确定。这里的「短句」指手机阅读的留白节奏，不堆辞藻，不写大段说明文。\n\n**参考样本**：思敏企微里勾选的那一长条，T04 标注后在 `data/posts.jsonl`（platform=xhs） 里 `label.good = true`。",
       "allowed_price_words": [
         "便宜量大",
         "活动价",
@@ -549,7 +668,8 @@
         "第一",
         "顶级",
         "独家",
-        "API"
+        "API",
+        "(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])"
       ],
       "model_specific_bans": {},
       "banned_word_rules": [
@@ -635,10 +755,23 @@
           "replace": "模型服务",
           "reason": "运营反馈小红书和闲鱼都不可写（2026-10-30）",
           "added_at": "2026-11-02"
+        },
+        {
+          "word": "(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])",
+          "regex": true,
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "指定模型",
+          "reason": "境外模型品牌和型号不得写入对外可见内容（T35，2026-11-03）",
+          "added_at": "2026-11-03"
         }
       ],
       "platform_allows_api": false,
-      "guidance": "- 像个人卖家，直给。标题就是「XX 模型 + 卖点 + 便宜」。\n- 价格可以写具体。\n- 好坏看「想要」人数，T02 抓回后按 `metrics.wants` 排序。\n- 不要「官方」「旗舰」这种词，闲鱼用户不吃。"
+      "guidance": "- 像个人卖家，直给。标题就是「XX 模型 + 卖点 + 便宜」。\n- 价格可以写具体；用户未提供实际金额时不自行编价，可沿用用户明确的好价、量大等服务表达。\n- 好坏看「想要」人数，T02 抓回后按 `metrics.wants` 排序。\n- 不要「官方」「旗舰」这种词，闲鱼用户不吃。"
     },
     "gzh": {
       "banned": [
@@ -647,7 +780,8 @@
         "史上最低",
         "第一",
         "顶级",
-        "独家"
+        "独家",
+        "(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])"
       ],
       "model_specific_bans": {},
       "banned_word_rules": [
@@ -722,6 +856,19 @@
           "replace": "专属",
           "reason": "广告法极限词/未经证明的绝对化表述",
           "added_at": "2026-11-02"
+        },
+        {
+          "word": "(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])",
+          "regex": true,
+          "level": "ban",
+          "platform": [
+            "xhs",
+            "xianyu",
+            "gzh"
+          ],
+          "replace": "指定模型",
+          "reason": "境外模型品牌和型号不得写入对外可见内容（T35，2026-11-03）",
+          "added_at": "2026-11-03"
         }
       ],
       "platform_allows_api": true,
@@ -753,10 +900,10 @@
     "hierarchy_rules": [
       "模型名称是封面主标题，字体大、醒目，一眼可辨。（Q05、Q06、Q25、Q26、Q28、Q29）",
       "「限时低价」作为副标题时用独立强调色，不能与背景相近。（Q09）",
-      "使用 rules/cover-palettes.json 的实测配色；图像模型生成无字背景，本机粗黑体排准确中文。模型名最大，行动词次大，卖点第三层。按本轮 persona 封面优先 1:1；两篇用居中卡片、分区任务两种结构。3:4 保留为通用历史建议，当前链路不默认使用。"
+      "新图采用文案 → 视觉提示词 → 完整海报三阶段。文案模型不写图像 Prompt；视觉模型读取本批最多3张真实本地参考封面及文案上下文，提炼构图、字体、光影、材质，独立产生原创 Prompt；图像模型直出带准确文字的海报。小红书3:4、1080×1440，闲鱼1:1、1080×1080。配色和设计约束仍引用 `rules/design-rules.md`；仅显式 `--background` 允许 Pillow 离线排字。manifest 保留参考图哈希、独立视觉 Prompt 和各阶段原始 usage。缺本地参考图在收费调用前失败。"
     ],
     "aspect_ratio": "封面先适配 1:1；主标题尽量完整占一行，避免模型名被拆碎。（Q04、Q10、Q27）",
-    "persona_precedence": "使用 rules/cover-palettes.json 的实测配色；图像模型生成无字背景，本机粗黑体排准确中文。模型名最大，行动词次大，卖点第三层。按本轮 persona 封面优先 1:1；两篇用居中卡片、分区任务两种结构。3:4 保留为通用历史建议，当前链路不默认使用。"
+    "persona_precedence": "新图采用文案 → 视觉提示词 → 完整海报三阶段。文案模型不写图像 Prompt；视觉模型读取本批最多3张真实本地参考封面及文案上下文，提炼构图、字体、光影、材质，独立产生原创 Prompt；图像模型直出带准确文字的海报。小红书3:4、1080×1440，闲鱼1:1、1080×1080。配色和设计约束仍引用 `rules/design-rules.md`；仅显式 `--background` 允许 Pillow 离线排字。manifest 保留参考图哈希、独立视觉 Prompt 和各阶段原始 usage。缺本地参考图在收费调用前失败。"
   },
   "title_patterns": {
     "openers": [
@@ -878,6 +1025,13 @@
         "banned_word_hits": []
       },
       {
+        "id": "6a17aeb10000000035031b34",
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "满血"
+        ]
+      },
+      {
         "id": "6a1e475a000000003501c657",
         "clean_for_style_reference": true,
         "banned_word_hits": []
@@ -907,15 +1061,32 @@
         ]
       },
       {
-        "id": "6aba2b7a000000001802fe41",
+        "id": "6ab25e080000000031024e6f",
         "clean_for_style_reference": true,
         "banned_word_hits": []
+      },
+      {
+        "id": "6ab4d5d30000000012039fd0",
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "量大管饱",
+          "API"
+        ]
+      },
+      {
+        "id": "6aba2b7a000000001802fe41",
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])",
+          "(?<![A-Za-z])(?:Cursor|Hermes\\s*Agent)(?![A-Za-z])"
+        ]
       },
       {
         "id": "6ac7598b000000001b02d055",
         "clean_for_style_reference": false,
         "banned_word_hits": [
-          "API"
+          "API",
+          "(?<![A-Za-z])(?:Cursor|Hermes\\s*Agent)(?![A-Za-z])"
         ]
       },
       {
@@ -936,14 +1107,21 @@
         "banned_word_hits": []
       },
       {
+        "id": "6ae01dbd0000000003003464",
+        "clean_for_style_reference": true,
+        "banned_word_hits": []
+      },
+      {
         "id": "6ae04e58000000001601b3e9",
         "clean_for_style_reference": true,
         "banned_word_hits": []
       },
       {
         "id": "6ae055f3000000001503ba84",
-        "clean_for_style_reference": true,
-        "banned_word_hits": []
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "(?:神器|神奇)"
+        ]
       },
       {
         "id": "6ae19a71000000003501e174",
@@ -952,8 +1130,11 @@
       },
       {
         "id": "6ae19f170000000034029496",
-        "clean_for_style_reference": true,
-        "banned_word_hits": []
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])",
+          "(?<![A-Za-z])token(?:s)?(?![A-Za-z])"
+        ]
       },
       {
         "id": "6ae2ca6300000000350135ad",
@@ -967,8 +1148,10 @@
       },
       {
         "id": "6ae44142000000001200baaa",
-        "clean_for_style_reference": true,
-        "banned_word_hits": []
+        "clean_for_style_reference": false,
+        "banned_word_hits": [
+          "(?<![A-Za-z])token(?:s)?(?![A-Za-z])"
+        ]
       },
       {
         "id": "6ae44af7000000001a023d37",

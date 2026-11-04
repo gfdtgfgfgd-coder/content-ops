@@ -7,7 +7,7 @@
     "node": ">=22.13"
   },
   "scripts": {
-    "test": "node --check server.mjs && node --check app.js",
+    "test": "node --check server.mjs && node --check app.js && node --check lib/content-ops-ui.mjs && node --test lib/content-ops-production.test.mjs",
     "start": "node server.mjs",
     "app": "electron .",
     "build:mac": "electron-builder --mac dmg --universal"
@@ -43,7 +43,7 @@
     ],
     "mac": {
       "category": "public.app-category.productivity",
-      "icon": "assets/app-icon.icns",
+      "icon": "assets/app-icon-1024.png",
       "identity": null,
       "target": [
         {

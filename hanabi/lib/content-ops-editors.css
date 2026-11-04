@@ -32,7 +32,21 @@
 .editor-table-scroll { margin:8px 0 14px; border-top:1px solid var(--line); }
 .editor-table-scroll table { min-width:1000px; table-layout:fixed; }
 .editor-word { font-weight:600; white-space:normal; overflow-wrap:anywhere; }
-.editor-table-scroll td:nth-child(2),.editor-table-scroll td:nth-child(3) { white-space:nowrap; }
+.editor-word-title { display:block; font-size:13px; font-weight:600; line-height:1.45; color:var(--text); }
+.editor-regex-code {
+  display:inline-block;
+  margin-top:4px;
+  padding:2px 6px;
+  border-radius:4px;
+  border:1px solid var(--line);
+  background:var(--surface-muted);
+  color:var(--text-muted);
+  font:11px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight:400;
+  word-break:break-all;
+  max-width:100%;
+}
+.editor-table-scroll td:nth-child(2),.editor-table-scroll td:nth-child(3),.editor-table-scroll td:nth-child(7) { white-space:nowrap; font-variant-numeric:tabular-nums; }
 .editor-table-scroll td:nth-child(6) { min-width:180px; }
 .editor-form { display:grid; gap:10px; max-width:760px; padding:12px 0 4px; }
 .editor-form[hidden] { display:none; }
@@ -68,10 +82,11 @@
 }
 
 /* Regex rules must wrap within their column instead of consuming the whole table. */
-.editor-table-scroll thead th:nth-child(1) { width:18%; }
+.editor-table-scroll thead th:nth-child(1) { width:17%; }
 .editor-table-scroll thead th:nth-child(2) { width:6%; }
-.editor-table-scroll thead th:nth-child(3) { width:15%; }
-.editor-table-scroll thead th:nth-child(4) { width:14%; }
-.editor-table-scroll thead th:nth-child(5) { width:14%; }
-.editor-table-scroll thead th:nth-child(6) { width:25%; }
-.editor-table-scroll thead th:nth-child(7) { width:8%; }
+.editor-table-scroll thead th:nth-child(3) { width:13%; }
+.editor-table-scroll thead th:nth-child(4) { width:12%; }
+.editor-table-scroll thead th:nth-child(5) { width:13%; }
+.editor-table-scroll thead th:nth-child(6) { width:22%; }
+.editor-table-scroll thead th:nth-child(7) { width:10%; }
+.editor-table-scroll thead th:nth-child(8) { width:7%; }

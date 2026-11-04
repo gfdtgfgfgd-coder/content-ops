@@ -1,0 +1,5 @@
+#!/bin/sh
+# 在索引真实字节上执行闸门；禁止工作区与暂存区不一致时绕过预算。
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+exec python3 scripts/doctor.py --staged

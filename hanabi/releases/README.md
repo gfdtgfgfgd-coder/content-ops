@@ -4,10 +4,10 @@
 
 ```bash
 cd ~/Desktop && git clone https://github.com/gfdtgfgfgd-coder/content-ops.git
-cd content-ops && zsh setup-new-mac.sh
+cd content-ops && ./start.command
 ```
 
-`setup-new-mac.sh` 会检查 Node/Python 版本、复制 `gateway.env` 模板、装 Hanabi 依赖、后台启动服务并打开 `http://127.0.0.1:6187`。它不装 Python 依赖，也不装 LaunchAgent（重启需重跑或手动加载 plist）。
+`start.command`（支持访达直接双击运行）会检查 Node/Python 版本、自动装好 Python 虚拟环境与依赖、复制 `gateway.env` 模板、装 Hanabi npm 依赖、后台启动服务并打开 `http://127.0.0.1:6187`。
 
 配置公司网关：把 `scratch/gateway.env.example` 复制为 `scratch/gateway.env`，填入公司 Key：
 

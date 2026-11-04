@@ -1,0 +1,423 @@
+"""Offline regressions. Run: PYTHONPATH=scripts scratch/.venv/bin/python3 -m unittest lib.test_pipeline -v"""
+from argparse import Namespace
+from contextlib import redirect_stdout
+import importlib.util
+import io
+import json
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+from unittest.mock import patch
+from PIL import Image
+from . import cleaning, copy, fetching, gateway, preferences, store, words
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+class PipelineTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.base = Path(self.tmp.name)
+
+    def test_counts_and_unique_ids(self):
+        self.assertEqual(store.post_count(), 398)
+        self.assertEqual(len(store.load_posts('xhs')), 364)
+        self.assertEqual(len(store.load_posts('xianyu')), 34)
+        self.assertEqual(len({p['id'] for p in store.load_posts()}), 398)
+
+    def test_store_roundtrip_and_order(self):
+        path = self.base / 'posts.jsonl'
+        rows = [{'id': 'b', 'platform': 'z', 'body': '中文\n换行'}, {'id': 'a', 'platform': 'x'}]
+        store.write_posts(rows, path)
+        self.assertEqual(store.read_posts(path), rows[::-1])
+        self.assertTrue(path.read_bytes().endswith(b'\n'))
+        self.assertIn('中文', path.read_text())
+
+    def test_duplicate_rejected_without_overwriting(self):
+        path = self.base / 'posts.jsonl'
+        path.write_text('existing')
+        with self.assertRaises(ValueError):
+            store.write_posts([{'id': 'a', 'platform': 'x'}] * 2, path)
+        self.assertEqual(path.read_text(), 'existing')
+
+    def test_migration_differences_keep_all_legacy(self):
+        data = self.base / 'data/sample'
+        data.mkdir(parents=True)
+        row = {'id': 'ab', 'platform': 'sample', 'title': '标题', 'metrics': {'likes': 1},
+               'is_pinned': False, 'image_urls': ['https://old/cover'], 'url': 'https://example/explore/ab?xsec_token=key', 'type': 'normal'}
+        (data / 'ab.json').write_text(json.dumps(row))
+        index = {'id': 'ab', 'title': '不同标题', 'likes': '1', 'sticky': False,
+                 'cover': 'https://old/cover', 'xsec': 'key', 'type': 'normal'}
+        (data / '_index.json').write_text(json.dumps([index]))
+        (data / '_urls.txt').write_text(row['url'] + '\n')
+        config = {'profiles': {'sample': {}}, 'posts_file': 'data/posts.jsonl',
+                  'migration_expected_counts': {'sample': 1},
+                  'migration_indexes': [{'platform': 'sample', 'index': 'data/sample/_index.json', 'urls': 'data/sample/_urls.txt'}]}
+        (self.base / 'config.json').write_text(json.dumps(config))
+        args = ['--root', str(self.base), '--config', 'config.json', '--report', str(self.base / 'report.json'), '--delete-legacy']
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(store.migrate(args), 1)
+        self.assertTrue((data / 'ab.json').exists())
+        self.assertEqual(json.loads((self.base / 'report.json').read_text())['differences'][0]['field'], 'title')
+        # Only an exact full comparison allows the deletion path.
+        index['title'] = row['title']
+        (data / '_index.json').write_text(json.dumps([index]))
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(store.migrate(args), 0)
+        self.assertFalse(data.exists())
+        self.assertEqual(store.read_posts(self.base / 'data/posts.jsonl'), [row])
+
+    def test_clean_all_separate_output_is_idempotent(self):
+        source = self.base / 'input.jsonl'
+        store.write_posts(store.load_posts(), source)
+        target = self.base / 'output.jsonl'
+        args = ['--platform', 'all', '--input-dir', str(source), '--output-dir', str(target)]
+        with redirect_stdout(io.StringIO()):
+            cleaning.clean(args)
+        first = target.read_bytes()
+        with redirect_stdout(io.StringIO()):
+            cleaning.clean(['--platform', 'all', '--input-dir', str(target)])
+        self.assertEqual(target.read_bytes(), first)
+        self.assertEqual(len(store.read_posts(target)), 398)
+        self.assertEqual(len(store.read_posts(source)), 398)
+
+    def test_clean_dry_run_does_not_write(self):
+        source = self.base / 'input.jsonl'
+        store.write_posts(store.load_posts(), source)
+        before = source.read_bytes()
+        with redirect_stdout(io.StringIO()):
+            cleaning.clean(['--platform', 'all', '--input-dir', str(source), '--dry-run'])
+        self.assertEqual(source.read_bytes(), before)
+
+    def test_word_output_semantics(self):
+        hits = words.check('最便宜 5 折', 'xhs')
+        self.assertEqual([hit['word'] for hit in hits], ['最便宜', '5 折'])
+        self.assertTrue(words.check('API', 'xianyu'))
+        self.assertFalse(words.check('安排一次任务', 'xhs'))
+
+    def test_preferences_loader_and_fallback(self):
+        with redirect_stdout(io.StringIO()):
+            block, version, snapshots, palettes, rules = preferences.load_preferences(ROOT / 'data/distilled-preferences.json', 'xhs', 40000)
+            fallback = preferences.load_preferences(self.base / 'missing.json', 'xhs', 40000)
+        self.assertIn('思敏偏好', block)
+        self.assertEqual(version['source'], 'distilled-preferences.json')
+        self.assertEqual(fallback[1]['source'], 'fallback')
+        self.assertTrue(palettes and rules and snapshots)
+        with self.assertRaises(ValueError), redirect_stdout(io.StringIO()):
+            preferences.load_preferences(ROOT / 'data/distilled-preferences.json', 'xhs', 1)
+
+    def test_reference_selection_hashes_and_missing(self):
+        post = store.load_posts('xhs')[0]
+        selected = self.base / 'references.json'
+        selected.write_text(json.dumps([{'platform': 'xhs', 'id': post['id']}]))
+        references, contexts, hashes = copy.load_references(selected)
+        self.assertEqual(references[0]['id'], post['id'])
+        self.assertEqual(contexts[0]['body'], post['body'])
+        self.assertEqual(len(next(iter(hashes.values()))), 64)
+        selected.write_text('[{"platform":"xhs","id":"does-not-exist"}]')
+        with self.assertRaises(ValueError):
+            copy.load_references(selected)
+
+    def test_ingest_checkpoint_without_images(self):
+        source = self.base / 'incoming.json'
+        output = self.base / 'posts.jsonl'
+        source.write_text(json.dumps([{'url': 'https://example/explore/abc', 'title': '中文', 'metrics': {'likes': '1.2万'}}]))
+        args = ['--platform', 'xhs', '--records', str(source), '--output', str(output), '--skip-existing']
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(fetching.posts_main(args), 0)
+        before = output.read_bytes()
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(fetching.posts_main(args), 0)
+        self.assertEqual(output.read_bytes(), before)
+        self.assertEqual(store.read_posts(output)[0]['metrics']['likes'], 12000)
+
+    def test_image_cli_mocked_no_network(self):
+        image = self.base / 'image.png'
+        info = {'output': str(image)}
+        with patch.object(gateway, 'generate_image', return_value=info) as generate, redirect_stdout(io.StringIO()):
+            self.assertEqual(gateway.main(['--prompt', '测试', '--output', str(image), '--config', str(self.base / 'missing.env')]), 0)
+        generate.assert_called_once()
+
+    def test_copy_pipeline_offline_and_resume(self):
+        background = self.base / 'background.png'
+        Image.new('RGB', (64, 64), '#eeeeee').save(background)
+        refs = self.base / 'references.json'
+        refs.write_text(json.dumps([{'platform': 'xhs', 'id': store.load_posts('xhs')[0]['id']}]))
+        settings = {'CONTENT_OPS_API_KEY': 'offline-test-only', 'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1',
+                    'CONTENT_OPS_TEXT_MODEL': 'claude-offline-test', 'CONTENT_OPS_IMAGE_MODEL': 'offline'}
+        body = ('把需求拆成输入、限制和验收三部分，再给出一个需要完成的小任务。保留每一步的结果，逐项核对任务是否做到。'
+                '不确定的地方先列出来，补齐背景再继续。把改动与原稿放在一起检查，确认文字表达清楚、细节完整后再整理成稿。')
+        post = {'title_lines': ['安排一次任务', 'GLM5.3', '拆开需求逐项检查'], 'body': body,
+                'tags': ['#GLM5.3', '#任务拆解', '#需求整理'], 'angle': '任务清单', 'audience': '程序员、独立开发者',
+                'image_prompt': '深色数字工作台，蓝色玻璃面板，清晰中文大标题，电影级柔和体积光'}
+        with patch.object(gateway, 'load_config', return_value=settings), \
+             patch.object(gateway, 'request_json', side_effect=AssertionError('network forbidden')), \
+             patch.object(copy, 'claude_call', return_value=({'posts': [post]}, {})) as calls, \
+             patch.object(gateway, 'generate_image', side_effect=AssertionError('paid image forbidden')), \
+             redirect_stdout(io.StringIO()):
+            args = ['--model', 'GLM5.3', '--count', '1', '--output', str(self.base / 'batch'),
+                    '--background', str(background), '--references', str(refs), '--brief', '开发者任务工具，便宜量大']
+            self.assertEqual(copy.main(args), 0)
+            self.assertEqual(calls.call_count, 1)
+            payload = json.loads(calls.call_args.args[1])
+            self.assertEqual(payload['brief'], '开发者任务工具，便宜量大')
+            self.assertEqual(len(payload['few_shot_examples']), 1)
+            count = calls.call_count
+            self.assertEqual(copy.main([*args, '--resume']), 0)
+            self.assertEqual(calls.call_count, count)
+            changed = [*args]
+            changed[-1] = '不同的需求'
+            self.assertEqual(copy.main([*changed, '--resume']), 1)
+            self.assertEqual(calls.call_count, count)
+        manifest = json.loads((self.base / 'batch/manifest.json').read_text())
+        self.assertEqual(manifest['status'], 'completed')
+        self.assertEqual(manifest['references'][0]['platform'], 'xhs')
+        self.assertEqual(manifest['posts'][0]['image_metadata']['mode'], 'offline_background_composition')
+        self.assertEqual((manifest['posts'][0]['image_metadata']['width'], manifest['posts'][0]['image_metadata']['height']), (1080, 1440))
+        self.assertTrue((self.base / 'batch/post-1.png').exists())
+
+    def test_automatic_references_same_platform_and_manual_override(self):
+        rows = [
+            {'platform': 'xhs', 'id': 'good', 'title': '推荐', 'body': '分段示例', 'label': {'good': True}, 'metrics': {'likes': 1}},
+            {'platform': 'xhs', 'id': 'popular', 'title': '热门', 'body': '分段示例', 'metrics': {'likes': 999}},
+            {'platform': 'xhs', 'id': 'normal', 'title': '普通', 'metrics': {'likes': 10}},
+            {'platform': 'xhs', 'id': 'low', 'title': '低互动', 'metrics': {'likes': 0}},
+            {'platform': 'xianyu', 'id': 'wanted', 'title': '想要', 'metrics': {'wants': 9999}}]
+        def source(platform=None):
+            return [r for r in rows if platform is None or r['platform'] == platform]
+        with patch.object(copy, 'load_posts', side_effect=source):
+            refs, contexts, hashes = copy.load_references(None)
+            self.assertEqual([r['id'] for r in refs], ['good', 'popular', 'normal'])
+            self.assertEqual(len(hashes), 3)
+            self.assertTrue(all(r['platform'] == 'xhs' for r in contexts))
+            self.assertEqual(copy.load_references(None, platform='xianyu')[0][0]['id'], 'wanted')
+            path = self.base / 'manual.json'
+            path.write_text(json.dumps([{'id': 'low', 'platform': 'xhs'}]))
+            self.assertEqual(copy.load_references(path)[0][0]['id'], 'low')
+            path.write_text('[]')
+            self.assertEqual(len(copy.load_references(path)[0]), 3)
+            with self.assertRaises(ValueError):
+                copy.load_references(None, max_chars=1)
+        refs, contexts, _ = copy.load_references(None, platform='xhs', model='Kimi K3.1 Pro')
+        self.assertEqual(len(refs), 3)
+        self.assertTrue(all(r['platform'] == 'xhs' and r['title'] for r in refs))
+
+    def test_relaxed_voice_title_dynamic_audience_and_cover_risk(self):
+        post = {'title_lines': ['程序员还在为上下文发愁？', 'Kimi K3.1 Pro', '编程与长程任务'],
+                'body': '我整理需求时会把背景和限制一起写清。' * 7 + '亲测、实测和用下来的经验可以自然表达。',
+                'tags': ['#KimiK3.1Pro', '#程序员', '#独立开发者'], 'audience': '程序员、独立开发者',
+                'angle': '痛点切入', 'cover_subtitle': '编程与长程任务', 'cover_highlight': '开发者需求',
+                'image_prompt': '科技工作台与中文商业排版'}
+        self.assertEqual(copy.validate_posts({'posts': [post]}, 1, 'Kimi K3.1 Pro')[0]['audience'], '程序员、独立开发者')
+        for field in ['body', 'cover_subtitle', 'cover_highlight', 'audience']:
+            invalid = {**post, field: 'API' + post[field]}
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, '风险词'):
+                copy.validate_posts({'posts': [invalid]}, 1, 'Kimi K3.1 Pro')
+
+    def test_markdown_keeps_audience_out_of_public_body(self):
+        post = {'title_lines': ['标题一', 'GLM5.3', '标题三'],
+                'body': '短句正文。\n\n再一段。  \n',
+                'tags': ['#GLM53', '#创作'], 'audience': '独立开发者'}
+        rendered = copy.markdown(post)
+        self.assertIn('短句正文。\n\n再一段。', rendered)
+        self.assertNotIn('适合人群', rendered)
+        self.assertNotIn('独立开发者', rendered)
+
+    def test_mobile_reflow_preserves_text_and_paragraphs(self):
+        original = '试着整理 GLM5.3 的任务输入，先把约束、输出要求和测试步骤讲清楚。\n\n做独立开发、搭 Agent 流水线的朋友，可以按自己的项目试试。'
+        rendered = copy.mobile_body(original)
+        self.assertTrue(all(len(line) <= 30 for line in rendered.splitlines()))
+        self.assertEqual(''.join(original.split()), ''.join(rendered.split()))
+        self.assertIn('GLM5.3', rendered)
+        phrase = copy.mobile_body('这套流程适合独立开发者和搭 Agent 工作流的人，平时可以直接套用到自己的项目里。')
+        self.assertIn('搭 Agent 工作流的人', phrase)
+        self.assertNotIn('Agent\n工作流', phrase)
+        self.assertIn('\n\n', rendered)
+        self.assertEqual(copy.mobile_body(rendered), rendered)
+        self.assertEqual(copy.mobile_body('正文。\n\n适合人群：开发者'), '正文。')
+        with self.assertRaisesRegex(ValueError, '连续标题冒号'):
+            copy.mobile_body('▫️编程辅助：长句说明\n\n▫️需求整理：长句说明\n\n▫️项目协作：长句说明')
+
+    def test_platform_poster_sizes_and_prompt(self):
+        self.assertEqual(copy.poster_size('xhs'), (1080, 1440))
+        self.assertEqual(copy.poster_size('xianyu'), (1080, 1080))
+        post = {'image_prompt': '立体科技工作台，琥珀色与冷蓝色对比',
+                'title_lines': ['效率提升', 'GLM5.3', '需求拆解'],
+                'cover_subtitle': '完整工作流', 'cover_highlight': '适合独立开发者'}
+        xhs_prompt = copy.direct_image_prompt(post, 'xhs')
+        self.assertIn('竖版3:4，1080×1440px', xhs_prompt)
+        self.assertIn('遵循视觉提示词中的构图', xhs_prompt)
+        self.assertIn('不留大面积空白', xhs_prompt)
+        conflicting = {**post, 'image_prompt': '1:1 方图，1080x1080px，正方形画布中的科技工作台'}
+        normalized = copy.direct_image_prompt(conflicting, 'xhs')
+        self.assertIn('竖版3:4', normalized)
+        self.assertIn('1080×1440px', normalized)
+        self.assertNotIn('1:1', normalized)
+        self.assertNotIn('1080x1080', normalized)
+        self.assertNotIn('正方形画布', normalized)
+        self.assertNotIn('构图构图', normalized)
+        self.assertIn('目标画幅中的科技工作台', normalized)
+        xianyu = copy.direct_image_prompt(conflicting, 'xianyu')
+        self.assertIn('方图1:1', xianyu)
+        self.assertIn('1080×1080px', xianyu)
+        self.assertNotIn('3:4', xianyu)
+        self.assertIn('方图1:1，1080×1080px', copy.direct_image_prompt(post, 'xianyu'))
+
+    def test_fresh_generation_sends_final_poster_prompt_and_size(self):
+        settings = {'CONTENT_OPS_API_KEY': 'offline-test-only', 'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1',
+                    'CONTENT_OPS_TEXT_MODEL': 'glm-5.3', 'CONTENT_OPS_IMAGE_MODEL': 'qwen-image-3.0'}
+        body = '整理开发需求时，把目标、限制和验收写在一起。先拆清楚要完成的事情，再逐步检查结果。' * 3
+        post = {'title_lines': ['需求一眼看清', 'GLM5.3', '开发流程拆得更顺'], 'body': body,
+                'tags': ['#GLM5.3', '#开发流程', '#需求整理'], 'angle': '场景拆解', 'audience': '独立开发者',
+                'cover_subtitle': '目标限制验收一次讲清', 'cover_highlight': '适合独立开发者',
+                'image_prompt': '文案模型不得提供视觉提示词'}
+        visual_prompt = '参考图采用深色代码工作台、冷蓝屏光与琥珀轮廓光；主标题置于上部，玻璃材质信息牌居中。'
+        def image_call(*, prompt, output, size, **kwargs):
+            Image.new('RGB', (1080, 1440), '#152638').save(output)
+            data = output.read_bytes()
+            return {'output': str(output), 'model': kwargs['model'], 'requested_size': size,
+                    'width': 1080, 'height': 1440, 'bytes': len(data), 'sha256': __import__('hashlib').sha256(data).hexdigest()}
+        with patch.object(gateway, 'load_config', return_value=settings), \
+             patch.object(copy, 'claude_call', return_value=({'posts': [post]}, {})), \
+             patch.object(copy, 'visual_prompt_call', return_value=(visual_prompt, {'model':'vision-test','usage':{'prompt_tokens':12}})) as vision, \
+             patch.object(gateway, 'generate_image', side_effect=image_call) as generate, \
+             redirect_stdout(io.StringIO()):
+            result = copy.run(Namespace(model='GLM5.3', brief='', preferences=copy.ROOT/'data/distilled-preferences.json',
+                platform='xhs', count=1, preference_max_chars=32000, config=self.base/'gateway.env', facts=None,
+                output=self.base/'direct', resume=False, references=None, reference_max_chars=32000,
+                timeout=120, background=None))
+        self.assertEqual(generate.call_args.kwargs['size'], '1080x1440')
+        self.assertIn('竖版3:4，1080×1440px', generate.call_args.kwargs['prompt'])
+        self.assertIn('参考图采用深色代码工作台', generate.call_args.kwargs['prompt'])
+        self.assertNotIn(post['image_prompt'], generate.call_args.kwargs['prompt'])
+        self.assertEqual(vision.call_args.args[0]['title_lines'], post['title_lines'])
+        self.assertTrue(vision.call_args.args[1])
+        self.assertEqual(result['posts'][0]['image_metadata']['mode'], 'direct_poster')
+        self.assertEqual((result['posts'][0]['image_metadata']['width'], result['posts'][0]['image_metadata']['height']), (1080, 1440))
+        manifest = json.loads((self.base/'direct/manifest.json').read_text())
+        self.assertEqual(manifest['vision_calls'][0]['model'], 'vision-test')
+        self.assertEqual(manifest['posts'][0]['visual_prompt'], visual_prompt)
+
+    def test_vision_sends_real_images_and_platform_context(self):
+        import base64
+        image_dir = self.base / 'data/images/xhs/example'
+        image_dir.mkdir(parents=True)
+        references = []
+        for i, extension in enumerate(['jpg', 'webp', 'png', 'jpg']):
+            image = image_dir / f'{i}.{extension}'
+            Image.new('RGB', (8, 8), '#223344').save(image)
+            references.append({'image_paths': [str(image.relative_to(self.base))]})
+        post = {'title_lines':['标题','GLM5.3','卖点'], 'cover_subtitle':'长任务',
+                'cover_highlight':'开发人群', 'body':'本次核心卖点。', 'audience':'开发者'}
+        response = {'model':'vision-selected','usage':{'prompt_tokens':123},
+                    'choices':[{'finish_reason':'stop','message':{'content':'冷暖对比与清晰大字的原创海报'}}]}
+        settings = {'CONTENT_OPS_BASE_URL':'https://offline.invalid/v1', 'CONTENT_OPS_API_KEY':'test',
+                    'CONTENT_OPS_VISION_MODEL':'vision-selected'}
+        with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', return_value=response) as request:
+            prompt, log = copy.visual_prompt_call(post, references, settings, 1, self.base/'visual.txt', 'xianyu')
+            payload = request.call_args.args[1]
+            self.assertEqual(payload['model'], 'vision-selected')
+            content = payload['messages'][0]['content']
+            self.assertEqual(len(content), 4)
+            self.assertIn('方图1:1', content[0]['text'])
+            self.assertNotIn('3:4', content[0]['text'])
+            self.assertIn('本次核心卖点', content[0]['text'])
+            for i, part in enumerate(content[1:]):
+                encoded = part['image_url']['url']
+                self.assertEqual(base64.b64decode(encoded.split(',')[1]), (image_dir/f"{i}.{['jpg','webp','png'][i]}").read_bytes())
+            self.assertEqual(log['reference_images'], 3)
+            self.assertEqual(log['usage']['prompt_tokens'], 123)
+            self.assertTrue(all(len(x['sha256']) == 64 for x in log['sources']))
+            self.assertEqual((self.base/'visual.txt').read_text(), prompt)
+        with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json') as request:
+            with self.assertRaisesRegex(ValueError, '没有可读取'):
+                copy.visual_prompt_call(post, [{'image_paths':['../../secret.jpg']}], settings, 1, self.base/'absent.txt', 'xhs')
+            request.assert_not_called()
+        with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', return_value={**response,'choices':[{'finish_reason':'length','message':{'content':'截断提示词'}}]}):
+            with self.assertRaisesRegex(ValueError, '被截断'):
+                copy.visual_prompt_call(post, references, settings, 1, self.base/'truncated.txt', 'xhs')
+            self.assertEqual((self.base/'truncated.txt').read_text(),'截断提示词')
+
+    def test_saved_gateway_fields_override_inherited_environment(self):
+        config = self.base / 'gateway.env'
+        config.write_text('CONTENT_OPS_API_KEY="file-test-key"\nCONTENT_OPS_TEXT_MODEL=selected-model\nOTHER=file\n')
+        with patch.dict(gateway.os.environ, {'CONTENT_OPS_API_KEY': 'inherited-test-key', 'CONTENT_OPS_TEXT_MODEL': 'old-model', 'OTHER': 'environment'}, clear=True):
+            settings = gateway.load_config(config)
+        self.assertEqual(settings['CONTENT_OPS_API_KEY'], 'file-test-key')
+        self.assertEqual(settings['CONTENT_OPS_TEXT_MODEL'], 'selected-model')
+        self.assertEqual(settings['OTHER'], 'environment')
+
+    def test_selected_text_model_reaches_upstream(self):
+        settings = {'CONTENT_OPS_TEXT_MODEL': 'selected-model', 'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1', 'CONTENT_OPS_API_KEY': 'test-key'}
+        response = {'choices': [{'message': {'content': '{"posts": []}'}, 'finish_reason': 'stop'}]}
+        with patch.object(gateway, 'request_json', return_value=response) as request:
+            copy.claude_call('system', 'user', settings, 1, self.base / 'response.txt')
+        self.assertEqual(request.call_args.args[1]['model'], 'selected-model')
+
+    def test_brief_validation_and_resume_input_identity(self):
+        for brief in ['长' * 1001, 'bad\x00brief']:
+            with patch.object(copy, 'claude_call') as calls, redirect_stdout(io.StringIO()):
+                self.assertEqual(copy.main(['--model', 'GLM5.3', '--brief', brief]), 1)
+                calls.assert_not_called()
+
+    def test_cover_style_auto_and_manual(self):
+        self.assertEqual(copy.validate_style('auto', 'code_ide', 'ignored'), ('auto', '', ''))
+        self.assertEqual(copy.validate_style('manual', 'code_ide', ' 蓝紫霓虹光 '), ('manual', 'code_ide', '蓝紫霓虹光'))
+        with self.assertRaisesRegex(ValueError, '至少选择一种预设风格或填写自定义画面感觉'):
+            copy.validate_style('manual', '', '   ')
+        with self.assertRaisesRegex(ValueError, '预设封面风格无效'):
+            copy.validate_style('manual', 'bad_preset', '')
+        with self.assertRaisesRegex(ValueError, '风险词'):
+            copy.validate_style('manual', '', '包含 API 禁词', platform='xhs', model='GLM5.3')
+        instruction = copy.build_style_instruction('manual', 'code_ide', '暗黑极客风、蓝紫霓虹光')
+        self.assertIn('预设流派【极客代码屏】', instruction)
+        self.assertIn('自定义画面感觉要求：暗黑极客风、蓝紫霓虹光', instruction)
+        post = {'image_prompt': '工作台海报', 'title_lines': ['效率提升', 'GLM5.3', '需求拆解'],
+                'cover_subtitle': '完整工作流', 'cover_highlight': '适合独立开发者'}
+        direct = copy.direct_image_prompt(post, 'xhs', '视觉提示词', style_mode='manual', style_preset='code_ide', style_prompt='蓝紫霓虹光')
+        self.assertIn('风格与画面感觉要求：预设流派【极客代码屏】', direct)
+        self.assertIn('蓝紫霓虹光', direct)
+
+    def test_invalid_count_fails_before_paid_call(self):
+        with patch.object(copy, 'claude_call', side_effect=AssertionError('must not call')) as calls:
+            with redirect_stdout(io.StringIO()):
+                result = copy.main(['--model', 'GLM5.3', '--count', '0', '--output', str(self.base / 'batch')])
+        self.assertEqual(result, 1)
+        calls.assert_not_called()
+
+    def test_invalid_facts_fail_before_paid_call(self):
+        config = self.base / 'gateway.env'
+        config.write_text('CONTENT_OPS_API_KEY=offline-placeholder\nCONTENT_OPS_BASE_URL=https://offline.invalid/v1\n')
+        facts = self.base / 'facts.json'
+        facts.write_text(json.dumps({'model': 'GLM5.3', 'verified_claims': [{'claim': 'missing source'}]}))
+        with patch.object(copy, 'claude_call', side_effect=AssertionError('must not call')) as calls:
+            with redirect_stdout(io.StringIO()):
+                result = copy.main(['--model', 'GLM5.3', '--count', '1', '--facts', str(facts), '--config', str(config), '--output', str(self.base / 'batch')])
+        self.assertEqual(result, 1)
+        calls.assert_not_called()
+        self.assertFalse((self.base / 'batch').exists())
+
+
+class DoctorTests(unittest.TestCase):
+    def test_staged_bytes_and_entry_allowlist(self):
+        spec = importlib.util.spec_from_file_location('doctor', ROOT / 'scripts/doctor.py')
+        doctor = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(doctor)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            subprocess.run(['git', 'init', '-q', str(root)], check=True)
+            (root / 'scripts').mkdir()
+            (root / 'scripts/unapproved.py').write_text('x' * 1500)
+            (root / 'large.txt').write_text('x' * 1500)
+            subprocess.run(['git', '-C', str(root), 'add', '.'], check=True)
+            (root / 'large.txt').write_text('small working copy')
+            budget = {'tracked_files_max': 10, 'tracked_kb_max': 100, 'single_file_kb_max': 1,
+                      'scratch_kb_max': 100, 'duplicate_min_kb': 1, 'scripts_entry_allow': []}
+            with patch.object(doctor, 'ROOT', root):
+                report = doctor.check(budget, staged=True)
+            self.assertFalse(report['ok'])
+            self.assertEqual(len(report['duplicates']), 1)
+            self.assertTrue(any('多出的入口' in error for error in report['errors']))
+            self.assertTrue(any('large.txt' in error for error in report['errors']))

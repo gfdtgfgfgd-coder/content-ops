@@ -12,7 +12,9 @@
 | 便宜量大的GLM-5.2太香了！ | https://www.xiaohongshu.com/explore/6a30b2be000000000f00456d | 140 |
 | 太香了sd2 | https://www.xiaohongshu.com/explore/6a02c2ed000000003502f752 | 612 |
 
-## 小红书全量清单（2026-11-01 Claude 导出）
+## 小红书全量清单（2026-11-01 Claude 导出，冻结旧快照）
+
+T36：运行时唯一入口已切为 `data/posts.jsonl`。下面两个文件因迁移比对未通过暂留，不再编辑，不再作为新的采集入口；核验差异见 T36。以下为当时抓取记录，不是现行操作说明。
 
 - `data/xhs/_urls.txt`：364 条带 `xsec_token` 的笔记链接，T02 直接按这个抓。
 - `data/xhs/_notes-index.json`：每条的 id、标题、点赞、类型、封面图 url。

@@ -1,0 +1,213 @@
+{
+  "version": 1,
+  "status": "completed",
+  "product_model": "GLM5.3",
+  "platform": "xhs",
+  "count": 1,
+  "text_model": "claude-sonnet-4-6",
+  "vision_model": "claude-sonnet-4-6",
+  "image_model": "qwen-image-3.0",
+  "created_at": "2026-11-04T11:43:50.638100+08:00",
+  "facts": {
+    "model": "GLM5.3",
+    "verified_claims": [],
+    "note": "未提供独立核验事实；本次卖点可来自用户简报，来源分别记录"
+  },
+  "brief": "内部链路验收，唯一内容主题是工作方法：把目标、现象、已试步骤整理清楚，再用 GLM5.3 梳理代码问题。面向需要整理报错与任务清单的开发者。不提供任何产品参数或性能结论；不得添加上下文长度、百万、准确率、全模块分析、排名、价格、使用经历或功能承诺。正文以建议口吻讲整理信息的方法，不声称实际体验或效果。",
+  "brief_source": "user_provided",
+  "generation_pipeline": "copy_vision_image_v1",
+  "reference_images": [
+    {
+      "path": "data/images/xhs/6ac7598b000000001b02d055/1.jpg",
+      "sha256": "c66028cd58e22100015172bfb6f8381fe1ba10c291adfc59a2976fd107f403ea"
+    },
+    {
+      "path": "data/images/xhs/6ae44142000000001200baaa/1.jpg",
+      "sha256": "6f0b636833d32aae6a612d8a83b5d0fe50b61c8b5a9c6b8a69b8c000e767142f"
+    },
+    {
+      "path": "data/images/xhs/6ae44af7000000001a023d37/1.jpg",
+      "sha256": "b8e6ae63bb29805ed25ce2883a0c3966311f1186b7a0d8298774d15672467df4"
+    }
+  ],
+  "reference_mode": "automatic",
+  "preference_version": {
+    "source": "distilled-preferences.json",
+    "distilled_at": "2026-11-02",
+    "version": 1,
+    "sha256": "6bd36cc0697460b8cbb0ddbb86d62b2a1b94c27a24a0d8ffd12029d24569f4e4"
+  },
+  "references": [
+    {
+      "id": "6ac7598b000000001b02d055",
+      "platform": "xhs",
+      "title": "GLM 5.3 API 直接打到白菜价！",
+      "image_paths": [
+        "data/images/xhs/6ac7598b000000001b02d055/1.jpg"
+      ]
+    },
+    {
+      "id": "6ae44142000000001200baaa",
+      "platform": "xhs",
+      "title": "冲！GLM-5.3活动来了！",
+      "image_paths": [
+        "data/images/xhs/6ae44142000000001200baaa/1.jpg"
+      ]
+    },
+    {
+      "id": "6ae44af7000000001a023d37",
+      "platform": "xhs",
+      "title": "GLM-5.3入手真的香！",
+      "image_paths": [
+        "data/images/xhs/6ae44af7000000001a023d37/1.jpg"
+      ]
+    }
+  ],
+  "reference_hashes": {
+    "xhs/6ac7598b000000001b02d055": "6998e04097a31cdcfbabd557b317bb16186a9191bb11078a314d8609051ddfe1",
+    "xhs/6ae44142000000001200baaa": "1b9689cd156c465e68842290421354cdcb6279c1d584847f58f8386975112a70",
+    "xhs/6ae44af7000000001a023d37": "4b9c46cec5c205c3d94eeaa094b6db7887a0abe8bf509bfc48249b5727916d8e"
+  },
+  "rules": {
+    "data/distilled-preferences.json": "6bd36cc0697460b8cbb0ddbb86d62b2a1b94c27a24a0d8ffd12029d24569f4e4"
+  },
+  "posts": [
+    {
+      "index": 1,
+      "title_lines": [
+        "报错一堆、不知从哪下手？",
+        "GLM5.3",
+        "先把问题整理清楚，再让它帮你理"
+      ],
+      "body": "写代码卡壳，最浪费时间的不是报错本身，\n而是脑子里乱成一团，说不清楚到底哪里出了问题。\n\n试过一个方法：\n把三件事先写下来再去问模型——\n\n▫️ 目标是什么\n想实现什么功能，或者这段代码原本要做什么\n\n▫️ 现在看到的现象\n报什么错、出现在哪一步、复现条件是什么\n\n▫️ 已经试过哪些步骤\n改过什么、有没有临时解决、还差哪一步没搞定\n\n整理好这三块再交给 GLM5.3，\n它拿到的是完整上下文，\n给出的方向会更贴近你实际卡住的地方，\n而不是泛泛重复文档里的通用方案。\n\n任务清单也一样，\n与其扔一段模糊需求，\n不如先按「做什么、优先级、依赖关系」拆一遍，\n再让模型帮你补细节或排序。\n\n信息整理这一步做扎实，\n后面来回确认的次数会少很多。\n\n需要整理报错、拆解任务、梳理开发思路的开发者，\n可以用这个方式先跑一遍，看看顺不顺手。\n\n#GLM5.3 #开发者 #代码调试 #任务清单\n#AI编程助手",
+      "tags": [
+        "#GLM5.3",
+        "#代码调试",
+        "#开发者",
+        "#任务清单",
+        "#AI编程助手"
+      ],
+      "audience": "需要整理报错信息和任务清单的开发者，尤其是在多步骤问题中容易卡住的工程师",
+      "angle": "工作方法：先整理目标/现象/已试步骤，再用模型梳理代码问题",
+      "cover_subtitle": "报错理不清？先把三件事写下来",
+      "cover_highlight": "目标·现象·已试步骤 整理好再问",
+      "markdown": "post-1.md",
+      "image": "post-1.png",
+      "status": "completed",
+      "visual_prompt": "竖版海报，尺寸1080×1440px，3:4比例，完整排版，无留白。整体氛围：深夜程序员工作台场景，深色背景以深蓝灰（#0d1117）为主调，局部从左上角射入一束冷白蓝侧光打亮画面上半区，右下角暖琥珀色台灯余光形成冷暖对撞，制造沉浸感与紧张感并存的视觉张力。场景有真实景深感，背景虚化但可辨认键盘、显示器、咖啡杯轮廓。主视觉构图：画面中央偏上三分之一处，一块发蓝光的半透明磨砂玻璃平板（类似悬浮UI卡片）占据视觉核心，卡片表面呈现三行结构化文本条目——第一行用橙黄色小标签标注\"目标\"，第二行蓝色标签标注\"现象\"，第三行绿色标签标注\"已试步骤\"，每行后面跟一行模糊的灰白细体代码风格文字作为填充感，整体像一张被认真填写的调试工单，有纸张纹理与玻璃折射叠加的材质层次。卡片右下角有蓝白渐变光晕向外漫射，与暗色背景形成强烈冷光对比。卡片右侧站一个小型3D拟人AI机器人，白色圆润机身，蓝色发光眼睛，右手食指指向卡片内容，姿态轻松专注，身上有金属光泽与次表面散射的塑料质感，腹部有柔和蓝光。字形层级与排版（全部内嵌在图像中完成）：\n— 最顶部区域，大号粗黑体标题，白色字体，两行排布：第一行\"报错一堆、不知从哪下手？\"字号最大，占满画面宽度约85%，字重极粗，带轻微蓝色文字内发光；第二行\"先把问题整理清楚，再让它帮你理\"字号略小，浅蓝灰色，紧跟其下形成问答呼应关系。— 主视觉卡片正上方，用黄色高亮色块背景托着产品型号\"GLM5.3\"，字体粗壮圆角无衬线，黄底黑字，与整体深色形成最强对比焦点，仿照参考图中黄色标记高亮字的手法，但融入场景光影而非贴纸感。— 卡片区域中，三行卖点文字清晰排版：第一行\"报错理不清？先把三件事写下来\"，白色中号；第二行\"目标·现象·已试步骤 整理好再问\"，浅蓝细体，字间距略宽，有打字机风格等宽字体质感。— 画面下部三分之一，深色半透明圆角矩形区域内，三列图标+说明，左中右分布：左列图标为清单符号，文字\"目标是什么\"；中列图标为放大镜，文字\"现在看到的现象\"；右列图标为扳手，文字\"已经试过哪些步骤\"；图标用蓝绿橙三色区分，白色小字说明，整体低调但信息清晰。— 最底部窄条，深色背景上排布浅灰色小字正文摘要两行：\"写代码卡壳，最浪费时间的不是报错本身\" / \"整理好三块再交给 GLM5.3，方向更贴近实际卡住的地方\"，字号最小，衬托层级完整。材质与光影细节：玻璃卡片有磨砂折射，机器人身上有金属高光与柔和阴影，台面反射蓝色光晕，背景深蓝有颗粒噪点肌理，文字有微弱投影使其脱离背景层次。整体画面密度适中，科技感与可读性平衡，冷蓝主光源从左上45度照入，暖橙副光从右下角补光，形成专业摄影棚级别的三维感。无水印、无多余标签、无价格信息。",
+      "visual_prompt_model": "claude-sonnet-4-6",
+      "image_metadata": {
+        "width": 1080,
+        "height": 1440,
+        "bytes": 1478442,
+        "sha256": "f3bc052ad7218ada1403186e60170e1d718976f9954e8a71f419083afc82c619",
+        "platform": "xhs",
+        "aspect_ratio": "3:4",
+        "mode": "direct_poster"
+      },
+      "image_generation": {
+        "output": "/Users/mac/Desktop/content-ops/outputs/2026-11-04/three-stage-reviewed/post-1.png",
+        "model": "qwen-image-3.0",
+        "endpoint": "https://duoyuanx.com/v1/images/generations",
+        "requested_size": "1080x1440",
+        "width": 1080,
+        "height": 1440,
+        "bytes": 1478442,
+        "sha256": "f3bc052ad7218ada1403186e60170e1d718976f9954e8a71f419083afc82c619",
+        "usage": {
+          "prompt_tokens": 1047,
+          "completion_tokens": 255,
+          "total_tokens": 1302,
+          "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "text_tokens": 0,
+            "audio_tokens": 0,
+            "image_tokens": 0
+          },
+          "completion_tokens_details": {
+            "text_tokens": 0,
+            "audio_tokens": 0,
+            "image_tokens": 0,
+            "reasoning_tokens": 0
+          }
+        },
+        "mode": "direct_poster",
+        "prompt": "海报，尺寸，比例，完整排版，无留白。整体氛围：深夜程序员工作台场景，深色背景以深蓝灰（#0d1117）为主调，局部从左上角射入一束冷白蓝侧光打亮画面上半区，右下角暖琥珀色台灯余光形成冷暖对撞，制造沉浸感与紧张感并存的视觉张力。场景有真实景深感，背景虚化但可辨认键盘、显示器、咖啡杯轮廓。主视觉构图：画面中央偏上三分之一处，一块发蓝光的半透明磨砂玻璃平板（类似悬浮UI卡片）占据视觉核心，卡片表面呈现三行结构化文本条目——第一行用橙黄色小标签标注\"目标\"，第二行蓝色标签标注\"现象\"，第三行绿色标签标注\"已试步骤\"，每行后面跟一行模糊的灰白细体代码风格文字作为填充感，整体像一张被认真填写的调试工单，有纸张纹理与玻璃折射叠加的材质层次。卡片右下角有蓝白渐变光晕向外漫射，与暗色背景形成强烈冷光对比。卡片右侧站一个小型3D拟人AI机器人，白色圆润机身，蓝色发光眼睛，右手食指指向卡片内容，姿态轻松专注，身上有金属光泽与次表面散射的塑料质感，腹部有柔和蓝光。字形层级与排版（全部内嵌在图像中完成）：— 最顶部区域，大号粗黑体标题，白色字体，两行排布：第一行\"报错一堆、不知从哪下手？\"字号最大，占满画面宽度约85%，字重极粗，带轻微蓝色文字内发光；第二行\"先把问题整理清楚，再让它帮你理\"字号略小，浅蓝灰色，紧跟其下形成问答呼应关系。— 主视觉卡片正上方，用黄色高亮色块背景托着产品型号\"GLM5.3\"，字体粗壮圆角无衬线，黄底黑字，与整体深色形成最强对比焦点，仿照参考图中黄色标记高亮字的手法，但融入场景光影而非贴纸感。— 卡片区域中，三行卖点文字清晰排版：第一行\"报错理不清？先把三件事写下来\"，白色中号；第二行\"目标·现象·已试步骤 整理好再问\"，浅蓝细体，字间距略宽，有打字机风格等宽字体质感。— 画面下部三分之一，深色半透明圆角矩形区域内，三列图标+说明，左中右分布：左列图标为清单符号，文字\"目标是什么\"；中列图标为放大镜，文字\"现在看到的现象\"；右列图标为扳手，文字\"已经试过哪些步骤\"；图标用蓝绿橙三色区分，白色小字说明，整体低调但信息清晰。— 最底部窄条，深色背景上排布浅灰色小字正文摘要两行：\"写代码卡壳，最浪费时间的不是报错本身\" / \"整理好三块再交给 GLM5.3，方向更贴近实际卡住的地方\"，字号最小，衬托层级完整。材质与光影细节：玻璃卡片有磨砂折射，机器人身上有金属高光与柔和阴影，台面反射蓝色光晕，背景深蓝有颗粒噪点肌理，文字有微弱投影使其脱离背景层次。整体画面密度适中，科技感与可读性平衡，冷蓝主光源从左上45度照入，暖橙副光从右下角补光，形成专业摄影棚级别的三维感。无水印、无多余标签、无价格信息\n\n画布规格：竖版3:4，1080×1440px。遵循视觉提示词中的构图、文字区位置和层级，核心标题清晰醒目。生成完整商业海报成图，直接在画面中完成文字排版、场景、材质、光影；不是空白底图，不留大面积空白。海报文字仅使用以下准确文案：报错一堆、不知从哪下手？；GLM5.3；先把问题整理清楚，再让它帮你理；报错理不清？先把三件事写下来；目标·现象·已试步骤 整理好再问。确保中文清晰可读、无遮挡，不增加未经提供的事实、价格、标志或水印。"
+      }
+    }
+  ],
+  "copy_calls": [
+    {
+      "model": "claude-sonnet-4-6",
+      "usage": {
+        "prompt_tokens": 31112,
+        "completion_tokens": 772,
+        "total_tokens": 31884,
+        "usage_semantic": "openai",
+        "usage_source": "anthropic",
+        "prompt_tokens_details": {
+          "cached_tokens": 23334,
+          "cached_creation_tokens": 7653,
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0
+        },
+        "completion_tokens_details": {
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "input_tokens": 31112,
+        "claude_cache_creation_5_m_tokens": 7653
+      }
+    }
+  ],
+  "vision_calls": [
+    {
+      "model": "claude-sonnet-4-6",
+      "usage": {
+        "prompt_tokens": 902,
+        "completion_tokens": 1199,
+        "total_tokens": 2101,
+        "usage_semantic": "openai",
+        "usage_source": "anthropic",
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0
+        },
+        "completion_tokens_details": {
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "input_tokens": 902
+      },
+      "reference_images": 3,
+      "sources": [
+        {
+          "path": "data/images/xhs/6ac7598b000000001b02d055/1.jpg",
+          "sha256": "c66028cd58e22100015172bfb6f8381fe1ba10c291adfc59a2976fd107f403ea"
+        },
+        {
+          "path": "data/images/xhs/6ae44142000000001200baaa/1.jpg",
+          "sha256": "6f0b636833d32aae6a612d8a83b5d0fe50b61c8b5a9c6b8a69b8c000e767142f"
+        },
+        {
+          "path": "data/images/xhs/6ae44af7000000001a023d37/1.jpg",
+          "sha256": "b8e6ae63bb29805ed25ce2883a0c3966311f1186b7a0d8298774d15672467df4"
+        }
+      ]
+    }
+  ],
+  "completed_at": "2026-11-04T11:46:42.368348+08:00",
+  "audit_files": [
+    "scratch/three-stage-audit/second-attempt/copy-response.txt",
+    "scratch/three-stage-audit/second-attempt/copy.json",
+    "scratch/three-stage-audit/second-attempt/vision-prompt-1.txt"
+  ],
+  "review_status": "pending_planning_review"
+}

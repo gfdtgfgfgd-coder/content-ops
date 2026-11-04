@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>com.lilith.hanabi.server</string>
+<key>ProgramArguments</key><array>
+  <string>/Users/mac/.local/bin/node</string>
+  <string>/Users/mac/Desktop/content-ops/hanabi/server.mjs</string>
+</array>
+<key>WorkingDirectory</key><string>/Users/mac/Desktop/content-ops</string>
+<key>RunAtLoad</key><true/>
+<key>KeepAlive</key><true/>
+<key>ThrottleInterval</key><integer>3</integer>
+<key>EnvironmentVariables</key><dict>
+  <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  <key>CONTENT_ALCHEMY_PORT</key><string>6187</string>
+</dict>
+<key>StandardOutPath</key><string>/Users/mac/Desktop/content-ops/scratch/hanabi.log</string>
+<key>StandardErrorPath</key><string>/Users/mac/Desktop/content-ops/scratch/hanabi-error.log</string>
+</dict></plist>

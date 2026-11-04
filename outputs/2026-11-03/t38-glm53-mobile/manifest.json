@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "status": "completed",
+  "product_model": "GLM5.3",
+  "platform": "xhs",
+  "count": 1,
+  "text_model": "claude-sonnet-4-6",
+  "image_model": "qwen-image-3.0",
+  "created_at": "2026-11-03T19:40:11.475564+08:00",
+  "facts": {
+    "model": "GLM5.3",
+    "verified_claims": [],
+    "note": "未提供独立核验事实；本次卖点可来自用户简报，来源分别记录"
+  },
+  "brief": "宣传 GLM5.3，聚焦开发者的需求整理、代码讨论、Agent 流程拆解。用具体工作场景呈现价值：先写清需求与约束，再分步讨论，最后自己核对结果。允许口语推荐，不写我用过或试过等个人经历，不承诺自动执行、速度或稳定性；不写上下文容量、性能指标、价格、活动。参考帖的产品参数、功能承诺和使用体验均不属于本次事实。目标受众为独立开发者和搭建 Agent 工作流的人。",
+  "brief_source": "user_provided",
+  "generation_pipeline": "single_pass_v1",
+  "reference_mode": "automatic",
+  "preference_version": {
+    "source": "distilled-preferences.json",
+    "distilled_at": "2026-11-02",
+    "version": 1,
+    "sha256": "6bd36cc0697460b8cbb0ddbb86d62b2a1b94c27a24a0d8ffd12029d24569f4e4"
+  },
+  "references": [
+    {
+      "id": "6ac7598b000000001b02d055",
+      "platform": "xhs",
+      "title": "GLM 5.3 API 直接打到白菜价！"
+    },
+    {
+      "id": "6ae44142000000001200baaa",
+      "platform": "xhs",
+      "title": "冲！GLM-5.3活动来了！"
+    },
+    {
+      "id": "6ae44af7000000001a023d37",
+      "platform": "xhs",
+      "title": "GLM-5.3入手真的香！"
+    }
+  ],
+  "reference_hashes": {
+    "xhs/6ac7598b000000001b02d055": "6998e04097a31cdcfbabd557b317bb16186a9191bb11078a314d8609051ddfe1",
+    "xhs/6ae44142000000001200baaa": "1b9689cd156c465e68842290421354cdcb6279c1d584847f58f8386975112a70",
+    "xhs/6ae44af7000000001a023d37": "4b9c46cec5c205c3d94eeaa094b6db7887a0abe8bf509bfc48249b5727916d8e"
+  },
+  "rules": {
+    "data/distilled-preferences.json": "6bd36cc0697460b8cbb0ddbb86d62b2a1b94c27a24a0d8ffd12029d24569f4e4"
+  },
+  "posts": [
+    {
+      "index": 1,
+      "title_lines": [
+        "开发者福音来了",
+        "GLM5.3",
+        "需求整理→代码讨论→Agent拆解，一条龙"
+      ],
+      "body": "写需求文档、拆解工作流、讨论代码方案，\n这些事儿单靠自己理，容易漏、容易乱。\n\nGLM5.3 可以帮你：\n▫️ 先把需求和约束写清楚，理出优先级\n▫️ 再分步讨论技术方案，\n列出每一步的输入输出\n▫️ 最后自己核对结果，看看哪里需要调整\n\n搭 Agent 流程的时候特别有用，\n多步骤任务不用自己从头捋，\n让模型帮你拆解、帮你讨论，\n你只管做决策和最终把关。\n\n适合独立开发者和搭 Agent\n工作流的人，\n需求整理、方案讨论、流程拆解都能用上。",
+      "tags": [
+        "#GLM5.3",
+        "#开发者",
+        "#Agent工作流",
+        "#需求整理",
+        "#代码讨论"
+      ],
+      "audience": "独立开发者、Agent 工作流搭建者",
+      "angle": "工作场景串联：需求整理 → 代码讨论 → Agent 拆解，展示实际协作价值",
+      "cover_subtitle": "需求整理→代码讨论→流程拆解",
+      "cover_highlight": "开发者和 Agent 搭建者的协作助手",
+      "markdown": "post-1.md",
+      "image": "post-1.png",
+      "status": "completed",
+      "palette": {
+        "id": "blue_mint",
+        "background": "#1C79D3",
+        "card": "#FFFEFF",
+        "text": "#000000",
+        "accent": "#6FD0A2"
+      },
+      "layout": "center_card",
+      "image_metadata": {
+        "width": 1080,
+        "height": 1080,
+        "bytes": 92662,
+        "sha256": "2f1a10c143d0fc542a70d1274300708823d8c56a686da18b33006faf17c65163"
+      },
+      "background_generation": {
+        "mode": "cached_background",
+        "source": "/Users/mac/Desktop/content-ops/outputs/2026-11-03/t38-glm53-layout/background-1.png",
+        "sha256": "4b4e1a5970fd5669ba409ff1b9e97ff1498a94f34ce85ea4b93b44a9719e8b11",
+        "note": "复用指定背景，本次未调用生图；本机换色与排版"
+      }
+    }
+  ],
+  "copy_calls": [
+    {
+      "model": "claude-sonnet-4-6",
+      "usage": {
+        "prompt_tokens": 34168,
+        "completion_tokens": 706,
+        "total_tokens": 34874,
+        "usage_semantic": "openai",
+        "usage_source": "anthropic",
+        "prompt_tokens_details": {
+          "cached_tokens": 9860,
+          "cached_creation_tokens": 18916,
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0
+        },
+        "completion_tokens_details": {
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 0
+        },
+        "input_tokens": 34168,
+        "claude_cache_creation_5_m_tokens": 18916
+      }
+    }
+  ],
+  "previous_errors": [
+    "[Errno 2] No such file or directory: 'scratch/t14-primary/background-1.png'"
+  ],
+  "completed_at": "2026-11-03T19:41:58.687860+08:00"
+}

@@ -1,6 +1,7 @@
 import {spawn} from 'node:child_process';
 import {existsSync} from 'node:fs';
-import {open,readFile,readdir,realpath,stat} from 'node:fs/promises';
+import {randomBytes} from 'node:crypto';
+import {cp,lstat,mkdir,open,readFile,realpath,rename,rm,stat,writeFile} from 'node:fs/promises';
 import {join,resolve,sep} from 'node:path';
 
 const platforms=new Set(['xhs','xianyu']);
@@ -12,10 +13,14 @@ const within=(root,path)=>path.startsWith(root+sep);
 const text=value=>Array.isArray(value)?value.map(String).join('\n'):value==null?'':String(value);
 const number=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0?value:0;
 const metric=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0?value:null;
+const modelCategories=new Set(['GLM','Kimi','Seedance/视频','其他']);
+const layoutStyles=new Set(['code_ide','bold_typo','card_3d','comparison','other']);
+const writes=new Map();
+const maxImageBytes=15*1024*1024;
 const byId=(a,b)=>a.id<b.id?-1:a.id>b.id?1:0;
 
 export function parseReferenceQuery(params=new URLSearchParams()){
-  for(const key of params.keys())if(!['platform','sort','offset','limit','ids'].includes(key)||params.getAll(key).length!==1)throw fail('素材库查询参数无效。');
+  for(const key of params.keys())if(!['platform','sort','offset','limit','ids','model_category','layout_style'].includes(key)||params.getAll(key).length!==1)throw fail('素材库查询参数无效。');
   const platform=params.get('platform')??'xhs',sort=params.get('sort')??'best';
   if(!platforms.has(platform)||!sorts.has(sort)||(sort==='wanted'&&platform!=='xianyu'))throw fail('素材库平台或排序无效。');
   const integer=(key,fallback,min,max)=>{const raw=params.get(key);if(raw===null)return fallback;if(!/^\d+$/u.test(raw))throw fail('素材库分页参数无效。');const value=Number(raw);if(!Number.isSafeInteger(value)||value<min||value>max)throw fail('素材库分页参数无效。');return value;};
@@ -26,7 +31,30 @@ export function parseReferenceQuery(params=new URLSearchParams()){
     if(!values.length||values.length>100||values.some(id=>!identifier.test(id)))throw fail('素材引用 ID 无效，单次最多 100 条。');
     ids=[...new Set(values)];
   }
-  return {platform,sort,offset,limit,ids};
+  const modelCategory=params.get('model_category')??'all',layoutStyle=params.get('layout_style')??'all';
+  if(modelCategory!=='all'&&!modelCategories.has(modelCategory)||layoutStyle!=='all'&&!layoutStyles.has(layoutStyle))throw fail('素材分类筛选无效。');
+  return {platform,sort,offset,limit,ids,modelCategory,layoutStyle};
+}
+
+export function classifyReference(post){
+  const source=[post.model,post.title,post.body,post.cover_ocr,...(Array.isArray(post.tags)?post.tags:[])].filter(Boolean).join(' ').toLocaleLowerCase();
+  const model=/(seedance|即梦|视频生成|视频模型)/iu.test(source)?'Seedance/视频':/(glm|智谱|智谱清言)/iu.test(source)?'GLM':/(kimi|月之暗面)/iu.test(source)?'Kimi':'其他';
+  // Business topics such as “编程/代码” do not describe the cover's layout.
+  // Prefer explicit layout terms; short OCR title lines are only a heuristic,
+  // never a claim that we inspected pixels. Missing evidence stays “other”.
+  const ocr=text(post.cover_ocr), lines=ocr.split(/\r?\n/u).map(line=>line.trim()).filter(Boolean);
+  const visual=[post.title,ocr].filter(Boolean).join(' ');
+  let layout='other',basis='无明确版式线索';
+  if(/代码屏|终端(?:窗口|界面)|(?:IDE|VS\s?Code)\s*(?:界面|截图|窗口)|编程界面|\$\s*(?:npm|pip|git|python)|(?:const|import|def|function)\s+\w+[=(\s]/iu.test(visual)){
+    layout='code_ide';basis='封面文字含代码界面或命令语法';
+  }else if(/对比(?:图|表)|表格|看板|前后对比|\bvs\b|[✓✔].*[✕✗×]/iu.test(visual)){
+    layout='comparison';basis='封面文字含对比或表格线索';
+  }else if(/3D|悬浮卡片|流程图|立体卡片|步骤[一二三123]|[→➜]/iu.test(visual)){
+    layout='card_3d';basis='封面文字含卡片或流程线索';
+  }else if(/大字报|粗体|撞色|醒目大字|超大字/iu.test(visual)||(lines.length>=3&&lines.length<=12&&lines.filter(line=>[...line].length<=24).length/lines.length>=.8)){
+    layout='bold_typo';basis='短行标题 OCR 或明确大字报描述';
+  }
+  return {model_category:modelCategories.has(post.model_category)?post.model_category:model,layout_style:layoutStyles.has(post.layout_style)?post.layout_style:layout,layout_basis:layoutStyles.has(post.layout_style)?'人工标注':basis,classification_method:layoutStyles.has(post.layout_style)?'manual':'text_heuristic'};
 }
 
 // Match the raw origin-form request target before URL normalizes dot segments.
@@ -78,7 +106,7 @@ function bundledRisk(posts,platform,config,rules){
 const pythonRiskProgram=`import importlib.util,json,sys
 from pathlib import Path
 root=Path(sys.argv[1])
-spec=importlib.util.spec_from_file_location('reference_checker',root/'scripts/check-banned-words.py')
+spec=importlib.util.spec_from_file_location('reference_checker',root/'scripts/lib/words.py')
 checker=importlib.util.module_from_spec(spec);spec.loader.exec_module(checker)
 data=json.load(sys.stdin);config=data['config'];rules=checker.load_rules(root/config['rules'])
 def text(value):
@@ -113,20 +141,190 @@ async function checkerRisk(root,posts,platform,config){
   });
 }
 
+// MIME is determined from the bytes, never the supplied filename.
+function uploadedImage(value){
+  let bytes,declared;
+  if(Buffer.isBuffer(value)||value instanceof Uint8Array)bytes=Buffer.from(value);
+  else {
+    if(value&&typeof value==='object'){declared=value.mimeType;value=value.data;}
+    if(typeof value!=='string')throw fail('图片必须是 Base64 或二进制数据。');
+    const match=value.match(/^data:([^;,]+);base64,(.*)$/su);
+    if(match){declared=match[1];value=match[2];}
+    if(value.length>4*Math.ceil(maxImageBytes/3))throw fail('图片不能超过 15MB。',413);
+    if(!value||value.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/u.test(value))throw fail('图片 Base64 无效。');
+    bytes=Buffer.from(value,'base64');
+    if(bytes.toString('base64')!==value)throw fail('图片 Base64 无效。');
+  }
+  if(bytes.length>maxImageBytes)throw fail('图片不能超过 15MB。',413);
+  const mime=sniffReferenceImage(bytes),ext=({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[mime];
+  if(!ext||declared&&declared!==mime)throw fail('仅支持真实的 PNG / JPEG / WebP 图片。',415);
+  // Reject truncated headers that cannot describe an image.
+  const valid=ext==='png'?bytes.length>=33&&bytes.subarray(12,16).toString()==='IHDR'&&bytes.readUInt32BE(16)>0&&bytes.readUInt32BE(20)>0&&bytes.subarray(-8,-4).toString()==='IEND':
+    ext==='jpg'?bytes.length>=4&&bytes.subarray(-2).equals(Buffer.from([255,217])):
+    bytes.length>=20&&bytes.readUInt32LE(4)+8===bytes.length&&/^VP8[ LX]$/u.test(bytes.subarray(12,16).toString());
+  if(!valid)throw fail('图片内容损坏或不完整。',415);
+  return {bytes,ext};
+}
+
+function referenceFields(payload){
+  if(!payload||typeof payload!=='object'||Array.isArray(payload))throw fail('素材字段无效。');
+  const allowed=new Set(['platform','title','body','cover_ocr','model','model_category','layout_style','label','image']);
+  if(Object.keys(payload).some(key=>!allowed.has(key)))throw fail('包含不支持的素材字段。');
+  const fields={};
+  for(const key of ['title','body','cover_ocr','model'])if(Object.hasOwn(payload,key)){
+    if(typeof payload[key]!=='string'||payload[key].length>200000||payload[key].includes('\0'))throw fail('素材文字字段无效或过长。');
+    fields[key]=payload[key];
+  }
+  for(const [key,values] of [['platform',platforms],['model_category',modelCategories],['layout_style',layoutStyles]])if(Object.hasOwn(payload,key)){
+    if(!values.has(payload[key]))throw fail('素材平台或分类无效。');fields[key]=payload[key];
+  }
+  if(Object.hasOwn(payload,'label')){
+    if(!payload.label||Array.isArray(payload.label)||typeof payload.label.good!=='boolean'||Object.keys(payload.label).some(key=>key!=='good'))throw fail('精选标记无效。');
+    fields.label={good:payload.label.good};
+  }
+  return fields;
+}
+
 export class ContentOpsReferenceStore {
   constructor({root}){this.root=resolve(root);}
+  // Serialize the read/modify/rename cycle across store instances for this root.
+  async mutate(operation){
+    const previous=writes.get(this.root)||Promise.resolve();
+    const current=previous.catch(()=>{}).then(async()=>{
+      await this.safeDirectory('data');
+      const unlock=await this.lock();
+      try{return await operation();}finally{await unlock();}
+    });
+    writes.set(this.root,current);
+    try{return await current;}finally{if(writes.get(this.root)===current)writes.delete(this.root);}
+  }
+  async lock(){
+    const path=join(this.root,'data/.posts.lock'),token=randomBytes(12).toString('hex');
+    for(let attempt=0;attempt<2;attempt++){
+      let file;
+      try{file=await open(path,'wx',0o600);}catch(error){
+        if(error.code!=='EEXIST')throw error;
+        try{
+          const record=JSON.parse(await readFile(path,'utf8'));
+          if(!Number.isInteger(record.pid)||record.pid<=0)throw fail('素材库写入锁无效。',409);
+          try{process.kill(record.pid,0);}catch(check){if(check.code==='ESRCH'){await rm(path);continue;}throw check;}
+        }catch(check){if(check.statusCode)throw check;}
+        throw fail('素材库正在写入，请稍后重试。',409);
+      }
+      try{await file.writeFile(JSON.stringify({pid:process.pid,token}));}catch(error){await rm(path,{force:true});throw error;}finally{await file.close();}
+      return async()=>{if(JSON.parse(await readFile(path,'utf8')).token===token)await rm(path);};
+    }
+    throw fail('素材库正在写入，请稍后重试。',409);
+  }
+  async safeDirectory(relative){
+    let path=this.root;
+    for(const piece of relative.split('/')){
+      path=join(path,piece);await mkdir(path).catch(error=>{if(error.code!=='EEXIST')throw error;});
+      const info=await lstat(path);if(info.isSymbolicLink()||!info.isDirectory())throw fail('素材存储目录无效。');
+    }
+    return path;
+  }
+  async writeRecords(posts){
+    const path=join(this.root,'data/posts.jsonl'),temporary=path+'.'+randomBytes(12).toString('hex')+'.tmp';
+    const info=await lstat(path).catch(error=>{if(error.code!=='ENOENT')throw error;});
+    if(info&&(!info.isFile()||info.isSymbolicLink()))throw fail('素材存储文件无效。');
+    try{
+      const file=await open(temporary,'wx',0o600);
+      try{await file.writeFile(posts.map(post=>JSON.stringify(post)).join('\n')+(posts.length?'\n':''));await file.sync();}finally{await file.close();}
+      await rename(temporary,path);
+    }finally{await rm(temporary,{force:true});}
+  }
+  async addReference(payload){
+    const fields=referenceFields(payload),image=payload.image==null?null:uploadedImage(payload.image);
+    return this.mutate(async()=>{
+      const posts=await this.records();
+      let id;do{id=randomBytes(12).toString('hex');}while(posts.some(post=>post.id===id));
+      const post={id,platform:'xhs',title:'',body:'',cover_ocr:'',model:'',label:{good:false},...fields,images:[],source:'user_added',fetched_at:new Date().toISOString()};
+      return this.saveReference(posts,null,post,image,payload.image!==undefined);
+    });
+  }
+  async updateReference(id,updates){
+    if(!identifier.test(String(id)))throw fail('素材 ID 无效。');
+    const fields=referenceFields(updates),image=updates.image==null?null:uploadedImage(updates.image);
+    return this.mutate(async()=>{
+      const posts=await this.records(),old=posts.find(post=>post.id===id);if(!old)throw fail('素材不存在。',404);
+      const post={...old,...fields,label:{...old.label,...fields.label}};
+      // Content changes invalidate derived risk signals, not the original metrics.
+      delete post.signal;
+      return this.saveReference(posts,old,post,image,Object.hasOwn(updates,'image'));
+    });
+  }
+  async saveReference(posts,old,post,image,changeImage){
+    const oldImages=Array.isArray(post.images)?post.images:[];
+    const hasImage=changeImage?Boolean(image):oldImages.length>0;
+    if(!hasImage&&!post.title?.trim()&&!post.body?.trim())throw fail('请至少提供图片、标题或正文中的一项。');
+    const relocate=old&&old.platform!==post.platform;
+    const changeDirectory=changeImage||relocate;
+    let staging,backup,oldDir,target,installed=false,backedUp=false;
+    try{
+      if(changeDirectory){
+        const parent=await this.safeDirectory(`data/images/${post.platform}`);
+        target=join(parent,post.id);oldDir=old?join(await this.safeDirectory(`data/images/${old.platform}`),post.id):target;
+        const info=await lstat(oldDir).catch(error=>{if(error.code!=='ENOENT')throw error;});
+        if(info&&(info.isSymbolicLink()||!info.isDirectory()))throw fail('素材图片目录无效。');
+        if(relocate&&await lstat(target).then(()=>true,error=>{if(error.code==='ENOENT')return false;throw error;}))throw fail('目标素材目录已存在。',409);
+        const token=randomBytes(12).toString('hex');staging=join(parent,`.${post.id}-${token}.tmp`);backup=oldDir+`.${token}.bak`;
+        await mkdir(staging);
+        if(info)await cp(oldDir,staging,{recursive:true,dereference:false});
+        if(changeImage){
+          // A replacement updates the cover; remaining carousel images are retained.
+          if(image){
+            const previous=oldImages[0];
+            if(typeof previous==='string'&&previous.startsWith(`data/images/${old?.platform||post.platform}/${post.id}/`)&&imageName.test(previous.split('/').at(-1)))await rm(join(staging,previous.split('/').at(-1)),{force:true});
+            const filename=`1.${image.ext}`;
+            await rm(join(staging,filename),{force:true}); // never follow an existing symlink
+            await writeFile(join(staging,filename),image.bytes,{flag:'wx',mode:0o600});
+            post.images=[`data/images/${post.platform}/${post.id}/${filename}`,...oldImages.slice(1).map(path=>path.replace(`data/images/${old?.platform||post.platform}/`,`data/images/${post.platform}/`))].filter((path,index,all)=>all.indexOf(path)===index);
+          }else{await rm(staging,{recursive:true,force:true});await mkdir(staging);post.images=[];}
+        }else if(relocate)post.images=oldImages.map(path=>path.replace(`data/images/${old.platform}/`,`data/images/${post.platform}/`));
+        if(info){await rename(oldDir,backup);backedUp=true;}
+        await rename(staging,target);installed=true;
+      }
+      const next=old?posts.map(item=>item.id===post.id?post:item):[...posts,post];
+      await this.writeRecords(next);
+    }catch(error){
+      if(installed)await rm(target,{recursive:true,force:true});
+      if(backedUp)await rename(backup,oldDir);
+      throw error;
+    }finally{if(staging)await rm(staging,{recursive:true,force:true});}
+    if(backedUp)await rm(backup,{recursive:true,force:true});
+    if(installed&&!post.images.length)await rm(target,{recursive:true,force:true});
+    return post;
+  }
+  async deleteReference(id){
+    if(!identifier.test(String(id)))throw fail('素材 ID 无效。');
+    return this.mutate(async()=>{
+      const posts=await this.records(),post=posts.find(item=>item.id===id);if(!post)throw fail('素材不存在。',404);
+      const parent=await this.safeDirectory(`data/images/${post.platform}`),path=join(parent,id),backup=path+'.'+randomBytes(12).toString('hex')+'.bak';
+      let moved=false;
+      try{
+        try{await rename(path,backup);moved=true;}catch(error){if(error.code!=='ENOENT')throw error;}
+        await this.writeRecords(posts.filter(item=>item.id!==id));
+      }catch(error){if(moved)await rename(backup,path);throw error;}
+      if(moved)await rm(backup,{recursive:true,force:true});
+      return {id,platform:post.platform};
+    });
+  }
   async configuration(){
     let value;try{value=JSON.parse(await readFile(join(this.root,'config/data-cleaning.json'),'utf8'));}catch{throw fail('素材库缺少有效的清洗配置。',503);}
     if(!Array.isArray(value.scan_fields)||!Array.isArray(value.model_context_fields)||!value.profiles?.xhs||!value.profiles?.xianyu)throw fail('素材库清洗配置结构无效。',503);
     return value;
   }
   async records(platform){
-    let files;try{files=await readdir(join(this.root,'data',platform));}catch(error){if(error.code==='ENOENT')return [];throw fail('读取素材库目录失败。',500);}
-    return await Promise.all(files.filter(name=>name.endsWith('.json')&&!name.startsWith('_')).sort().map(async name=>{
-      let post;try{post=JSON.parse(await readFile(join(this.root,'data',platform,name),'utf8'));}catch{throw fail(`素材 JSON 无效：${name}`,500);}
-      if(!post||typeof post!=='object'||!identifier.test(String(post.id||''))||`${post.id}.json`!==name)throw fail(`素材 ID 与文件不一致：${name}`,500);
-      return post;
-    }));
+    let raw;try{raw=await readFile(join(this.root,'data/posts.jsonl'),'utf8');}catch(error){if(error.code==='ENOENT')return [];throw fail('读取素材库失败。',500);}
+    const seen=new Set(),posts=[];
+    for(const [index,line] of raw.split('\n').entries()){
+      if(!line.trim())continue;
+      let post;try{post=JSON.parse(line);}catch{throw fail(`素材 JSONL 无效：第 ${index+1} 行`,500);}
+      if(!post||typeof post!=='object'||!identifier.test(String(post.id||''))||!platforms.has(post.platform)||seen.has(post.id))throw fail(`素材 ID 或平台无效/重复：第 ${index+1} 行`,500);
+      seen.add(post.id);if(platform===undefined||post.platform===platform)posts.push(post);
+    }
+    return posts;
   }
   async risks(posts,platform,config){
     let bundle;try{bundle=JSON.parse(await readFile(join(this.root,'data/distilled-preferences.json'),'utf8'));}catch{}
@@ -153,19 +351,19 @@ export class ContentOpsReferenceStore {
         clean=typeof signal.clean_for_style_reference==='boolean'?signal.clean_for_style_reference:Boolean(rank&&rank<=profile.reference_count&&!hits.length);
       }
       const images=imageUrls(post,query.platform),body=text(post.body);
-      return {id:String(post.id),platform:query.platform,title:text(post.title),body_preview:[...body].slice(0,300).join(''),body_full:body,cover_ocr:text(post.cover_ocr),image:images[0]||null,images,
+      return {id:String(post.id),platform:query.platform,title:text(post.title),body_preview:[...body].slice(0,300).join(''),body_full:body,cover_ocr:text(post.cover_ocr),image:images[0]||null,images,...classifyReference(post),
         metrics:{likes:metric(metrics.likes),collects:metric(metrics.collects),comments:metric(metrics.comments),wants:metric(metrics.wants)},label_good:good,
         clean_for_style_reference:clean,banned_word_hits:hits,engagement_tier:tier,model:typeof post.model==='string'?post.model:'',tags:Array.isArray(post.tags)?post.tags.filter(tag=>typeof tag==='string'):[],url:typeof post.url==='string'?post.url:'',fetched_at:typeof post.fetched_at==='string'?post.fetched_at:''};
     });
     const tierRank={good:3,high:2,mid:1,low:0};
     const engaged=post=>number(post.metrics.likes)+number(post.metrics.collects)*2+number(post.metrics.comments);
     posts.sort((a,b)=>{
-      if(query.sort==='best')return Number(b.label_good&&b.clean_for_style_reference)-Number(a.label_good&&a.clean_for_style_reference)||tierRank[b.engagement_tier]-tierRank[a.engagement_tier]||number(b.metrics.likes)-number(a.metrics.likes)||byId(a,b);
+      if(query.sort==='best')return Number(b.label_good)-Number(a.label_good)||Number(b.clean_for_style_reference)-Number(a.clean_for_style_reference)||tierRank[b.engagement_tier]-tierRank[a.engagement_tier]||number(b.metrics.likes)-number(a.metrics.likes)||byId(a,b);
       if(query.sort==='engaged')return engaged(b)-engaged(a)||byId(a,b);
       if(query.sort==='wanted')return Number(b.metrics.wants!==null)-Number(a.metrics.wants!==null)||number(b.metrics.wants)-number(a.metrics.wants)||byId(a,b);
       return (Date.parse(b.fetched_at)||0)-(Date.parse(a.fetched_at)||0)||byId(a,b);
     });
-    const selected=query.ids?posts.filter(post=>query.ids.includes(post.id)):posts;
+    const selected=posts.filter(post=>(!query.ids||query.ids.includes(post.id))&&(query.modelCategory==='all'||post.model_category===query.modelCategory)&&(query.layoutStyle==='all'||post.layout_style===query.layoutStyle));
     // ids limits the result set; pagination and total describe that filtered set.
     return {total:selected.length,dataset_total:posts.length,offset:query.offset,limit:query.limit,posts:selected.slice(query.offset,query.offset+query.limit),
       ...(query.ids?{missing_ids:query.ids.filter(id=>!selected.some(post=>post.id===id))}:{})};

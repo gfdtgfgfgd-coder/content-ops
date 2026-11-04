@@ -1,0 +1,10 @@
+{
+  "output": "/Users/mac/Desktop/content-ops/outputs/2026-11-03/validation-kimi-1080x1440.png",
+  "model": "qwen-image-3.0",
+  "endpoint": "https://duoyuanx.com/v1/images/generations",
+  "requested_size": "1080x1440",
+  "width": 1080,
+  "height": 1440,
+  "bytes": 1188871,
+  "sha256": "bc872045438cae813a1fa6e0e840f27d4cc9d94ed5ed575310671346031281fc"
+}

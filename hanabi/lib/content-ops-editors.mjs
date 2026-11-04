@@ -1,8 +1,32 @@
 const platforms = new Set(['xhs', 'xianyu', 'gzh']);
 const labels = {xhs:'小红书', xianyu:'闲鱼', gzh:'公众号'};
 
+const regexAliases = {
+  '(?<![A-Za-z])token(?:s)?(?![A-Za-z])': 'token / tokens',
+  '(?:神器|神奇)': '神器 / 神奇',
+  '(?<![A-Za-z])(?:Cursor|Hermes\\s*Agent)(?![A-Za-z])': 'Cursor / Hermes Agent 等海外工具',
+  '(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])': 'ChatGPT / Claude / Gemini 等境外模型',
+  '[0-9]+(?:\\.[0-9]+)?\\s*折': '数字折扣（如 5折、8.5折）',
+  '¥\\s*[0-9]+(?:\\.[0-9]+)?': '¥ 价格（如 ¥99）',
+  '￥\\s*[0-9]+(?:\\.[0-9]+)?': '￥ 价格（如 ￥99）',
+  '[一二三四五六七八九十零〇两半]+(?:点[一二三四五六七八九十零〇]+)?\\s*折': '中文折扣（如 八折、九五折）',
+  '(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)': '具体金额（含元/块/RMB/USD等单位）',
+};
+
+function friendlyWord(entry) {
+  if (!entry?.regex) return entry?.word || '';
+  if (regexAliases[entry.word]) return regexAliases[entry.word];
+  const clean = String(entry.word || '')
+    .replace(/\(\?<![^)]+\)|\(\?![^)]+\)/g, '')
+    .replace(/\(\?:([^()]+)\)/g, '$1')
+    .replace(/\\s\*/g, ' ')
+    .replace(/\\/g, '');
+  return clean || entry.word;
+}
+
 async function request(path, body) {
   const response = await fetch(path, {
+    cache: 'no-store',
     method: body ? 'POST' : 'GET',
     headers: {'content-type':'application/json'},
     ...(body ? {body:JSON.stringify(body)} : {}),
@@ -89,7 +113,7 @@ export class ContentOpsEditors {
     const quotes = data.parse_error ? null : textEntries(data.quotes);
     this.personaRaw.textContent = typeof data.raw_md === 'string' ? data.raw_md : '没有提供原文回退内容。';
     this.personaRawDisclosure.hidden = typeof data.raw_md !== 'string' || Boolean(standards && anti && quotes);
-    this.root.querySelector('#persona-version').textContent = data.version ? `证据版本 ${data.version}` : '';
+    this.root.querySelector('#persona-version').textContent = data.version ? `证据版本 · 更新时间 ${data.version}` : '';
     if (!standards || !anti || !quotes) {
       this.personaRevision = '';
       this.root.querySelector('#persona-standards').replaceChildren();
@@ -100,17 +124,19 @@ export class ContentOpsEditors {
       return;
     }
     this.root.querySelectorAll('#persona-add-standard,#persona-add-anti,#persona-add-quote,#content-ops-persona .editor-form button[type="submit"]').forEach(button => { button.disabled = !this.personaRevision; });
-    this.personaStatus.textContent = `已读取 ${standards.length} 条标准、${anti.length} 条反例、${quotes.length} 条工作反馈。`;
-    this.renderPersonaList('#persona-standards', standards);
-    this.renderPersonaList('#persona-anti', anti);
+    this.personaStatus.textContent = `已读取 ${standards.length} 条标准、${anti.length} 条反例、${quotes.length} 条工作反馈${data.version ? `（最近更新：${data.version}，最新条目已置顶）` : ''}。`;
+    const quoteDates = new Map(quotes.map(quote => [quote.id || quote.evidence_id, quote.date || '']));
+    this.renderPersonaList('#persona-standards', standards, quoteDates);
+    this.renderPersonaList('#persona-anti', anti, quoteDates);
     const quoteList = this.root.querySelector('#persona-quotes');
     quoteList.replaceChildren();
     const table = node('table');
     const head = node('thead'), headerRow = node('tr');
-    for (const text of ['编号','日期','摘录']) headerRow.append(node('th', text));
+    for (const text of ['编号','更新时间','摘录']) headerRow.append(node('th', text));
     head.append(headerRow); table.append(head);
     const body = node('tbody');
-    for (const quote of quotes) {
+    const sortedQuotes = [...quotes].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || Number(String(b.id || '').slice(1)) - Number(String(a.id || '').slice(1)));
+    for (const quote of sortedQuotes) {
       const row = node('tr');
       row.append(node('td', quote.id || quote.evidence_id || '—'), node('td', quote.date || '—'), node('td', quote.text || ''));
       body.append(row);
@@ -118,15 +144,21 @@ export class ContentOpsEditors {
     table.append(body); quoteList.append(table);
   }
 
-  renderPersonaList(selector, entries) {
+  renderPersonaList(selector, entries, quoteDates) {
     const list = this.root.querySelector(selector);
     list.replaceChildren();
-    for (const entry of entries) {
+    const latestFor = entry => (Array.isArray(entry.evidence) ? entry.evidence : []).map(id => quoteDates?.get(id)).filter(Boolean).sort().at(-1) || '';
+    const sorted = [...entries].sort((a, b) => latestFor(b).localeCompare(latestFor(a)) || (a.id || 0) - (b.id || 0));
+    for (const entry of sorted) {
       const item = node('li');
       if (Number.isInteger(entry.id) && entry.id > 0) item.value = entry.id;
       item.append(node('span', entry.text || ''));
       const evidence = evidenceText(entry.evidence);
-      if (evidence) item.append(node('span', evidence, 'editor-evidence'));
+      const latestDate = latestFor(entry);
+      if (evidence || latestDate) {
+        const meta = [evidence ? `证据：${evidence}` : '', latestDate ? `更新时间：${latestDate}` : ''].filter(Boolean).join(' · ');
+        item.append(node('span', meta, 'editor-evidence'));
+      }
       list.append(item);
     }
   }
@@ -147,19 +179,28 @@ export class ContentOpsEditors {
       return;
     }
     const formReady = Boolean(this.bannedRevision);
+    const latestUpdate = words.map(item => item.added_at || item.updated_at || '').filter(Boolean).sort().at(-1) || '';
     this.root.querySelectorAll('#banned-add-form input,#banned-add-form select,#banned-add-form textarea,#banned-add-form button').forEach(control => { control.disabled = !formReady; });
     this.root.querySelector('.editor-add-details > summary').removeAttribute('aria-disabled');
-    this.root.querySelector('#banned-count').textContent = `${words.length} 条`;
-    this.bannedStatus.textContent = `已读取 ${words.length} 条规则。`;
+    this.root.querySelector('#banned-count').textContent = `${words.length} 条${latestUpdate ? ` · 更新时间 ${latestUpdate}` : ''}`;
+    this.bannedStatus.textContent = `已读取 ${words.length} 条规则${latestUpdate ? `（最近更新：${latestUpdate}，最新词条已置顶）` : ''}。`;
     this.wordsBody.replaceChildren();
-    for (const entry of words) {
+    const sortedWords = words.map((entry, index) => ({entry, index})).sort((a, b) => String(b.entry.added_at || b.entry.updated_at || '').localeCompare(String(a.entry.added_at || a.entry.updated_at || '')) || a.index - b.index).map(item => item.entry);
+    for (const entry of sortedWords) {
       const row = node('tr');
       row.dataset.word = String(entry.word ?? '');
       const scope = Array.isArray(entry.platform) ? entry.platform : entry.platform ? [entry.platform] : [];
       const models = entry.model_scope ?? entry.models ?? [];
-      const wordCell = node('th', entry.word || '', 'editor-word');
+      const isRegex = Boolean(entry.regex);
+      const displayName = isRegex ? friendlyWord(entry) : entry.word || '';
+      const wordCell = node('th', null, 'editor-word');
       wordCell.scope = 'row';
-      if (entry.regex) wordCell.append(node('span', '正则规则', 'editor-evidence'));
+      wordCell.append(node('span', displayName, 'editor-word-title'));
+      if (isRegex) {
+        const code = node('code', entry.word, 'editor-regex-code');
+        code.title = `底层匹配正则：${entry.word}`;
+        wordCell.append(code);
+      }
       row.append(
         wordCell,
         node('td', entry.level || '—'),
@@ -167,6 +208,7 @@ export class ContentOpsEditors {
         node('td', Array.isArray(models) ? models.join('、') : models || '—'),
         node('td', entry.replace || '—'),
         node('td', entry.reason || '—'),
+        node('td', entry.added_at || entry.updated_at || '—'),
       );
       const action = node('td');
       const remove = node('button', this.pendingRemoval.has(String(entry.word)) ? '确认删除' : '删除', 'ref-text-button');

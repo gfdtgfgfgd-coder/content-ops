@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "status": "completed",
+  "product_model": "GLM5.3",
+  "platform": "xhs",
+  "count": 1,
+  "text_model": "gemini-3.8-flash",
+  "image_model": "qwen-image-3.0",
+  "created_at": "2026-11-03T23:34:33.227256+08:00",
+  "facts": {
+    "model": "GLM5.3",
+    "verified_claims": [],
+    "note": "未提供独立核验事实；本次卖点可来自用户简报，来源分别记录"
+  },
+  "brief": "",
+  "brief_source": "user_provided",
+  "generation_pipeline": "single_pass_v1",
+  "reference_mode": "automatic",
+  "preference_version": {
+    "source": "distilled-preferences.json",
+    "distilled_at": "2026-11-02",
+    "version": 1,
+    "sha256": "6bd36cc0697460b8cbb0ddbb86d62b2a1b94c27a24a0d8ffd12029d24569f4e4"
+  },
+  "references": [
+    {
+      "id": "6ac7598b000000001b02d055",
+      "platform": "xhs",
+      "title": "GLM 5.3 API 直接打到白菜价！"
+    },
+    {
+      "id": "6ae44142000000001200baaa",
+      "platform": "xhs",
+      "title": "冲！GLM-5.3活动来了！"
+    },
+    {
+      "id": "6ae44af7000000001a023d37",
+      "platform": "xhs",
+      "title": "GLM-5.3入手真的香！"
+    }
+  ],
+  "reference_hashes": {
+    "xhs/6ac7598b000000001b02d055": "6998e04097a31cdcfbabd557b317bb16186a9191bb11078a314d8609051ddfe1",
+    "xhs/6ae44142000000001200baaa": "1b9689cd156c465e68842290421354cdcb6279c1d584847f58f8386975112a70",
+    "xhs/6ae44af7000000001a023d37": "4b9c46cec5c205c3d94eeaa094b6db7887a0abe8bf509bfc48249b5727916d8e"
+  },
+  "rules": {
+    "data/distilled-preferences.json": "6bd36cc0697460b8cbb0ddbb86d62b2a1b94c27a24a0d8ffd12029d24569f4e4"
+  },
+  "posts": [
+    {
+      "index": 1,
+      "title_lines": [
+        "写代码跑任务太费钱？",
+        "GLM5.3",
+        "便宜量大，长代码工程放开跑"
+      ],
+      "body": "每天写代码、调工作流，\n总在算模型调用成本？\n\n这次 GLM5.3 直接好价来袭，\n高频跑长任务也不心疼。\n\n超大上下文一次吞下整个项目，\n不用再把长文档、多文件拆碎了喂。\n\n复杂代码重构、改 Bug 反应顺滑，\n多步骤智能体工作流也能稳稳执行。\n\n还支持代码安全审查和漏洞排查，\n日常开发和项目调试省心不少。\n\n做独立开发或带团队做项目的朋友，\n趁着活动价直接安排上，\n赶紧上手体验一波！",
+      "tags": [
+        "#GLM5.3",
+        "#AI编程",
+        "#代码开发",
+        "#程序员日常"
+      ],
+      "audience": "独立开发者与工程研发人员",
+      "angle": "开发者开发成本与长代码处理痛点切入",
+      "cover_subtitle": "超大上下文搞定复杂工程",
+      "cover_highlight": "便宜量大高频跑任务更尽兴",
+      "markdown": "post-1.md",
+      "image": "post-1.png",
+      "status": "completed",
+      "palette": {
+        "id": "blue_mint",
+        "background": "#1C79D3",
+        "card": "#FFFEFF",
+        "text": "#000000",
+        "accent": "#6FD0A2"
+      },
+      "layout": "center_card",
+      "image_metadata": {
+        "width": 1080,
+        "height": 1080,
+        "bytes": 97824,
+        "sha256": "7ff1dd5b939e80f39e701b27f80dc44711c542a6c3790787d910ccfe14e8551a"
+      },
+      "background_generation": {
+        "output": "/Users/mac/Desktop/content-ops/outputs/2026-11-03/hanabi/12335bb1-24bd-47c3-8741-6e3ebd705281/background-1.png",
+        "model": "qwen-image-3.0",
+        "endpoint": "https://duoyuanx.com/v1/images/generations",
+        "requested_size": "1080x1080",
+        "width": 1080,
+        "height": 1080,
+        "bytes": 1042139,
+        "sha256": "bd66b8f0716476d0d2c0d46d1fcfca329bbfaebfa6a1b473ac1a222eab66541b",
+        "mode": "fresh_generation"
+      }
+    }
+  ],
+  "copy_calls": [
+    {
+      "model": "gemini-3.8-flash",
+      "usage": {
+        "prompt_tokens": 1869,
+        "completion_tokens": 318,
+        "total_tokens": 2187,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "text_tokens": 1869,
+          "audio_tokens": 0,
+          "image_tokens": 0
+        },
+        "completion_tokens_details": {
+          "text_tokens": 0,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "reasoning_tokens": 0
+        }
+      }
+    }
+  ],
+  "completed_at": "2026-11-03T23:35:39.876996+08:00"
+}

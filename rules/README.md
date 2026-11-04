@@ -17,23 +17,23 @@
 - 从置顶两篇提炼的实际参数
 
 ### banned-words-quick.yaml
-风险词库（当前唯一机器规则源，T18 复核版）：
-- 22 条规则（以平台、模型和正则条件组合）
-- 包含替换建议
-- 支持 `scripts/check-banned-words.py` CLI 检查
+风险词库（机器检查唯一事实源）：
+- 平台、模型和正则条件组合
+- 包含建议替换词与违禁原因
+- 支持 `scripts/check.py words` CLI 检查
 
 ### cover-palettes.json
 封面配色方案：
-- 6 组配色（背景、卡片、强调色）
+- 配色定义（背景、卡片、强调色）
 - 生成脚本轮换使用
 
 ## 使用
 
-生成脚本（`scripts/gen-xhs-post.py`）会自动加载这些规则作为 system prompt 的一部分。
+生成脚本（`scripts/generate.py copy`）会自动加载这些规则作为 system prompt 的一部分。
 
 单独检查风险词：
 ```bash
-python3 scripts/check-banned-words.py --platform xhs --model GLM5.3 --text "你的文案"
+python3 scripts/check.py words --platform xhs --model GLM5.3 --text "你的文案"
 ```
 
 ## 维护

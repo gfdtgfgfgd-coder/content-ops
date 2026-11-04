@@ -1,20 +1,19 @@
 ---
 name: hanabi-packaging
-description: 打包当前本机 Hanabi 与双击启动器，制作 macOS arm64 可运行交付及可同步源码快照。
+description: 打包当前本机 Hanabi 与双击启动器，从唯一 PNG 重建本机 macOS 启动器；不制作 ZIP 或复制独立运行时。
 ---
 
 # Hanabi 程序打包
 
 用于用户明确要求备份或交付 Hanabi 程序。程序包与个人资料迁移分别处理；没有明确要求时不复制聊天数据库、上传资料、公司令牌、登录态或企微原文。
 
-1. 读当前 Hanabi 开发目录和 content-ops 的 AGENTS.md；比对开发代码与 `~/Library/Application Support/Content Alchemy/runtime`，确认所打包版本。
-2. 使用 `scripts/package-hanabi.py --help` 的参数指定源码、已部署运行目录、Node、独立 Python 根目录、Pillow/PyYAML 所在 site-packages、输出路径和新的包名。默认构建本机 Apple Silicon 包，不冒充 Intel 或 universal 版本。
-3. 打包脚本按白名单携带源码、生产依赖、原生助手、Node/Python、生成规则与背景。Python 自带开发元数据的旧绝对链接必须重定位，包内不能依赖原开发目录。
-4. 完整 ZIP 和解压程序目录在 releases 下本机保留；源码 tar.gz、SHA-256、交付说明和打包脚本可入 Git。不要强行提交超过普通 Git 限制的 ZIP。
-5. 从 ZIP 解压副本执行 `启动Hanabi.command --self-test`，确认健康端点、最新图文表单、无令牌状态和离线中文封面。此测试不调用收费模型、不读写真实资料库。
-6. 校验 ZIP CRC、SHA-256、manifest 文件哈希、源码对应关系和启动器签名；扫描本机已知令牌，结果只报告通过与否，不输出令牌。
-7. 测试启动器打开真实 Hanabi；沿用原服务，不中断任务。部署沿用 `install-background-service.mjs`，保留已有数据库、附件、知识和配置。
-8. 交付时写清完整 ZIP 所在位置、双击入口、架构和换机配置要求；更新任务卡、README、总表，中文 commit 并 push。
+1. 读 `AGENTS.md`、任务卡与 `docs/GUIDE.md`。当前交付策略是 Git 源码加本机启动器，不恢复旧 ZIP / 双份源码包。
+2. 在仓库根目录运行 `python3 scripts/build.py package --help`。默认 `python3 scripts/build.py package` 生成被忽略的 `releases/Hanabi.app`；需要隔离验收时传 `--output scratch/<任务>/packages`，已有目标不覆盖。
+3. `--source` 指定包含 `server.mjs` 与 `assets/app-icon-1024.png` 的源码目录，`--node` 指定本机 Node。旧 `--runtime`、`--python-root`、`--python-packages` 仅保留解析兼容，**不再复制运行时**，不得承诺便携运行或换机免安装。
+4. 图标唯一源是 1024 PNG。构建在系统临时目录用 `sips` / `iconutil` 生成 iconset 与 icns，只把 icns 放进成品 App，临时目录自动删除；不要把派生图标重新提交。
+5. 校验 App 的 Info.plist、启动脚本语法、图标尺寸与像素、实际源码和 Node 路径。启动器沿用健康的 6187 服务，不停止真实生成任务；测试服务须使用隔离端口和资料目录。不为打包验收调用收费模型。
+6. 启动器使用当前源码与本机 Node，源码目录移动后应重建；Python 依赖、网关配置按 GUIDE 准备，凭证、聊天库和附件不放进 App。App 是可删重建的本机派生物，换机仍克隆 Git 并执行 `start.command`。
+7. 交付时写清 App 路径、本机依赖与换机要求。更新任务卡和 README，先跑 `python3 scripts/doctor.py`；退出码非 0 时不提交或推送，也不把未验收工作标完成。
 
 ## 前端布局验收
 

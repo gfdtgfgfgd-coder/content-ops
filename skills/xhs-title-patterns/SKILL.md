@@ -9,4 +9,4 @@ description: 制作或复核小红书模型推广标题与封面时，参考已�
 
 生成时同时应用 [思敏偏好](../simin-persona/SKILL.md)、[平台规则](../../rules/platform-rules.md) 和 [风险词源表](../../rules/banned-words-quick.yaml)。历史原文和标注【已禁】的表达仅用于核对来源；当前规则优先。模型能力须另有事实依据，同批标题与海报结构须有变化。
 
-机器读取用 `scripts/distill-preferences.py` 重建的 `data/distilled-preferences.json`；修改来源后重建，避免手改派生文件。
+机器读取用 `scripts/build.py distill` 重建的 `data/distilled-preferences.json`；修改来源后重建，避免手改派生文件。

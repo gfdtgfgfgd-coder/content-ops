@@ -176,6 +176,31 @@
       "image": "data/images/xhs/6aded0b8000000001601bde0/1.jpg",
       "likes": 1,
       "url": "https://www.xiaohongshu.com/explore/6aded0b8000000001601bde0?xsec_token=ABrYNPhbuPEBbHU6PaPC9AHlBluQatUGOwxasROMQMzZE=&xsec_source=pc_user"
+    },
+    {
+      "id": "6ae01dbd0000000003003464",
+      "clean_for_style_reference": true,
+      "banned_word_hits": []
+    },
+    {
+      "id": "6a17aeb10000000035031b34",
+      "clean_for_style_reference": false,
+      "banned_word_hits": [
+        "满血"
+      ]
+    },
+    {
+      "id": "6ab4d5d30000000012039fd0",
+      "clean_for_style_reference": false,
+      "banned_word_hits": [
+        "量大管饱",
+        "API"
+      ]
+    },
+    {
+      "id": "6ab25e080000000031024e6f",
+      "clean_for_style_reference": true,
+      "banned_word_hits": []
     }
   ],
   "xianyu_top_posts": [
@@ -278,5 +303,5 @@
       "url": "https://www.goofish.com/item?id=1065290794357&categoryId=50023914"
     }
   ],
-  "updated_at": "2026-11-02T11:00:02+00:00"
+  "updated_at": "2026-11-04"
 }

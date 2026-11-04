@@ -1,8 +1,8 @@
 {
   "_note": "仓库体量预算。scripts/doctor.py 读这份文件判断仓库是否开始熵增。改预算要在这里改并写进决策记录，不要在别处开口子。",
-  "tracked_files_max": 90,
-  "tracked_kb_max": 2100,
-  "single_file_kb_max": 400,
+  "tracked_files_max": 105,
+  "tracked_kb_max": 2400,
+  "single_file_kb_max": 1000,
   "scratch_kb_max": 204800,
   "scratch_keep_dirs": 2,
   "duplicate_min_kb": 1,

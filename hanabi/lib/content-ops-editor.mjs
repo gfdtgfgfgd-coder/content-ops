@@ -91,7 +91,7 @@ export class ContentOpsEditor {
         if(result?.code!==0)continue;
         const root=await realpath(result.stdout.trim()).catch(()=>null);
         if(!root||this.explicitRoot&&root!==await realpath(candidate).catch(()=>null))continue;
-        if(SOURCE_FILES.every(path=>existsSync(join(root,path)))&&existsSync(join(root,'scripts/distill-preferences.py'))&&existsSync(join(root,'config/preference-build.json')))return root;
+        if(SOURCE_FILES.every(path=>existsSync(join(root,path)))&&existsSync(join(root,'scripts/build.py'))&&existsSync(join(root,'config/preference-build.json')))return root;
       }
       throw fail('未找到可编辑的 content-ops Git 仓库；请设置 CONTENT_OPS_EDITOR_ROOT。',503);
     })();
@@ -142,7 +142,7 @@ export class ContentOpsEditor {
   }
   async cleanSources(root){
     const config=JSON.parse(await this.file(root,'config/preference-build.json'));
-    const paths=[...new Set([...SOURCE_FILES,'config/preference-build.json','scripts/distill-preferences.py',...Object.values(config.paths||{})])];
+    const paths=[...new Set([...SOURCE_FILES,'config/preference-build.json','scripts/build.py','scripts/lib/preferences.py','scripts/lib/store.py',...Object.values(config.paths||{})])];
     if(paths.some(path=>typeof path!=='string'||path.startsWith('/')||path.split(/[\\/]/u).includes('..')))throw fail('偏好构建配置路径无效。',503);
     const dirty=await this.git(root,['status','--porcelain','--untracked-files=all','--',...paths]);
     if(dirty.code!==0)throw fail('无法检查源文件的 Git 状态。',503);
@@ -167,7 +167,7 @@ export class ContentOpsEditor {
         await mkdir(join(root,'tmp'),{recursive:true});
         const output=join(root,'tmp',`hanabi-preferences-${randomUUID()}.json`);
         try{
-          const built=await this.run(this.python(root),[join(root,'scripts/distill-preferences.py'),'--root',root,'--output',output,'--date',this.clock()],{cwd:root,timeout:60000});
+          const built=await this.run(this.python(root),[join(root,'scripts/build.py'),'distill','--root',root,'--output',output,'--date',this.clock()],{cwd:root,timeout:60000});
           if(built.code!==0)throw fail('偏好包重建失败，编辑已撤回；请检查原始规则与证据一致性。',409);
           const bundle=await readFile(output,'utf8');
           try{const value=JSON.parse(bundle);if(!value.persona||!value.platform_rules||!value.sources)throw new Error();}catch{throw fail('新偏好包结构无效，编辑已撤回。',409);}
