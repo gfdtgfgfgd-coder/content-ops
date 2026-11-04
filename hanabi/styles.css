@@ -2158,6 +2158,24 @@ body { font-size: var(--font-body); line-height: 1.65; }
 .document-content p{margin:8px 0}.document-content ul{padding-left:24px}.document-content li{margin:5px 0}
 .document-content blockquote{margin:12px 0;padding:8px 14px;border-left:3px solid var(--accent);background:var(--surface-muted);color:var(--text-soft)}
 .document-content code{padding:1px 4px;background:var(--surface-soft);border-radius:3px;font-size:.92em}
+
+/* Resizable primary navigation track. */
+@media (min-width: 681px) {
+  .app-shell { grid-template-columns: minmax(190px, min(var(--left-rail-width, 280px), 500px, 45vw)) 8px minmax(0, 1fr); transition: grid-template-columns .18s ease; }
+  .left-rail { grid-column: 1; min-width: 0; }
+  .rail-resizer { grid-column: 2; grid-row: 1; min-height: 100dvh; }
+  .main-column { grid-column: 3; width: auto; }
+}
+.rail-resizer::before { left: 3px; }
+.rail-resizer::after { left: 1px; }
+.rail-resizer:hover::before, .rail-resizer:focus-visible::before, .is-resizing .rail-resizer::before { background: var(--pink-7); }
+.rail-resizer:hover::after, .rail-resizer:focus-visible::after, .is-resizing .rail-resizer::after { background: var(--pink-4); box-shadow: inset 0 0 0 1px var(--pink-7); }
+body.is-resizing, body.is-resizing * { cursor: col-resize !important; user-select: none !important; }
+body.is-resizing .app-shell { transition: none; }
+@media (max-width: 680px) {
+  .rail-resizer { display: none; }
+  .app-shell { grid-template-columns: minmax(0, 1fr); }
+}
 .document-table-line{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;white-space:pre-wrap}
 
 /* Optional campaign brief spans the compact generation form. */
@@ -2191,3 +2209,10 @@ body { font-size: var(--font-body); line-height: 1.65; }
 .document-content a{color:var(--accent);text-underline-offset:3px}
 .document-content hr{border:0;border-top:1px solid var(--line);margin:28px 0}
 @media(max-width:800px){.document-reader{grid-template-columns:minmax(0,1fr);gap:16px}.document-toc{position:static;max-height:180px}.nav-section-label{display:none}}
+
+/* Copy versions share the existing platform card and cover. */
+.ops-copy-tabs{display:flex;gap:6px;overflow-x:auto;padding:14px 20px 0}
+.ops-copy-tabs button{flex-shrink:0;border:1px solid var(--border,#ddd);border-radius:999px;background:transparent;color:inherit;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer}
+.ops-copy-tabs button[aria-selected="true"]{background:#262322;color:#fff;border-color:#262322}
+.ops-copy-tabs button:focus-visible{outline:2px solid #a45438;outline-offset:3px}
+.ops-post-body strong{font-weight:700}

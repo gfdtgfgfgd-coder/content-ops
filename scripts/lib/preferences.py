@@ -462,8 +462,10 @@ def load_preferences(path, platform, max_chars):
             raise ValueError('偏好包缺少有效版本或日期，请先重跑蒸馏脚本') from None
         persona, target = data['persona'], data['platform_rules'][platform]
         titles, design = data['title_patterns'], data['design']
-        required = [persona['standards'],persona['anti_patterns'],target['banned'],target['allowed_price_words'],
+        required = [persona['standards'],persona['anti_patterns'],target['banned'],
                     target['banned_word_rules'],titles['openers'],titles['structures'],design['hierarchy_rules'],design['cover_palettes']]
+        if platform == 'xhs' or 'allowed_price_words' in target:
+            required.append(target.get('allowed_price_words'))
         if any(not isinstance(value,list) or not value for value in required):
             raise ValueError('偏好包六项结构不完整，请先重跑蒸馏脚本')
         context = {'persona':{'standards':persona['standards'],'anti_patterns':persona['anti_patterns']},

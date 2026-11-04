@@ -17,7 +17,8 @@ const HOST = '127.0.0.1';
 const REPO_ROOT = resolve(ROOT, '..');
 const DOCUMENTS = Object.freeze({
   'platform-rules': 'rules/platform-rules.md', 'design-rules': 'rules/design-rules.md',
-  guide: 'docs/GUIDE.md', decisions: 'docs/01-决策记录.md', sources: 'data/sources/README.md'
+  guide: 'docs/GUIDE.md', decisions: 'docs/01-决策记录.md', sources: 'data/sources/README.md',
+  corpus: 'data/model-corpus.md'
 });
 const APP_DATA = process.env.CONTENT_ALCHEMY_DATA_DIR || join(homedir(), 'Library', 'Application Support', 'Content Alchemy');
 const UPLOAD_DIR = join(APP_DATA, 'uploads');
@@ -28,12 +29,12 @@ await mkdir(UPLOAD_DIR, { recursive: true, mode: 0o700 });
 const db = new DatabaseSync(DB_PATH);
 db.exec(`PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS content_ops_batches (
  id TEXT PRIMARY KEY, request_id TEXT NOT NULL UNIQUE, model TEXT NOT NULL, platform TEXT NOT NULL,
- count INTEGER NOT NULL, background_mode TEXT NOT NULL, reference_ids TEXT NOT NULL DEFAULT '[]',
+ count INTEGER NOT NULL, copy_format TEXT NOT NULL DEFAULT 'all_variations', copy_multiplier INTEGER NOT NULL DEFAULT 1, background_mode TEXT NOT NULL, reference_ids TEXT NOT NULL DEFAULT '[]',
  status TEXT NOT NULL, job_ids TEXT NOT NULL, output_dir TEXT NOT NULL, error TEXT NOT NULL DEFAULT '',
  created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 ); CREATE TABLE IF NOT EXISTS analysis_jobs (
  id TEXT PRIMARY KEY, batch_id TEXT NOT NULL, position INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'queued',
- result TEXT NOT NULL DEFAULT '', error TEXT NOT NULL DEFAULT '', progress INTEGER NOT NULL DEFAULT 0,
+ result TEXT NOT NULL DEFAULT '', copies TEXT NOT NULL DEFAULT '[]', error TEXT NOT NULL DEFAULT '', progress INTEGER NOT NULL DEFAULT 0,
  progress_message TEXT NOT NULL DEFAULT '', attachments TEXT NOT NULL DEFAULT '[]',
  created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 ); CREATE INDEX IF NOT EXISTS jobs_batch ON analysis_jobs(batch_id,position);`);

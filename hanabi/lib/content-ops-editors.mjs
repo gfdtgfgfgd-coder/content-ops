@@ -6,11 +6,8 @@ const regexAliases = {
   '(?:神器|神奇)': '神器 / 神奇',
   '(?<![A-Za-z])(?:Cursor|Hermes\\s*Agent)(?![A-Za-z])': 'Cursor / Hermes Agent 等海外工具',
   '(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])': 'ChatGPT / Claude / Gemini 等境外模型',
-  '[0-9]+(?:\\.[0-9]+)?\\s*折': '数字折扣（如 5折、8.5折）',
-  '¥\\s*[0-9]+(?:\\.[0-9]+)?': '¥ 价格（如 ¥99）',
-  '￥\\s*[0-9]+(?:\\.[0-9]+)?': '￥ 价格（如 ￥99）',
-  '[一二三四五六七八九十零〇两半]+(?:点[一二三四五六七八九十零〇]+)?\\s*折': '中文折扣（如 八折、九五折）',
-  '(?:[0-9]+(?:\\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)': '具体金额（含元/块/RMB/USD等单位）',
+  '(?:\\d+(?:\\.\\d+)?|[一二三四五六七八九十零〇两半]+(?:点[一二三四五六七八九十零〇]+)?|几)\\s*折': '具体折扣（如 5折、八折、几折）',
+  '[¥￥]\\s*[0-9]+(?:\\.[0-9]+)?|(?:[0-9]+(?:\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\\s*(?:元|块钱|人民币|美元|美金|RMB|USD)': '具体价格与金额（含 ¥/￥、元、RMB等）',
 };
 
 function friendlyWord(entry) {
@@ -74,8 +71,7 @@ export class ContentOpsEditors {
     root.querySelector('#persona-form-standard').addEventListener('submit', event => { event.preventDefault(); void this.addPersona('add_standard', event.currentTarget); });
     root.querySelector('#persona-form-anti').addEventListener('submit', event => { event.preventDefault(); void this.addPersona('add_anti_pattern', event.currentTarget); });
     root.querySelector('#persona-form-quote').addEventListener('submit', event => { event.preventDefault(); void this.addPersona('add_quote', event.currentTarget); });
-    root.querySelector('#banned-add-form').addEventListener('submit', event => { event.preventDefault(); void this.addWord(event.currentTarget); });
-    this.wordsBody.addEventListener('click', event => { void this.handleWordAction(event); });
+    root.querySelector('#banned-add-form')?.addEventListener('submit', event => { event.preventDefault(); void this.addWord(event.currentTarget); });
     void this.reload();
   }
 
@@ -172,18 +168,13 @@ export class ContentOpsEditors {
     if (!words) {
       this.bannedRevision = '';
       this.wordsBody.replaceChildren();
-      this.bannedStatus.textContent = '风险词结构无法解析；请展开原始文件查看，暂不能编辑。';
+      this.bannedStatus.textContent = '风险词结构无法解析；请展开原始文件查看。';
       this.root.querySelector('#banned-count').textContent = '';
-      this.root.querySelectorAll('#banned-add-form input,#banned-add-form select,#banned-add-form textarea,#banned-add-form button').forEach(control => { control.disabled = true; });
-      this.root.querySelector('.editor-add-details > summary').setAttribute('aria-disabled','true');
       return;
     }
-    const formReady = Boolean(this.bannedRevision);
     const latestUpdate = words.map(item => item.added_at || item.updated_at || '').filter(Boolean).sort().at(-1) || '';
-    this.root.querySelectorAll('#banned-add-form input,#banned-add-form select,#banned-add-form textarea,#banned-add-form button').forEach(control => { control.disabled = !formReady; });
-    this.root.querySelector('.editor-add-details > summary').removeAttribute('aria-disabled');
     this.root.querySelector('#banned-count').textContent = `${words.length} 条${latestUpdate ? ` · 更新时间 ${latestUpdate}` : ''}`;
-    this.bannedStatus.textContent = `已读取 ${words.length} 条规则${latestUpdate ? `（最近更新：${latestUpdate}，最新词条已置顶）` : ''}。`;
+    this.bannedStatus.textContent = `已读取 ${words.length} 条只读风控规则${latestUpdate ? `（最近更新：${latestUpdate}，最新词条已置顶）` : ''}。`;
     this.wordsBody.replaceChildren();
     const sortedWords = words.map((entry, index) => ({entry, index})).sort((a, b) => String(b.entry.added_at || b.entry.updated_at || '').localeCompare(String(a.entry.added_at || a.entry.updated_at || '')) || a.index - b.index).map(item => item.entry);
     for (const entry of sortedWords) {
@@ -210,16 +201,7 @@ export class ContentOpsEditors {
         node('td', entry.reason || '—'),
         node('td', entry.added_at || entry.updated_at || '—'),
       );
-      const action = node('td');
-      const remove = node('button', this.pendingRemoval.has(String(entry.word)) ? '确认删除' : '删除', 'ref-text-button');
-      remove.type = 'button'; remove.dataset.removeWord = String(entry.word ?? '');
-      remove.setAttribute('aria-label', this.pendingRemoval.has(String(entry.word)) ? `确认删除风险词 ${entry.word}` : `删除风险词 ${entry.word}`);
-      action.append(remove);
-      if (this.pendingRemoval.has(String(entry.word))) {
-        const cancel = node('button', '取消', 'ref-text-button');
-        cancel.type = 'button'; cancel.dataset.cancelWord = String(entry.word ?? ''); action.append(cancel);
-      }
-      row.append(action); this.wordsBody.append(row);
+      this.wordsBody.append(row);
     }
   }
 

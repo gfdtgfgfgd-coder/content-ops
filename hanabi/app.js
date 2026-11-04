@@ -3,13 +3,148 @@ import DOMPurify from '/node_modules/dompurify/dist/purify.es.mjs';
 import { ContentOpsUI } from '/lib/content-ops-ui.mjs';
 import { mountContentOpsReferences } from '/lib/content-ops-references.mjs';
 
-const views = ['generate', 'references', 'persona', 'banned', 'rules', 'documents'];
-const showView = (name) => {
-  const view = ['persona', 'banned'].includes(name) ? 'rules' : views.includes(name) ? name : 'generate';
-  const changed = !document.querySelector(`#view-${view}`)?.classList.contains('active');
+const views = ['generate', 'references', 'rules', 'documents'];
+
+const railResizer = document.querySelector('.rail-resizer');
+const appShell = document.querySelector('#app-shell');
+const railWidthKey = 'hanabi.left-rail-width';
+const defaultRailWidth = 280;
+const minRailWidth = 190;
+const getRailBounds = () => ({ min: minRailWidth, max: Math.max(minRailWidth, Math.min(500, window.innerWidth * 0.45)) });
+const clampRailWidth = width => {
+  const bounds = getRailBounds();
+  return Math.round(Math.max(bounds.min, Math.min(bounds.max, width)));
+};
+const setRailWidth = width => {
+  const value = clampRailWidth(width);
+  appShell.style.setProperty('--left-rail-width', `${value}px`);
+  railResizer.setAttribute('aria-valuenow', String(value));
+  return value;
+};
+try {
+  const savedRailWidth = Number.parseFloat(localStorage.getItem(railWidthKey));
+  if (Number.isFinite(savedRailWidth)) setRailWidth(savedRailWidth);
+} catch {}
+
+let activeRailPointer = null;
+const finishRailResize = (event, persist = true) => {
+  if (activeRailPointer === null || (event && event.pointerId !== activeRailPointer)) return;
+  activeRailPointer = null;
+  document.body.classList.remove('is-resizing');
+  if (persist) {
+    try { localStorage.setItem(railWidthKey, `${parseFloat(appShell.style.getPropertyValue('--left-rail-width'))}px`); } catch {}
+  }
+};
+railResizer.addEventListener('pointerdown', event => {
+  if (window.innerWidth < 681 || event.button !== 0) return;
+  activeRailPointer = event.pointerId;
+  railResizer.setPointerCapture(event.pointerId);
+  document.body.classList.add('is-resizing');
+  event.preventDefault();
+});
+railResizer.addEventListener('pointermove', event => {
+  if (event.pointerId === activeRailPointer) setRailWidth(event.clientX);
+});
+railResizer.addEventListener('pointerup', event => finishRailResize(event));
+railResizer.addEventListener('pointercancel', event => finishRailResize(event));
+railResizer.addEventListener('lostpointercapture', event => finishRailResize(event));
+railResizer.addEventListener('dblclick', () => {
+  const width = setRailWidth(defaultRailWidth);
+  try { localStorage.setItem(railWidthKey, `${width}px`); } catch {}
+});
+railResizer.addEventListener('keydown', event => {
+  if (!['ArrowLeft', 'ArrowRight', 'Home'].includes(event.key)) return;
+  event.preventDefault();
+  const current = parseFloat(appShell.style.getPropertyValue('--left-rail-width')) || defaultRailWidth;
+  const width = setRailWidth(event.key === 'Home' ? defaultRailWidth : current + (event.key === 'ArrowRight' ? 10 : -10));
+  try { localStorage.setItem(railWidthKey, `${width}px`); } catch {}
+});
+window.addEventListener('resize', () => {
+  if (window.innerWidth < 681) finishRailResize(null, false);
+  const current = parseFloat(appShell.style.getPropertyValue('--left-rail-width'));
+  if (Number.isFinite(current)) setRailWidth(current);
+});
+
+const docToGroup = {
+  'platform-rules': 'rules',
+  'design-rules': 'rules',
+  'persona': 'rules',
+  'banned': 'rules',
+  'guide': 'documents',
+  'decisions': 'documents',
+  'sources': 'documents',
+  'corpus': 'documents'
+};
+
+const defaultTabs = {
+  rules: 'platform-rules',
+  documents: 'guide'
+};
+
+const parseRoute = (raw) => {
+  const token = String(raw || '').replace(/^#/, '').trim();
+  if (!token) {
+    const saved = sessionStorage.getItem('hanabi.current-route');
+    if (saved) return parseRoute(saved);
+    return { view: 'generate', tab: null, key: 'generate' };
+  }
+  if (token.includes('/')) {
+    const [view, tab] = token.split('/');
+    if (docToGroup[tab] === view) return { view, tab, key: tab };
+  }
+  if (docToGroup[token]) {
+    return { view: docToGroup[token], tab: token, key: token };
+  }
+  if (token === 'rules') {
+    const tab = sessionStorage.getItem('hanabi.tab.rules') || defaultTabs.rules;
+    return { view: 'rules', tab, key: tab };
+  }
+  if (token === 'documents') {
+    const tab = sessionStorage.getItem('hanabi.tab.documents') || defaultTabs.documents;
+    return { view: 'documents', tab, key: tab };
+  }
+  if (views.includes(token)) {
+    return { view: token, tab: null, key: token };
+  }
+  return { view: 'generate', tab: null, key: 'generate' };
+};
+
+const saveScroll = () => {
+  const route = parseRoute(location.hash.slice(1) || sessionStorage.getItem('hanabi.current-route'));
+  try {
+    sessionStorage.setItem(`hanabi.scroll.${route.key}`, String(window.scrollY));
+  } catch {}
+};
+
+let scrollDebounce = null;
+window.addEventListener('scroll', () => {
+  clearTimeout(scrollDebounce);
+  scrollDebounce = setTimeout(saveScroll, 60);
+}, { passive: true });
+window.addEventListener('beforeunload', saveScroll);
+
+const restoreScroll = (key) => {
+  const saved = sessionStorage.getItem(`hanabi.scroll.${key}`);
+  if (saved != null) {
+    const y = Number(saved);
+    if (!Number.isNaN(y)) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: y, behavior: 'instant' });
+      });
+    }
+  }
+};
+
+const showView = (name, { replace = true, restore = false } = {}) => {
+  const route = parseRoute(name);
+  const { view, tab, key } = route;
+  const currentActivePanel = document.querySelector('.view-panel.active');
+  const changed = currentActivePanel?.id !== `view-${view}`;
+
   for (const panel of document.querySelectorAll('.view-panel')) {
-    panel.hidden = panel.id !== `view-${view}`;
-    panel.classList.toggle('active', !panel.hidden);
+    const isTarget = panel.id === `view-${view}`;
+    panel.hidden = !isTarget;
+    panel.classList.toggle('active', isTarget);
   }
   for (const button of document.querySelectorAll('[data-view]')) {
     const active = button.dataset.view === view;
@@ -17,16 +152,33 @@ const showView = (name) => {
     if (active) button.setAttribute('aria-current', 'page');
     else button.removeAttribute('aria-current');
   }
-  history.replaceState(null, '', `#${view}`);
-  document.dispatchEvent(new CustomEvent('content-ops:view', {detail:{view, tab:['persona','banned'].includes(name) ? name : null}}));
-  if (changed) window.scrollTo({ top:0, behavior:'instant' });
+
+  const newHash = `#${key}`;
+  if (location.hash !== newHash) {
+    if (replace) history.replaceState(null, '', newHash);
+    else history.pushState(null, '', newHash);
+  }
+  sessionStorage.setItem('hanabi.current-route', key);
+  if (tab && docToGroup[tab]) {
+    sessionStorage.setItem(`hanabi.tab.${docToGroup[tab]}`, tab);
+  }
+
+  document.dispatchEvent(new CustomEvent('content-ops:view', {
+    detail: { view, tab, restore }
+  }));
+
+  if (restore) {
+    restoreScroll(key);
+  } else if (changed) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
 };
 document.addEventListener('click', (event) => {
   const button = event.target.closest('[data-view]');
-  if (button) { event.preventDefault(); showView(button.dataset.view); }
+  if (button) { event.preventDefault(); showView(button.dataset.view, { replace: false, restore: false }); }
 });
-window.addEventListener('popstate', () => showView(location.hash.slice(1)));
-window.addEventListener('hashchange', () => showView(location.hash.slice(1)));
+window.addEventListener('popstate', () => showView(location.hash.slice(1), { replace: true, restore: true }));
+window.addEventListener('hashchange', () => showView(location.hash.slice(1), { replace: true, restore: true }));
 
 const api = async (path, options = {}) => {
   const response = await fetch(path, { cache: 'no-store', ...options });
@@ -38,11 +190,11 @@ const api = async (path, options = {}) => {
 function mountDocumentViews() {
   const groups = [
     ['rules', '运营规则', [['platform-rules','平台规则'], ['design-rules','设计规则'], ['persona','思敏偏好'], ['banned','风险词库']]],
-    ['documents', '文档与决策', [['guide','操作手册'], ['decisions','决策记录'], ['sources','素材来源']]]
+    ['documents', '文档与决策', [['guide','操作手册'], ['decisions','决策记录'], ['sources','素材来源'], ['corpus','模型语料库']]]
   ];
   const documentPaths = {'rules/platform-rules.md':'platform-rules', 'rules/design-rules.md':'design-rules',
     'docs/GUIDE.md':'guide', 'docs/01-决策记录.md':'decisions', 'data/sources/README.md':'sources',
-    'skills/simin-persona/SKILL.md':'persona', 'rules/banned-words-quick.yaml':'banned'};
+    'skills/simin-persona/SKILL.md':'persona', 'rules/banned-words-quick.yaml':'banned', 'data/model-corpus.md':'corpus'};
   const readers = new Map();
   for (const [view, title, docs] of groups) {
     const panel = document.createElement('section'); panel.className = 'view-panel'; panel.id = `view-${view}`; panel.hidden = true;
@@ -63,14 +215,25 @@ function mountDocumentViews() {
         editor.querySelector('h1').hidden = true;
       }
     }
-    let active = docs[0][0], version = 0;
-    const select = async (name = active) => {
+    let active = defaultTabs[view] || docs[0][0], version = 0;
+    const select = async (name = active, { restore = false } = {}) => {
       active = name; const request = ++version;
+      sessionStorage.setItem(`hanabi.tab.${view}`, name);
+      sessionStorage.setItem('hanabi.current-route', name);
+      const newHash = `#${name}`;
+      if (location.hash !== newHash) {
+        history.replaceState(null, '', newHash);
+      }
       for (const tab of tabs.querySelectorAll('[data-doc]')) {
         const selected = tab.dataset.doc === name; tab.setAttribute('aria-selected',String(selected)); tab.tabIndex = selected ? 0 : -1;
       }
       for (const [id, editor] of editors) editor.hidden = id !== name;
-      reader.hidden = editors.has(name); if (reader.hidden) { void window.contentOpsEditors?.reload?.(); return; }
+      reader.hidden = editors.has(name);
+      if (reader.hidden) {
+        void window.contentOpsEditors?.reload?.();
+        if (restore) restoreScroll(name);
+        return;
+      }
       reader.setAttribute('role','tabpanel'); reader.id = `doc-panel-${name}`; reader.setAttribute('aria-labelledby',`tab-${name}`);
       article.textContent = '正在读取文档…'; toc.replaceChildren();
       try {
@@ -95,6 +258,9 @@ function mountDocumentViews() {
           else if (['https:','http:'].includes(relative.protocol) && relative.origin !== 'https://local.invalid') {link.target = '_blank';link.rel = 'noopener noreferrer';}
           else {link.removeAttribute('href');link.title = '此文件未纳入业务文档面板';}
         }
+        if (restore) {
+          restoreScroll(name);
+        }
       } catch (error) {if (request === version) article.textContent = `文档读取失败：${error.message}`;}
     };
     tabs.addEventListener('click', event => {const tab = event.target.closest('[data-doc]'); if(tab) void select(tab.dataset.doc);});
@@ -106,8 +272,13 @@ function mountDocumentViews() {
     });
     readers.set(view, select);
   }
-  function openDocument(name) {const view = ['guide','decisions','sources'].includes(name) ? 'documents' : 'rules'; showView(view); void readers.get(view)(name);}
-  document.addEventListener('content-ops:view', event => {if (readers.has(event.detail.view)) void readers.get(event.detail.view)(event.detail.tab || undefined);});
+  function openDocument(name) { showView(name, { replace: false, restore: false }); }
+  document.addEventListener('content-ops:view', event => {
+    if (readers.has(event.detail.view)) {
+      const targetDoc = event.detail.tab || sessionStorage.getItem(`hanabi.tab.${event.detail.view}`) || defaultTabs[event.detail.view];
+      void readers.get(event.detail.view)(targetDoc, { restore: event.detail.restore });
+    }
+  });
 }
 
 mountDocumentViews();
@@ -179,5 +350,5 @@ void refreshConnections().catch(connectionError);
 const contentOpsUI = new ContentOpsUI();
 mountContentOpsReferences();
 
-showView(location.hash.slice(1) || 'generate');
+showView(location.hash.slice(1) || sessionStorage.getItem('hanabi.current-route') || 'generate', { replace: true, restore: true });
 void api('/healthz').catch(() => {});

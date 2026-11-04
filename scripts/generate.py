@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""文件式 CLI；参数名与原能力保持一致，子命令 --help 查看详情。"""
+"""文件式 CLI；参数名与原能力保持一致，copy 的 --count 表示图片数，--copy-format / --copy-multiplier 透传给文案流水线；子命令 --help 查看详情。"""
 import argparse
 import importlib
 import importlib.util

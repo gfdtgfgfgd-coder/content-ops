@@ -193,7 +193,7 @@ test('documents HTTP serves canonical Markdown and rejects arbitrary file names'
       child.once('error',reject);child.once('exit',code=>reject(new Error(`Local HTTP server exited ${code}`)));
       child.stdout.on('data',chunk=>{text+=chunk;const match=text.match(/listening on (http:\/\/127\.0\.0\.1:\d+)/u);if(match){clearTimeout(timer);resolve(match[1]);}});
     });
-    const sources={'platform-rules':'rules/platform-rules.md','design-rules':'rules/design-rules.md',guide:'docs/GUIDE.md',decisions:'docs/01-决策记录.md',sources:'data/sources/README.md'};
+    const sources={'platform-rules':'rules/platform-rules.md','design-rules':'rules/design-rules.md',guide:'docs/GUIDE.md',decisions:'docs/01-决策记录.md',sources:'data/sources/README.md',corpus:'data/model-corpus.md'};
     for(const [name,path] of Object.entries(sources)){
       const response=await fetch(`${url}/api/content-ops/documents?doc=${name}`);
       assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
@@ -359,4 +359,87 @@ test('platform card content escapes untrusted title, copy and tags without losin
   assert.match(html,/&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.match(html,/&lt;script&gt;alert\(1\)&lt;\/script&gt; &amp; 原文/);
   assert.match(html,/#&lt;svg\/onload=alert\(1\)&gt;/);
+});
+
+test('copy format and multiplier validate enums, integers, aliases and defaults',()=>{
+  assert.equal(validateContentOpsInput(input).copyFormat,'all_variations');
+  assert.equal(validateContentOpsInput(input).copyMultiplier,3);
+  for(const copyFormat of ['all_variations','format_1','format_2','format_3'])
+    for(const copyMultiplier of [1,3,5]) assert.equal(validateContentOpsInput({...input,copyFormat,copyMultiplier}).copyMultiplier,copyMultiplier);
+  assert.equal(validateContentOpsInput({...input,copy_format:'format_2',copy_multiplier:5}).copyFormat,'format_2');
+  for(const copyMultiplier of [0,6,1.5,true,'3',{},[]])assert.throws(()=>validateContentOpsInput({...input,copyMultiplier}),{statusCode:400});
+  for(const copyFormat of ['', 'bad', 3, {}, []])assert.throws(()=>validateContentOpsInput({...input,copyFormat}),{statusCode:400});
+});
+
+async function productionFixture(t){
+  const dir=await mkdtemp(join(root,'scratch/copy-options-node-')),db=new DatabaseSync(':memory:');
+  t.after(async()=>{db.close();await rm(dir,{recursive:true,force:true});});
+  // Remove only the new columns to exercise an actual pre-feature database upgrade.
+  const schema=(await readFile(join(root,'hanabi/server.mjs'),'utf8')).match(/db\.exec\(`([\s\S]*?)`\);/)[1];
+  db.exec(schema.replace(", copy_format TEXT NOT NULL DEFAULT 'all_variations', copy_multiplier INTEGER NOT NULL DEFAULT 1",'').replace(" copies TEXT NOT NULL DEFAULT '[]',",''));
+  db.prepare('INSERT INTO content_ops_batches(id,request_id,model,platform,count,background_mode,status,job_ids,output_dir,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run('legacy','legacy-request','旧型号','xhs',1,'fresh','completed','["legacy-job"]',join(dir,'legacy'),'2026-11-01','2026-11-01');
+  db.prepare('INSERT INTO analysis_jobs(id,batch_id,position,status,result,created_at,updated_at) VALUES(?,?,?,?,?,?,?)').run('legacy-job','legacy',1,'completed','# 旧文案\n\n旧正文','2026-11-01','2026-11-01');
+  await mkdir(join(dir,'scripts'));await mkdir(join(dir,'scratch'));
+  await writeFile(join(dir,'scripts/generate.py'),'# never run');
+  await writeFile(join(dir,'scratch/gateway.env'),'CONTENT_OPS_API_KEY=test-placeholder\nCONTENT_OPS_BASE_URL=https://offline.invalid/v1\n');
+  const captured=[];
+  const spawnProcess=(command,args,options)=>{captured.push({command,args,options});const child=new EventEmitter();child.stdout=new EventEmitter();child.stderr=new EventEmitter();child.kill=()=>{};return child;};
+  const production=new ContentOpsProduction({db,root:dir,uploadDir:join(dir,'uploads'),spawnProcess});
+  return {dir,db,production,captured,spawnProcess};
+}
+
+test('legacy migration retains one copy; new batches persist all versions, safe args and request identity',async t=>{
+  const {dir,db,production,captured,spawnProcess}=await productionFixture(t);
+  const legacy=production.public(production.get('legacy'));
+  assert.equal(legacy.copyMultiplier,1);assert.equal(legacy.copyCount,1);assert.equal(legacy.posts[0].copies[0].text,'# 旧文案\n\n旧正文');
+  const {batch}=await production.create(input),row=production.get(batch.id);
+  assert.equal(batch.posts.length,1);assert.equal(batch.copyCount,3);assert.equal(batch.copyFormat,'all_variations');
+  assert.equal(captured.length,1);assert.equal(captured[0].args[captured[0].args.indexOf('--copy-multiplier')+1],'3');
+  assert.equal(captured[0].args[captured[0].args.indexOf('--copy-format')+1],'all_variations');
+  assert.equal(captured[0].options.shell,false);
+  for(const change of [{copyMultiplier:2},{copyFormat:'format_1'},{platform:'xianyu'}])await assert.rejects(()=>production.create({...input,...change}),{statusCode:409});
+  await mkdir(row.output_dir,{recursive:true});
+  const copies=[1,2,3].map(index=>({index,copy_format:`format_${index}`,markdown:`post-1-copy-${index}.md`}));
+  const texts=copies.map(c=>`# 文案${c.index}\n\n**卖点${c.index}**\n\n#标签${c.index}`);
+  for(const [i,version] of copies.entries())await writeFile(join(row.output_dir,version.markdown),texts[i]);
+  await writeFile(join(row.output_dir,'post-1.png'),png);
+  await writeFile(join(row.output_dir,'manifest.json'),JSON.stringify({posts:[{index:1,status:'completed',image:'post-1.png',copies}]}));
+  await production.finish(batch.id,0);
+  const restored=new ContentOpsProduction({db,root:dir,uploadDir:join(dir,'uploads'),spawnProcess});
+  const saved=restored.public(restored.get(batch.id));
+  assert.equal(saved.status,'completed');assert.equal(saved.posts.length,1);assert.equal(saved.posts[0].text,texts[0]);
+  assert.deepEqual(saved.posts[0].copies.map(c=>c.text),texts);assert.deepEqual(saved.posts[0].copies.map(c=>c.copyFormat),['format_1','format_2','format_3']);
+  assert.ok(saved.posts[0].image);assert.equal((await readdir(join(dir,'uploads'))).length,1);
+  assert.equal((await restored.create(input)).reused,true);assert.equal(captured.length,1);
+});
+
+test('missing or unsafe copy versions cannot mark a poster group completed; configured defaults reach argv',async t=>{
+  const {dir,production,captured}=await productionFixture(t);
+  await writeFile(join(dir,'scratch/gateway.env'),'CONTENT_OPS_API_KEY=test\nCONTENT_OPS_BASE_URL=https://offline.invalid/v1\nCONTENT_OPS_COPY_FORMAT=format_3\nCONTENT_OPS_COPY_MULTIPLIER=2\n');
+  const config=await production.config();assert.equal(config.copyMultiplier,2);assert.equal(config.copyFormat,'format_3');
+  const {batch}=await production.create(input),row=production.get(batch.id);
+  assert.equal(batch.copyMultiplier,2);assert.equal(batch.copyCount,2);
+  assert.equal(captured[0].args[captured[0].args.indexOf('--copy-multiplier')+1],'2');
+  assert.equal(captured[0].args[captured[0].args.indexOf('--copy-format')+1],'format_3');
+  await mkdir(row.output_dir,{recursive:true});await writeFile(join(row.output_dir,'post-1-copy-1.md'),'# 已保留的首篇');
+  const post={index:1,status:'completed',image:'post-1.png',copies:[{index:1,markdown:'post-1-copy-1.md'},{index:2,markdown:'post-1-copy-2.md'}]};
+  await writeFile(join(row.output_dir,'manifest.json'),JSON.stringify({posts:[post]}));
+  await production.finish(batch.id,0);let saved=production.public(production.get(batch.id));
+  assert.equal(saved.status,'failed');assert.equal(saved.posts[0].copies.length,1);assert.match(saved.posts[0].error,/缺失/);
+  post.copies[1].markdown='../secret.md';await writeFile(join(row.output_dir,'manifest.json'),JSON.stringify({posts:[post]}));
+  await production.finish(batch.id,0);saved=production.public(production.get(batch.id));
+  assert.match(saved.posts[0].error,/路径或序号/);assert.equal(saved.posts[0].image,null);
+  await assert.rejects(()=>production.create({...input,requestId:'invalid-count-123',copyMultiplier:6}),{statusCode:400});assert.equal(captured.length,1);
+});
+
+test('selected copy switches body and tags, falls back for legacy posts, renders safe bold',async()=>{
+  const {copiesForPost,selectedCopy}=await import('./content-ops-ui.mjs');
+  const post={text:'# 兼容首篇',copies:[{text:'# A\n\n**卖点A**\n\n#标签A'},{text:'# B\n\n**卖点B**\n\n#标签B'}]};
+  assert.equal(selectedCopy(post,1).text,post.copies[1].text);
+  assert.deepEqual(parsePostText(selectedCopy(post,1).text),{title:'B',body:'**卖点B**',tags:['#标签B']});
+  assert.equal(selectedCopy(post,9).text,post.copies[0].text);
+  assert.equal(copiesForPost({text:'旧文案'})[0].text,'旧文案');assert.equal(selectedCopy({}).text,'');
+  assert.match(renderPostContent(post.copies[1].text),/<strong>卖点B<\/strong>/);
+  assert.match(renderPostContent('# 标题\n\n**长卖点\n自动换行**'),/<strong>长卖点\n自动换行<\/strong>/);
+  assert.doesNotMatch(renderPostContent('# 标题\n\n**<img src=x onerror=alert(1)>**'),/<img/);
 });

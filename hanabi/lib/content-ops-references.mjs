@@ -25,6 +25,30 @@ export class ContentOpsReferences {
     this.sort = root.querySelector('#content-ops-ref-sort');
     this.modelCategory = this.addFilter('模型分类', 'model_category', [['all','全部模型'],...modelOptions]);
     this.layoutStyle = this.addFilter('版式流派', 'layout_style', [['all','全部版式'],...layoutOptions]);
+    try {
+      const savedFilters = JSON.parse(sessionStorage.getItem('content-ops-reference-filters') || '{}');
+      if (savedFilters.platform && platforms.has(savedFilters.platform)) {
+        this.platform.value = savedFilters.platform;
+        this.updateSortOptions();
+      }
+      if (savedFilters.sort && this.sort.querySelector(`option[value="${savedFilters.sort}"]`)) this.sort.value = savedFilters.sort;
+      if (savedFilters.modelCategory && this.modelCategory.querySelector(`option[value="${savedFilters.modelCategory}"]`)) this.modelCategory.value = savedFilters.modelCategory;
+      if (savedFilters.layoutStyle && this.layoutStyle.querySelector(`option[value="${savedFilters.layoutStyle}"]`)) this.layoutStyle.value = savedFilters.layoutStyle;
+    } catch {}
+    const saveFilters = () => {
+      try {
+        sessionStorage.setItem('content-ops-reference-filters', JSON.stringify({
+          platform: this.platform.value,
+          sort: this.sort.value,
+          modelCategory: this.modelCategory.value,
+          layoutStyle: this.layoutStyle.value
+        }));
+      } catch {}
+    };
+    this.platform.addEventListener('change', saveFilters);
+    this.sort.addEventListener('change', saveFilters);
+    this.modelCategory.addEventListener('change', saveFilters);
+    this.layoutStyle.addEventListener('change', saveFilters);
     this.grid = root.querySelector('#content-ops-ref-grid');
     this.pinnedGrid = root.querySelector('#content-ops-ref-pinned');
     this.status = root.querySelector('#content-ops-ref-status');

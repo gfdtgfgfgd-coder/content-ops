@@ -103,7 +103,7 @@
 5. 卡片内复制完整文案、保存海报/主图；点击封面在当前页放大，按 Escape 或「关闭」返回。小红书按3:4、闲鱼按1:1展示，保存原图不缩放。
 6. 左侧「历史批次」找回已保存结果并回填参数；「另做一批」开始新请求。窗口宽度小于1024px时设置与预览上下排列。
 
-前端展示复用 `hanabi/lib/content-ops-ui.mjs` 的 Markdown 派生逻辑：标题、段落和末尾标签仅供排版，复制始终使用原始 `post.text`；不写回批次、不新增数据源。生成/历史接口结构不变。价格高亮只取已保存文案，互动区无虚构计数。回归命令见第9节，展示解析与转义测试并入现有 Node 测试文件。
+前端展示复用 `hanabi/lib/content-ops-ui.mjs` 的 Markdown 派生逻辑：标题、段落和末尾标签仅供排版，复制使用当前选中版本的原始 Markdown（旧批次回退 `post.text`）；不写回批次、不新增数据源。生成/历史接口保留 `post.text` 为首篇，并增加 `post.copies`；多篇通过文案 Tab 切换，正文、标签及复制内容同步变化。价格高亮只取已保存文案，互动区无虚构计数。回归命令见第9节，展示解析与转义测试并入现有 Node 测试文件。
 
 **换电脑或启动服务**：克隆仓库后双击或运行 `./start.command`。它做四件事：检查 Node ≥22.13 与 Python ≥3.9、初始化 Python 虚拟环境并自动装好 Pillow/PyYAML、从 `config/gateway.env.example` 复制出 `scratch/gateway.env`、装 Hanabi npm 依赖并在后台启动服务后打开 6187。不再需要解压 ZIP。新图由图像模型直接生成完整海报；Pillow 仅在显式传入 `--background <图片>` 时用于离线合成兜底。小红书使用 1080×1440（3:4），闲鱼使用 1080×1080（1:1），尺寸与生成参数写入 manifest。旧版曾在 `hanabi/releases/` 放打包 ZIP，里面同时是 app 与 content-ops 的双份副本（套娃），已删除；说明见 `hanabi/releases/README.md`。个人数据库与附件始终不含在仓库里。
 
@@ -147,6 +147,22 @@ python3 scripts/generate.py copy --model GLM5.3 --count 2 --resume \
   --output outputs/<日期>/<同一批目录>
 ```
 
+**文案结构与图文配比**
+
+`--count`（别名 `--image-count`）始终表示图片数量；文案总数为图片数量 × `--copy-multiplier`，倍率须为1–5整数，默认3。`--copy-format` 支持 `all_variations`（默认）及 `format_1`、`format_2`、`format_3`；具体结构唯一口径见 `rules/platform-rules.md`。全套模式按整批文案顺序循环三种结构，指定格式则全部遵循同一结构，不同切入角度仍需互异。
+
+```bash
+python3 scripts/generate.py copy --model GLM5.3 --count 1 \
+  --copy-format all_variations --copy-multiplier 3 \
+  --output outputs/<日期>/<新批次目录>
+```
+
+CLI显式参数优先，其次读取 `scratch/gateway.env` 的 `CONTENT_OPS_COPY_FORMAT` / `CONTENT_OPS_COPY_MULTIPLIER`（模板见 `config/gateway.env.example`），最后回退默认。Hanabi同样读取这两个默认值；表单位于需求上方，可逐批修改。HTTP参数为 `copyFormat` / `copyMultiplier`，也接受下划线别名。批次SQLite原位加列，旧批次倍率保留1；新请求记录选值，同一requestId不得改变平台、结构或倍率。
+
+每张图只调用一次视觉模型和一次生图模型。新批次输出 `post-N.png` 和 `post-N-copy-M.md`；manifest v2 的 `posts[N].copies` 挂载各版本及Markdown路径，`posts[N]`保留首篇兼容字段。`copy.json` 是本批校验后文案源，Markdown及manifest内文案为派生展示；重建命令为原生成命令加 `--resume`，须保留原参数、配置、引用和偏好版本。已成功图片通过哈希检查后复用，不再次计费；缺失Markdown可由源重建。旧manifest按单文案处理，保留历史文件名。不建立另一份文案索引或规则副本。
+
+每篇要求独立标题、精确的结构区块与顺序；小红书标题≤20字，开头≤两行，核心卖点加粗，独立两行价格反差。文案全部版本的标题、正文、标签及封面文字均经风险库检查，任一版本不合格即停止，不重试收费调用。
+
 **简报与事实输入**
 ```bash
 python3 scripts/generate.py copy --model GLM5.3 --count 2 \
@@ -154,7 +170,7 @@ python3 scripts/generate.py copy --model GLM5.3 --count 2 \
 ```
 运营输入可直接用 `--brief "本次卖点与人群"`，不填仍能生成；不是必须另造 facts 文件。`brief` 原文、`brief_source=user_provided`、三阶段链路标记写入 manifest。模型据本次输入自主判断受众、生成封面副标题与亮点。Hanabi 会持久化 brief；同一 requestId 修改需求返回409，另做一批使用新标识。
 
-可选 `--facts` 用于独立核验资料：`{"model": "GLM5.3", "verified_claims": [{"claim": "断言", "source": "官方链接"}]}`。脚本仍校验型号一致且 claim 有 source；缺少 facts 不再统一删掉用户提供卖点或只写任务建议。用户输入与历史参考不等于独立核验，不凭空编造评测或活动；成稿交规划 agent 复核。每批只做一次文案模型调用并执行本地结构/禁词检查；每张新海报再独立调用视觉提示词模型与图像模型。这两个阶段不承担二次改稿或风格终审。参考帖即使与产品同型号也不作为产品事实源。
+可选 `--facts` 用于独立核验资料：`{"model": "GLM5.3", "verified_claims": [{"claim": "断言", "source": "官方链接"}]}`。脚本仍校验型号一致且 claim 有 source；缺少 facts 不再统一删掉用户提供卖点或只写任务建议。用户输入与历史参考不等于独立核验，不凭空编造评测或活动；成稿交规划 agent 复核。每张图对应一轮文案模型调用，一次返回本图全部文案，并逐篇执行本地结构/禁词检查；每张新海报再独立调用视觉提示词模型与图像模型。这两个阶段不承担二次改稿或风格终审。参考帖即使与产品同型号也不作为产品事实源。
 
 ```bash
 python3 scripts/generate.py copy --model 'Kimi K3.1 Pro' --count 1 \

@@ -1,6 +1,7 @@
 """Offline regressions. Run: PYTHONPATH=scripts scratch/.venv/bin/python3 -m unittest lib.test_pipeline -v"""
 from argparse import Namespace
 from contextlib import redirect_stdout
+from copy import deepcopy
 import importlib.util
 import io
 import json
@@ -13,6 +14,22 @@ from PIL import Image
 from . import cleaning, copy, fetching, gateway, preferences, store, words
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def structured_post(fmt='format_1', n=1):
+    content = {
+        'intro':'开发需求变多，先把步骤理清。',
+        'selling_points':'**把目标限制和验收写清楚**\n\n**长任务拆成小步逐项核对**',
+        'price':'能力升级，复杂任务少绕路\n开销降低，便宜量大更省心',
+        'compatibility':'兼容CC的情况待确认，先核对工具。',
+        'scenarios':'需求整理、代码修改都先明确验收。',
+        'audience':'独立开发者和小团队可按任务安排。',
+        'hook':f'第{n}种切入，带上你要做的小任务\n先确认需求，再看看怎样推进。',
+    }
+    return {'title':f'开发任务这样拆{n}', 'title_lines':['需求一眼看清','GLM5.3','开发流程拆得更顺'],
+            'copy_format':fmt, 'sections':[{'kind':kind,'text':content[kind]} for kind in copy.COPY_FORMATS[fmt]],
+            'tags':['#GLM5.3','#开发流程','#需求整理'], 'angle':f'切入角度{n}', 'audience':'独立开发者',
+            'cover_subtitle':'目标限制验收一次讲清', 'cover_highlight':'适合独立开发者'}
 
 
 class PipelineTests(unittest.TestCase):
@@ -100,6 +117,8 @@ class PipelineTests(unittest.TestCase):
     def test_preferences_loader_and_fallback(self):
         with redirect_stdout(io.StringIO()):
             block, version, snapshots, palettes, rules = preferences.load_preferences(ROOT / 'data/distilled-preferences.json', 'xhs', 40000)
+            xianyu = preferences.load_preferences(ROOT / 'data/distilled-preferences.json', 'xianyu', 40000)
+            self.assertIn('xianyu',xianyu[0])
             fallback = preferences.load_preferences(self.base / 'missing.json', 'xhs', 40000)
         self.assertIn('思敏偏好', block)
         self.assertEqual(version['source'], 'distilled-preferences.json')
@@ -152,12 +171,13 @@ class PipelineTests(unittest.TestCase):
         post = {'title_lines': ['安排一次任务', 'GLM5.3', '拆开需求逐项检查'], 'body': body,
                 'tags': ['#GLM5.3', '#任务拆解', '#需求整理'], 'angle': '任务清单', 'audience': '程序员、独立开发者',
                 'image_prompt': '深色数字工作台，蓝色玻璃面板，清晰中文大标题，电影级柔和体积光'}
+        post.update(structured_post())
         with patch.object(gateway, 'load_config', return_value=settings), \
              patch.object(gateway, 'request_json', side_effect=AssertionError('network forbidden')), \
              patch.object(copy, 'claude_call', return_value=({'posts': [post]}, {})) as calls, \
              patch.object(gateway, 'generate_image', side_effect=AssertionError('paid image forbidden')), \
              redirect_stdout(io.StringIO()):
-            args = ['--model', 'GLM5.3', '--count', '1', '--output', str(self.base / 'batch'),
+            args = ['--model', 'GLM5.3', '--count', '1', '--copy-multiplier', '1', '--output', str(self.base / 'batch'),
                     '--background', str(background), '--references', str(refs), '--brief', '开发者任务工具，便宜量大']
             self.assertEqual(copy.main(args), 0)
             self.assertEqual(calls.call_count, 1)
@@ -273,6 +293,7 @@ class PipelineTests(unittest.TestCase):
                 'tags': ['#GLM5.3', '#开发流程', '#需求整理'], 'angle': '场景拆解', 'audience': '独立开发者',
                 'cover_subtitle': '目标限制验收一次讲清', 'cover_highlight': '适合独立开发者',
                 'image_prompt': '文案模型不得提供视觉提示词'}
+        post.update(structured_post())
         visual_prompt = '参考图采用深色代码工作台、冷蓝屏光与琥珀轮廓光；主标题置于上部，玻璃材质信息牌居中。'
         def image_call(*, prompt, output, size, **kwargs):
             Image.new('RGB', (1080, 1440), '#152638').save(output)
@@ -280,7 +301,7 @@ class PipelineTests(unittest.TestCase):
             return {'output': str(output), 'model': kwargs['model'], 'requested_size': size,
                     'width': 1080, 'height': 1440, 'bytes': len(data), 'sha256': __import__('hashlib').sha256(data).hexdigest()}
         with patch.object(gateway, 'load_config', return_value=settings), \
-             patch.object(copy, 'claude_call', return_value=({'posts': [post]}, {})), \
+             patch.object(copy, 'claude_call', return_value=({'posts': [post, structured_post('format_2',2), structured_post('format_3',3)]}, {})), \
              patch.object(copy, 'visual_prompt_call', return_value=(visual_prompt, {'model':'vision-test','usage':{'prompt_tokens':12}})) as vision, \
              patch.object(gateway, 'generate_image', side_effect=image_call) as generate, \
              redirect_stdout(io.StringIO()):
@@ -299,6 +320,17 @@ class PipelineTests(unittest.TestCase):
         manifest = json.loads((self.base/'direct/manifest.json').read_text())
         self.assertEqual(manifest['vision_calls'][0]['model'], 'vision-test')
         self.assertEqual(manifest['posts'][0]['visual_prompt'], visual_prompt)
+
+        generate.assert_called_once()
+        vision.assert_called_once()
+        self.assertEqual(manifest['count'], 1)
+        self.assertEqual(manifest['copy_count'], 3)
+        versions = manifest['posts'][0]['copies']
+        self.assertEqual([v['copy_format'] for v in versions], ['format_1','format_2','format_3'])
+        self.assertEqual([v['markdown'] for v in versions], [f'post-1-copy-{i}.md' for i in range(1,4)])
+        saved = [(self.base/'direct'/v['markdown']).read_text() for v in versions]
+        self.assertEqual(len(set(saved)),3)
+        self.assertEqual(len(list((self.base/'direct').glob('post-*.png'))),1)
 
     def test_vision_sends_real_images_and_platform_context(self):
         import base64
@@ -379,6 +411,92 @@ class PipelineTests(unittest.TestCase):
         direct = copy.direct_image_prompt(post, 'xhs', '视觉提示词', style_mode='manual', style_preset='code_ide', style_prompt='蓝紫霓虹光')
         self.assertIn('风格与画面感觉要求：预设流派【极客代码屏】', direct)
         self.assertIn('蓝紫霓虹光', direct)
+
+    def test_copy_options_config_precedence_and_invalid_inputs(self):
+        self.assertEqual(copy.copy_options(), ('all_variations',3))
+        settings = {'CONTENT_OPS_COPY_FORMAT':'format_3','CONTENT_OPS_COPY_MULTIPLIER':'5'}
+        self.assertEqual(copy.copy_options(settings=settings), ('format_3',5))
+        self.assertEqual(copy.copy_options('format_1',1,settings), ('format_1',1))
+        for multiplier in [0,6,1.5,True,{},'03','3.0']:
+            with self.subTest(multiplier=multiplier), self.assertRaises(ValueError):
+                copy.copy_options('all_variations',multiplier)
+        for fmt in ['', 'bad', 2, []]:
+            with self.subTest(fmt=fmt), self.assertRaises(ValueError):
+                copy.copy_options(fmt,3)
+        for argv in [['--copy-multiplier','0'], ['--copy-multiplier','6']]:
+            with patch.object(copy,'claude_call') as calls, redirect_stdout(io.StringIO()):
+                self.assertEqual(copy.main(['--model','GLM5.3',*argv]),1)
+                calls.assert_not_called()
+
+    def test_copy_structure_validation_and_risk_checks_cover_every_version(self):
+        posts = [structured_post(copy.format_for('all_variations',i),i+1) for i in range(5)]
+        result = copy.validate_posts({'posts':deepcopy(posts)},5,'GLM5.3',copy_format='all_variations')
+        self.assertEqual([p['copy_format'] for p in result], ['format_1','format_2','format_3','format_1','format_2'])
+        for index in range(5):
+            for field in ['title','tags','sections']:
+                bad = deepcopy(posts)
+                if field == 'sections': bad[index][field][-1]['text'] += ' API'
+                elif field == 'tags': bad[index][field].append('#API')
+                else: bad[index][field] += 'API'
+                with self.subTest(version=index,field=field), self.assertRaisesRegex(ValueError,'风险词'):
+                    copy.validate_posts({'posts':bad},5,'GLM5.3',copy_format='all_variations')
+        long_bold=structured_post();long_bold['sections'][1]['text']='**'+('明确任务目标和验收要求'*3)+'**'
+        self.assertIn('\n',copy.validate_posts({'posts':[long_bold]},1,'GLM5.3',copy_format='format_1')[0]['body'])
+        mutations = [
+            lambda p:p.update(copy_format='format_2'),
+            lambda p:p['sections'].reverse(),
+            lambda p:p.update(title='长'*21),
+            lambda p:p.update(title='标题\t控制符'),
+            lambda p:p['sections'][0].update(text='第一行\n第二行\n第三行'),
+            lambda p:p['sections'][1].update(text='缺少加粗的核心卖点'),
+            lambda p:p['sections'][2].update(text='只有一行价格反差'),
+        ]
+        for mutate in mutations:
+            post=structured_post();mutate(post)
+            with self.subTest(mutate=mutate), self.assertRaises(ValueError):
+                copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_1')
+        post=structured_post('format_2');post['sections'][3]['text']='工具兼容情况待确认'
+        with self.assertRaisesRegex(ValueError,'CC'):
+            copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_2')
+        repeated_angles=[structured_post('format_1',n) for n in range(1,4)]
+        repeated_angles[2]['angle']=repeated_angles[0]['angle']
+        with self.assertRaisesRegex(ValueError,'不同结构'):
+            copy.validate_posts({'posts':repeated_angles},3,'GLM5.3',copy_format='format_1')
+        duplicate=structured_post();duplicate['angle']='另一角度'
+        with self.assertRaisesRegex(ValueError,'正文重复'):
+            copy.validate_posts({'posts':[structured_post(),duplicate]},2,'GLM5.3',copy_format='format_1')
+
+    def test_multiple_images_multiplier_and_fixed_format_no_overwrite(self):
+        settings={'CONTENT_OPS_API_KEY':'test','CONTENT_OPS_BASE_URL':'https://offline.invalid/v1'}
+        for fmt,multiplier,platform in [('all_variations',5,'xhs'),('format_2',3,'xhs'),('format_3',1,'xhs'),('format_2',5,'xianyu')]:
+            output=self.base/f'{fmt}-{multiplier}-{platform}'
+            def text_call(system,user,*args):
+                plan=json.loads(user)['copy_plan']
+                return {'posts':[structured_post(p['copy_format'],(p['image_index']-1)*multiplier+p['copy_index']) for p in plan]},{}
+            def image_call(*,output,**kwargs):
+                Image.new('RGB',copy.poster_size(platform)).save(output)
+                data=output.read_bytes()
+                return {'width':copy.poster_size(platform)[0],'height':copy.poster_size(platform)[1],'bytes':len(data),'sha256':__import__('hashlib').sha256(data).hexdigest()}
+            argv=['--model','GLM5.3','--platform',platform,'--count','2','--copy-format',fmt,'--copy-multiplier',str(multiplier),'--output',str(output)]
+            with self.subTest(fmt=fmt), patch.object(gateway,'load_config',return_value=settings), \
+                 patch.object(copy,'claude_call',side_effect=text_call) as calls, \
+                 patch.object(copy,'visual_prompt_call',return_value=('工作台海报',{'model':'offline'})), \
+                 patch.object(gateway,'generate_image',side_effect=image_call) as images, redirect_stdout(io.StringIO()):
+                self.assertEqual(copy.main(argv),0)
+                self.assertEqual(calls.call_count,2)
+                self.assertEqual(images.call_count,2)
+                self.assertEqual(len(list(output.glob('post-*-copy-*.md'))),2*multiplier)
+                (output/'post-1-copy-1.md').unlink()
+                self.assertEqual(copy.main([*argv,'--resume']),0)
+                self.assertTrue((output/'post-1-copy-1.md').exists())
+                self.assertEqual(images.call_count,2)
+                self.assertEqual(calls.call_count,2)
+                self.assertEqual(copy.main([*argv,'--resume','--copy-multiplier',str(2 if multiplier==1 else 1)]),1)
+                self.assertEqual(copy.main([*argv,'--resume','--copy-format','format_1']),1)
+                self.assertEqual(images.call_count,2)
+                manifest=json.loads((output/'manifest.json').read_text())
+                versions=[p for post in manifest['posts'] for p in post['copies']]
+                self.assertEqual([p['copy_format'] for p in versions],[copy.format_for(fmt,i) for i in range(2*multiplier)])
 
     def test_invalid_count_fails_before_paid_call(self):
         with patch.object(copy, 'claude_call', side_effect=AssertionError('must not call')) as calls:

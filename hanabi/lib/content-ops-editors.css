@@ -81,12 +81,11 @@
   .editor-form :is(input:not([type=checkbox]),textarea,select) { min-height:44px; }
 }
 
-/* Regex rules must wrap within their column instead of consuming the whole table. */
-.editor-table-scroll thead th:nth-child(1) { width:17%; }
+/* Table columns: 7 columns total */
+.editor-table-scroll thead th:nth-child(1) { width:18%; }
 .editor-table-scroll thead th:nth-child(2) { width:6%; }
-.editor-table-scroll thead th:nth-child(3) { width:13%; }
-.editor-table-scroll thead th:nth-child(4) { width:12%; }
-.editor-table-scroll thead th:nth-child(5) { width:13%; }
-.editor-table-scroll thead th:nth-child(6) { width:22%; }
-.editor-table-scroll thead th:nth-child(7) { width:10%; }
-.editor-table-scroll thead th:nth-child(8) { width:7%; }
+.editor-table-scroll thead th:nth-child(3) { width:14%; }
+.editor-table-scroll thead th:nth-child(4) { width:13%; }
+.editor-table-scroll thead th:nth-child(5) { width:14%; }
+.editor-table-scroll thead th:nth-child(6) { width:24%; }
+.editor-table-scroll thead th:nth-child(7) { width:11%; }

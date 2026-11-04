@@ -36,31 +36,18 @@
   replace: 专属
   reason: 广告法极限词/未经证明的绝对化表述
   added_at: "2026-11-02"
-- word: 几折
+- word: '(?:\d+(?:\.\d+)?|[一二三四五六七八九十零〇两半]+(?:点[一二三四五六七八九十零〇]+)?|几)\s*折'
   level: ban
   platform: [xhs]
   replace: 便宜量大
-  reason: 小红书禁止具体折扣（D10）
-  added_at: "2026-11-02"
-- word: '[0-9]+(?:\.[0-9]+)?\s*折'
-  level: ban
-  platform: [xhs]
-  replace: 便宜量大
-  reason: 小红书禁止具体折扣（D10）
+  reason: 小红书禁止具体折扣，包括数字折、中文数字折及几折（D10）
   added_at: "2026-11-02"
   regex: true
-- word: '¥\s*[0-9]+(?:\.[0-9]+)?'
+- word: '[¥￥]\s*[0-9]+(?:\.[0-9]+)?|(?:[0-9]+(?:\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\s*(?:元|块钱|人民币|美元|美金|RMB|USD)'
   level: ban
   platform: [xhs]
   replace: 低价
-  reason: 小红书禁止具体价格（D10）
-  added_at: "2026-11-02"
-  regex: true
-- word: '￥\s*[0-9]+(?:\.[0-9]+)?'
-  level: ban
-  platform: [xhs]
-  replace: 低价
-  reason: 小红书禁止具体价格（D10）
+  reason: 小红书禁止具体价格与金额，含 ¥/￥ 符号、数字及货币单位后缀（D10）
   added_at: "2026-11-02"
   regex: true
 - word: 宝子们
@@ -98,14 +85,6 @@
   reason: 运营明确说询价小红书不能写（2026-10-30）
   added_at: "2026-11-02"
 
-- word: '[一二三四五六七八九十零〇两半]+(?:点[一二三四五六七八九十零〇]+)?\s*折'
-  regex: true
-  level: ban
-  platform: [xhs]
-  replace: 活动价
-  reason: 图片和文案的具体折扣均不可写，补足中文数字（2026-10-28）
-  added_at: "2026-11-02"
-
 - word: 满血
   level: ban
   platform: [xhs]
@@ -136,15 +115,6 @@
   models: [seedance]
   replace: ""
   reason: Seedance 单独禁词，不换成秒出等速度承诺（2026-10-29）
-  added_at: "2026-11-02"
-
-# T08 补足具体金额变体；不将模型版本号或任务时长当成价格。
-- word: '(?:[0-9]+(?:\.[0-9]+)?|[一二三四五六七八九十百千万两零〇]+)\s*(?:元|块钱|人民币|美元|美金|RMB|USD)'
-  regex: true
-  level: ban
-  platform: [xhs]
-  replace: ''
-  reason: D10 禁具体金额，包括中文数字及单位后缀
   added_at: "2026-11-02"
 
 # T35 2026-11-03：境外模型品牌/型号不得进入任何对外文案；群公告按 gzh 口径检查。
