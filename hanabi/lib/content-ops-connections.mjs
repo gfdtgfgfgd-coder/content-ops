@@ -5,9 +5,9 @@ import { dirname, join } from 'node:path';
 
 const fields = {
   baseUrl: 'CONTENT_OPS_BASE_URL', apiKey: 'CONTENT_OPS_API_KEY',
-  textModel: 'CONTENT_OPS_TEXT_MODEL', visionModel: 'CONTENT_OPS_VISION_MODEL', imageModel: 'CONTENT_OPS_IMAGE_MODEL'
+  textModel: 'CONTENT_OPS_TEXT_MODEL', visionModel: 'CONTENT_OPS_VISION_MODEL', imageModel: 'CONTENT_OPS_IMAGE_MODEL', analysisModel: 'CONTENT_OPS_ANALYSIS_MODEL'
 };
-const defaults = { CONTENT_OPS_TEXT_MODEL: 'claude-sonnet-4-6', CONTENT_OPS_VISION_MODEL: 'claude-sonnet-4-6', CONTENT_OPS_IMAGE_MODEL: 'qwen-image-3.0' };
+const defaults = { CONTENT_OPS_TEXT_MODEL: 'claude-sonnet-4-6', CONTENT_OPS_VISION_MODEL: 'claude-sonnet-4-6', CONTENT_OPS_IMAGE_MODEL: 'qwen-image-3.0', CONTENT_OPS_ANALYSIS_MODEL: 'claude-sonnet-4-6' };
 const fail = message => Object.assign(new Error(message), { statusCode: 400 });
 export function parseGatewayEnv(raw) {
   const settings = {};
@@ -50,6 +50,7 @@ export class ContentOpsConnections {
       configured: configured(settings), baseUrl: settings.CONTENT_OPS_BASE_URL || '',
       apiKey: settings.CONTENT_OPS_API_KEY ? '••••••••' : '', hasKey: Boolean(settings.CONTENT_OPS_API_KEY),
       textModel: settings.CONTENT_OPS_TEXT_MODEL, visionModel: settings.CONTENT_OPS_VISION_MODEL, imageModel: settings.CONTENT_OPS_IMAGE_MODEL,
+      analysisModel: settings.CONTENT_OPS_ANALYSIS_MODEL,
       connection, status: connection.state
     };
   }
@@ -57,7 +58,7 @@ export class ContentOpsConnections {
   validate(input, current) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) throw fail('配置格式无效。');
     for (const name of Object.keys(input)) if (!Object.hasOwn(fields, name)) throw fail('配置字段无效。');
-    for (const name of ['baseUrl', 'textModel', 'visionModel', 'imageModel']) if (typeof input[name] !== 'string') throw fail('接口地址和模型名称必须是文本。');
+    for (const name of ['baseUrl', 'textModel', 'visionModel', 'imageModel', 'analysisModel']) if (typeof input[name] !== 'string') throw fail('接口地址和模型名称必须是文本。');
     if (input.apiKey !== undefined && typeof input.apiKey !== 'string') throw fail('API 密钥必须是文本。');
     const baseUrl = input.baseUrl.trim();
     let url;
@@ -65,9 +66,9 @@ export class ContentOpsConnections {
     if (baseUrl.length > 2048 || /[\s'"\x00-\x1f\x7f]/u.test(baseUrl) || url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) throw fail('接口地址必须使用 HTTPS，且不能包含凭证、查询参数或片段。');
     const apiKey = input.apiKey?.trim() || current.CONTENT_OPS_API_KEY || '';
     if (!apiKey || apiKey.length > 4096 || /[\s'"\x00-\x1f\x7f]/u.test(apiKey)) throw fail('请输入有效的单行 API 密钥。');
-    const textModel = input.textModel.trim(), visionModel = input.visionModel.trim(), imageModel = input.imageModel.trim();
-    if (![textModel, visionModel, imageModel].every(model => /^[A-Za-z0-9][A-Za-z0-9._:/@+\-]{0,199}$/u.test(model))) throw fail('请输入有效的模型 ID（最多200字符，不含空白或引号）。');
-    return { CONTENT_OPS_BASE_URL: baseUrl.replace(/\/+$/u, ''), CONTENT_OPS_API_KEY: apiKey, CONTENT_OPS_TEXT_MODEL: textModel, CONTENT_OPS_VISION_MODEL: visionModel, CONTENT_OPS_IMAGE_MODEL: imageModel };
+    const textModel = input.textModel.trim(), visionModel = input.visionModel.trim(), imageModel = input.imageModel.trim(), analysisModel = input.analysisModel.trim();
+    if (![textModel, visionModel, imageModel, analysisModel].every(model => /^[A-Za-z0-9][A-Za-z0-9._:/@+\-]{0,199}$/u.test(model))) throw fail('请输入有效的模型 ID（最多200字符，不含空白或引号）。');
+    return { CONTENT_OPS_BASE_URL: baseUrl.replace(/\/+$/u, ''), CONTENT_OPS_API_KEY: apiKey, CONTENT_OPS_TEXT_MODEL: textModel, CONTENT_OPS_VISION_MODEL: visionModel, CONTENT_OPS_IMAGE_MODEL: imageModel, CONTENT_OPS_ANALYSIS_MODEL: analysisModel };
   }
   async probe(settings) {
     const base = settings.CONTENT_OPS_BASE_URL;

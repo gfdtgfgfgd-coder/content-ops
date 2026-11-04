@@ -4,9 +4,7 @@
     "feedback": "data/wecom/simin-feedback.jsonl",
     "risk_words": "data/wecom/risk-words.md",
     "banned_rules": "rules/banned-words-quick.yaml",
-    "platform_rules": "rules/platform-rules.md",
-    "decisions": "docs/01-决策记录.md",
-    "design_rules": "rules/design-rules.md",
+    "content_spec": "rules/content-spec.md",
     "cover_palettes": "rules/cover-palettes.json",
     "title_patterns": "skills/xhs-title-patterns/quick.md",
     "generation_skill": "skills/xhs-post-generation/SKILL.md",
@@ -42,7 +40,6 @@
     "simin_persona",
     "historical_templates"
   ],
-  "policy_decision_id": "D18",
   "conflict_evidence_ids": [
     "Q07",
     "Q14",

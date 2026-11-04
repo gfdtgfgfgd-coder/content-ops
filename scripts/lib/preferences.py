@@ -268,8 +268,8 @@ def source_bundle(root: Path, config: dict[str, Any], config_path: Path) -> tupl
         source = root / paths[key]
         hashes[paths[key]] = hash_file(source) if source.is_file() else hash_json_directory(root, source)
     names = [
-        "simin-persona", "risk-words", "banned-words-quick", "platform-rules",
-        "design-rules", "cover-palettes", "xhs-title-patterns", "xhs-post-generation",
+        "simin-persona", "risk-words", "banned-words-quick", "content-spec",
+        "cover-palettes", "xhs-title-patterns", "xhs-post-generation",
         "reference-posts", "xhs-data", "xianyu-data",
     ]
     try:
@@ -343,22 +343,14 @@ def build_bundle(root: Path, config_path: Path, output_date: str | None) -> dict
     q7_match = re.search(r"^2\.\s*(.+?)\s*$", section(risk_text, "已保留的时间与范围冲突"), re.M)
     if not q7_match:
         raise ValueError("risk-words.md 中缺少第二条价格冲突说明")
-    decisions_text = read_text(source_paths["decisions"])
-    decision_match = re.search(
-        rf"^\|\s*{re.escape(config['policy_decision_id'])}\s*\|\s*(.*?)\s*\|",
-        decisions_text,
-        re.M,
-    )
-    if not decision_match:
-        raise ValueError(f"决策记录中找不到 {config['policy_decision_id']}")
     api_evidence_id = next((item["id"] for item in api_evidence if api_term in item["quote"]), None)
     if api_evidence_id is None:
         raise ValueError("两平台禁词规则没有对应的反馈引文")
-    platform_source = read_text(source_paths["platform_rules"])
+    platform_source = read_text(source_paths["content_spec"])
     platform_bundles = {}
     for entry in config["platforms"]:
         platform = entry["id"]
-        guidance = section(platform_source, entry["name"])
+        guidance = platform_source
         platform_bundles[platform] = {
             **platform_rule_bundle(platform, rules, api_term),
             "guidance": "\n".join(line for line in guidance.splitlines() if not hits_in_text(rules, line, platform)).strip(),
@@ -445,7 +437,7 @@ def main(argv=None) -> int:
 
 
 RULE_FILES = ['skills/simin-persona/SKILL.md', 'skills/xhs-title-patterns/quick.md',
- 'rules/banned-words-quick.yaml', 'rules/platform-rules.md', 'rules/design-rules.md',
+ 'rules/banned-words-quick.yaml', 'rules/content-spec.md',
  'skills/xhs-post-generation/SKILL.md']
 
 def load_preferences(path, platform, max_chars):

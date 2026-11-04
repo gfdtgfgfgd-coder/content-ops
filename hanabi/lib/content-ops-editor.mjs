@@ -230,26 +230,54 @@ export class ContentOpsEditor {
     return {id,raw:content,feedback,message:`思敏偏好：新增 ${body.action} ${id}`};
   }
   async wordsChange(root,raw,body){
-    if(!['add','remove'].includes(body.action))throw fail('风险词编辑操作无效。');
+    if(body.action!=='add')throw fail('风险词库只允许新增，不允许删除或覆盖。',403);
     const rules=await this.yaml(root,raw),word=line(body.word,'风险词',500),matches=rules.flatMap((rule,index)=>rule.word===word?[index]:[]);
     const blocks=[...raw.matchAll(/^-\s+word\s*:/gmu)];
     if(blocks.length!==rules.length)throw fail('词库条目格式不能安全追加或删除，请先修复原文。',409);
-    if(body.action==='remove'){
-      if(matches.length!==1)throw fail(matches.length?'同名词有多个范围，请先在原文件核对后编辑。':'风险词不存在，请刷新。',409);
-      const index=matches[0],content=raw.slice(0,blocks[index].index)+raw.slice(blocks[index+1]?.index??raw.length);
-      await this.yaml(root,content);
-      return {id:word,raw:content,message:`风险词：删除 ${word}`};
-    }
     if(matches.length)throw fail('风险词已存在，请先核对已有范围。',409);
     const level=body.level;
     if(!['ban','warn'].includes(level)||!Array.isArray(body.platform)||!body.platform.length||body.platform.length>3||body.platform.some(platform=>!['xhs','xianyu','gzh'].includes(platform)))throw fail('请选择风险级别和适用平台。');
     const replacement=line(body.replace,'替换词',500,true),reason=line(body.reason,'原因',2000),scope=body.models??body.model_scope??[];
     const models=typeof scope==='string'?scope.split(/[,，、]/u).map(value=>value.trim()).filter(Boolean):scope;
     if(!Array.isArray(models)||models.length>10||models.some(model=>typeof model!=='string'||!model.trim()||model.length>80||/[\r\n\x00-\x1f\x7f]/u.test(model)))throw fail('模型范围须为不超过10个模型名。');
-    const entry={word,level,platform:[...new Set(body.platform)],replace:replacement,reason,added_at:this.clock(),...(models.length?{models:[...new Set(models)]}:{})};
+    const entry={word,regex:body.regex===true,level,platform:[...new Set(body.platform)],replace:replacement,reason,added_at:this.clock(),...(models.length?{models:[...new Set(models)]}:{})};
     const dump=await this.run(this.python(root),['-c',yamlProgram],{cwd:root,input:JSON.stringify({action:'dump',entry:[entry]})});
     if(dump.code!==0)throw fail('无法生成风险词 YAML，编辑未保存。',503);
     const content=raw.trimEnd()+'\n\n'+dump.stdout.trimEnd()+'\n';await this.yaml(root,content);
     return {id:word,raw:content,message:`风险词：新增 ${word}`};
+  }
+  async analyzeSpecSync(input){
+    if(!isObject(input)||!['manual','persona_add','word_add'].includes(input.trigger))throw fail('同步分析参数无效。');
+    const root=await this.root(), cfg=await (await import('./content-ops-connections.mjs')).loadGatewaySettings(root);
+    if(!cfg.CONTENT_OPS_BASE_URL||!cfg.CONTENT_OPS_API_KEY)throw fail('请先配置模型网关。',503);
+    const spec=await this.file(root,'rules/content-spec.md');
+    const persona=await this.file(root,PERSONA),words=await this.file(root,WORDS);
+    const prompt=[
+      '你是内容规范维护分析器。只根据给定原料判断是否需要修改《内容生产规范》。不要复制风险词表；始终遵守该文档中单源引用原则。返回严格 JSON：{"summary":"...","updatedContent":"完整 Markdown"}。',
+      `触发类型：${input.trigger}`,`本次新增：${JSON.stringify(input.addedItem||null)}`,
+      `运营偏好原料：\n${persona}`,`风险词原料：\n${words}`,`当前内容生产规范：\n${spec}`,
+      input.previousDraft?`上一版草案：\n${input.previousDraft}`:'',input.feedback?`用户修改建议：\n${input.feedback}`:''
+    ].filter(Boolean).join('\n\n');
+    const response=await fetch(`${cfg.CONTENT_OPS_BASE_URL.replace(/\/$/u,'')}/chat/completions`,{method:'POST',headers:{authorization:`Bearer ${cfg.CONTENT_OPS_API_KEY}`,'content-type':'application/json'},body:JSON.stringify({model:cfg.CONTENT_OPS_ANALYSIS_MODEL,messages:[{role:'user',content:prompt}],temperature:0.2}),signal:AbortSignal.timeout(120000)});
+    const data=await response.json().catch(()=>null);if(!response.ok)throw fail(`分析模型请求失败（${response.status}）。`,502);
+    const raw=data?.choices?.[0]?.message?.content;if(typeof raw!=='string')throw fail('分析模型未返回文本。',502);
+    let result;try{result=JSON.parse(raw.replace(/^```(?:json)?\s*/u,'').replace(/\s*```$/u,''));}catch{throw fail('分析模型未按 JSON 契约返回，未生成草案。',502);}
+    if(typeof result.updatedContent!=='string'||!result.updatedContent.startsWith('# 内容生产规范'))throw fail('分析草案结构无效。',502);
+    return {summary:String(result.summary||''),updatedContent:result.updatedContent,revision:hash(spec),before:spec};
+  }
+  async applySpecSync(input){
+    fields(input,['updatedContent','revision','summary']);
+    if(typeof input.updatedContent!=='string'||input.updatedContent.length>120000||!input.updatedContent.startsWith('# 内容生产规范')||! /^[0-9a-f]{64}$/u.test(input.revision||''))throw fail('规范草案或版本无效。');
+    return this.serialize(async()=>{const root=await this.root(),unlock=await this.lock(root);let oldSpec,oldBundle,written=false;try{
+      await this.cleanSources(root);oldSpec=await this.file(root,'rules/content-spec.md');oldBundle=await this.file(root,BUNDLE);
+      if(hash(oldSpec)!==input.revision)throw fail('内容生产规范已被更新，请重新分析。',409);
+      await this.atomic(root,'rules/content-spec.md',input.updatedContent);written=true;
+      const built=await this.run(this.python(root),[join(root,'scripts/build.py'),'distill','--root',root,'--date',this.clock()],{cwd:root,timeout:60000});
+      if(built.code!==0)throw fail('偏好包重建失败，已撤回规范修改。',409);
+      const status=await this.git(root,['status','--porcelain','--','rules/content-spec.md',BUNDLE]);if(status.code!==0||!status.stdout.trim())throw fail('规范或偏好包没有可提交变更。',409);
+      const commit=await this.git(root,['-c','core.hooksPath=/dev/null','-c','commit.gpgsign=false','commit','--only','-m','同步原料库至内容生产规范','--','rules/content-spec.md',BUNDLE]);
+      if(commit.code!==0)throw fail('Git 提交失败，已撤回规范修改。',503);
+      const head=await this.git(root,['rev-parse','--short','HEAD']);return {ok:true,commit:head.stdout.trim(),content:await this.file(root,'rules/content-spec.md')};
+    }catch(error){if(written){try{await this.atomic(root,'rules/content-spec.md',oldSpec);await this.atomic(root,BUNDLE,oldBundle);}catch{}}throw error;}finally{await unlock();}});
   }
 }

@@ -66,18 +66,15 @@ window.addEventListener('resize', () => {
 });
 
 const docToGroup = {
-  'platform-rules': 'rules',
-  'design-rules': 'rules',
+  'content-spec': 'documents',
   'persona': 'rules',
   'banned': 'rules',
   'guide': 'documents',
-  'decisions': 'documents',
-  'sources': 'documents',
   'corpus': 'documents'
 };
 
 const defaultTabs = {
-  rules: 'platform-rules',
+  rules: 'persona',
   documents: 'guide'
 };
 
@@ -189,21 +186,22 @@ const api = async (path, options = {}) => {
 
 function mountDocumentViews() {
   const groups = [
-    ['rules', '运营规则', [['platform-rules','平台规则'], ['design-rules','设计规则'], ['persona','思敏偏好'], ['banned','风险词库']]],
-    ['documents', '文档与决策', [['guide','操作手册'], ['decisions','决策记录'], ['sources','素材来源'], ['corpus','模型语料库']]]
+    ['rules', '原料库', [['persona','运营偏好'], ['banned','风险词库']]],
+    ['documents', '操作规范', [['content-spec','内容生产规范'], ['guide','系统操作手册'], ['corpus','模型语料库']]]
   ];
-  const documentPaths = {'rules/platform-rules.md':'platform-rules', 'rules/design-rules.md':'design-rules',
-    'docs/GUIDE.md':'guide', 'docs/01-决策记录.md':'decisions', 'data/sources/README.md':'sources',
+  const documentPaths = {'rules/content-spec.md':'content-spec', 'docs/GUIDE.md':'guide',
     'skills/simin-persona/SKILL.md':'persona', 'rules/banned-words-quick.yaml':'banned', 'data/model-corpus.md':'corpus'};
   const readers = new Map();
   for (const [view, title, docs] of groups) {
     const panel = document.createElement('section'); panel.className = 'view-panel'; panel.id = `view-${view}`; panel.hidden = true;
     const heading = document.createElement('h1'); heading.textContent = title;
+    const syncButton = document.createElement('button'); syncButton.type='button'; syncButton.className='button button-outline'; syncButton.textContent='同步原料库'; syncButton.addEventListener('click',()=>void openSpecSync({trigger:'manual'}));
+    const headingRow = document.createElement('header'); headingRow.className='doc-view-heading'; headingRow.append(heading,syncButton);
     const tabs = document.createElement('div'); tabs.className = 'doc-tabs'; tabs.setAttribute('role','tablist'); tabs.setAttribute('aria-label',title);
     const reader = document.createElement('div'); reader.className = 'document-reader';
     const toc = document.createElement('nav'); toc.className = 'document-toc'; toc.setAttribute('aria-label','文档目录');
     const article = document.createElement('article'); article.className = 'document-content'; article.setAttribute('aria-live','polite');
-    reader.append(toc, article); panel.append(heading, tabs, reader); document.querySelector('.main-content').append(panel);
+    reader.append(toc, article); panel.append(headingRow, tabs, reader); document.querySelector('.main-content').append(panel);
     const editors = new Map();
     for (const [id, label] of docs) {
       const tab = document.createElement('button'); tab.type = 'button'; tab.textContent = label; tab.dataset.doc = id;
@@ -214,6 +212,11 @@ function mountDocumentViews() {
         editor.setAttribute('role','tabpanel'); editor.setAttribute('aria-labelledby',tab.id); panel.append(editor); editors.set(id,editor);
         editor.querySelector('h1').hidden = true;
       }
+    }
+    if(view==='rules'){
+      const editor=document.querySelector('#view-persona');
+      const button=syncButton.cloneNode(true);button.addEventListener('click',()=>void openSpecSync({trigger:'manual'}));
+      editor.querySelector('.content-ops-editors').prepend(button);
     }
     let active = defaultTabs[view] || docs[0][0], version = 0;
     const select = async (name = active, { restore = false } = {}) => {
@@ -283,6 +286,41 @@ function mountDocumentViews() {
 
 mountDocumentViews();
 
+const syncDialog=document.querySelector('#spec-sync-dialog');
+let syncDraft=null;
+async function openSpecSync(input){
+  syncDialog.showModal();
+  syncDialog.querySelector('#spec-sync-status').textContent='正在调用分析模型…';
+  syncDialog.querySelector('[data-spec-sync-apply]').disabled=true;
+  if(input.trigger==='manual')showView('content-spec',{replace:false,restore:false});
+  try{await analyzeSpec(input);}catch(error){syncDialog.querySelector('#spec-sync-status').textContent=`分析失败：${error.message}`;}
+}
+async function analyzeSpec(input){
+  const result=await api('/api/content-ops/spec-sync/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});
+  syncDraft=result;
+  syncDialog.querySelector('#spec-sync-status').textContent='请审核差异后确认或继续调整。';
+  syncDialog.querySelector('#spec-sync-summary').textContent=result.summary||'模型未提供摘要。';
+  syncDialog.querySelector('#spec-sync-before').textContent=result.before;
+  syncDialog.querySelector('#spec-sync-after').textContent=result.updatedContent;
+  syncDialog.querySelector('[data-spec-sync-apply]').disabled=false;
+}
+document.addEventListener('content-ops:spec-sync',event=>void openSpecSync(event.detail));
+syncDialog.querySelector('[data-spec-sync-close]').addEventListener('click',()=>syncDialog.close());
+syncDialog.querySelector('[data-spec-sync-cancel]').addEventListener('click',()=>{syncDraft=null;syncDialog.close();});
+syncDialog.querySelector('[data-spec-sync-reanalyze]').addEventListener('click',async()=>{
+  if(!syncDraft)return;const feedback=syncDialog.querySelector('[name="feedback"]').value.trim();
+  if(!feedback){syncDialog.querySelector('#spec-sync-status').textContent='请先填写修改建议。';return;}
+  syncDialog.querySelector('[data-spec-sync-reanalyze]').disabled=true;
+  try{await analyzeSpec({trigger:'manual',previousDraft:syncDraft.updatedContent,feedback});syncDialog.querySelector('[name="feedback"]').value='';}
+  catch(error){syncDialog.querySelector('#spec-sync-status').textContent=`重新分析失败：${error.message}`;}
+  finally{syncDialog.querySelector('[data-spec-sync-reanalyze]').disabled=false;}
+});
+syncDialog.querySelector('[data-spec-sync-apply]').addEventListener('click',async event=>{
+  if(!syncDraft)return;const button=event.currentTarget;button.disabled=true;
+  try{const saved=await api('/api/content-ops/spec-sync/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({updatedContent:syncDraft.updatedContent,revision:syncDraft.revision,summary:syncDraft.summary})});syncDialog.querySelector('#spec-sync-status').textContent=`已同步并提交 ${saved.commit}。`;await api('/api/content-ops/documents?doc=content-spec');setTimeout(()=>syncDialog.close(),700);}
+  catch(error){syncDialog.querySelector('#spec-sync-status').textContent=`同步失败：${error.message}`;button.disabled=false;}
+});
+
 const connectionsDialog = document.querySelector('#connections-dialog');
 const connectionsForm = document.querySelector('#connections-form');
 
@@ -309,6 +347,8 @@ const refreshConnections = async () => {
   fields.textModel.value = config.textModel || 'claude-sonnet-4-6';
   fields.visionModel.value = config.visionModel || 'claude-sonnet-4-6';
   fields.imageModel.value = config.imageModel || 'qwen-image-3.0';
+  fields.analysisModel.value = config.analysisModel || 'claude-sonnet-4-6';
+  fields.analysisModel.value = config.analysisModel || 'claude-sonnet-4-6';
   renderConnectionState(config);
 };
 const connectionError = error => {

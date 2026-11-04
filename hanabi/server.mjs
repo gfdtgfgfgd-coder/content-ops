@@ -16,8 +16,7 @@ const PORT = Number(process.env.CONTENT_ALCHEMY_PORT || 6187);
 const HOST = '127.0.0.1';
 const REPO_ROOT = resolve(ROOT, '..');
 const DOCUMENTS = Object.freeze({
-  'platform-rules': 'rules/platform-rules.md', 'design-rules': 'rules/design-rules.md',
-  guide: 'docs/GUIDE.md', decisions: 'docs/01-决策记录.md', sources: 'data/sources/README.md',
+  'content-spec': 'rules/content-spec.md', guide: 'docs/GUIDE.md',
   corpus: 'data/model-corpus.md'
 });
 const APP_DATA = process.env.CONTENT_ALCHEMY_DATA_DIR || join(homedir(), 'Library', 'Application Support', 'Content Alchemy');
@@ -75,6 +74,8 @@ async function route(req, res) {
       const content=await readFile(join(REPO_ROOT,relative),'utf8');
       return send(res,200,{name,path:relative,content},{'Cache-Control':'no-store'});
     }
+    if (pathname === '/api/content-ops/spec-sync/analyze' && req.method === 'POST') return send(res, 200, await editor.analyzeSpecSync(await body(req)));
+    if (pathname === '/api/content-ops/spec-sync/apply' && req.method === 'POST') return send(res, 200, await editor.applySpecSync(await body(req)));
     if (req.method === 'POST' && pathname === '/api/content-ops/generate') return send(res, 200, await production.create(await body(req)));
     if (req.method === 'GET' && pathname === '/api/content-ops/batches') return send(res, 200, { batches: production.list() });
     const batchMatch = pathname.match(/^\/api\/content-ops\/batches\/([^/]+)(?:\/(stop))?$/u);

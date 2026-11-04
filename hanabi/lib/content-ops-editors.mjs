@@ -56,7 +56,6 @@ export class ContentOpsEditors {
     this.personaRawDisclosure = this.personaRaw.closest('details');
     this.bannedRawDisclosure = this.bannedRaw.closest('details');
     this.wordsBody = root.querySelector('#banned-words-table tbody');
-    this.pendingRemoval = new Set();
     this.words = [];
     this.personaRevision = '';
     this.bannedRevision = '';
@@ -223,7 +222,8 @@ export class ContentOpsEditors {
       const saved = await request('/api/content-ops/persona', payload);
       form.reset(); form.hidden = true;
       await this.reload();
-      this.personaStatus.append(document.createTextNode(` 已写回本机文档并提交 ${saved.commit || '已记录'}，尚未推送。`));
+      this.personaStatus.append(document.createTextNode(` 已写回本机文档并提交 ${saved.commit || '已记录'}，正在分析规范…`));
+      document.dispatchEvent(new CustomEvent('content-ops:spec-sync', {detail:{trigger:'persona_add',addedItem:{action,id:saved.id,text}}}));
     } catch (error) { this.showRetry(this.personaStatus, `保存失败：${error.message}。表单内容已保留。`); }
     finally { this.savingPersona = false; form.querySelector('button[type="submit"]').disabled = !this.personaRevision; }
   }
@@ -238,7 +238,7 @@ export class ContentOpsEditors {
       return;
     }
     const payload = {
-      action:'add', word, level:String(values.get('level') || 'ban'), platform,
+      action:'add', word, regex:String(values.get('regex')) === 'true', level:String(values.get('level') || 'ban'), platform,
       replace:String(values.get('replace') || '').trim(), reason:String(values.get('reason') || '').trim(),
       model_scope:String(values.get('model_scope') || '').trim(), revision:this.bannedRevision,
     };
@@ -250,49 +250,12 @@ export class ContentOpsEditors {
       form.reset();
       form.querySelector('input[value="xhs"]').checked = true;
       await this.reload();
-      this.bannedStatus.append(document.createTextNode(` 已写回本机文件并提交 ${saved.commit || '已记录'}，尚未推送。`));
+      this.bannedStatus.append(document.createTextNode(` 已写回本机文件并提交 ${saved.commit || '已记录'}，正在分析规范…`));
+      document.dispatchEvent(new CustomEvent('content-ops:spec-sync', {detail:{trigger:'word_add',addedItem:{word,regex:payload.regex,level:payload.level,platform,replace:payload.replace,reason:payload.reason}}}));
     } catch (error) { this.showRetry(this.bannedStatus, `保存失败：${error.message}。表单内容已保留。`); }
     finally { this.savingWord = false; form.querySelector('button[type="submit"]').disabled = !this.bannedRevision; }
   }
 
-  async handleWordAction(event) {
-    const cancel = event.target.closest('[data-cancel-word]');
-    if (cancel) {
-      if (this.savingWord) return;
-      this.pendingRemoval.delete(cancel.dataset.cancelWord);
-      const remove = cancel.parentElement.querySelector('[data-remove-word]');
-      remove.textContent = '删除';
-      remove.setAttribute('aria-label', `删除风险词 ${cancel.dataset.cancelWord}`);
-      cancel.remove();
-      return;
-    }
-    const button = event.target.closest('[data-remove-word]');
-    if (!button || this.savingWord) return;
-    const word = button.dataset.removeWord;
-    if (!this.pendingRemoval.has(word)) {
-      this.pendingRemoval.add(word);
-      const confirmButton = button.closest('tr').querySelector('[data-remove-word]');
-      confirmButton.textContent = '确认删除';
-      confirmButton.setAttribute('aria-label', `确认删除风险词 ${word}`);
-      const action = button.parentElement;
-      const cancelButton = node('button', '取消', 'ref-text-button');
-      cancelButton.type = 'button'; cancelButton.dataset.cancelWord = word;
-      action.append(cancelButton);
-      return;
-    }
-    button.disabled = true;
-    this.savingWord = true;
-    this.bannedStatus.textContent = `正在删除「${word}」…`;
-    try {
-      const saved = await request('/api/content-ops/banned-words', {action:'remove', word, revision:this.bannedRevision});
-      this.pendingRemoval.delete(word);
-      await this.reload();
-      this.bannedStatus.append(document.createTextNode(` 已从本机文件删除并提交 ${saved.commit || '已记录'}，尚未推送。`));
-    } catch (error) {
-      button.disabled = false;
-      this.bannedStatus.textContent = `删除失败：${error.message}`;
-    } finally { this.savingWord = false; }
-  }
 }
 
 if (typeof document !== 'undefined') {
