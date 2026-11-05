@@ -221,26 +221,52 @@ test('cover classification distinguishes content topics from layout evidence', (
 
 import {ContentOpsReferences} from './content-ops-references.mjs';
 
-test('reference view toggles existing cards and preserves temporary single-card expansion', () => {
+test('reference arrows toggle in both view modes and toolbar resets all card overrides', () => {
   const classes = () => {
     const values = new Set();
     return {toggle(name, enabled) { if (enabled) values.add(name); else values.delete(name); }, contains(name) { return values.has(name); }};
   };
-  const card = {classList:classes()}, pinned = {classList:classes()};
-  card.classList.toggle('ref-card--outline-open', true);
-  const grid = item => ({classList:classes(), querySelectorAll:() => [item]});
+  const makeCard = id => {
+    const card = {dataset:{platform:'xhs',id}, classList:classes()};
+    card.button = {setAttribute(name,value) { this[name]=value; }, closest:() => card};
+    card.querySelector = () => card.button;
+    return card;
+  };
+  const card = makeCard('aa'), other = makeCard('bb'), pinned = makeCard('aa');
+  const grid = items => ({classList:classes(), querySelectorAll:() => items});
   const browser = Object.create(ContentOpsReferences.prototype);
-  Object.assign(browser, {grid:grid(card), pinnedGrid:grid(pinned), viewMode:'expanded', viewModeButton:{setAttribute(name,value) { this[name]=value; }}});
+  Object.assign(browser, {grid:grid([card,other]), pinnedGrid:grid([pinned]), viewMode:'expanded',
+    expandedOutlineKeys:new Set(), collapsedCardKeys:new Set(), posts:[{platform:'xhs',id:'aa'},{platform:'xhs',id:'bb'}],
+    viewModeButton:{setAttribute(name,value) { this[name]=value; }}});
+  const clickArrow = () => browser.handleClick({target:{closest:selector => selector === '[data-ref-outline-expand]' ? card.button : null}});
   browser.applyViewMode();
-  assert.equal(card.classList.contains('ref-card--collapsed'), false);
-  browser.toggleViewMode();
-  assert.equal(browser.grid.classList.contains('ref-grid--collapsed'), true);
+  assert.equal(card.button['aria-expanded'], 'true');
+  assert.equal(card.button.title, '收起图文');
+  clickArrow();
   assert.equal(card.classList.contains('ref-card--collapsed'), true);
   assert.equal(pinned.classList.contains('ref-card--collapsed'), true);
-  assert.equal(card.classList.contains('ref-card--outline-open'), true);
-  assert.equal(browser.viewModeButton.textContent, '📖 展开图文');
-  browser.toggleViewMode();
+  assert.equal(other.classList.contains('ref-card--collapsed'), false);
+  assert.equal(card.button['aria-expanded'], 'false');
+  clickArrow();
   assert.equal(card.classList.contains('ref-card--collapsed'), false);
+  clickArrow();
+  browser.toggleViewMode();
+  assert.equal(browser.collapsedCardKeys.size, 0);
+  assert.equal(browser.grid.classList.contains('ref-grid--collapsed'), true);
+  assert.equal(other.classList.contains('ref-card--collapsed'), true);
+  assert.equal(browser.viewModeButton.textContent, '📖 展开图文');
+  clickArrow();
+  assert.equal(card.classList.contains('ref-card--collapsed'), false);
+  assert.equal(card.classList.contains('ref-card--outline-open'), true);
+  assert.equal(pinned.button['aria-expanded'], 'true');
+  clickArrow();
+  assert.equal(card.classList.contains('ref-card--collapsed'), true);
+  clickArrow();
+  browser.toggleViewMode();
+  assert.equal(browser.expandedOutlineKeys.size, 0);
+  assert.equal(card.classList.contains('ref-card--outline-open'), false);
+  assert.equal(card.classList.contains('ref-card--collapsed'), false);
+  assert.equal(other.classList.contains('ref-card--collapsed'), false);
   assert.equal(browser.viewModeButton['aria-pressed'], 'false');
 });
 

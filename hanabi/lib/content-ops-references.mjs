@@ -68,6 +68,7 @@ export class ContentOpsReferences {
     this.draggedKey = null;
     this.dropTarget = null;
     this.expandedOutlineKeys = new Set();
+    this.collapsedCardKeys = new Set();
     this.collectionsDialog = document.querySelector('#content-ops-collections-dialog');
     this.collectionForm = document.querySelector('#content-ops-collections-form');
     this.collectionList = document.querySelector('#content-ops-collection-list');
@@ -137,7 +138,7 @@ export class ContentOpsReferences {
     const collapsed = this.viewMode === 'collapsed';
     for (const grid of [this.grid, this.pinnedGrid]) {
       grid?.classList.toggle('ref-grid--collapsed', collapsed);
-      grid?.querySelectorAll('.ref-card').forEach(card => card.classList.toggle('ref-card--collapsed', collapsed));
+      grid?.querySelectorAll('.ref-card').forEach(card => this.applyCardViewMode(card));
     }
     if (this.viewModeButton) {
       this.viewModeButton.textContent = collapsed ? '📖 展开图文' : '📋 仅看标题';
@@ -145,7 +146,26 @@ export class ContentOpsReferences {
     }
   }
 
+  isCardCollapsed(key) {
+    return this.viewMode === 'collapsed' ? !this.expandedOutlineKeys.has(key) : this.collapsedCardKeys.has(key);
+  }
+
+  applyCardViewMode(card) {
+    const collapsed = this.isCardCollapsed(keyOf(card.dataset));
+    card.classList.toggle('ref-card--collapsed', collapsed);
+    card.classList.toggle('ref-card--outline-open', !collapsed && this.viewMode === 'collapsed');
+    const button = card.querySelector('[data-ref-outline-expand]');
+    if (button) {
+      button.setAttribute('aria-expanded', String(!collapsed));
+      button.setAttribute('aria-label', collapsed ? '展开图文' : '收起图文');
+      button.title = collapsed ? '展开图文' : '收起图文';
+      button.textContent = collapsed ? '▸' : '▾';
+    }
+  }
+
   toggleViewMode() {
+    this.expandedOutlineKeys.clear();
+    this.collapsedCardKeys.clear();
     this.viewMode = this.viewMode === 'collapsed' ? 'expanded' : 'collapsed';
     try { sessionStorage.setItem('content-ops-ref-view-mode', this.viewMode); } catch {}
     this.applyViewMode();
@@ -470,15 +490,15 @@ export class ContentOpsReferences {
     const images = imageList(post);
     const body = String(post.body_full ?? post.body_preview ?? '');
     const cited = this.citedKeys.has(keyOf(post));
-    const key = keyOf(post), outlineOpen = this.expandedOutlineKeys.has(key);
-    const collapsed = this.viewMode === 'collapsed';
+    const key = keyOf(post), collapsed = this.isCardCollapsed(key);
+    const outlineOpen = this.viewMode === 'collapsed' && !collapsed;
     return `<article class="ref-card${post.label_good === true ? ' ref-card--good' : ''}${cited ? ' ref-card--cited' : ''}${post.banned_word_hits?.length ? ' ref-card--warned' : ''}${collapsed ? ' ref-card--collapsed' : ''}${outlineOpen ? ' ref-card--outline-open' : ''}" data-id="${esc(post.id)}" data-platform="${esc(post.platform)}" data-cited="${cited}" tabindex="-1">
       <div class="ref-card-head">
         <button class="ref-drag-handle" type="button" draggable="true" data-ref-drag-handle aria-label="拖动调整素材顺序" title="拖动调整顺序">⠿</button>
         <div class="ref-outline-badges">${this.badges(post)}</div>
         <h2 class="ref-title" title="${esc(post.title || '无标题')}">${esc(post.title || '无标题')}</h2>
         <div class="ref-card-actions">
-          <button class="ref-icon-button" type="button" data-ref-outline-expand aria-expanded="${outlineOpen}" aria-label="${outlineOpen ? '收起图文' : '展开图文'}" title="${outlineOpen ? '收起图文' : '展开图文'}">${outlineOpen ? '▾' : '▸'}</button>
+          <button class="ref-icon-button" type="button" data-ref-outline-expand aria-expanded="${!collapsed}" aria-label="${collapsed ? '展开图文' : '收起图文'}" title="${collapsed ? '展开图文' : '收起图文'}">${collapsed ? '▸' : '▾'}</button>
           <button class="ref-icon-button" type="button" data-ref-move-up aria-label="上移" title="上移">↑</button>
           <button class="ref-icon-button" type="button" data-ref-move-down aria-label="下移" title="下移">↓</button>
           <button class="ref-text-button" type="button" data-ref-select aria-pressed="${this.selectedKeys.has(key)}">${this.selectedKeys.has(key) ? '移出引用' : '引用'}</button>
@@ -636,14 +656,16 @@ export class ContentOpsReferences {
     const outline = event.target.closest('[data-ref-outline-expand]');
     if (outline) {
       const card = outline.closest('.ref-card'), post = this.findPost(card);
-      if (!card || !post || this.viewMode !== 'collapsed') return;
-      const key = keyOf(post), expanded = !this.expandedOutlineKeys.has(key);
-      if (expanded) this.expandedOutlineKeys.add(key); else this.expandedOutlineKeys.delete(key);
-      card.classList.toggle('ref-card--outline-open', expanded);
-      outline.setAttribute('aria-expanded', String(expanded));
-      outline.setAttribute('aria-label', expanded ? '收起图文' : '展开图文');
-      outline.title = expanded ? '收起图文' : '展开图文';
-      outline.textContent = expanded ? '▾' : '▸';
+      if (!card || !post) return;
+      const key = keyOf(post);
+      const overrides = this.viewMode === 'collapsed' ? this.expandedOutlineKeys : this.collapsedCardKeys;
+      if (overrides.has(key)) overrides.delete(key); else overrides.add(key);
+      // The same reference may also be visible in the pinned area.
+      for (const grid of [this.grid, this.pinnedGrid]) {
+        grid?.querySelectorAll('.ref-card').forEach(item => {
+          if (keyOf(item.dataset) === key) this.applyCardViewMode(item);
+        });
+      }
       return;
     }
     const action = event.target.closest('[data-ref-edit],[data-ref-delete]');
