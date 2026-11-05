@@ -219,23 +219,155 @@ test('cover classification distinguishes content topics from layout evidence', (
   assert.equal(classifyReference({title:'其他工具'}).model_category,'其他');
 });
 
-test('combined filters operate before pagination and preserve selection IDs', async () => {
-  const store = new ContentOpsReferenceStore({root});
-  const all = [];
-  for(let offset=0;;offset+=100){
-    const result=await store.list(new URLSearchParams({platform:'xhs',limit:'100',offset:String(offset)}));
-    all.push(...result.posts);if(all.length>=result.total)break;
-  }
-  for(const model of ['GLM','Kimi','Seedance/视频','其他'])for(const layout of ['code_ide','bold_typo','card_3d','comparison','other']){
-    const expected=all.filter(post=>post.model_category===model&&post.layout_style===layout);
-    const q=new URLSearchParams({platform:'xhs',model_category:model,layout_style:layout,limit:'2',offset:'1'});
-    const result=await store.list(q);
-    assert.equal(result.total,expected.length);
-    assert.deepEqual(result.posts.map(p=>p.id),expected.slice(1,3).map(p=>p.id));
-  }
-  const target=all.find(p=>p.model_category==='Kimi'&&p.layout_style==='bold_typo');assert.ok(target);
-  const selected=await store.list(new URLSearchParams({platform:'xhs',ids:target.id}));assert.equal(selected.posts[0].id,target.id);
-  for(const q of ['layout_style=unknown','model_category=unknown','model_category=GLM&model_category=Kimi','layout_style=../'])assert.throws(()=>parseReferenceQuery(new URLSearchParams(q)),{statusCode:400});
+import {ContentOpsReferences} from './content-ops-references.mjs';
+
+test('reference view toggles existing cards and preserves temporary single-card expansion', () => {
+  const classes = () => {
+    const values = new Set();
+    return {toggle(name, enabled) { if (enabled) values.add(name); else values.delete(name); }, contains(name) { return values.has(name); }};
+  };
+  const card = {classList:classes()}, pinned = {classList:classes()};
+  card.classList.toggle('ref-card--outline-open', true);
+  const grid = item => ({classList:classes(), querySelectorAll:() => [item]});
+  const browser = Object.create(ContentOpsReferences.prototype);
+  Object.assign(browser, {grid:grid(card), pinnedGrid:grid(pinned), viewMode:'expanded', viewModeButton:{setAttribute(name,value) { this[name]=value; }}});
+  browser.applyViewMode();
+  assert.equal(card.classList.contains('ref-card--collapsed'), false);
+  browser.toggleViewMode();
+  assert.equal(browser.grid.classList.contains('ref-grid--collapsed'), true);
+  assert.equal(card.classList.contains('ref-card--collapsed'), true);
+  assert.equal(pinned.classList.contains('ref-card--collapsed'), true);
+  assert.equal(card.classList.contains('ref-card--outline-open'), true);
+  assert.equal(browser.viewModeButton.textContent, '📖 展开图文');
+  browser.toggleViewMode();
+  assert.equal(card.classList.contains('ref-card--collapsed'), false);
+  assert.equal(browser.viewModeButton['aria-pressed'], 'false');
+});
+
+test('reference order debounces quick moves and preserves the captured collection scope', async () => {
+  const browser = Object.create(ContentOpsReferences.prototype), calls = [];
+  Object.assign(browser, {platform:{value:'xhs'}, collection:{value:'c1'}, requestVersion:1,
+    posts:[{platform:'xhs',id:'aa'},{platform:'xhs',id:'bb'}],
+    collections:[{id:'c1',reference_ids:['xhs:aa','xianyu:cc','xhs:bb']}],
+    collectionRequest:async (...args) => calls.push(args), showSavedStatus:() => {}});
+  browser.scheduleOrderSave();
+  browser.posts.reverse();
+  browser.scheduleOrderSave();
+  browser.platform.value='all'; browser.collection.value='all';
+  await new Promise(resolve => setTimeout(resolve, 300));
+  assert.equal(calls.length,1);
+  assert.equal(calls[0][0],'/api/content-ops/collections/c1');
+  assert.deepEqual(calls[0][2].reference_ids,['xhs:bb','xianyu:cc','xhs:aa']);
+  assert.deepEqual(browser.collections[0].reference_ids,calls[0][2].reference_ids);
+  assert.equal(browser.savingOrder,false);
+  assert.equal(browser.pendingOrder,null);
+});
+
+test('reference filters use platform and collections, support full load, and default to newest input', async t => {
+  const {store}=await referenceFixture(t);
+  const first=await store.addReference({title:'第一条'});
+  const second=await store.addReference({title:'第二条'});
+  const third=await store.addReference({platform:'xianyu',title:'第三条'});
+  const fourth=await store.addReference({title:'第四条'});
+  const collection=await store.createCollection({name:'重点素材'});
+  await store.updateCollection(collection.id,{reference_ids:[`xhs:${first.id}`,`xhs:${second.id}`,`xianyu:${third.id}`]});
+
+  const all=await store.list(new URLSearchParams({platform:'all',limit:'5000'}));
+  assert.deepEqual(all.posts.map(post=>post.id),[fourth.id,third.id,second.id,first.id]);
+  assert.equal(all.total,4);assert.equal(all.limit,5000);assert.equal(all.dataset_total,4);
+  const allAlias=await store.list(new URLSearchParams({platform:'all',limit:'all'}));
+  assert.deepEqual(allAlias.posts.map(post=>post.id),all.posts.map(post=>post.id));assert.equal(allAlias.limit,5000);
+  const xhs=await store.list(new URLSearchParams({platform:'xhs',limit:'100'}));
+  assert.deepEqual(xhs.posts.map(post=>post.id),[fourth.id,second.id,first.id]);
+  const grouped=await store.list(new URLSearchParams({platform:'all',collection_id:collection.id,limit:'2',offset:'1'}));
+  assert.equal(grouped.total,3);assert.deepEqual(grouped.posts.map(post=>post.id),[second.id,third.id]);
+  const uncategorized=await store.list(new URLSearchParams({platform:'xhs',collection_id:'uncategorized',limit:'100'}));
+  assert.deepEqual(uncategorized.posts.map(post=>post.id),[fourth.id]);
+  const selected=await store.list(new URLSearchParams({platform:'all',ids:third.id}));
+  assert.deepEqual(selected.posts.map(post=>post.id),[third.id]);
+  for(const q of ['sort=newest','model_category=GLM','layout_style=code_ide','collection_id=unknown','collection_id=../','limit=5001'])assert.throws(()=>parseReferenceQuery(new URLSearchParams(q)),{statusCode:400});
+});
+
+test('collections support CRUD, atomic persistence, relation filtering, and deletion without deleting references', async t => {
+  const {dir,store}=await referenceFixture(t);
+  const post=await store.addReference({title:'保留素材'});
+  const created=await store.createCollection({name:'待整理'});
+  assert.match(created.id,/^[0-9a-f]{24}$/u);assert.ok(Date.parse(created.created_at));assert.deepEqual(created.reference_ids,[]);
+  assert.deepEqual(JSON.parse(await readFile(join(dir,'data/collections.json'))).collections,[created]);
+  const renamed=await store.updateCollection(created.id,{name:'已整理',reference_ids:[`xhs:${post.id}`]});
+  assert.equal(renamed.name,'已整理');
+  assert.deepEqual((await store.list(new URLSearchParams({collection_id:created.id}))).posts.map(item=>item.id),[post.id]);
+  const source=await readFile(join(dir,'data/collections.json'),'utf8');
+  const write=store.writeCollections;store.writeCollections=async()=>{throw new Error('simulated collection disk failure');};
+  await assert.rejects(()=>store.updateCollection(created.id,{name:'不会写入'}),/simulated collection disk failure/u);
+  assert.equal(await readFile(join(dir,'data/collections.json'),'utf8'),source);
+  store.writeCollections=write;
+  await store.deleteCollection(created.id);
+  assert.deepEqual(await store.readCollections(),[]);
+  assert.equal((await store.records()).some(item=>item.id===post.id),true);
+  assert.deepEqual((await store.list(new URLSearchParams({collection_id:'uncategorized'}))).posts.map(item=>item.id),[post.id]);
+  assert.equal((await readdir(join(dir,'data'))).some(name=>name.includes('.tmp')||name.includes('.lock')),false);
+});
+
+test('reference platform edits preserve collection membership and roll back on relation write failure', async t => {
+  const {dir,store}=await referenceFixture(t);
+  const post=await store.addReference({title:'跨平台素材'}), collection=await store.createCollection({name:'保留顺序'});
+  await store.updateCollection(collection.id,{reference_ids:[`xhs:${post.id}`]});
+  const source=await readFile(join(dir,'data/posts.jsonl'),'utf8');
+  const write=store.writeCollections; store.writeCollections=async()=>{throw new Error('relation write failure');};
+  await assert.rejects(()=>store.updateReference(post.id,{platform:'xianyu'}),/relation write failure/u);
+  assert.equal(await readFile(join(dir,'data/posts.jsonl'),'utf8'),source);
+  assert.deepEqual((await store.readCollections())[0].reference_ids,[`xhs:${post.id}`]);
+  store.writeCollections=write;
+  await store.updateReference(post.id,{platform:'xianyu'});
+  assert.deepEqual((await store.readCollections())[0].reference_ids,[`xianyu:${post.id}`]);
+  assert.equal((await store.list(new URLSearchParams({platform:'xianyu',collection_id:collection.id}))).posts[0].id,post.id);
+});
+
+test('reference reorder validates IDs, preserves platform slots, and writes atomically', async t => {
+  const {dir,store}=await referenceFixture(t);
+  const first=await store.addReference({title:'第一条'});
+  const second=await store.addReference({title:'第二条'});
+  const third=await store.addReference({platform:'xianyu',title:'第三条'});
+  const fourth=await store.addReference({title:'第四条'});
+  const before=await store.list(new URLSearchParams({platform:'all',limit:'5000'}));
+  assert.deepEqual(before.posts.map(post=>post.id),[fourth.id,third.id,second.id,first.id]);
+
+  const reordered=await store.reorderReferences({platform:'xhs',ids:[first.id,fourth.id,second.id]});
+  assert.deepEqual(reordered,{ok:true,count:3});
+  const after=await store.list(new URLSearchParams({platform:'all',limit:'5000'}));
+  assert.deepEqual(after.posts.map(post=>post.id),[first.id,third.id,fourth.id,second.id]);
+
+  const source=await readFile(join(dir,'data/posts.jsonl'),'utf8');
+  for(const payload of [
+    {platform:'xhs',ids:[first.id,first.id]},
+    {platform:'xhs',ids:['../data']},
+    {platform:'xhs',ids:['does-not-exist']},
+    {platform:'xhs',ids:[third.id]},
+    {platform:'xhs',ids:[`${first.id};touch`]},
+    {platform:'other',ids:[first.id]}
+  ]) await assert.rejects(()=>store.reorderReferences(payload));
+  assert.equal(await readFile(join(dir,'data/posts.jsonl'),'utf8'),source);
+
+  const write=store.writeRecords;store.writeRecords=async()=>{throw new Error('simulated reorder disk failure');};
+  await assert.rejects(()=>store.reorderReferences({platform:'all',ids:[second.id,third.id,fourth.id,first.id]}),/simulated reorder disk failure/u);
+  assert.equal(await readFile(join(dir,'data/posts.jsonl'),'utf8'),source);
+  store.writeRecords=write;
+  assert.equal((await readdir(join(dir,'data'))).some(name=>name.includes('.tmp')),false);
+});
+
+test('collection reorder persists the requested order without changing reference records', async t => {
+  const {dir,store}=await referenceFixture(t);
+  const first=await store.addReference({title:'第一条'});
+  const second=await store.addReference({title:'第二条'});
+  const third=await store.addReference({title:'第三条'});
+  const collection=await store.createCollection({name:'可排序合集'});
+  const originalRecords=await readFile(join(dir,'data/posts.jsonl'),'utf8');
+  await store.updateCollection(collection.id,{reference_ids:[`xhs:${first.id}`,`xhs:${second.id}`,`xhs:${third.id}`]});
+  await store.updateCollection(collection.id,{reference_ids:[`xhs:${third.id}`,`xhs:${first.id}`,`xhs:${second.id}`]});
+  assert.deepEqual((await store.list(new URLSearchParams({collection_id:collection.id,limit:'5000'}))).posts.map(post=>post.id),[third.id,first.id,second.id]);
+  assert.deepEqual((await store.readCollections()).find(item=>item.id===collection.id).reference_ids,[`xhs:${third.id}`,`xhs:${first.id}`,`xhs:${second.id}`]);
+  assert.equal(await readFile(join(dir,'data/posts.jsonl'),'utf8'),originalRecords);
 });
 
 
@@ -286,8 +418,8 @@ test('references CRUD accepts image+text, image-only, text-only and preserves ma
   await assert.rejects(()=>store.updateReference(pureImage.id,{image:null}),{statusCode:400});
   assert.equal(pureImage.title,'');assert.match(pureImage.images[0],/xianyu\/[0-9a-f]{24}\/1.webp$/u);
   const pureText=await store.addReference({body:'只有正文'});
-  const selected=await store.list(new URLSearchParams({model_category:'Kimi',layout_style:'comparison'}));
-  assert.deepEqual(selected.posts.map(item=>item.id),[post.id]);assert.equal(selected.posts[0].classification_method,'manual');
+  const selected=await store.list(new URLSearchParams({platform:'xhs'}));
+  assert.deepEqual(selected.posts.map(item=>item.id),[pureText.id,post.id]);assert.equal(selected.posts[1].classification_method,'manual');
   const noCover=await store.list(new URLSearchParams({ids:pureText.id}));assert.equal(noCover.posts[0].image,null);assert.deepEqual(noCover.posts[0].images,[]);
   await store.updateReference(post.id,{body:'修改正文',cover_ocr:'新 OCR',model:'新型号',label:{good:false},image:{data:webp.toString('base64'),mimeType:'image/webp'}});
   await assert.rejects(()=>readFile(join(dir,post.images[0])),{code:'ENOENT'});
@@ -377,6 +509,32 @@ test('references HTTP roundtrip uses real routes, image headers, errors and isol
     response=await request(`${path}/${other.id}/edit`,{title:'不存在'});assert.equal(response.status,404);
     response=await fetch(url+path);assert.equal((await response.json()).total,0);
     await assert.rejects(()=>stat(join(dir,`data/images/xhs/${reference.id}`)),{code:'ENOENT'});
+  } finally {clearTimeout(timer);const exited=once(child,'exit');child.kill('SIGTERM');await exited;}
+});
+
+test('references reorder HTTP endpoint supports full platform lists and rejects unsafe requests', {timeout:15000}, async t => {
+  const {dir}=await referenceFixture(t);
+  await mkdir(join(dir,'hanabi'));await cp(join(root,'hanabi/lib'),join(dir,'hanabi/lib'),{recursive:true});await cp(join(root,'hanabi/server.mjs'),join(dir,'hanabi/server.mjs'));
+  const child=spawn(process.execPath,[join(dir,'hanabi/server.mjs')],{env:{...process.env,CONTENT_ALCHEMY_PORT:'0',CONTENT_OPS_DB_PATH:join(dir,'test.sqlite'),CONTENT_ALCHEMY_DATA_DIR:dir},stdio:['ignore','pipe','pipe']});
+  let timer;
+  try {
+    const url=await new Promise((resolve,reject)=>{let output='';timer=setTimeout(()=>reject(new Error('HTTP server did not start')),8000);child.once('error',reject);child.once('exit',code=>reject(new Error(`HTTP server exited ${code}`)));child.stdout.on('data',chunk=>{output+=chunk;const match=output.match(/listening on (http:\/\/127\.0\.0\.1:\d+)/u);if(match){clearTimeout(timer);resolve(match[1]);}});});
+    const request=(path,payload,headers={})=>fetch(url+path,{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify(payload)});
+    const created=[];
+    for(const title of ['第一条','第二条','第三条']){
+      const response=await request('/api/content-ops/references',{title});
+      assert.equal(response.status,201);created.push((await response.json()).reference);
+    }
+    const reorder=await request('/api/content-ops/references/reorder',{platform:'xhs',ids:[created[0].id,created[2].id,created[1].id]});
+    assert.equal(reorder.status,200);assert.deepEqual(await reorder.json(),{ok:true,count:3});
+    const list=await fetch(`${url}/api/content-ops/references?platform=xhs&collection_id=all&limit=5000`);
+    assert.equal(list.status,200);assert.deepEqual((await list.json()).posts.map(post=>post.id),[created[0].id,created[2].id,created[1].id]);
+    const injection=await request('/api/content-ops/references/reorder',{platform:'xhs',ids:['../data']});
+    assert.equal(injection.status,400);
+    const crossSite=await request('/api/content-ops/references/reorder',{platform:'xhs',ids:[created[0].id]},{Origin:'https://unrelated.invalid'});
+    assert.equal(crossSite.status,403);
+    const nonJson=await fetch(url+'/api/content-ops/references/reorder',{method:'POST',body:'{}'});
+    assert.equal(nonJson.status,403);
   } finally {clearTimeout(timer);const exited=once(child,'exit');child.kill('SIGTERM');await exited;}
 });
 

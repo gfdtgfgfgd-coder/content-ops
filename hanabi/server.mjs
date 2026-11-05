@@ -91,6 +91,25 @@ async function route(req, res) {
     if (req.method === 'GET' && pathname === '/api/content-ops/batches') return send(res, 200, { batches: production.list() });
     const batchMatch = pathname.match(/^\/api\/content-ops\/batches\/([^/]+)(?:\/(stop))?$/u);
     if (batchMatch) { const id = decodeURIComponent(batchMatch[1]); if (req.method === 'GET' && !batchMatch[2]) return send(res, 200, { batch: production.public(production.get(id)) }); if (req.method === 'POST' && batchMatch[2] === 'stop') return send(res, 200, { batch: production.stop(id) }); }
+    if (req.method === 'GET' && pathname === '/api/content-ops/collections') return send(res, 200, { collections: await references.readCollections() }, { 'Cache-Control': 'no-store' });
+    const collectionMatch = pathname.match(/^\/api\/content-ops\/collections(?:\/([^/]+))?$/u);
+    if (collectionMatch) {
+      let id = null;
+      try { if (collectionMatch[1]) id = decodeURIComponent(collectionMatch[1]); } catch { return send(res, 400, { error: '合集 ID 无效。' }); }
+      const create = !id && req.method === 'POST';
+      const update = id && req.method === 'PUT';
+      const remove = id && req.method === 'DELETE';
+      const headers = { 'Cache-Control': 'no-store' };
+      if (!create && !update && !remove) return send(res, 405, { error: '方法不支持。' }, headers);
+      if (!localJsonRequest(req)) return send(res, 403, { error: '仅允许当前 Hanabi 页面提交 JSON 合集操作。' }, headers);
+      if (remove) return send(res, 200, { deleted: await references.deleteCollection(id) }, headers);
+      const payload = await body(req, 256 * 1024);
+      return send(res, create ? 201 : 200, { collection: create ? await references.createCollection(payload) : await references.updateCollection(id, payload) }, headers);
+    }
+    if (req.method === 'POST' && pathname === '/api/content-ops/references/reorder') {
+      if (!localJsonRequest(req)) return send(res, 403, { error: '仅允许本机 Hanabi 页面提交素材排序。' }, { 'Cache-Control': 'no-store' });
+      return send(res, 200, await references.reorderReferences(await body(req, 256 * 1024)), { 'Cache-Control': 'no-store' });
+    }
     if (req.method === 'GET' && pathname === '/api/content-ops/references') return send(res, 200, await references.list(parsed.searchParams), { 'Cache-Control': 'no-store' });
     const referenceMatch = pathname.match(/^\/api\/content-ops\/references(?:\/([^/]+)(?:\/(edit|delete))?)?$/u);
     if (referenceMatch) {

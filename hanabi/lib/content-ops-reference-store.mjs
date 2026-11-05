@@ -5,8 +5,9 @@ import {cp,lstat,mkdir,open,readFile,realpath,rename,rm,stat,writeFile} from 'no
 import {join,resolve,sep} from 'node:path';
 
 const platforms=new Set(['xhs','xianyu']);
-const sorts=new Set(['best','engaged','newest','wanted']);
+const queryPlatforms=new Set(['all',...platforms]);
 const identifier=/^[0-9a-f]{1,64}$/iu;
+const collectionReference=/^(xhs|xianyu):([0-9a-f]{1,64})$/iu;
 const imageName=/^[a-z0-9][a-z0-9._-]{0,120}\.(?:jpe?g|png|webp|gif|avif)$/iu;
 const fail=(message,statusCode=400)=>Object.assign(new Error(message),{statusCode});
 const within=(root,path)=>path.startsWith(root+sep);
@@ -18,22 +19,21 @@ const layoutStyles=new Set(['code_ide','bold_typo','card_3d','comparison','other
 const writes=new Map();
 const maxImageBytes=15*1024*1024;
 const byId=(a,b)=>a.id<b.id?-1:a.id>b.id?1:0;
+const referenceKey=post=>`${post.platform}:${post.id}`;
 
 export function parseReferenceQuery(params=new URLSearchParams()){
-  for(const key of params.keys())if(!['platform','sort','offset','limit','ids','model_category','layout_style'].includes(key)||params.getAll(key).length!==1)throw fail('素材库查询参数无效。');
-  const platform=params.get('platform')??'xhs',sort=params.get('sort')??'best';
-  if(!platforms.has(platform)||!sorts.has(sort)||(sort==='wanted'&&platform!=='xianyu'))throw fail('素材库平台或排序无效。');
+  for(const key of params.keys())if(!['platform','offset','limit','ids','collection_id'].includes(key)||params.getAll(key).length!==1)throw fail('素材库查询参数无效。');
+  const platform=params.get('platform')??'xhs',collectionId=params.get('collection_id')??'all';
+  if(!queryPlatforms.has(platform)||!['all','uncategorized'].includes(collectionId)&&!identifier.test(collectionId))throw fail('素材库平台或合集无效。');
   const integer=(key,fallback,min,max)=>{const raw=params.get(key);if(raw===null)return fallback;if(!/^\d+$/u.test(raw))throw fail('素材库分页参数无效。');const value=Number(raw);if(!Number.isSafeInteger(value)||value<min||value>max)throw fail('素材库分页参数无效。');return value;};
-  const offset=integer('offset',0,0,Number.MAX_SAFE_INTEGER),limit=integer('limit',30,1,100);
+  const offset=integer('offset',0,0,Number.MAX_SAFE_INTEGER),limitRaw=params.get('limit'),limit=limitRaw==='all'?5000:integer('limit',30,1,5000);
   let ids=null;
   if(params.has('ids')){
     const values=params.get('ids').split(',');
     if(!values.length||values.length>100||values.some(id=>!identifier.test(id)))throw fail('素材引用 ID 无效，单次最多 100 条。');
     ids=[...new Set(values)];
   }
-  const modelCategory=params.get('model_category')??'all',layoutStyle=params.get('layout_style')??'all';
-  if(modelCategory!=='all'&&!modelCategories.has(modelCategory)||layoutStyle!=='all'&&!layoutStyles.has(layoutStyle))throw fail('素材分类筛选无效。');
-  return {platform,sort,offset,limit,ids,modelCategory,layoutStyle};
+  return {platform,collectionId,offset,limit,ids};
 }
 
 export function classifyReference(post){
@@ -76,12 +76,12 @@ export function sniffReferenceImage(bytes){
   throw fail('文件不是支持的素材图片。',415);
 }
 
-function imageUrls(post,platform){
-  const prefix=`data/images/${platform}/${post.id}/`;
+function imageUrls(post){
+  const prefix=`data/images/${post.platform}/${post.id}/`;
   return [...new Set((Array.isArray(post.images)?post.images:[]).flatMap(path=>{
     if(typeof path!=='string'||!path.startsWith(prefix))return [];
     const filename=path.slice(prefix.length);
-    return imageName.test(filename)?[`/api/content-ops/image/${platform}/${post.id}/${encodeURIComponent(filename)}`]:[];
+    return imageName.test(filename)?[`/api/content-ops/image/${post.platform}/${post.id}/${encodeURIComponent(filename)}`]:[];
   }))];
 }
 
@@ -234,6 +234,102 @@ export class ContentOpsReferenceStore {
       await rename(temporary,path);
     }finally{await rm(temporary,{force:true});}
   }
+  normalizeCollection(value){
+    if(!value||typeof value!=='object'||Array.isArray(value)||!identifier.test(String(value.id||'')))throw fail('合集数据无效。',500);
+    const name=typeof value.name==='string'?value.name.trim():'';
+    const createdAt=typeof value.created_at==='string'?value.created_at:'';
+    const referenceIds=Array.isArray(value.reference_ids)?[...new Set(value.reference_ids.map(String))]:null;
+    if(!name||name.length>80||name.includes('\0')||!createdAt||!referenceIds||referenceIds.length>10000||referenceIds.some(referenceId=>!collectionReference.test(referenceId)))throw fail('合集数据无效。',500);
+    return {id:String(value.id),name,created_at:createdAt,reference_ids:referenceIds};
+  }
+  async readCollections(){
+    const path=join(this.root,'data/collections.json');
+    let raw;try{raw=await readFile(path,'utf8');}catch(error){if(error.code==='ENOENT')return [];throw fail('读取素材合集失败。',500);}
+    let value;try{value=JSON.parse(raw);}catch{throw fail('素材合集文件无效。',500);}
+    const records=Array.isArray(value)?value:value?.collections;
+    if(!Array.isArray(records))throw fail('素材合集文件结构无效。',500);
+    const seen=new Set();
+    return records.map(record=>{
+      const collection=this.normalizeCollection(record);
+      if(seen.has(collection.id))throw fail('素材合集 ID 重复。',500);
+      seen.add(collection.id);return collection;
+    });
+  }
+  async writeCollections(collections){
+    const path=join(this.root,'data/collections.json'),temporary=path+'.'+randomBytes(12).toString('hex')+'.tmp';
+    const info=await lstat(path).catch(error=>{if(error.code!=='ENOENT')throw error;});
+    if(info&&(!info.isFile()||info.isSymbolicLink()))throw fail('素材合集文件无效。');
+    try{
+      const file=await open(temporary,'wx',0o600);
+      try{await file.writeFile(JSON.stringify({collections},null,2)+'\n');await file.sync();}finally{await file.close();}
+      await rename(temporary,path);
+    }finally{await rm(temporary,{force:true});}
+  }
+  collectionName(value){
+    if(typeof value!=='string')throw fail('合集名称无效。');
+    const name=value.trim();
+    if(!name||name.length>80||name.includes('\0'))throw fail('合集名称需为 1-80 个字符。');
+    return name;
+  }
+  collectionReferences(value){
+    if(!Array.isArray(value)||value.length>10000||value.some(referenceId=>typeof referenceId!=='string'||!collectionReference.test(referenceId)))throw fail('合集关联素材无效。');
+    return [...new Set(value)];
+  }
+  async createCollection(payload){
+    if(!payload||typeof payload!=='object'||Array.isArray(payload)||Object.keys(payload).some(key=>!['name'].includes(key)))throw fail('合集字段无效。');
+    const name=this.collectionName(payload.name);
+    return this.mutate(async()=>{
+      const collections=await this.readCollections();
+      let id;do{id=randomBytes(12).toString('hex');}while(collections.some(collection=>collection.id===id));
+      const collection={id,name,created_at:new Date().toISOString(),reference_ids:[]};
+      await this.writeCollections([...collections,collection]);return collection;
+    });
+  }
+  async updateCollection(id,payload){
+    if(!identifier.test(String(id))||!payload||typeof payload!=='object'||Array.isArray(payload)||Object.keys(payload).some(key=>!['name','reference_ids','referenceIds'].includes(key)))throw fail('合集参数无效。');
+    const hasName=Object.hasOwn(payload,'name'),hasReferences=Object.hasOwn(payload,'reference_ids')||Object.hasOwn(payload,'referenceIds');
+    if(!hasName&&!hasReferences)throw fail('合集没有可更新字段。');
+    const name=hasName?this.collectionName(payload.name):null;
+    const referenceIds=hasReferences?this.collectionReferences(payload.reference_ids??payload.referenceIds):null;
+    return this.mutate(async()=>{
+      const collections=await this.readCollections(),index=collections.findIndex(collection=>collection.id===String(id));
+      if(index<0)throw fail('素材合集不存在。',404);
+      const collection={...collections[index],...(hasName?{name}:{}),...(hasReferences?{reference_ids:referenceIds}:{})};
+      collections[index]=collection;await this.writeCollections(collections);return collection;
+    });
+  }
+  async deleteCollection(id){
+    if(!identifier.test(String(id)))throw fail('合集 ID 无效。');
+    return this.mutate(async()=>{
+      const collections=await this.readCollections(),index=collections.findIndex(collection=>collection.id===String(id));
+      if(index<0)throw fail('素材合集不存在。',404);
+      const [collection]=collections.splice(index,1);await this.writeCollections(collections);return {id:collection.id,name:collection.name};
+    });
+  }
+  async reorderReferences(payload){
+    if(!payload||typeof payload!=='object'||Array.isArray(payload)||Object.keys(payload).some(key=>!['platform','ids'].includes(key)))throw fail('素材排序参数无效。');
+    const platform=payload.platform;
+    if(!queryPlatforms.has(platform))throw fail('素材排序平台无效。');
+    if(!Array.isArray(payload.ids)||payload.ids.length>5000||payload.ids.some(id=>typeof id!=='string'||!identifier.test(id)))throw fail('素材排序 ID 无效。');
+    const ids=payload.ids.map(String);
+    if(new Set(ids).size!==ids.length)throw fail('素材排序 ID 不得重复。');
+    return this.mutate(async()=>{
+      const posts=await this.records();
+      const byReference=new Map(posts.map(post=>[post.id,post]));
+      for(const id of ids){
+        const post=byReference.get(id);
+        if(!post)throw fail('素材排序包含不存在的 ID。',404);
+        if(platform!=='all'&&post.platform!==platform)throw fail('素材排序包含不属于当前平台的 ID。');
+      }
+      if(!ids.length)return {ok:true,count:0};
+      const visible=[...posts].reverse(),selectedIds=new Set(ids);
+      const slots=visible.map((post,index)=>selectedIds.has(post.id)?index:-1).filter(index=>index>=0);
+      if(slots.length!==ids.length)throw fail('素材排序包含重复或不可见的 ID。');
+      ids.forEach((id,index)=>{visible[slots[index]]=byReference.get(id);});
+      await this.writeRecords(visible.reverse());
+      return {ok:true,count:ids.length};
+    });
+  }
   async addReference(payload){
     const fields=referenceFields(payload),image=payload.image==null?null:uploadedImage(payload.image);
     return this.mutate(async()=>{
@@ -260,7 +356,10 @@ export class ContentOpsReferenceStore {
     if(!hasImage&&!post.title?.trim()&&!post.body?.trim())throw fail('请至少提供图片、标题或正文中的一项。');
     const relocate=old&&old.platform!==post.platform;
     const changeDirectory=changeImage||relocate;
-    let staging,backup,oldDir,target,installed=false,backedUp=false;
+    const collections=relocate?await this.readCollections():[];
+    const nextCollections=collections.map(collection=>({...collection,reference_ids:collection.reference_ids.map(id=>id===referenceKey(old)?referenceKey(post):id)}));
+    const collectionsChanged=collections.some(collection=>collection.reference_ids.includes(referenceKey(old)));
+    let staging,backup,oldDir,target,installed=false,backedUp=false,recordsWritten=false;
     try{
       if(changeDirectory){
         const parent=await this.safeDirectory(`data/images/${post.platform}`);
@@ -287,7 +386,10 @@ export class ContentOpsReferenceStore {
       }
       const next=old?posts.map(item=>item.id===post.id?post:item):[...posts,post];
       await this.writeRecords(next);
+      recordsWritten=true;
+      if(collectionsChanged)await this.writeCollections(nextCollections);
     }catch(error){
+      if(recordsWritten)await this.writeRecords(posts).catch(()=>{});
       if(installed)await rm(target,{recursive:true,force:true});
       if(backedUp)await rename(backup,oldDir);
       throw error;
@@ -300,12 +402,21 @@ export class ContentOpsReferenceStore {
     if(!identifier.test(String(id)))throw fail('素材 ID 无效。');
     return this.mutate(async()=>{
       const posts=await this.records(),post=posts.find(item=>item.id===id);if(!post)throw fail('素材不存在。',404);
+      const collections=await this.readCollections(),referenceId=referenceKey(post);
+      const nextCollections=collections.map(collection=>({...collection,reference_ids:collection.reference_ids.filter(value=>value!==referenceId)}));
+      const collectionsChanged=nextCollections.some((collection,index)=>collection.reference_ids.length!==collections[index].reference_ids.length);
       const parent=await this.safeDirectory(`data/images/${post.platform}`),path=join(parent,id),backup=path+'.'+randomBytes(12).toString('hex')+'.bak';
-      let moved=false;
+      let moved=false,recordsWritten=false;
       try{
         try{await rename(path,backup);moved=true;}catch(error){if(error.code!=='ENOENT')throw error;}
         await this.writeRecords(posts.filter(item=>item.id!==id));
-      }catch(error){if(moved)await rename(backup,path);throw error;}
+        recordsWritten=true;
+        if(collectionsChanged)await this.writeCollections(nextCollections);
+      }catch(error){
+        if(recordsWritten)await this.writeRecords(posts).catch(()=>{});
+        if(moved)await rename(backup,path);
+        throw error;
+      }
       if(moved)await rm(backup,{recursive:true,force:true});
       return {id,platform:post.platform};
     });
@@ -322,7 +433,7 @@ export class ContentOpsReferenceStore {
       if(!line.trim())continue;
       let post;try{post=JSON.parse(line);}catch{throw fail(`素材 JSONL 无效：第 ${index+1} 行`,500);}
       if(!post||typeof post!=='object'||!identifier.test(String(post.id||''))||!platforms.has(post.platform)||seen.has(post.id))throw fail(`素材 ID 或平台无效/重复：第 ${index+1} 行`,500);
-      seen.add(post.id);if(platform===undefined||post.platform===platform)posts.push(post);
+      seen.add(post.id);if(platform===undefined||platform==='all'||post.platform===platform)posts.push(post);
     }
     return posts;
   }
@@ -332,38 +443,52 @@ export class ContentOpsReferenceStore {
     return Array.isArray(rules)&&rules.length?bundledRisk(posts,platform,config,rules):checkerRisk(this.root,posts,platform,config);
   }
   async list(params){
-    const query=parseReferenceQuery(params),source=await this.records(query.platform),config=await this.configuration();
-    const profile=config.profiles[query.platform],pending=source.filter(post=>!Array.isArray(post.signal?.banned_word_hits));
-    const riskValues=pending.length?await this.risks(pending,query.platform,config):[];
-    const risks=new Map(pending.map((post,index)=>[String(post.id),riskValues[index]]));
-    const wantsOrder=[...source].sort((a,b)=>number(b.metrics?.[profile.wants_field||'wants'])-number(a.metrics?.[profile.wants_field||'wants'])||byId(a,b));
-    const ranks=new Map(wantsOrder.filter(post=>number(post.metrics?.[profile.wants_field||'wants'])>0).map((post,index)=>[String(post.id),index+1]));
+    const query=parseReferenceQuery(params),source=await this.records(query.platform),config=await this.configuration(),collections=await this.readCollections();
+    const risks=new Map();
+    for(const platform of platforms){
+      const pending=source.filter(post=>post.platform===platform&&!Array.isArray(post.signal?.banned_word_hits));
+      if(!pending.length)continue;
+      const riskValues=await this.risks(pending,platform,config);
+      pending.forEach((post,index)=>risks.set(referenceKey(post),riskValues[index]));
+    }
+    const ranks=new Map();
+    for(const platform of platforms){
+      const profile=config.profiles[platform];
+      const wantsOrder=source.filter(post=>post.platform===platform).sort((a,b)=>number(b.metrics?.[profile.wants_field||'wants'])-number(a.metrics?.[profile.wants_field||'wants'])||byId(a,b));
+      wantsOrder.filter(post=>number(post.metrics?.[profile.wants_field||'wants'])>0).forEach((post,index)=>ranks.set(referenceKey(post),index+1));
+    }
+    const collectionByReference=new Map();
+    for(const collection of collections)for(const referenceId of collection.reference_ids){
+      const names=collectionByReference.get(referenceId)||[];names.push({id:collection.id,name:collection.name});collectionByReference.set(referenceId,names);
+    }
     const posts=source.map(post=>{
+      const profile=config.profiles[post.platform],referenceId=referenceKey(post);
       const signal=post.signal||{},metrics=post.metrics||{},good=post.label?.good===true;
-      const hits=Array.isArray(signal.banned_word_hits)?signal.banned_word_hits.filter(word=>typeof word==='string'):risks.get(String(post.id));
+      const hits=Array.isArray(signal.banned_word_hits)?signal.banned_word_hits.filter(word=>typeof word==='string'):risks.get(referenceId)||[];
       let tier,clean;
-      if(query.platform==='xhs'){
+      if(post.platform==='xhs'){
         tier=['good','high','mid','low'].includes(signal.engagement_tier)?signal.engagement_tier:good?'good':Object.entries(profile.high_metrics).some(([key,limit])=>number(metrics[key])>=limit)?'high':profile.interaction_metrics.some(key=>number(metrics[key])>0)?'mid':'low';
         clean=typeof signal.clean_for_style_reference==='boolean'?signal.clean_for_style_reference:good&&!hits.length;
       }else{
-        const rank=ranks.get(String(post.id));
+        const rank=ranks.get(referenceId);
         tier=signal.wants_tier==='top'?'high':signal.wants_tier==='mid'?'mid':['low','none'].includes(signal.wants_tier)?'low':rank&&rank<=profile.top_count?'high':rank&&rank<=profile.reference_count?'mid':'low';
         clean=typeof signal.clean_for_style_reference==='boolean'?signal.clean_for_style_reference:Boolean(rank&&rank<=profile.reference_count&&!hits.length);
       }
-      const images=imageUrls(post,query.platform),body=text(post.body);
-      return {id:String(post.id),platform:query.platform,title:text(post.title),body_preview:[...body].slice(0,300).join(''),body_full:body,cover_ocr:text(post.cover_ocr),image:images[0]||null,images,...classifyReference(post),
+      const images=imageUrls(post),body=text(post.body),postCollections=collectionByReference.get(referenceId)||[];
+      return {id:String(post.id),platform:post.platform,title:text(post.title),body_preview:[...body].slice(0,300).join(''),body_full:body,cover_ocr:text(post.cover_ocr),image:images[0]||null,images,...classifyReference(post),
         metrics:{likes:metric(metrics.likes),collects:metric(metrics.collects),comments:metric(metrics.comments),wants:metric(metrics.wants)},label_good:good,
-        clean_for_style_reference:clean,banned_word_hits:hits,engagement_tier:tier,model:typeof post.model==='string'?post.model:'',tags:Array.isArray(post.tags)?post.tags.filter(tag=>typeof tag==='string'):[],url:typeof post.url==='string'?post.url:'',fetched_at:typeof post.fetched_at==='string'?post.fetched_at:''};
+        clean_for_style_reference:clean,banned_word_hits:hits,engagement_tier:tier,model:typeof post.model==='string'?post.model:'',tags:Array.isArray(post.tags)?post.tags.filter(tag=>typeof tag==='string'):[],url:typeof post.url==='string'?post.url:'',fetched_at:typeof post.fetched_at==='string'?post.fetched_at:'',collection_ids:postCollections.map(collection=>collection.id),collection_names:postCollections.map(collection=>collection.name)};
     });
-    const tierRank={good:3,high:2,mid:1,low:0};
-    const engaged=post=>number(post.metrics.likes)+number(post.metrics.collects)*2+number(post.metrics.comments);
-    posts.sort((a,b)=>{
-      if(query.sort==='best')return Number(b.label_good)-Number(a.label_good)||Number(b.clean_for_style_reference)-Number(a.clean_for_style_reference)||tierRank[b.engagement_tier]-tierRank[a.engagement_tier]||number(b.metrics.likes)-number(a.metrics.likes)||byId(a,b);
-      if(query.sort==='engaged')return engaged(b)-engaged(a)||byId(a,b);
-      if(query.sort==='wanted')return Number(b.metrics.wants!==null)-Number(a.metrics.wants!==null)||number(b.metrics.wants)-number(a.metrics.wants)||byId(a,b);
-      return (Date.parse(b.fetched_at)||0)-(Date.parse(a.fetched_at)||0)||byId(a,b);
-    });
-    const selected=posts.filter(post=>(!query.ids||query.ids.includes(post.id))&&(query.modelCategory==='all'||post.model_category===query.modelCategory)&&(query.layoutStyle==='all'||post.layout_style===query.layoutStyle));
+    posts.reverse();
+    const collection=collections.find(item=>item.id===query.collectionId);
+    if(query.collectionId!=='all'&&query.collectionId!=='uncategorized'&&!collection)throw fail('素材合集不存在。',404);
+    const postsByKey=new Map(posts.map(post=>[referenceKey(post),post]));
+    const selected=query.collectionId!=='all'&&query.collectionId!=='uncategorized'
+      ? collection.reference_ids.map(referenceId=>postsByKey.get(referenceId)).filter(Boolean).filter(post=>!query.ids||query.ids.includes(post.id))
+      : posts.filter(post=>{
+        const matchesCollection=query.collectionId==='all'||!post.collection_ids.length;
+        return matchesCollection&&(!query.ids||query.ids.includes(post.id));
+      });
     // ids limits the result set; pagination and total describe that filtered set.
     return {total:selected.length,dataset_total:posts.length,offset:query.offset,limit:query.limit,posts:selected.slice(query.offset,query.offset+query.limit),
       ...(query.ids?{missing_ids:query.ids.filter(id=>!selected.some(post=>post.id===id))}:{})};
