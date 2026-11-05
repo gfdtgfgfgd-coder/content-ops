@@ -1,10 +1,11 @@
 """Offline regressions. Run: PYTHONPATH=scripts scratch/.venv/bin/python3 -m unittest lib.test_pipeline -v"""
 from argparse import Namespace
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, redirect_stderr
 from copy import deepcopy
 import importlib.util
 import io
 import json
+import shutil
 from pathlib import Path
 import subprocess
 import tempfile
@@ -118,6 +119,36 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual([hit['word'] for hit in hits], ['最便宜', '5 折'])
         self.assertTrue(words.check('API', 'xianyu'))
         self.assertFalse(words.check('安排一次任务', 'xhs'))
+
+    def test_xhs_references_filters_deleted_and_unmarked_posts(self):
+        source = self.base / 'posts.jsonl'
+        posts = [{'id': 'a', 'platform': 'xhs', 'label': {'good': True}, 'body': '普通内容'},
+                 {'id': 'b', 'platform': 'xhs', 'label': {'good': False}},
+                 {'id': 'c', 'platform': 'xhs', 'label': {'good': True}}]
+        store.write_posts(posts, source)
+        refs = {'xhs_good_posts': [{'id': value} for value in ['a', 'b', 'deleted']]}
+        log = io.StringIO()
+        with redirect_stderr(log):
+            selected = preferences.xhs_references(source, refs, [], 'xhs', 29)
+        self.assertEqual([post['id'] for post in selected], ['a'])
+        self.assertTrue(selected[0]['clean_for_style_reference'])
+        self.assertIn('已删除或取消精选 2 条', log.getvalue())
+        store.write_posts(posts[1:], source)
+        with redirect_stderr(io.StringIO()):
+            self.assertEqual(preferences.xhs_references(source, refs, [], 'xhs', 29), [])
+
+    def test_preference_build_accepts_an_empty_temporary_reference_dataset(self):
+        config_path = ROOT / 'config/preference-build.json'
+        config = json.loads(config_path.read_text())
+        for relative in set(config['paths'].values()) | {'config/preference-build.json'}:
+            target = self.base / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
+        store.write_posts([], self.base / config['paths']['xhs_data_dir'])
+        with redirect_stderr(io.StringIO()):
+            bundle = preferences.build_bundle(self.base, self.base / 'config/preference-build.json', '2026-11-05')
+        self.assertEqual(bundle['style_references']['xhs_good_posts'], [])
+        self.assertEqual(bundle['style_references']['xianyu_top_posts'], [])
 
     def test_preferences_loader_and_fallback(self):
         with redirect_stdout(io.StringIO()):

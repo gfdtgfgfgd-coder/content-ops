@@ -56,7 +56,13 @@ python3 scripts/check.py --help
 
 当前帖子唯一源为 `data/posts.jsonl`；风险规则唯一源为 `rules/banned-words-quick.yaml`；运营偏好事实源为 `skills/simin-persona/SKILL.md` 和 `data/wecom/simin-feedback.jsonl`。模型语料库唯一源为 `data/model-corpus.md`。不要编辑派生包代替源文件。
 
-素材删除排障：页面、API、`data/posts.jsonl` 与 `data/images/` 应共同核对；图片缺失不等于用户要求删除，禁止据此批量删帖。若旧 JSONL 被恢复，记录可能重新出现而本机图片仍不存在；不要使用 `git restore data/posts.jsonl` 覆盖用户的增删改。2026-11-05 已通过真实删除 API 清理截图确认的两条残留，具体回写来源待查。局部恢复记录保存在忽略目录 `scratch/deleted-reference-repair-20261105.json`，仅含本轮两条原记录及操作前合集关系，供人工核查，处理完可删除；不是新的素材源。
+素材库写入：素材增删改、全局排序和合集 CRUD 均在仓库根目录持有 `.posts.lock`，写入临时文件、fsync、原子替换后自动 Git 提交；提交路径仅限本次受影响的 `data/posts.jsonl`、`data/collections.json`，使用 `commit --only`、禁用 hooks/签名，并为缺失的身份提供命令级兜底。提交失败会撤回本次数据和图片变更并向界面报错，不混入其他暂存代码。图片备份待提交成功才删除。素材库要求这两个数据文件已受本仓库 Git 跟踪。
+
+**【最高红线】严禁暴力回滚生产数据（Agent 必读）**：`data/posts.jsonl` 与 `data/collections.json` 属于用户实时维护的生产数据库，界面增删改决定最新业务状态。严禁执行 `git restore data/posts.jsonl`、`git checkout -- data/posts.jsonl`、`git reset` 等覆盖用户数据的命令，整仓回滚也不得覆盖这两个文件！数量变动导致测试或流水线报警时，必须修复断言或同步派生配置，严禁为测试通过还原生产数据。抗回滚测试只能在独立临时 Git 仓库执行。自动提交保证恢复当前 HEAD 不撤销已提交删除；主动切到删除之前的历史或其他分支仍可能取回旧数据，不得据此承诺任意历史操作都安全。
+
+素材删除排障：共同核对页面、API、JSONL 和图片文件，不把一次图片读取失败直接当作删除授权。2026-11-05 按 Lilith 本轮明确要求，检查声明的本地图片是否全部不存在，清理 17 条历史缺图记录及失效合集引用，393 条降至 376 条；保留纯文字素材和仍有任意有效图片的素材。局部恢复记录 `scratch/deleted-reference-repair-20261105.json` 保留此前截图两条记录，并追加本轮删除的 17 条及原合集关系；核查完可删，不作为第二素材源。
+
+偏好构建仅从 `posts.jsonl` 当前存活且标为 good 的素材与 `reference-posts.json` 的交集中取小红书参考；索引过时、精选不足仅记录日志。`config/preference-build.json` 的数量是上限，不能当作生产库固定条数；素材编辑后清洗信号失效时按现行风险规则即时计算。数量测试使用独立临时数据和 Git 仓库，不因用户删帖而还原生产数据。
 
 ## 一份事实一个文件与 D20 闸门
 

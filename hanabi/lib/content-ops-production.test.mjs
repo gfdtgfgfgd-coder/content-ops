@@ -552,8 +552,85 @@ async function referenceFixture(t) {
   t.after(()=>rm(dir,{recursive:true,force:true}));
   for(const name of ['data','config'])await mkdir(join(dir,name));
   for(const name of ['config/data-cleaning.json','data/distilled-preferences.json'])await cp(join(root,name),join(dir,name));
+  await writeFile(join(dir,'data/posts.jsonl'),'');
+  await writeFile(join(dir,'data/collections.json'),JSON.stringify({collections:[]},null,2)+'\n');
+  const git=args=>execFileSync('git',args,{cwd:dir,stdio:'pipe'});
+  git(['init','-q']);git(['config','user.name','Hanabi test']);git(['config','user.email','test@localhost']);
+  git(['add','data/posts.jsonl','data/collections.json']);git(['-c','core.hooksPath=/dev/null','commit','-qm','测试素材初始版本']);
   return {dir,store:new ContentOpsReferenceStore({root:dir})};
 }
+
+test('reference mutations commit only their data, preserve staged work, and survive current-HEAD restores', async t => {
+  const {dir,store}=await referenceFixture(t),git=args=>execFileSync('git',args,{cwd:dir,encoding:'utf8',stdio:'pipe'});
+  await writeFile(join(dir,'unfinished.txt'),'staged work');git(['add','unfinished.txt']);
+  await writeFile(join(dir,'unfinished.txt'),'new unstaged work');
+  git(['config','user.name','']);git(['config','user.email','']);git(['config','commit.gpgsign','true']);
+  await writeFile(join(dir,'.git/hooks/pre-commit'),'#!/bin/sh\nexit 1\n',{mode:0o755});
+  const expectCommit=(message,paths)=>{
+    assert.equal(git(['log','-1','--format=%s']).trim(),message);
+    assert.deepEqual(git(['diff-tree','--no-commit-id','--name-only','-r','HEAD']).trim().split('\n').sort(),paths.sort());
+    assert.equal(git(['show',':unfinished.txt']),'staged work');
+    assert.equal(git(['status','--porcelain','--','unfinished.txt']).slice(0,2),'AM');
+  };
+  const first=await store.addReference({title:'第一篇',image:png});
+  expectCommit(`素材库：录入素材 ${first.id}`,['data/posts.jsonl']);
+  const second=await store.addReference({title:'保留纯文'});
+  await store.updateReference(first.id,{title:'更新标题'});
+  expectCommit(`素材库：更新素材 ${first.id}`,['data/posts.jsonl']);
+  await store.reorderReferences({platform:'all',ids:[first.id,second.id]});
+  expectCommit('素材库：重排全量素材顺序',['data/posts.jsonl']);
+  const collection=await store.createCollection({name:'测试合集'});
+  expectCommit(`素材库：更新素材合集 ${collection.id}`,['data/collections.json']);
+  await store.updateCollection(collection.id,{name:'已改名',reference_ids:[`xhs:${first.id}`,`xhs:${second.id}`]});
+  expectCommit(`素材库：更新素材合集 ${collection.id}`,['data/collections.json']);
+  await store.deleteReference(first.id);
+  expectCommit(`素材库：删除素材 ${first.id}`,['data/posts.jsonl','data/collections.json']);
+  await assert.rejects(()=>stat(join(dir,`data/images/xhs/${first.id}`)),{code:'ENOENT'});
+  assert.deepEqual(JSON.parse(git(['show','HEAD:data/posts.jsonl']).trim()).id,second.id);
+  for(const args of [['restore','.'],['checkout','.']]){
+    git(args);
+    assert.deepEqual((await new ContentOpsReferenceStore({root:dir}).records()).map(post=>post.id),[second.id]);
+    assert.deepEqual((await store.readCollections())[0].reference_ids,[`xhs:${second.id}`]);
+  }
+  await store.deleteCollection(collection.id);
+  assert.equal(git(['log','-1','--format=%s']).trim(),`素材库：更新素材合集 ${collection.id}`);
+  const head=git(['rev-parse','HEAD']);
+  await store.reorderReferences({platform:'all',ids:[second.id]});
+  assert.equal(git(['rev-parse','HEAD']),head);
+});
+
+test('Git commit failure restores reference records, collections, images and the existing index', async t => {
+  const {dir,store}=await referenceFixture(t),git=args=>execFileSync('git',args,{cwd:dir,encoding:'utf8',stdio:'pipe'});
+  const first=await store.addReference({title:'图片素材',image:png}),second=await store.addReference({body:'纯文'});
+  const collection=await store.createCollection({name:'保留合集'});
+  await store.updateCollection(collection.id,{reference_ids:[`xhs:${first.id}`,`xhs:${second.id}`]});
+  await writeFile(join(dir,'unfinished.txt'),'keep');git(['add','unfinished.txt']);
+  const index=await readFile(join(dir,'.git/index')),head=git(['rev-parse','HEAD']);
+  const records=await readFile(join(dir,'data/posts.jsonl'),'utf8'),collections=await readFile(join(dir,'data/collections.json'),'utf8');
+  for(const operation of [
+    ()=>store.addReference({image:webp}),()=>store.updateReference(first.id,{platform:'xianyu',image:webp}),
+    ()=>store.deleteReference(first.id),()=>store.reorderReferences({platform:'all',ids:[first.id,second.id]}),
+    ()=>store.createCollection({name:'失败'}),()=>store.updateCollection(collection.id,{name:'失败'}),()=>store.deleteCollection(collection.id)
+  ]){
+    await writeFile(join(dir,'.git/index.lock'),'test busy index');
+    try{await assert.rejects(operation,{statusCode:503});}finally{await rm(join(dir,'.git/index.lock'));}
+    assert.equal(git(['rev-parse','HEAD']),head);
+    assert.equal(await readFile(join(dir,'data/posts.jsonl'),'utf8'),records);
+    assert.equal(await readFile(join(dir,'data/collections.json'),'utf8'),collections);
+    assert.deepEqual(await readFile(join(dir,first.images[0])),png);
+    assert.deepEqual(await readFile(join(dir,'.git/index')),index);
+  }
+  assert.deepEqual(await readdir(join(dir,'data/images/xhs')),[first.id]);
+  assert.deepEqual(await readdir(join(dir,'data/images/xianyu')),[]);
+  assert.equal((await readdir(join(dir,'data'))).some(name=>name.includes('.tmp')||name.includes('.lock')),false);
+});
+
+test('reference mutations refuse an inherited parent Git repository', async t => {
+  const {dir}=await referenceFixture(t),nested=join(dir,'nested');await mkdir(nested);
+  const store=new ContentOpsReferenceStore({root:nested});
+  await assert.rejects(()=>store.addReference({title:'不应写入父仓库'}),{statusCode:503});
+  await assert.rejects(()=>stat(join(nested,'data/posts.jsonl')),{code:'ENOENT'});
+});
 
 test('references CRUD accepts image+text, image-only, text-only and preserves manual labels', async t => {
   const {dir,store}=await referenceFixture(t);
@@ -591,7 +668,7 @@ test('references reject invalid payloads, IDs, formats and oversized images with
   await assert.rejects(()=>store.deleteReference('ff'),{statusCode:404});
   await assert.rejects(()=>store.updateReference(post.id,{title:'',image:null}),{statusCode:400});
   assert.equal(await readFile(join(dir,'data/posts.jsonl'),'utf8'),source);
-  assert.deepEqual((await readdir(join(dir,'data'))).sort(),['distilled-preferences.json','posts.jsonl']);
+  assert.deepEqual((await readdir(join(dir,'data'))).sort(),['collections.json','distilled-preferences.json','posts.jsonl']);
   await writeFile(join(dir,'data/posts.jsonl'),'broken JSON\n');
   await assert.rejects(()=>store.addReference({title:'不能覆盖损坏的源'}),{statusCode:500});
   assert.equal(await readFile(join(dir,'data/posts.jsonl'),'utf8'),'broken JSON\n');

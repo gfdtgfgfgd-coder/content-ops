@@ -1,4 +1,5 @@
 import {spawn} from 'node:child_process';
+import {editorCommand} from './content-ops-editor.mjs';
 import {existsSync} from 'node:fs';
 import {randomBytes} from 'node:crypto';
 import {cp,lstat,mkdir,open,readFile,realpath,rename,rm,stat,writeFile} from 'node:fs/promises';
@@ -193,10 +194,36 @@ export class ContentOpsReferenceStore {
     const current=previous.catch(()=>{}).then(async()=>{
       await this.safeDirectory('data');
       const unlock=await this.lock();
-      try{return await operation();}finally{await unlock();}
+      try{
+        const repository=await editorCommand('git',['rev-parse','--show-toplevel'],{cwd:this.root});
+        if(repository.code!==0||resolve(repository.stdout.trim())!==this.root)throw fail('素材库必须位于独立 Git 仓库根目录，操作尚未保存。',503);
+        return await operation();
+      }finally{await unlock();}
     });
     writes.set(this.root,current);
     try{return await current;}finally{if(writes.get(this.root)===current)writes.delete(this.root);}
+  }
+  async commitData(message,paths){
+    const allowed=new Set(['data/posts.jsonl','data/collections.json']);
+    if(!paths.length||paths.some(path=>!allowed.has(path)))throw fail('素材库提交路径无效。',500);
+    const git=args=>editorCommand('git',args,{cwd:this.root});
+    const tracked=await git(['ls-files','--error-unmatch','--',...paths]);
+    if(tracked.code!==0)throw fail('素材数据文件尚未纳入 Git，操作已撤回。',503);
+    const diff=await git(['diff','--quiet','HEAD','--',...paths]);
+    if(diff.code===0)return;
+    if(diff.code!==1)throw fail('无法检查素材数据版本，操作已撤回。',503);
+    const identity=[];
+    for(const [key,fallback] of [['user.name','Hanabi'],['user.email','hanabi@localhost']]){
+      const value=await git(['config','--get',key]);
+      if(!value.stdout.trim())identity.push('-c',`${key}=${fallback}`);
+    }
+    const result=await git([...identity,'-c','core.hooksPath=/dev/null','-c','commit.gpgsign=false','commit','--only','-m',message,'--',...paths]);
+    if(result.code!==0)throw fail('素材库 Git 提交失败，操作已撤回；请检查 Git 写入锁与权限。',503);
+  }
+  async saveCollections(collections,previous,id){
+    await this.writeCollections(collections);
+    try{await this.commitData(`素材库：更新素材合集 ${id}`,['data/collections.json']);}
+    catch(error){await this.writeCollections(previous);throw error;}
   }
   async lock(){
     const path=join(this.root,'data/.posts.lock'),token=randomBytes(12).toString('hex');
@@ -282,7 +309,7 @@ export class ContentOpsReferenceStore {
       const collections=await this.readCollections();
       let id;do{id=randomBytes(12).toString('hex');}while(collections.some(collection=>collection.id===id));
       const collection={id,name,created_at:new Date().toISOString(),reference_ids:[]};
-      await this.writeCollections([...collections,collection]);return collection;
+      await this.saveCollections([...collections,collection],collections,id);return collection;
     });
   }
   async updateCollection(id,payload){
@@ -295,7 +322,7 @@ export class ContentOpsReferenceStore {
       const collections=await this.readCollections(),index=collections.findIndex(collection=>collection.id===String(id));
       if(index<0)throw fail('素材合集不存在。',404);
       const collection={...collections[index],...(hasName?{name}:{}),...(hasReferences?{reference_ids:referenceIds}:{})};
-      collections[index]=collection;await this.writeCollections(collections);return collection;
+      const next=[...collections];next[index]=collection;await this.saveCollections(next,collections,id);return collection;
     });
   }
   async deleteCollection(id){
@@ -303,7 +330,7 @@ export class ContentOpsReferenceStore {
     return this.mutate(async()=>{
       const collections=await this.readCollections(),index=collections.findIndex(collection=>collection.id===String(id));
       if(index<0)throw fail('素材合集不存在。',404);
-      const [collection]=collections.splice(index,1);await this.writeCollections(collections);return {id:collection.id,name:collection.name};
+      const collection=collections[index];await this.saveCollections(collections.filter((_,position)=>position!==index),collections,id);return {id:collection.id,name:collection.name};
     });
   }
   async reorderReferences(payload){
@@ -327,6 +354,8 @@ export class ContentOpsReferenceStore {
       if(slots.length!==ids.length)throw fail('素材排序包含重复或不可见的 ID。');
       ids.forEach((id,index)=>{visible[slots[index]]=byReference.get(id);});
       await this.writeRecords(visible.reverse());
+      try{await this.commitData('素材库：重排全量素材顺序',['data/posts.jsonl']);}
+      catch(error){await this.writeRecords(posts);throw error;}
       return {ok:true,count:ids.length};
     });
   }
@@ -359,7 +388,7 @@ export class ContentOpsReferenceStore {
     const collections=relocate?await this.readCollections():[];
     const nextCollections=collections.map(collection=>({...collection,reference_ids:collection.reference_ids.map(id=>id===referenceKey(old)?referenceKey(post):id)}));
     const collectionsChanged=collections.some(collection=>collection.reference_ids.includes(referenceKey(old)));
-    let staging,backup,oldDir,target,installed=false,backedUp=false,recordsWritten=false;
+    let staging,backup,oldDir,target,installed=false,backedUp=false,recordsWritten=false,collectionsWritten=false;
     try{
       if(changeDirectory){
         const parent=await this.safeDirectory(`data/images/${post.platform}`);
@@ -387,8 +416,10 @@ export class ContentOpsReferenceStore {
       const next=old?posts.map(item=>item.id===post.id?post:item):[...posts,post];
       await this.writeRecords(next);
       recordsWritten=true;
-      if(collectionsChanged)await this.writeCollections(nextCollections);
+      if(collectionsChanged){await this.writeCollections(nextCollections);collectionsWritten=true;}
+      await this.commitData(`素材库：${old?'更新':'录入'}素材 ${post.id}`,['data/posts.jsonl',...(collectionsChanged?['data/collections.json']:[])]);
     }catch(error){
+      if(collectionsWritten)await this.writeCollections(collections);
       if(recordsWritten)await this.writeRecords(posts).catch(()=>{});
       if(installed)await rm(target,{recursive:true,force:true});
       if(backedUp)await rename(backup,oldDir);
@@ -406,13 +437,15 @@ export class ContentOpsReferenceStore {
       const nextCollections=collections.map(collection=>({...collection,reference_ids:collection.reference_ids.filter(value=>value!==referenceId)}));
       const collectionsChanged=nextCollections.some((collection,index)=>collection.reference_ids.length!==collections[index].reference_ids.length);
       const parent=await this.safeDirectory(`data/images/${post.platform}`),path=join(parent,id),backup=path+'.'+randomBytes(12).toString('hex')+'.bak';
-      let moved=false,recordsWritten=false;
+      let moved=false,recordsWritten=false,collectionsWritten=false;
       try{
         try{await rename(path,backup);moved=true;}catch(error){if(error.code!=='ENOENT')throw error;}
         await this.writeRecords(posts.filter(item=>item.id!==id));
         recordsWritten=true;
-        if(collectionsChanged)await this.writeCollections(nextCollections);
+        if(collectionsChanged){await this.writeCollections(nextCollections);collectionsWritten=true;}
+        await this.commitData(`素材库：删除素材 ${id}`,['data/posts.jsonl',...(collectionsChanged?['data/collections.json']:[])]);
       }catch(error){
+        if(collectionsWritten)await this.writeCollections(collections);
         if(recordsWritten)await this.writeRecords(posts).catch(()=>{});
         if(moved)await rename(backup,path);
         throw error;

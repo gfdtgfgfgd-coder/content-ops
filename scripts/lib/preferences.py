@@ -207,15 +207,17 @@ def xhs_references(directory: Path, refs: dict[str, Any], rules: list[dict[str, 
     good_ids = {post_id for post_id, post in posts.items() if isinstance(post.get("label"), dict) and post["label"].get("good") is True}
     index_ids = {item.get("id") for item in refs.get("xhs_good_posts", []) if isinstance(item, dict)}
     if good_ids != index_ids:
-        raise ValueError(f"XHS good 标注与 reference-posts 索引不一致：帖子={len(good_ids)}，索引={len(index_ids)}")
+        print(f"XHS 精选索引动态过滤：索引中已删除或取消精选 {len(index_ids - good_ids)} 条，"
+              f"当前精选尚未入索引 {len(good_ids - index_ids)} 条；仅使用存活精选与索引交集。", file=sys.stderr)
     result = []
-    for post_id in sorted(good_ids):
+    for post_id in sorted(good_ids & index_ids)[:limit]:
         post = posts[post_id]
         signal = post.get("signal") if isinstance(post.get("signal"), dict) else {}
+        hits = clean_reference_hits(post, rules, platform)
         clean = signal.get("clean_for_style_reference")
         if not isinstance(clean, bool):
-            raise ValueError(f"XHS {post_id} 尚无 signal.clean_for_style_reference")
-        result.append({"id": post_id, "clean_for_style_reference": clean, "banned_word_hits": clean_reference_hits(post, rules, platform)})
+            clean = not hits
+        result.append({"id": post_id, "clean_for_style_reference": clean, "banned_word_hits": hits})
     return result
 
 
@@ -325,10 +327,10 @@ def build_bundle(root: Path, config_path: Path, output_date: str | None) -> dict
 
     xhs_posts = xhs_references(source_paths["xhs_data_dir"], read_json(source_paths["reference_posts"]), rules, platform_ids["xhs_reference"], int(config["reference_limits"]["xhs_good_posts"]))
     xianyu_posts = xianyu_references(source_paths["xianyu_data_dir"], rules, platform_ids["xianyu_reference"], int(config["reference_limits"]["xianyu_top_posts"]))
-    if len(xhs_posts) != int(config["reference_limits"]["xhs_good_posts"]):
-        raise ValueError(f"期望 {config['reference_limits']['xhs_good_posts']} 条 XHS good，实际 {len(xhs_posts)}")
-    if len(xianyu_posts) != int(config["reference_limits"]["xianyu_top_posts"]):
-        raise ValueError(f"期望 {config['reference_limits']['xianyu_top_posts']} 条闲鱼参考，实际 {len(xianyu_posts)}")
+    for name, selected in (("xhs_good_posts", xhs_posts), ("xianyu_top_posts", xianyu_posts)):
+        maximum = int(config["reference_limits"][name])
+        if len(selected) < maximum:
+            print(f"参考素材 {name} 当前可用 {len(selected)} 条，上限 {maximum} 条；按实际存活素材构建。", file=sys.stderr)
 
     identity_section = section(persona_text, "她是谁、负责什么")
     identity = re.sub(r"\s+", " ", identity_section.splitlines()[0]).strip()
