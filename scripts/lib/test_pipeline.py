@@ -354,6 +354,7 @@ class PipelineTests(unittest.TestCase):
             prompt, log = copy.visual_prompt_call(post, references, settings, 1, self.base/'visual.txt', 'xianyu')
             payload = request.call_args.args[1]
             self.assertEqual(payload['model'], 'vision-selected')
+            self.assertEqual(payload['max_tokens'], 2400)
             content = payload['messages'][0]['content']
             self.assertEqual(len(content), 4)
             self.assertIn('方图1:1', content[0]['text'])
@@ -374,6 +375,19 @@ class PipelineTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, '被截断'):
                 copy.visual_prompt_call(post, references, settings, 1, self.base/'truncated.txt', 'xhs')
             self.assertEqual((self.base/'truncated.txt').read_text(),'截断提示词')
+        for error, expected in [
+            (gateway.ImageGenerationError('Gateway connection failed: timed out'), '网络超时'),
+            (gateway.ImageGenerationError('Gateway HTTP 400: image input is not supported'), '不支持图像输入'),
+        ]:
+            with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', side_effect=error):
+                with self.subTest(error=error), self.assertRaisesRegex(ValueError, expected):
+                    copy.visual_prompt_call(post, references, settings, 1, self.base/'failed.txt', 'xhs')
+        with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', return_value={'choices':[{'finish_reason':'stop','message':{'content':''}}]}):
+            with self.assertRaisesRegex(ValueError, '可能不支持图像输入'):
+                copy.visual_prompt_call(post, references, settings, 1, self.base/'empty.txt', 'xhs')
+        with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', return_value={'choices':[]}):
+            with self.assertRaisesRegex(ValueError, '可能不支持图像输入'):
+                copy.visual_prompt_call(post, references, settings, 1, self.base/'no-choice.txt', 'xhs')
 
     def test_saved_gateway_fields_override_inherited_environment(self):
         config = self.base / 'gateway.env'
@@ -448,7 +462,7 @@ class PipelineTests(unittest.TestCase):
         mutations = [
             lambda p:p.update(copy_format='format_2'),
             lambda p:p['sections'].reverse(),
-            lambda p:p.update(title='长'*21),
+            lambda p:p.update(title='长'*26),
             lambda p:p.update(title='标题\t控制符'),
             lambda p:p['sections'][0].update(text='第一行\n第二行\n第三行'),
             lambda p:p['sections'][1].update(text='缺少加粗的核心卖点'),
@@ -468,6 +482,30 @@ class PipelineTests(unittest.TestCase):
         duplicate=structured_post();duplicate['angle']='另一角度'
         with self.assertRaisesRegex(ValueError,'正文重复'):
             copy.validate_posts({'posts':[structured_post(),duplicate]},2,'GLM5.3',copy_format='format_1')
+
+    def test_small_copy_length_overages_are_trimmed_with_warnings(self):
+        post = structured_post()
+        post['sections'][0]['text'] = '开头内容需要稍微增加几个字，达到三十四字边界以上但仍然可以自然修剪完成'
+        post['title'] = '标题长度刚刚超过二十字但没有达到严重超长范围'
+        output = io.StringIO()
+        with redirect_stdout(output):
+            result = copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_1')
+        self.assertIn('WARN', output.getvalue())
+        self.assertLessEqual(len(post['sections'][0]['text'].replace('\n','')),34)
+        self.assertTrue(post['sections'][0]['text'].endswith(('，', ',', '？', '！', '?', '!')))
+        self.assertEqual(len(post['title']),20)
+        self.assertEqual(result[0]['body'].split('\n\n')[0], post['sections'][0]['text'])
+
+        fallback = structured_post()
+        fallback['sections'][0]['text'] = '开' * 35
+        with redirect_stdout(io.StringIO()):
+            copy.validate_posts({'posts':[fallback]},1,'GLM5.3',copy_format='format_1')
+        self.assertEqual(fallback['sections'][0]['text'].replace('\n',''), '开' * 33 + '。')
+
+        severe = structured_post()
+        severe['sections'][0]['text'] = '开' * 46
+        with self.assertRaisesRegex(ValueError,'开头引入'):
+            copy.validate_posts({'posts':[severe]},1,'GLM5.3',copy_format='format_1')
 
     def test_multiple_images_multiplier_and_fixed_format_no_overwrite(self):
         settings={'CONTENT_OPS_API_KEY':'test','CONTENT_OPS_BASE_URL':'https://offline.invalid/v1'}

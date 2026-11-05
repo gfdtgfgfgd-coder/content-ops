@@ -95,13 +95,30 @@ def structured_body(post, expected_format, platform):
         if not isinstance(text, str) or not text.strip() or re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text):
             raise ValueError('文案区块必须为非空文本，不能含控制字符')
         text = text.strip()
-        if platform == 'xhs':
+        if platform == 'xhs' and section['kind'] != 'intro':
             text = mobile_body(text, maximum=20)
         section['text'] = text
         content[section['kind']] = text
     intro = content['intro']
-    if len(intro.splitlines()) > 2 or len(intro.replace('\n', '')) > 34:
+    intro_length = len(intro.replace('\n', ''))
+    if len(intro.splitlines()) > 2:
         raise ValueError('开头引入须在两行、34字以内')
+    if intro_length > 45:
+        raise ValueError('开头引入须在两行、34字以内')
+    if intro_length > 34:
+        flattened = intro.replace('\n', '')
+        boundary = max((flattened.rfind(mark, 0, 34) for mark in '，,？！!?'), default=-1)
+        if boundary >= 0:
+            intro = flattened[:boundary + 1]
+        else:
+            intro = flattened[:33].rstrip() + '。'
+        content['intro'] = intro
+        sections[0]['text'] = intro
+        print(f'WARN: 开头引入超出34字，已自动修剪至{len(intro)}字。')
+    if platform == 'xhs':
+        intro = mobile_body(intro, maximum=20)
+        content['intro'] = intro
+        sections[0]['text'] = intro
     if not re.search(r'\*\*[^*]+\*\*', content['selling_points']):
         raise ValueError('核心卖点须使用 Markdown 加粗')
     if len(content['price'].splitlines()) != 2:
@@ -109,7 +126,12 @@ def structured_body(post, expected_format, platform):
     if 'compatibility' in content and not re.search(r'(?<![A-Za-z])CC(?![A-Za-z])', content['compatibility'], re.I):
         raise ValueError('工具区块须包含兼容 CC 的说明；未核实时须明确待确认')
     title = post.get('title')
-    if not isinstance(title, str) or not title.strip() or re.search(r'[\x00-\x1f\x7f]', title) or (platform == 'xhs' and len(title) > 20):
+    if not isinstance(title, str) or not title.strip() or re.search(r'[\x00-\x1f\x7f]', title):
+        raise ValueError('笔记标题须为非空单行文本，小红书不超过20字')
+    if platform == 'xhs' and 20 < len(title) <= 25:
+        post['title'] = title[:20]
+        print(f'WARN: 小红书标题超出20字，已自动修剪至20字。')
+    elif platform == 'xhs' and len(title) > 25:
         raise ValueError('笔记标题须为非空单行文本，小红书不超过20字')
     return '\n\n'.join(section['text'] for section in sections)
 
@@ -388,18 +410,29 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
         f"标题：{'；'.join(post['title_lines'])}\n卖点：{post['cover_subtitle']}；{post['cover_highlight']}\n"
         f"正文：{post['body']}\n目标人群：{post['audience']}\n画布要求：{ratio}{style_line}"
     )}, *images]
-    response = image_api.request_json(settings['CONTENT_OPS_BASE_URL'].rstrip('/') + '/chat/completions',
-        {'model':model,'messages':[{'role':'user','content':content}],'temperature':0.5,'max_tokens':1600},
-        settings['CONTENT_OPS_API_KEY'],timeout)
-    choice = response.get('choices',[{}])[0]
-    text = choice.get('message',{}).get('content','')
+    try:
+        response = image_api.request_json(settings['CONTENT_OPS_BASE_URL'].rstrip('/') + '/chat/completions',
+            {'model':model,'messages':[{'role':'user','content':content}],'temperature':0.5,'max_tokens':2400},
+            settings['CONTENT_OPS_API_KEY'],timeout)
+    except image_api.ImageGenerationError as error:
+        reason = str(error)
+        lowered = reason.lower()
+        if any(marker in lowered for marker in ('timed out', 'timeout', '超时')):
+            raise ValueError('视觉模型请求网络超时，请检查网络或网关后重试。') from None
+        if any(marker in lowered for marker in ('image input', 'image_url', 'vision', 'multimodal', 'multi-modal', '图像输入', '多模态')) and any(marker in lowered for marker in ('unsupported', 'not support', 'not_supported', '不支持', 'invalid')):
+            raise ValueError('当前视觉模型或网关不支持图像输入，请改用支持多模态图片的视觉模型。') from None
+        raise ValueError(f'视觉模型请求失败：{reason}。请检查模型配置和网关响应。') from None
+    choices = response.get('choices')
+    choice = choices[0] if isinstance(choices, list) and choices and isinstance(choices[0], dict) else {}
+    message = choice.get('message')
+    text = message.get('content', '') if isinstance(message, dict) else ''
     if isinstance(text,list):
         text = '\n'.join(part.get('text','') for part in text if isinstance(part,dict))
     raw_output.write_text(text if isinstance(text,str) else json.dumps(text,ensure_ascii=False),encoding='utf-8')
-    if choice.get('finish_reason') == 'length':
-        raise ValueError('视觉提示词被截断；原响应已保留，不自动重复收费调用')
+    if choice.get('finish_reason') in ('length', 'max_tokens'):
+        raise ValueError('视觉提示词输出被截断，可能是模型输出长度限制；原响应已保留，请更换支持图像输入的模型或调整模型输出限制。')
     if not isinstance(text,str) or not text.strip() or len(text)>6000:
-        raise ValueError('视觉模型未返回有效海报提示词')
+        raise ValueError('视觉模型未返回有效文本，可能不支持图像输入，也可能是响应格式异常；请确认所选模型支持多模态图片输入。')
     return text.strip(), {'model':response.get('model',model),'usage':response.get('usage',{}),'reference_images':len(images),'sources':sources}
 
 def fit_font(font_path, text, maximum, width):
