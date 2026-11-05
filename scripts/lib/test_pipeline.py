@@ -262,6 +262,12 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(copy.mobile_body('正文。\n\n适合人群：开发者'), '正文。')
         with self.assertRaisesRegex(ValueError, '连续标题冒号'):
             copy.mobile_body('▫️编程辅助：长句说明\n\n▫️需求整理：长句说明\n\n▫️项目协作：长句说明')
+        selling_points = '\n'.join([
+            '💻 **重构老鸟**：解析工程目录，跨模块调用不串台。',
+            '🛠️ **漏洞自修**：主动排查缺陷，直接给出修复补丁。',
+            '📋 **任务拆解**：模糊需求摊平，自动生成开发清单。',
+        ])
+        self.assertIn('重构老鸟', copy.mobile_body(selling_points, maximum=20, allow_heading_runs=True))
 
     def test_platform_poster_sizes_and_prompt(self):
         self.assertEqual(copy.poster_size('xhs'), (1080, 1440))
@@ -504,8 +510,17 @@ class PipelineTests(unittest.TestCase):
 
         severe = structured_post()
         severe['sections'][0]['text'] = '开' * 46
-        with self.assertRaisesRegex(ValueError,'开头引入'):
+        with redirect_stdout(io.StringIO()):
             copy.validate_posts({'posts':[severe]},1,'GLM5.3',copy_format='format_1')
+        self.assertLessEqual(len(severe['sections'][0]['text'].replace('\n', '')), 34)
+        self.assertTrue(severe['sections'][0]['text'].endswith(('，', '。', '！', '？', '；', '、', ',', ';', '!', '?')))
+
+        wrapped = structured_post()
+        wrapped['sections'][0]['text'] = '开头内容超过限制，仍然需要自然截断\n继续提供背景信息并保持完整\n末尾内容不应阻止自动修剪'
+        with redirect_stdout(io.StringIO()):
+            copy.validate_posts({'posts':[wrapped]},1,'GLM5.3',copy_format='format_1')
+        self.assertLessEqual(len(wrapped['sections'][0]['text'].replace('\n', '')), 34)
+        self.assertLessEqual(len(wrapped['sections'][0]['text'].splitlines()), 2)
 
     def test_multiple_images_multiplier_and_fixed_format_no_overwrite(self):
         settings={'CONTENT_OPS_API_KEY':'test','CONTENT_OPS_BASE_URL':'https://offline.invalid/v1'}

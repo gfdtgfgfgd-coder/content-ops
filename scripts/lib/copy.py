@@ -96,25 +96,28 @@ def structured_body(post, expected_format, platform):
             raise ValueError('文案区块必须为非空文本，不能含控制字符')
         text = text.strip()
         if platform == 'xhs' and section['kind'] != 'intro':
-            text = mobile_body(text, maximum=20)
+            text = mobile_body(text, maximum=20, allow_heading_runs=section['kind'] == 'selling_points')
         section['text'] = text
         content[section['kind']] = text
     intro = content['intro']
     intro_length = len(intro.replace('\n', ''))
-    if len(intro.splitlines()) > 2:
-        raise ValueError('开头引入须在两行、34字以内')
-    if intro_length > 45:
-        raise ValueError('开头引入须在两行、34字以内')
     if intro_length > 34:
         flattened = intro.replace('\n', '')
-        boundary = max((flattened.rfind(mark, 0, 34) for mark in '，,？！!?'), default=-1)
-        if boundary >= 0:
-            intro = flattened[:boundary + 1]
+        limit = min(34, len(flattened))
+        boundaries = [index for index in range(1, limit + 1) if flattened[index - 1] in '，。！？；、：,;!?']
+        if boundaries:
+            intro = flattened[:boundaries[-1]]
         else:
-            intro = flattened[:33].rstrip() + '。'
+            intro = flattened[:min(33, limit)].rstrip()
+            if len(intro) > 1 and intro[-1] in '的和与及在把让为给从对并且以及':
+                intro = intro[:-1].rstrip()
+            if not intro.endswith(tuple('，。！？；、：,;!?')):
+                intro += '。'
         content['intro'] = intro
         sections[0]['text'] = intro
         print(f'WARN: 开头引入超出34字，已自动修剪至{len(intro)}字。')
+    if len(intro.splitlines()) > 2:
+        raise ValueError('开头引入须在两行、34字以内')
     if platform == 'xhs':
         intro = mobile_body(intro, maximum=20)
         content['intro'] = intro
@@ -270,18 +273,19 @@ def public_text(post):
 def markdown(post):
     return '# ' + post.get('title', ' · '.join(post['title_lines'])) + '\n\n' + post['body'].rstrip() + '\n\n' + ' '.join(post['tags']) + '\n'
 
-def mobile_body(body, maximum=30):
+def mobile_body(body, maximum=30, allow_heading_runs=False):
     """Only reflow whitespace; do not rewrite claims or invent sentence endings."""
     body = re.sub(r'(?m)^\s*适合人群\s*[:：][^\n]*\s*\Z', '', body).strip()
     if re.search(r'适合人群\s*[:：]', body):
         raise ValueError('正文不能单列适合人群，请自然融入行动号召')
-    heading_run = 0
-    for line in body.splitlines():
-        if not line.strip():
-            continue
-        heading_run = heading_run + 1 if re.match(r'^\s*[^:：\n]{1,12}[:：].+', line) else 0
-        if heading_run >= 3:
-            raise ValueError('正文连续标题冒号说明过多，请改为短句段落；不自动重写或重试')
+    if not allow_heading_runs:
+        heading_run = 0
+        for line in body.splitlines():
+            if not line.strip():
+                continue
+            heading_run = heading_run + 1 if re.match(r'^\s*[^:：\n]{1,12}[:：].+', line) else 0
+            if heading_run >= 3:
+                raise ValueError('正文连续标题冒号说明过多，请改为短句段落；不自动重写或重试')
     paragraphs = []
     for paragraph in re.split(r'\n\s*\n', body):
         lines = []
@@ -628,8 +632,8 @@ def run(args):
            '只写标题、正文、标签、人群和文案结构，不要生成 image_prompt 或任何图像提示词；海报视觉由独立多模态模型分析真实参考封面后生成。',
            '3–5个标签，其中一个为去空格的完整模型名；所有可见文字遵守当前风险词库和平台价格规则。',
            '逐篇严格遵守 copy_plan 指定的 copy_format，以及 format_sections 中的区块顺序，不得增加、遗漏或调换区块。只在 sections 中写正文，body 由程序拼接。',
-           'intro简单引入，不超过两行、34字；selling_points用大白话描述真实卖点，核心卖点用**加粗**；price独立两行短句，体现能力与开销的反差，遵守平台价格规则。',
-           'compatibility说明兼容CC及资料中已确认的工具，未提供兼容事实时须写兼容CC待确认，不能编造支持承诺；scenarios只写使用场景，audience只写使用人群；hook以自然行动号召收尾。',
+           'intro简单引入，不超过两行、34字；selling_points写四个核心短卖点，格式统一为「【emoji】 **短卖点**：【短句1】，【短句2】。」，每个短句6–12字极短干练，拒绝废话水词；emoji适量克制，正文普通段落不每行堆砌；price独立两行短句，体现能力与开销的反差，遵守平台价格规则。',
+           'compatibility采用接地气、开发者日常口吻的多样化接驳话术（如支持一键拉进CC开发环境、轻松接驳CC与本地工作流、完美融入CC编程环境等），包含兼容CC且严禁篇篇机械重复同句；scenarios结合当篇卖点给出2–3个具体落地场景，同批每篇不同；audience单行干练罗列3–4个目标角色（如开发者、研发、全栈工程师、极客），同批每篇不同；hook以自然行动号召收尾。',
            '同一张封面下的文案共用相同产品与核心卖点，切换不同切入角度；同批使用不同angle和正文，避免只换同义词。'],
        'schema':{'posts':[{'title':'简短笔记标题', 'copy_format':'按copy_plan', 'sections':[{'kind':'按format_sections', 'text':'区块正文'}], 'title_lines':['痛点或利益点开场',model,'本次核心卖点'],
                  'tags':['#'+re.sub(r'\s+', '', model),'#相关场景','#目标人群'],
