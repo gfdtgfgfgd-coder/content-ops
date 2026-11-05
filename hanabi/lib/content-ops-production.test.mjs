@@ -270,6 +270,67 @@ test('reference arrows toggle in both view modes and toolbar resets all card ove
   assert.equal(browser.viewModeButton['aria-pressed'], 'false');
 });
 
+test('reference deletion keeps surviving cards and viewport, updates counts, and leaves failures untouched', async t => {
+  const oldWindow = globalThis.window, oldDocument = globalThis.document;
+  t.after(() => {
+    if (oldWindow === undefined) delete globalThis.window; else globalThis.window = oldWindow;
+    if (oldDocument === undefined) delete globalThis.document; else globalThis.document = oldDocument;
+  });
+  const cards = [], requests = [], focusCalls = [];
+  let y = 80, confirmed = true, fail = false;
+  globalThis.window = {innerHeight:100, confirm:() => confirmed, scrollBy:({top}) => { y += top; }};
+  globalThis.document = {activeElement:{}};
+  for (const id of ['aa','bb','cc']) cards.push({
+    dataset:{platform:'xhs',id},
+    getBoundingClientRect() { const top = cards.indexOf(this) * 80 - y; return {top,bottom:top+80}; },
+    contains:() => false, focus:options => focusCalls.push(options),
+    remove() { cards.splice(cards.indexOf(this), 1); }
+  });
+  cards[1].contains = () => true;
+  const survivor = cards[2];
+  const browser = Object.create(ContentOpsReferences.prototype);
+  Object.assign(browser, {root:{querySelectorAll:() => cards}, pinnedGrid:{}, totalLabel:{}, status:{}, total:3,
+    posts:cards.map(card => ({...card.dataset})), pinned:{platform:'xhs',id:'bb'},
+    collections:[{reference_ids:['xhs:aa','xhs:bb','xhs:cc']}],
+    expandedOutlineKeys:new Set(['xhs:bb']), collapsedCardKeys:new Set(['xhs:bb']),
+    selectedReferences:[{platform:'xhs',id:'bb'}],
+    saveSelection:() => {}, refreshBadges:() => {}, renderCollectionList:() => {},
+    mutationRequest:async path => { requests.push(path); if (fail) throw new Error('offline'); },
+    load:() => assert.fail('deletion must not clear or reload the list')});
+  const target = browser.posts[1];
+  confirmed = false;
+  await browser.deletePost(target);
+  assert.equal(requests.length, 0);
+  assert.equal(cards.length, 3);
+  confirmed = true; fail = true;
+  await browser.deletePost(target);
+  assert.equal(browser.total, 3);
+  assert.equal(y, 80);
+  assert.equal(cards.length, 3);
+  assert.match(browser.status.textContent, /offline/);
+  fail = false;
+  await browser.deletePost(target);
+  assert.equal(requests.at(-1), '/api/content-ops/references/bb/delete');
+  assert.equal(cards.length, 2);
+  assert.equal(cards[1], survivor);
+  assert.equal(y, 0);
+  assert.equal(survivor.getBoundingClientRect().top, 80);
+  assert.deepEqual(focusCalls, [{preventScroll:true}]);
+  assert.equal(browser.pinned, null);
+  assert.equal(browser.pinnedGrid.hidden, true);
+  assert.equal(browser.totalLabel.textContent, '共 2 条');
+  assert.deepEqual(browser.collections[0].reference_ids, ['xhs:aa','xhs:cc']);
+  assert.deepEqual(browser.selectedReferences, []);
+  assert.equal(browser.expandedOutlineKeys.size, 0);
+  assert.equal(browser.collapsedCardKeys.size, 0);
+  assert.equal(browser.mutating, false);
+  await browser.deletePost(browser.posts[1]);
+  await browser.deletePost(browser.posts[0]);
+  assert.equal(browser.total, 0);
+  assert.equal(cards.length, 0);
+  assert.match(browser.status.textContent, /当前筛选下没有素材/);
+});
+
 test('reference order debounces quick moves and preserves the captured collection scope', async () => {
   const browser = Object.create(ContentOpsReferences.prototype), calls = [];
   Object.assign(browser, {platform:{value:'xhs'}, collection:{value:'c1'}, requestVersion:1,

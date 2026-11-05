@@ -399,14 +399,46 @@ export class ContentOpsReferences {
     finally { this.mutating = false; this.form.querySelectorAll('button,input,textarea,select').forEach(element => element.disabled = false); }
   }
 
+  removeDeletedPost(post) {
+    const key = keyOf(post);
+    const cards = [...this.root.querySelectorAll('.ref-card')];
+    const survivors = cards.filter(card => keyOf(card.dataset) !== key);
+    // Anchor to a surviving visible card; capture after the request so scrolling
+    // while the server is busy is respected. Near the end, use the previous card.
+    const anchor = survivors.find(card => {
+      const rect = card.getBoundingClientRect();
+      return rect.bottom > 0 && rect.top < window.innerHeight;
+    }) || survivors.filter(card => card.getBoundingClientRect().top < window.innerHeight).at(-1);
+    const top = anchor?.getBoundingClientRect().top;
+    const removed = cards.filter(card => keyOf(card.dataset) === key);
+    const restoreFocus = removed.some(card => card.contains(document.activeElement));
+    const listed = this.posts.some(item => keyOf(item) === key);
+    this.posts = this.posts.filter(item => keyOf(item) !== key);
+    if (this.pinned && keyOf(this.pinned) === key) this.pinned = null;
+    for (const card of removed) card.remove();
+    this.pinnedGrid.hidden = !this.pinned;
+    if (listed && this.total != null) this.total = Math.max(0, this.total - 1);
+    this.totalLabel.textContent = `共 ${this.total ?? this.posts.length} 条`;
+    for (const collection of this.collections) {
+      collection.reference_ids = collection.reference_ids.filter(id => id !== key);
+    }
+    this.renderCollectionList();
+    this.expandedOutlineKeys.delete(key);
+    this.collapsedCardKeys.delete(key);
+    this.reconcileSelection(post, null);
+    if (restoreFocus) (anchor || this.viewModeButton)?.focus({preventScroll:true});
+    if (anchor) window.scrollBy({top:anchor.getBoundingClientRect().top - top, behavior:'instant'});
+  }
+
   async deletePost(post) {
+    if (this.mutating || this.loading) return;
     if (this.pendingOrder || this.orderSavePromise) await this.persistOrder();
     if (!window.confirm('确定要删除该素材吗？')) return;
     this.mutating = true;
     try {
       await this.mutationRequest(`/api/content-ops/references/${encodeURIComponent(post.id)}/delete`, {});
-      this.reconcileSelection(post, null);
-      await this.refreshAfterMutation('素材及本地图片已删除。');
+      this.removeDeletedPost(post);
+      this.status.textContent = this.total === 0 ? '素材已删除，当前筛选下没有素材。' : '素材及本地图片已删除。';
     } catch (error) { this.status.textContent = `删除失败：${error.message}`; }
     finally { this.mutating = false; }
   }

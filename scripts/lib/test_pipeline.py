@@ -39,10 +39,14 @@ class PipelineTests(unittest.TestCase):
         self.base = Path(self.tmp.name)
 
     def test_counts_and_unique_ids(self):
-        self.assertEqual(store.post_count(), 398)
-        self.assertEqual(len(store.load_posts('xhs')), 364)
-        self.assertEqual(len(store.load_posts('xianyu')), 34)
-        self.assertEqual(len({p['id'] for p in store.load_posts()}), 398)
+        source = self.base / 'posts.jsonl'
+        store.write_posts([{'id': 'a', 'platform': 'xhs'}, {'id': 'b', 'platform': 'xhs'},
+                           {'id': 'c', 'platform': 'xianyu'}], source)
+        with patch.object(store, 'POSTS', source):
+            self.assertEqual(store.post_count(), 3)
+            self.assertEqual(len(store.load_posts('xhs')), 2)
+            self.assertEqual(len(store.load_posts('xianyu')), 1)
+            self.assertEqual(len({p['id'] for p in store.load_posts()}), 3)
 
     def test_store_roundtrip_and_order(self):
         path = self.base / 'posts.jsonl'
@@ -88,7 +92,8 @@ class PipelineTests(unittest.TestCase):
 
     def test_clean_all_separate_output_is_idempotent(self):
         source = self.base / 'input.jsonl'
-        store.write_posts(store.load_posts(), source)
+        posts = store.load_posts()
+        store.write_posts(posts, source)
         target = self.base / 'output.jsonl'
         args = ['--platform', 'all', '--input-dir', str(source), '--output-dir', str(target)]
         with redirect_stdout(io.StringIO()):
@@ -97,8 +102,8 @@ class PipelineTests(unittest.TestCase):
         with redirect_stdout(io.StringIO()):
             cleaning.clean(['--platform', 'all', '--input-dir', str(target)])
         self.assertEqual(target.read_bytes(), first)
-        self.assertEqual(len(store.read_posts(target)), 398)
-        self.assertEqual(len(store.read_posts(source)), 398)
+        self.assertEqual(len(store.read_posts(target)), len(posts))
+        self.assertEqual(len(store.read_posts(source)), len(posts))
 
     def test_clean_dry_run_does_not_write(self):
         source = self.base / 'input.jsonl'
