@@ -254,6 +254,7 @@ export class ContentOpsReferences {
   }
 
   async assignCollection(post, collectionId) {
+    if (this.mutating || this.loading) return;
     if (this.pendingOrder || this.orderSavePromise) await this.persistOrder();
     if (this.mutating) return;
     const key = `${post.platform}:${post.id}`;
@@ -274,9 +275,36 @@ export class ContentOpsReferences {
         if (JSON.stringify(current.reference_ids) !== JSON.stringify(item.reference_ids)) await this.collectionRequest(`/api/content-ops/collections/${encodeURIComponent(item.id)}`, 'PUT', {reference_ids:item.reference_ids});
       }
       await this.loadCollections();
-      await this.refreshAfterMutation(collectionId === 'uncategorized' ? '素材已移出全部合集。' : '素材合集归属已更新。');
+      this.refreshCollectionMembership();
+      this.showSavedStatus(collectionId === 'uncategorized' ? '素材已移出全部合集。' : '素材合集归属已更新。');
     } catch (error) { this.status.textContent = `合集更新失败：${error.message}`; }
     finally { this.mutating = false; }
+  }
+
+  refreshCollectionMembership() {
+    for (const post of [...this.posts, ...(this.pinned ? [this.pinned] : [])]) {
+      const memberships = this.collections.filter(item => item.reference_ids.includes(keyOf(post)));
+      post.collection_ids = memberships.map(item => item.id);
+      post.collection_names = memberships.map(item => item.name);
+    }
+    const filter = this.collection.value;
+    const removed = new Set(this.posts.filter(post => filter === 'uncategorized'
+      ? post.collection_ids.length > 0
+      : filter !== 'all' && !post.collection_ids.includes(filter)).map(keyOf));
+    this.updateListInPlace(() => {
+      this.posts = this.posts.filter(post => !removed.has(keyOf(post)));
+      for (const card of [...this.grid.children]) {
+        if (removed.has(keyOf(card.dataset))) card.remove();
+      }
+      for (const card of this.root.querySelectorAll('.ref-card')) {
+        const post = this.findPost(card);
+        if (!post) continue;
+        card.querySelector('.ref-outline-badges').innerHTML = this.badges(post);
+        card.querySelector('[data-ref-collection]').innerHTML = this.collectionOptions(post);
+      }
+      this.total = this.posts.length;
+      this.totalLabel.textContent = `共 ${this.total} 条`;
+    }, removed, true);
   }
 
   mountEditor() {
@@ -399,35 +427,42 @@ export class ContentOpsReferences {
     finally { this.mutating = false; this.form.querySelectorAll('button,input,textarea,select').forEach(element => element.disabled = false); }
   }
 
-  removeDeletedPost(post) {
-    const key = keyOf(post);
+  updateListInPlace(update, removedKeys = new Set(), keepPinned = false) {
     const cards = [...this.root.querySelectorAll('.ref-card')];
-    const survivors = cards.filter(card => keyOf(card.dataset) !== key);
-    // Anchor to a surviving visible card; capture after the request so scrolling
-    // while the server is busy is respected. Near the end, use the previous card.
+    const survives = card => !removedKeys.has(keyOf(card.dataset)) || (keepPinned && this.pinnedGrid.contains(card));
+    const survivors = cards.filter(survives);
+    // Capture after the request, so scrolling while saving is respected.
     const anchor = survivors.find(card => {
       const rect = card.getBoundingClientRect();
       return rect.bottom > 0 && rect.top < window.innerHeight;
     }) || survivors.filter(card => card.getBoundingClientRect().top < window.innerHeight).at(-1);
     const top = anchor?.getBoundingClientRect().top;
-    const removed = cards.filter(card => keyOf(card.dataset) === key);
-    const restoreFocus = removed.some(card => card.contains(document.activeElement));
-    const listed = this.posts.some(item => keyOf(item) === key);
-    this.posts = this.posts.filter(item => keyOf(item) !== key);
-    if (this.pinned && keyOf(this.pinned) === key) this.pinned = null;
-    for (const card of removed) card.remove();
-    this.pinnedGrid.hidden = !this.pinned;
-    if (listed && this.total != null) this.total = Math.max(0, this.total - 1);
-    this.totalLabel.textContent = `共 ${this.total ?? this.posts.length} 条`;
-    for (const collection of this.collections) {
-      collection.reference_ids = collection.reference_ids.filter(id => id !== key);
-    }
-    this.renderCollectionList();
-    this.expandedOutlineKeys.delete(key);
-    this.collapsedCardKeys.delete(key);
-    this.reconcileSelection(post, null);
+    const restoreFocus = cards.some(card => !survives(card) && card.contains(document.activeElement));
+    update();
     if (restoreFocus) (anchor || this.viewModeButton)?.focus({preventScroll:true});
     if (anchor) window.scrollBy({top:anchor.getBoundingClientRect().top - top, behavior:'instant'});
+  }
+
+  removeDeletedPost(post) {
+    const key = keyOf(post);
+    if (this.pinned && keyOf(this.pinned) === key) this.pinned = null;
+    this.updateListInPlace(() => {
+      const listed = this.posts.some(item => keyOf(item) === key);
+      this.posts = this.posts.filter(item => keyOf(item) !== key);
+      for (const card of this.root.querySelectorAll('.ref-card')) {
+        if (keyOf(card.dataset) === key) card.remove();
+      }
+      this.pinnedGrid.hidden = !this.pinned;
+      if (listed && this.total != null) this.total = Math.max(0, this.total - 1);
+      this.totalLabel.textContent = `共 ${this.total ?? this.posts.length} 条`;
+      for (const collection of this.collections) {
+        collection.reference_ids = collection.reference_ids.filter(id => id !== key);
+      }
+      this.renderCollectionList();
+      this.expandedOutlineKeys.delete(key);
+      this.collapsedCardKeys.delete(key);
+      this.reconcileSelection(post, null);
+    }, new Set([key]));
   }
 
   async deletePost(post) {

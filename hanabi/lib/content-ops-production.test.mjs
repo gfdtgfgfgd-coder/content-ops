@@ -331,6 +331,66 @@ test('reference deletion keeps surviving cards and viewport, updates counts, and
   assert.match(browser.status.textContent, /当前筛选下没有素材/);
 });
 
+test('collection assignment updates existing cards, preserves viewport and selection, and filters only the affected row', async t => {
+  const oldWindow = globalThis.window, oldDocument = globalThis.document;
+  t.after(() => {
+    if (oldWindow === undefined) delete globalThis.window; else globalThis.window = oldWindow;
+    if (oldDocument === undefined) delete globalThis.document; else globalThis.document = oldDocument;
+  });
+  const cards = [], requests = [];
+  let y = 80, fail = false;
+  globalThis.window = {innerHeight:100, scrollBy:({top}) => { y += top; }};
+  globalThis.document = {activeElement:{}};
+  for (const id of ['aa','bb','cc']) cards.push({
+    dataset:{platform:'xhs',id}, badges:{}, menu:{},
+    querySelector(selector) { return selector === '.ref-outline-badges' ? this.badges : this.menu; },
+    getBoundingClientRect() { const top = cards.indexOf(this) * 80 - y; return {top,bottom:top+80}; },
+    contains:() => false, focus() {}, remove() { cards.splice(cards.indexOf(this), 1); }
+  });
+  const original = [...cards], target = {platform:'xhs', id:'bb'};
+  let stored = [{id:'one',name:'合集一',reference_ids:[]}, {id:'two',name:'合集二',reference_ids:[]}];
+  const browser = Object.create(ContentOpsReferences.prototype);
+  Object.assign(browser, {root:{querySelectorAll:() => cards}, grid:{children:cards}, pinnedGrid:{contains:() => false},
+    posts:cards.map(card => ({...card.dataset})), collection:{value:'all'}, collections:structuredClone(stored),
+    total:3, totalLabel:{}, status:{}, selectedReferences:[target], selectedKeys:new Set(['xhs:bb']), citedKeys:new Set(),
+    expandedOutlineKeys:new Set(['xhs:bb']), collapsedCardKeys:new Set(),
+    showSavedStatus:message => { browser.status.textContent = message; },
+    collectionRequest:async (path, method, payload) => {
+      if (fail) throw new Error('offline');
+      requests.push(path);
+      stored.find(item => path.endsWith('/' + item.id)).reference_ids = payload.reference_ids;
+    },
+    loadCollections:async () => { browser.collections = structuredClone(stored); },
+    load:() => assert.fail('collection assignment must not clear or reload references')});
+  await browser.assignCollection(target, 'one');
+  assert.deepEqual(cards, original);
+  assert.equal(y, 80);
+  assert.match(cards[1].badges.innerHTML, /合集：合集一/);
+  assert.match(cards[1].menu.innerHTML, /移出：合集一/);
+  assert.equal(browser.total, 3);
+  assert.deepEqual(browser.posts[1].collection_ids, ['one']);
+  fail = true;
+  await browser.assignCollection(target, 'two');
+  assert.deepEqual(browser.posts[1].collection_ids, ['one']);
+  assert.equal(y, 80);
+  assert.match(browser.status.textContent, /offline/);
+  fail = false;
+  await browser.assignCollection(target, 'two');
+  stored[0].reference_ids = ['xhs:aa','xhs:bb','xhs:cc'];
+  browser.collection.value = 'one';
+  await browser.loadCollections();
+  await browser.assignCollection(target, 'one');
+  assert.equal(cards[1], original[2]);
+  assert.deepEqual(browser.posts.map(post => post.id), ['aa','cc']);
+  assert.equal(y, 0);
+  assert.equal(browser.totalLabel.textContent, '共 2 条');
+  assert.deepEqual(stored[1].reference_ids, ['xhs:bb']);
+  assert.deepEqual(browser.selectedReferences, [target]);
+  assert.equal(browser.expandedOutlineKeys.has('xhs:bb'), true);
+  assert.equal(browser.mutating, false);
+  assert.equal(requests.length, 3);
+});
+
 test('reference order debounces quick moves and preserves the captured collection scope', async () => {
   const browser = Object.create(ContentOpsReferences.prototype), calls = [];
   Object.assign(browser, {platform:{value:'xhs'}, collection:{value:'c1'}, requestVersion:1,
