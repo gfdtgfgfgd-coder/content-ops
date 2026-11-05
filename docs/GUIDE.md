@@ -56,6 +56,8 @@ python3 scripts/check.py --help
 
 当前帖子唯一源为 `data/posts.jsonl`；风险规则唯一源为 `rules/banned-words-quick.yaml`；运营偏好事实源为 `skills/simin-persona/SKILL.md` 和 `data/wecom/simin-feedback.jsonl`。模型语料库唯一源为 `data/model-corpus.md`。不要编辑派生包代替源文件。
 
+素材删除排障：页面、API、`data/posts.jsonl` 与 `data/images/` 应共同核对；图片缺失不等于用户要求删除，禁止据此批量删帖。若旧 JSONL 被恢复，记录可能重新出现而本机图片仍不存在；不要使用 `git restore data/posts.jsonl` 覆盖用户的增删改。2026-11-05 已通过真实删除 API 清理截图确认的两条残留，具体回写来源待查。局部恢复记录保存在忽略目录 `scratch/deleted-reference-repair-20261105.json`，仅含本轮两条原记录及操作前合集关系，供人工核查，处理完可删除；不是新的素材源。
+
 ## 一份事实一个文件与 D20 闸门
 
 同一事实只保留一个可编辑源。索引、缓存或导出物必须注明源和重建命令，通过 doctor 验证，并且可删除后重建。不要为一份规则复制第二份内容；能力扩展优先添加已有 CLI 子命令，不复制 v2 入口；历史重大变更写入 `docs/CHANGELOG.md`，完整 Git 历史留在版本库。

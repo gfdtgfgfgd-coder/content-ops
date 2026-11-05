@@ -597,6 +597,27 @@ test('references reject invalid payloads, IDs, formats and oversized images with
   assert.equal(await readFile(join(dir,'data/posts.jsonl'),'utf8'),'broken JSON\n');
 });
 
+test('deleting a reference with missing local images removes canonical records and all collection links across reloads', async t => {
+  const {dir,store}=await referenceFixture(t);
+  const removed=await store.addReference({title:'已删图片的残留记录',image:png});
+  const retained=await store.addReference({title:'保留纯文字素材'});
+  const collections=await Promise.all(['合集一','合集二'].map(name=>store.createCollection({name})));
+  for(const collection of collections)await store.updateCollection(collection.id,{reference_ids:[`xhs:${removed.id}`,`xhs:${retained.id}`]});
+  await rm(join(dir,`data/images/xhs/${removed.id}`),{recursive:true});
+  await store.deleteReference(removed.id);
+  const reloaded=new ContentOpsReferenceStore({root:dir});
+  assert.deepEqual((await reloaded.records()).map(post=>post.id),[retained.id]);
+  assert.deepEqual((await readFile(join(dir,'data/posts.jsonl'),'utf8')).trim().split('\n').map(line=>JSON.parse(line).id),[retained.id]);
+  for(const collection of await reloaded.readCollections()){
+    assert.deepEqual(collection.reference_ids,[`xhs:${retained.id}`]);
+    assert.deepEqual((await reloaded.list(new URLSearchParams({collection_id:collection.id}))).posts.map(post=>post.id),[retained.id]);
+  }
+  await assert.rejects(()=>reloaded.updateReference(removed.id,{title:'不应复活'}),{statusCode:404});
+  await assert.rejects(()=>reloaded.deleteReference(removed.id),{statusCode:404});
+  assert.equal((await reloaded.list(new URLSearchParams({platform:'all'}))).total,1);
+  assert.equal((await readdir(join(dir,'data'))).some(name=>name.includes('.tmp')||name.includes('.lock')),false);
+});
+
 test('references serialize simultaneous adds/edits/deletes across instances without lost records', async t => {
   const {dir,store}=await referenceFixture(t),second=new ContentOpsReferenceStore({root:dir});
   const posts=await Promise.all(Array.from({length:12},(_,index)=>(index%2?store:second).addReference({title:`素材 ${index}`})));
