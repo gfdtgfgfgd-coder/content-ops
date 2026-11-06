@@ -27,8 +27,8 @@
       "bytes": 4700
     },
     "rules/banned-words-quick.yaml": {
-      "sha256": "cf0e3ae3c839a92c8dbc69bd9dd766608b0e0dc8c900a3d4a391d873bb4e9ae5",
-      "bytes": 6364
+      "sha256": "ca038ce14776afa15e860e156fc1aceaf8f2f44721703e23b41f34725b8b89fe",
+      "bytes": 6381
     },
     "rules/content-spec.md": {
       "sha256": "131b371bb6d8beadd03648a164dac276cdf8538c0a8ff6587f982e95e95568b6",
@@ -404,7 +404,7 @@
         "询价",
         "(?<![A-Za-z])(?:ChatGPT|GPT|Codex|GPT-Image|Claude|Gemini|Grok|OpenAI|Anthropic)(?![A-Za-z])",
         "(?<![A-Za-z])token(?:s)?(?![A-Za-z])",
-        "(?:神器|神奇)",
+        "神器",
         "(?<![A-Za-z])(?:Cursor|Hermes\\s*Agent)(?![A-Za-z])",
         "源头便宜出",
         "毫秒级"
@@ -640,15 +640,16 @@
           "added_at": "2026-11-04"
         },
         {
-          "word": "(?:神器|神奇)",
-          "regex": true,
+          "word": "神器",
+          "regex": false,
           "level": "ban",
           "platform": [
             "xhs"
           ],
           "replace": "挖到宝了",
           "reason": "容易卡小红书夸大宣传审核，统一替换为挖到宝了/新搭子（Q41，2026-11-04）",
-          "added_at": "2026-11-04"
+          "added_at": "2026-11-04",
+          "updated_at": "2026-11-06"
         },
         {
           "word": "(?<![A-Za-z])(?:Cursor|Hermes\\s*Agent)(?![A-Za-z])",

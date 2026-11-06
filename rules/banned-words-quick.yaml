@@ -135,13 +135,15 @@
   reason: 小红书违禁词，易触发代币风控，统一替换为额度/算力/开销（Q40，2026-11-04）
   added_at: "2026-11-04"
 
-- word: '(?:神器|神奇)'
-  regex: true
+- word: 神器
+  regex: false
   level: ban
-  platform: [xhs]
+  platform:
+  - xhs
   replace: 挖到宝了
   reason: 容易卡小红书夸大宣传审核，统一替换为挖到宝了/新搭子（Q41，2026-11-04）
-  added_at: "2026-11-04"
+  added_at: '2026-11-04'
+  updated_at: '2026-11-06'
 
 - word: '(?<![A-Za-z])(?:Cursor|Hermes\s*Agent)(?![A-Za-z])'
   regex: true
