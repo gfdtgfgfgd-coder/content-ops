@@ -391,6 +391,73 @@ test('collection assignment updates existing cards, preserves viewport and selec
   assert.equal(requests.length, 3);
 });
 
+test('editing a reference updates only its card, keeps viewport and state, and removes only filter mismatches', async t => {
+  const previousWindow=globalThis.window, previousDocument=globalThis.document;
+  t.after(() => {
+    if(previousWindow===undefined)delete globalThis.window;else globalThis.window=previousWindow;
+    if(previousDocument===undefined)delete globalThis.document;else globalThis.document=previousDocument;
+  });
+  let y=80;
+  const cards=[];
+  globalThis.window={innerHeight:100,scrollBy:({top})=>{y+=top;}};
+  globalThis.document={activeElement:{},createElement:tag=>{
+    assert.equal(tag,'template');
+    return {set innerHTML(value){this.content={firstElementChild:{className:'ref-card',dataset:{cited:'false'},childNodes:[value]}};}};
+  }};
+  for(const id of ['aa','bb','cc'])cards.push({
+    dataset:{platform:'xhs',id},rendered:'original',
+    getBoundingClientRect(){const top=cards.indexOf(this)*80-y;return {top,bottom:top+80};},
+    contains:()=>false,focus(){},replaceChildren(...nodes){this.rendered=nodes.join('');},
+    remove(){cards.splice(cards.indexOf(this),1);}
+  });
+  const original=[...cards], browser=Object.create(ContentOpsReferences.prototype),requests=[];
+  let next={platform:'xhs',id:'bb',title:'改好的标题',body_full:'新的正文',images:['/api/content-ops/image/xhs/bb/new.jpg'],collection_ids:['one'],collection_names:['合集一']};
+  Object.assign(browser,{root:{querySelectorAll:()=>cards},pinnedGrid:{contains:()=>false},platform:{value:'all'},collection:{value:'all'},
+    posts:cards.map(card=>({...card.dataset})),collections:[{id:'one',reference_ids:['xhs:bb']}],requestVersion:0,total:3,totalLabel:{},status:{},
+    selectedKeys:new Set(['xhs:bb']),citedKeys:new Set(),expandedOutlineKeys:new Set(['xhs:bb']),collapsedCardKeys:new Set(['xhs:cc']),
+    isCardCollapsed:()=>false,applyViewMode(){},load:()=>assert.fail('editing must never clear or reload the list'),
+    fetcher:async url=>{requests.push(new URL(url,'http://localhost'));return {ok:true,json:async()=>({posts:[next]})};}});
+  const old=browser.posts[1];
+  await browser.refreshAfterMutation('已保存',old,next);
+  assert.deepEqual(cards,original);assert.equal(y,80);assert.equal(browser.total,3);
+  assert.equal(requests[0].searchParams.get('ids'),'bb');assert.equal(requests[0].searchParams.has('collection_id'),false);
+  assert.match(cards[1].rendered,/改好的标题/u);assert.match(cards[1].rendered,/新的正文/u);assert.match(cards[1].rendered,/bb\/new.jpg/u);
+  assert.equal(cards[0].rendered,'original');assert.equal(cards[2].rendered,'original');
+  assert.equal(browser.posts[1],next);assert.equal(browser.expandedOutlineKeys.has('xhs:bb'),true);assert.equal(browser.collapsedCardKeys.has('xhs:cc'),true);
+  assert.equal(browser.selectedKeys.has('xhs:bb'),true);
+  // Platform changes under a platform filter remove just that row and retain a nearby anchor.
+  browser.platform.value='xhs';next={...next,platform:'xianyu'};
+  await browser.refreshAfterMutation('已保存',old,next);
+  assert.deepEqual(cards,[original[0],original[2]]);assert.equal(y,0);assert.equal(browser.totalLabel.textContent,'共 2 条');
+  assert.deepEqual(browser.collections[0].reference_ids,['xianyu:bb']);assert.equal(browser.expandedOutlineKeys.has('xianyu:bb'),true);
+  // A focused reference outside the current filter remains pinned and is updated in place.
+  browser.pinned=next;original[1].dataset.platform='xianyu';cards.push(original[1]);browser.pinnedGrid.contains=card=>card===original[1];
+  browser.updateEditedPost(next,{...next,title:'置顶编辑'});
+  assert.match(original[1].rendered,/置顶编辑/u);assert.equal(browser.pinned.title,'置顶编辑');assert.equal(browser.total,2);
+});
+
+test('editor saving preserves modal scroll, reports refresh failures, and ignores stale targeted responses', async t => {
+  const previousWindow=globalThis.window;
+  t.after(()=>{if(previousWindow===undefined)delete globalThis.window;else globalThis.window=previousWindow;});
+  const viewport={scrollX:0,scrollY:1800,scrollTo({top}){this.scrollY=top;}};
+  globalThis.window=viewport;
+  const browser=Object.create(ContentOpsReferences.prototype),old={platform:'xhs',id:'aa'},next={...old,title:'新标题'};
+  const elements=Object.fromEntries(['platform','title','body','cover_ocr','model'].map(name=>[name,{value:name==='platform'?'xhs':name==='title'?'新标题':''}]));
+  elements.good={checked:false};let updated=0,fail=false;
+  Object.assign(browser,{form:{elements,querySelectorAll:()=>[]},editing:old,hasImage:false,editorImages:[],editorStatus:{},status:{},requestVersion:0,
+    dialog:{close(){viewport.scrollY=0;}},reconcileSelection(){},mutationRequest:async()=>({reference:next}),
+    updateEditedPost(a,b){assert.equal(a,old);assert.equal(b,next);assert.equal(viewport.scrollY,1800);updated++;},
+    fetcher:async()=>{if(fail)throw new Error('offline');return {ok:true,json:async()=>({posts:[next]})};},
+    load:()=>assert.fail('saving existing references must not call load')});
+  await browser.saveEditor();assert.equal(updated,1);assert.equal(viewport.scrollY,1800);assert.equal(browser.mutating,false);
+  fail=true;await browser.saveEditor();assert.equal(updated,1);assert.match(browser.status.textContent,/素材已保存，卡片更新失败：offline/u);
+  browser.fetcher=async()=>{browser.requestVersion++;return {ok:true,json:async()=>({posts:[next]})};};
+  await browser.refreshAfterMutation('不应覆盖',old,next);assert.equal(updated,1);assert.doesNotMatch(browser.status.textContent,/不应覆盖/u);
+  browser.mutationRequest=async()=>{throw new Error('save failed');};
+  browser.dialog.close=()=>assert.fail('failed saves must leave the editor open');
+  await browser.saveEditor();assert.match(browser.editorStatus.textContent,/save failed/u);assert.equal(viewport.scrollY,1800);
+});
+
 test('reference order debounces quick moves and preserves the captured collection scope', async () => {
   const browser = Object.create(ContentOpsReferences.prototype), calls = [];
   Object.assign(browser, {platform:{value:'xhs'}, collection:{value:'c1'}, requestVersion:1,
@@ -987,7 +1054,10 @@ test('multi-image retention rejects symlinks and missing files without touching 
   assert.deepEqual(await readFile(outside),png);
 });
 
-test('multi-image editor submits retained and appended queues and guards empty/reading state', async () => {
+test('multi-image editor submits retained and appended queues and guards empty/reading state', async t => {
+  const previousWindow=globalThis.window;
+  t.after(() => { if(previousWindow===undefined)delete globalThis.window;else globalThis.window=previousWindow; });
+  globalThis.window={scrollX:0,scrollY:800,scrollTo:options=>assert.equal(options.top,800)};
   const editor=Object.create(ContentOpsReferences.prototype),requests=[];
   const elements=Object.fromEntries(['platform','title','body','cover_ocr','model'].map(name=>[name,{value:name==='platform'?'xhs':name==='cover_ocr'?'一\n二':''}]));
   elements.good={checked:false};

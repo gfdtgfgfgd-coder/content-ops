@@ -414,9 +414,62 @@ export class ContentOpsReferences {
     this.saveSelection(); this.refreshBadges();
   }
 
-  async refreshAfterMutation(message) {
-    await this.load(true);
-    if (!this.loadError) this.status.textContent = message;
+  async refreshAfterMutation(message, old = null, replacement = null) {
+    if (!old) {
+      await this.load(true);
+      if (!this.loadError) this.status.textContent = message;
+      return;
+    }
+    // Read the normalized card model without ever clearing the live list.
+    const version = this.requestVersion;
+    const query = new URLSearchParams({platform:replacement.platform, ids:replacement.id, limit:'1'});
+    try {
+      const response = await this.fetcher(`/api/content-ops/references?${query}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || '请求失败');
+      if (version !== this.requestVersion) return;
+      const post = data.posts?.find(item => keyOf(item) === keyOf(replacement));
+      if (!post) throw new Error('未读取到保存后的素材');
+      this.updateEditedPost(old, post);
+      this.status.textContent = message;
+    } catch (error) {
+      if (version === this.requestVersion) this.status.textContent = `素材已保存，卡片更新失败：${error.message}。请重试刷新。`;
+    }
+  }
+
+  updateEditedPost(old, post) {
+    const oldKey = keyOf(old), newKey = keyOf(post);
+    const listed = this.posts.some(item => keyOf(item) === oldKey);
+    const matches = (this.platform.value === 'all' || this.platform.value === post.platform)
+      && (this.collection.value === 'all' || (this.collection.value === 'uncategorized'
+        ? !post.collection_ids?.length : post.collection_ids?.includes(this.collection.value)));
+    const removed = listed && !matches ? new Set([oldKey]) : new Set();
+    const pinned = this.pinned && keyOf(this.pinned) === oldKey;
+    this.updateListInPlace(() => {
+      for (const keys of [this.expandedOutlineKeys, this.collapsedCardKeys]) {
+        if (keys.delete(oldKey)) keys.add(newKey);
+      }
+      this.posts = this.posts.flatMap(item => keyOf(item) === oldKey ? matches ? [post] : [] : [item]);
+      if (pinned) this.pinned = post;
+      for (const card of this.root.querySelectorAll('.ref-card')) {
+        if (keyOf(card.dataset) !== oldKey) continue;
+        if (removed.has(oldKey) && !this.pinnedGrid.contains(card)) { card.remove(); continue; }
+        const template = document.createElement('template');
+        template.innerHTML = this.card(post);
+        const updated = template.content.firstElementChild;
+        // Keep the article itself: it may be the viewport anchor or dialog opener.
+        card.className = updated.className;
+        card.dataset.platform = post.platform; card.dataset.id = String(post.id);
+        card.dataset.cited = updated.dataset.cited;
+        card.replaceChildren(...updated.childNodes);
+      }
+      for (const collection of this.collections) {
+        collection.reference_ids = collection.reference_ids.map(key => key === oldKey ? newKey : key);
+      }
+      if (removed.size && this.total != null) this.total = Math.max(0, this.total - 1);
+      this.totalLabel.textContent = `共 ${this.total ?? this.posts.length} 条`;
+      this.applyViewMode();
+    }, removed, Boolean(pinned));
   }
 
   async saveEditor() {
@@ -433,8 +486,12 @@ export class ContentOpsReferences {
     this.editorStatus.textContent = '正在保存…';
     try {
       const data = await this.mutationRequest(`/api/content-ops/references${old ? `/${encodeURIComponent(old.id)}/edit` : ''}`, payload);
-      this.reconcileSelection(old, data.reference); this.dialog.close();
-      await this.refreshAfterMutation('素材已保存；列表已按当前筛选更新。');
+      this.reconcileSelection(old, data.reference);
+      // Closing a modal can restore focus with scrolling before the card update.
+      const {scrollX, scrollY} = window;
+      this.dialog.close();
+      window.scrollTo({left:scrollX, top:scrollY, behavior:'instant'});
+      await this.refreshAfterMutation('素材已保存；列表已按当前筛选更新。', old, data.reference);
     } catch (error) { this.editorStatus.textContent = error.message; }
     finally { this.mutating = false; this.form.querySelectorAll('button,input,textarea,select').forEach(element => element.disabled = false); }
   }
