@@ -51,14 +51,6 @@
   added_at: "2026-11-02"
   regex: true
 
-- word: 姐妹们
-  level: ban
-  platform: [xhs]
-  replace: 大家
-  reason: 小红书调性：避免油腻称呼（platform-rules.md）
-  added_at: "2026-11-02"
-
-# T04 企微提炼，2026-11-01。具体时间与冲突见 data/wecom/risk-words.md。
 - word: API
   level: ban
   platform: [xhs, xianyu]
