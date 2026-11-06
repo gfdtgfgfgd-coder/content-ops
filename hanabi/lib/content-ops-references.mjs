@@ -637,7 +637,7 @@ export class ContentOpsReferences {
           <button class="ref-icon-button" type="button" data-ref-outline-expand aria-expanded="${!collapsed}" aria-label="${collapsed ? '展开图文' : '收起图文'}" title="${collapsed ? '展开图文' : '收起图文'}">${collapsed ? '▸' : '▾'}</button>
           <button class="ref-icon-button" type="button" data-ref-move-up aria-label="上移" title="上移">↑</button>
           <button class="ref-icon-button" type="button" data-ref-move-down aria-label="下移" title="下移">↓</button>
-          <button class="ref-text-button" type="button" data-ref-select aria-pressed="${this.selectedKeys.has(key)}">${this.selectedKeys.has(key) ? '移出引用' : '引用'}</button>
+          <button class="ref-text-button" type="button" data-ref-select aria-pressed="${this.selectedKeys.has(key) || cited}">${(this.selectedKeys.has(key) || cited) ? '移出引用' : '引用'}</button>
           <button class="ref-text-button" type="button" data-ref-edit>编辑</button><button class="ref-text-button ref-delete" type="button" data-ref-delete>删除</button>
         </div>
       </div>
@@ -817,8 +817,9 @@ export class ContentOpsReferences {
       const card = select.closest('.ref-card');
       const reference = {platform:card.dataset.platform,id:card.dataset.id};
       const key = keyOf(reference);
-      if (this.selectedKeys.has(key)) {
+      if (this.selectedKeys.has(key) || this.citedKeys.has(key)) {
         this.selectedKeys.delete(key);
+        this.citedKeys.delete(key);
         this.selectedReferences = this.selectedReferences.filter(item => keyOf(item) !== key);
       } else if (this.selectedReferences.length >= 8) {
         this.status.textContent = '一批最多选择 8 条参考帖。';
@@ -842,6 +843,7 @@ export class ContentOpsReferences {
   clearSelectionNow() {
     this.selectedReferences = [];
     this.selectedKeys.clear();
+    this.citedKeys.clear();
     this.saveSelection();
     this.refreshBadges();
   }
@@ -851,6 +853,7 @@ export class ContentOpsReferences {
     const key = keyOf(reference);
     this.selectedReferences = this.selectedReferences.filter(item => keyOf(item) !== key);
     this.selectedKeys.delete(key);
+    this.citedKeys.delete(key);
     this.saveSelection();
     this.refreshBadges();
   }
@@ -859,10 +862,12 @@ export class ContentOpsReferences {
     for (const card of this.root.querySelectorAll('.ref-card')) {
       const post = this.findPost(card);
       if (!post) continue;
-      const selected = this.selectedKeys.has(keyOf(post));
+      const key = keyOf(post);
+      const selected = this.selectedKeys.has(key);
+      const cited = this.citedKeys.has(key);
       const button = card.querySelector('[data-ref-select]');
-      button.setAttribute('aria-pressed', String(selected));
-      button.textContent = selected ? '移出引用' : '引用';
+      button.setAttribute('aria-pressed', String(selected || cited));
+      button.textContent = (selected || cited) ? '移出引用' : '引用';
       card.querySelector('.ref-outline-badges').innerHTML = this.badges(post);
     }
     this.selectionLabel.textContent = this.selectedReferences.length ? `下批引用 ${this.selectedReferences.length} 条` : '';

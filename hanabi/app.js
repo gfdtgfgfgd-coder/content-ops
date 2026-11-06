@@ -386,8 +386,8 @@ connectionsForm.addEventListener('submit', async event => {
 });
 void refreshConnections().catch(connectionError);
 
-const contentOpsUI = new ContentOpsUI();
 mountContentOpsReferences();
+const contentOpsUI = new ContentOpsUI();
 
 showView(location.hash.slice(1) || sessionStorage.getItem('hanabi.current-route') || 'generate', { replace: true, restore: true });
 void api('/healthz').catch(() => {});

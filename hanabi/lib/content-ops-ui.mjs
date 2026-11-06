@@ -56,7 +56,7 @@ export class ContentOpsUI {
     this.imageDialog.addEventListener('click',event=>{if(event.target===this.imageDialog){const r=this.imageDialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)this.imageDialog.close();}});
     document.querySelector('#content-ops-style-mode')?.addEventListener('change',()=>this.syncStyleFields());
     document.querySelector('#content-ops-stop').onclick=()=>void this.stop();
-    document.querySelector('#content-ops-new').onclick=()=>{clearTimeout(this.timer);this.batch=null;document.querySelector('#content-ops-history').value='';sessionStorage.removeItem('hanabi.content-ops-request');this.render();document.querySelector('#content-ops-model').focus();};
+    document.querySelector('#content-ops-new').onclick=()=>{clearTimeout(this.timer);this.batch=null;this.historicalReferences=false;document.querySelector('#content-ops-history').value='';sessionStorage.removeItem('hanabi.content-ops-request');const current=window.contentOpsReferences?.getSelection?.()||[];void this.loadReferenceCards(current);window.dispatchEvent(new CustomEvent('content-ops:references',{detail:{references:current}}));this.render();document.querySelector('#content-ops-model').focus();};
     document.querySelector('#content-ops-history').onchange=async event=>{if(!event.target.value||this.busy||this.batch?.status==='running')return;try{this.batch=(await api('/api/content-ops/batches/'+event.target.value)).batch;this.panel.open=true;this.applyBatchToForm(this.batch);this.historicalReferences=true;await this.loadReferenceCards(this.batch.references||[]);this.render();document.querySelector('[data-view="generate"]')?.click();this.schedule();}catch(error){this.notice.textContent=error.message;}};
     this.result.addEventListener('click',async event=>{
       const tab=event.target.closest('[data-copy-version]'),copy=event.target.closest('[data-content-ops-copy]'),zoom=event.target.closest('[data-content-ops-zoom]'),chat=event.target.closest('[data-content-ops-chat]'),reference=event.target.closest('[data-content-ops-reference]');
@@ -96,15 +96,15 @@ export class ContentOpsUI {
   renderReferenceCards(){
     if(!this.selectedRefs)return;
     const references=this.liveReferences,visible=document.querySelector('#view-generate')?.classList.contains('active');
-    this.selectedRefs.innerHTML=references.length?`<div class="selected-refs-heading"><strong>${this.historicalReferences?'本批引用素材':'已引用参考素材'} · ${references.length} 张</strong>${this.historicalReferences?'':'<button type="button" class="text-button" data-ref-clear>清空引用</button>'}</div><div class="selected-refs-grid">${references.map((ref,index)=>`<article class="selected-ref-card"><button type="button" class="selected-ref-open" data-ref-open="${index}" aria-label="在素材库定位 ${esc(ref.title||ref.id)}"><img src="${esc(ref.image||'')}" alt="" ${ref.image?'':'hidden'}><span class="selected-ref-no-image" ${ref.image?'hidden':''}>暂无封面</span><span class="ops-platform-badge">${ref.platform==='xianyu'?'闲鱼':'小红书'}</span><strong>${esc(ref.title||ref.id)}</strong></button>${this.historicalReferences?'':'<button type="button" class="selected-ref-remove" data-ref-remove="'+index+'">移除</button>'}</article>`).join('')}</div><p class="selected-refs-note">AI 视觉模型将读取以上封面作为构图、配色与字形排版参考</p>`:`<p>未指定参考素材，系统将自动匹配同平台高赞爆款 <button type="button" class="text-button" data-ref-pick>去素材库挑选 →</button></p>`;
+    this.selectedRefs.innerHTML=references.length?`<div class="selected-refs-heading"><strong>${this.historicalReferences?'本批引用素材':'已引用参考素材'} · ${references.length} 张</strong><button type="button" class="text-button" data-ref-clear>清空引用</button></div><div class="selected-refs-grid">${references.map((ref,index)=>`<article class="selected-ref-card"><button type="button" class="selected-ref-open" data-ref-open="${index}" aria-label="在素材库定位 ${esc(ref.title||ref.id)}"><img src="${esc(ref.image||'')}" alt="" ${ref.image?'':'hidden'}><span class="selected-ref-no-image" ${ref.image?'hidden':''}>暂无封面</span><span class="ops-platform-badge">${ref.platform==='xianyu'?'闲鱼':'小红书'}</span><strong>${esc(ref.title||ref.id)}</strong></button><button type="button" class="selected-ref-remove" data-ref-remove="${index}">移除</button></article>`).join('')}</div><p class="selected-refs-note">AI 视觉模型将读取以上封面作为构图、配色与字形排版参考</p>`:`<p>未指定参考素材，系统将自动匹配同平台高赞爆款 <button type="button" class="text-button" data-ref-pick>去素材库挑选 →</button></p>`;
     const count=references.length;
     if(this.referenceHint)this.referenceHint.textContent=count?`当前已就绪 ${count} 张参考封面图，多模态模型将深度分析其视觉特征。`:'未指定参考素材，系统将自动匹配同平台高赞爆款。';
     if(!this.selectedRefs.dataset.bound){
       this.selectedRefs.dataset.bound='true';this.selectedRefs.addEventListener('click',event=>{
         if(event.target.closest('[data-ref-pick]'))document.querySelector('[data-view="references"]')?.click();
         const open=event.target.closest('[data-ref-open]');if(open){const ref=this.liveReferences[Number(open.dataset.refOpen)];if(ref)window.dispatchEvent(new CustomEvent('content-ops:reference-focus',{detail:ref}));}
-        const remove=event.target.closest('[data-ref-remove]');if(remove){const index=Number(remove.dataset.refRemove);window.contentOpsReferences?.removeSelection?.(this.liveReferences[index]);}
-        if(event.target.closest('[data-ref-clear]'))window.contentOpsReferences?.clearSelectionNow?.();
+        const remove=event.target.closest('[data-ref-remove]');if(remove){const index=Number(remove.dataset.refRemove);const target=this.liveReferences[index];this.historicalReferences=false;this.liveReferences=this.liveReferences.filter((_,i)=>i!==index);if(target)window.contentOpsReferences?.removeSelection?.(target);this.renderReferenceCards();}
+        if(event.target.closest('[data-ref-clear]')){this.historicalReferences=false;this.liveReferences=[];window.contentOpsReferences?.clearSelectionNow?.();window.dispatchEvent(new CustomEvent('content-ops:references',{detail:{references:[]}}));this.renderReferenceCards();}
       });
     }
     this.selectedRefs.hidden=!visible;
@@ -156,7 +156,7 @@ export class ContentOpsUI {
   async submit(){
     if(this.busy||this.batch?.status==='running')return;
     let request=storedRequest();
-    const references=window.contentOpsReferences?.getSelection?.()||[];
+    const references=(!this.historicalReferences&&this.liveReferences?.length)?this.liveReferences.map(r=>({platform:r.platform,id:String(r.id)})):(window.contentOpsReferences?.getSelection?.()||[]);
     const brief=document.querySelector('#content-ops-brief').value;
     if(Array.from(brief).length>1000){this.notice.textContent='需求不能超过1000字。';return;}
     const styleMode=document.querySelector('#content-ops-style-mode')?.value||'auto';
