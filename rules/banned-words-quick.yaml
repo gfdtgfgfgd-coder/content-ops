@@ -50,12 +50,7 @@
   reason: 小红书禁止具体价格与金额，含 ¥/￥ 符号、数字及货币单位后缀（D10）
   added_at: "2026-11-02"
   regex: true
-- word: 宝子们
-  level: ban
-  platform: [xhs]
-  replace: 大家
-  reason: 小红书调性：避免油腻称呼（platform-rules.md）
-  added_at: "2026-11-02"
+
 - word: 姐妹们
   level: ban
   platform: [xhs]
