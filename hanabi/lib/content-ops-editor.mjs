@@ -333,7 +333,7 @@ export class ContentOpsEditor {
     return this.serialize(async()=>{const root=await this.root(),unlock=await this.lock(root);let oldSpec,oldBundle,written=false,committed=false;try{
       await this.cleanSources(root);oldSpec=await this.file(root,'rules/content-spec.md');oldBundle=await this.file(root,BUNDLE);
       if(hash(oldSpec)!==input.revision)throw fail('内容生产规范已被更新，请重新分析。',409);
-      const updated=input.updatedContent.replace(/\n?\n> 最近更新时间[：:].*\n/u,'').replace(/\n?\n> 业务规范唯一源/u,'\n\n> 最近更新时间：'+this.clock()+'\n> 业务规范唯一源');
+      const updated=input.updatedContent.replace(/^> 最近更新时间[：:].*\n/mu,'').replace(/\n?\n> 业务规范唯一源/u,'\n\n> 最近更新时间：'+this.clock()+'\n> 业务规范唯一源');
       if(!updated.includes('最近更新时间：'))throw fail('规范草案头部结构无效。');
       await this.atomic(root,'rules/content-spec.md',updated);written=true;
       const built=await this.run(this.python(root),[join(root,'scripts/build.py'),'distill','--root',root,'--date',this.clock()],{cwd:root,timeout:60000});

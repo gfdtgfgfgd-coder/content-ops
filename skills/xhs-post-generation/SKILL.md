@@ -10,10 +10,10 @@ description: 用公司网关文案模型与 Qwen 为给定产品名生成小红�
 1. 读取 `data/distilled-preferences.json`；缺失时回退到已审来源。偏好和业务提示仅在生成脚本加载，`/v1/*` 网关保持纯透传。版本与来源哈希写入 manifest。
 2. 当前风险词、内容生产规范与运营偏好保持有效；唯一机器规则源为 `rules/banned-words-quick.yaml`，不在本技能复制词表。所有可见文字（含封面副标题/亮点、标签、人群）都检查。
 3. `--brief` 为本轮用户提供的营销需求与卖点，可直接用于本轮文案，manifest 如实记录来源；可选 `--facts` 记录独立核验资料。缺少 facts 不再把所有卖点降为试用建议。不添编数字、个人评测经历或活动，不把用户提供参数冒充独立核验。
-4. 文案模型按每图文案计划返回独立笔记标题、copy_format、顺序区块sections，以及三行封面标题（第二行完整模型名）、正文、标签、angle、动态 audience，以及来自文案核心亮点的 cover_subtitle/cover_highlight。标题首行不限动词枚举，正常第一人称与经验分享口吻不靠正则封杀。同批组织结构应有变化。
+4. 文案模型按每图文案计划返回独立笔记标题、copy_format、顺序区块 sections、标签、angle、动态 audience；正文由区块组装。在线文案契约不要求旧 title_lines、cover_subtitle/cover_highlight，封面专属短字由第7步独立规划，不能从正文浓缩搬运。标题不限动词枚举，正常第一人称与经验分享口吻不靠正则封杀。同批组织结构应有变化。
 5. 每图只做一轮公司文案模型调用，返回本图全部版本，再由本机做基础结构与风险词检查；写稿、价格与移动端正文规范唯一源为 `rules/content-spec.md`，更新后用 `python3 scripts/build.py distill` 重建偏好包。`copy.mobile_body` 仅处理换行及说明书尾巴，不改写事实；校验后的正文同步写入 copy.json、manifest 和 Markdown，原始响应保留审计。不再进行风格/事实两轮模型删改。风格终审交规划 agent，不自动重试收费请求。
-6. 不手选参考时，从 `data/posts.jsonl` 自动取同平台最多3条 good/高互动真实帖，以人工 good 优先，相关型号、互动量排序。手选优先。学习标题节奏、排版、痛点及卖点组织；参考帖不作为任何产品事实或使用经历的来源，即使型号相同也不能移用参数，卖点只来自本次 brief/facts。记录实际引用和源哈希；语料不足如实保留缺口。
-7. 新图采用文案 → 视觉提示词 → 完整海报三阶段。文案模型不写图像 Prompt；视觉模型读取本批最多3张真实本地参考封面及文案上下文，提炼构图、字体、光影、材质，独立产生原创 Prompt；图像模型直出带准确文字的海报。小红书3:4、1080×1440，闲鱼1:1、1080×1080。配色和设计约束引用 `rules/content-spec.md`；仅显式 `--background` 允许 Pillow 离线排字。manifest 保留参考图哈希、独立视觉 Prompt 和各阶段原始 usage。缺本地参考图在收费调用前失败。
+6. 手选参考优先；自动选图读取 `data/collections.json`，按平台结构选择与缺口处理见 `docs/GUIDE.md`「封面同构链路与排障」。合集、素材仍是唯一源，不另建索引；参考帖仅供文案节奏与构图，不是产品事实。记录引用、源哈希与实际读取的原图。
+7. 文案与封面独立：视觉模型只看单张结构锚图、合集/OCR、完整型号、封面专属语料和现行风险规则，不读取正文及旧封面五段字。视觉先拆结构，再返回结构化方案与独立短字；图像模型按校验后的方案生成。四类设计约束引用 `rules/content-spec.md`，工程契约与旧流派兼容见 GUIDE，不在本技能复制词表。仅显式 `--background` 允许离线 Pillow 排版；不把提示词约束宣称为图生图或像素级还原。
 8. 保存 manifest、每图模型响应、copy.json、Markdown和PNG；结构选项、倍率、文件契约与重建流程引用 docs/GUIDE.md「文案结构与图文配比」，不复制结构规则。输出目录非空拒绝覆盖，失败保留已有结果；续跑核对 brief、facts、引用与偏好版本，不把缺图称作完成。
 
 使用：`python3 scripts/generate.py copy --model GLM5.3 --platform xhs --count 2 --copy-format all_variations --copy-multiplier 3`（2图6文案）。首次运行 `./start.command` 初始化环境（自动安装依赖到 scratch/.venv）；脚本会转到该仓库环境。凭证配置见 docs/GUIDE.md「生成脚本与网关配置」，不写到成品或日志。

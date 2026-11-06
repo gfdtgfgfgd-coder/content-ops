@@ -11,10 +11,30 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
-from PIL import Image
+# Match CLI runtime bootstrap so the documented python3 entrypoint works on macOS.
+try:
+    from PIL import Image
+except ModuleNotFoundError:
+    import os, sys
+    runtime = Path(__file__).resolve().parents[2] / 'scratch/.venv/bin/python3'
+    if runtime.exists() and Path(sys.executable).absolute() != runtime.absolute():
+        os.execv(str(runtime), [str(runtime), '-m', 'scripts.lib.test_pipeline', *sys.argv[1:]])
+    raise
 from . import cleaning, compact_posts, copy, fetching, gateway, preferences, store, words
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def visual_plan(model='GLM5.3', layout='大字报', prompt=None):
+    if layout == '大字报':
+        values = [('hook','挖到宝了'), ('benefit','便宜管饱'), ('model',model), ('payoff','编程更顺手')]
+    else:
+        values = [('model',model), ('benefit','便宜量大')] + [('feature',t) for t in ['全栈编程','安全审计','速度快','兼容CC']]
+    texts = [{'role':role, 'text':text, 'position':f'文字区{i+1}'} for i,(role,text) in enumerate(values)]
+    return {'collection_name':layout,
+            'structure':{'layout':layout, 'region_proportions':'原图三分区比例1:2:1' if layout != '大字报' else '纸张内四行文字均匀分布',
+                         'text_regions':[{'position':t['position'],'line_count':1,'line_lengths':[copy.cover_units(t['text'])]} for t in texts]},
+            'cover_texts':texts, 'visual_prompt':prompt or ('暖米白纯文字便签，薄荷绿荧光笔强调，四行粗体排字。' if layout == '大字报' else '保留原图分区与主体形态，仅更换配色和同类卡片角度。')}
 
 
 def structured_post(fmt='format_1', n=1):
@@ -281,7 +301,7 @@ class PipelineTests(unittest.TestCase):
             {'platform': 'xianyu', 'id': 'wanted', 'title': '想要', 'metrics': {'wants': 9999}}]
         def source(platform=None):
             return [r for r in rows if platform is None or r['platform'] == platform]
-        with patch.object(copy, 'load_posts', side_effect=source):
+        with patch.object(copy, 'ROOT', self.base), patch.object(copy, 'load_posts', side_effect=source), patch.object(copy, 'collection_memberships', return_value={}):
             refs, contexts, hashes = copy.load_references(None)
             self.assertEqual([r['id'] for r in refs], ['good', 'popular', 'normal'])
             self.assertEqual(len(hashes), 3)
@@ -343,27 +363,27 @@ class PipelineTests(unittest.TestCase):
     def test_platform_poster_sizes_and_prompt(self):
         self.assertEqual(copy.poster_size('xhs'), (1080, 1440))
         self.assertEqual(copy.poster_size('xianyu'), (1080, 1080))
-        post = {'image_prompt': '立体科技工作台，琥珀色与冷蓝色对比',
-                'title_lines': ['效率提升', 'GLM5.3', '需求拆解'],
-                'cover_subtitle': '完整工作流', 'cover_highlight': '适合独立开发者'}
-        xhs_prompt = copy.direct_image_prompt(post, 'xhs')
+        post = {'model':'GLM5.3', 'body':'正文污染标记', 'title_lines':['旧标题','GLM5.3','旧卖点'],
+                'cover_subtitle':'旧副标题', 'cover_highlight':'旧技术长句', 'image_prompt':'旧图像提示词'}
+        plan = visual_plan()
+        xhs_prompt = copy.direct_image_prompt(post, 'xhs', plan)
         self.assertIn('竖版3:4，1080×1440px', xhs_prompt)
-        self.assertIn('遵循视觉提示词中的构图', xhs_prompt)
-        self.assertIn('不留大面积空白', xhs_prompt)
-        conflicting = {**post, 'image_prompt': '1:1 方图，1080x1080px，正方形画布中的科技工作台'}
-        normalized = copy.direct_image_prompt(conflicting, 'xhs')
+        self.assertIn('禁止3D物件', xhs_prompt)
+        self.assertIn('挖到宝了', xhs_prompt)
+        for pollution in ['正文污染标记','旧标题','旧卖点','旧副标题','旧技术长句','旧图像提示词','不留大面积空白']:
+            self.assertNotIn(pollution, xhs_prompt)
+        conflicting = visual_plan(layout='上中下', prompt='1:1 方图，1080x1080px，正方形画布中的科技工作台')
+        normalized = copy.direct_image_prompt(post, 'xhs', conflicting)
         self.assertIn('竖版3:4', normalized)
         self.assertIn('1080×1440px', normalized)
-        self.assertNotIn('1:1', normalized)
-        self.assertNotIn('1080x1080', normalized)
-        self.assertNotIn('正方形画布', normalized)
-        self.assertNotIn('构图构图', normalized)
+        for old in ['1:1','1080x1080','正方形画布','构图构图']:
+            self.assertNotIn(old, normalized)
         self.assertIn('目标画幅中的科技工作台', normalized)
-        xianyu = copy.direct_image_prompt(conflicting, 'xianyu')
-        self.assertIn('方图1:1', xianyu)
-        self.assertIn('1080×1080px', xianyu)
+        xianyu = copy.direct_image_prompt(post, 'xianyu', conflicting)
+        self.assertIn('方图1:1，1080×1080px', xianyu)
         self.assertNotIn('3:4', xianyu)
-        self.assertIn('方图1:1，1080×1080px', copy.direct_image_prompt(post, 'xianyu'))
+        with self.assertRaises(ValueError):
+            copy.direct_image_prompt(post, 'xhs', '旧纯文本提示词')
 
     def test_fresh_generation_sends_final_poster_prompt_and_size(self):
         settings = {'CONTENT_OPS_API_KEY': 'offline-test-only', 'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1',
@@ -374,14 +394,19 @@ class PipelineTests(unittest.TestCase):
                 'cover_subtitle': '目标限制验收一次讲清', 'cover_highlight': '适合独立开发者',
                 'image_prompt': '文案模型不得提供视觉提示词'}
         post.update(structured_post())
-        visual_prompt = '参考图采用深色代码工作台、冷蓝屏光与琥珀轮廓光；主标题置于上部，玻璃材质信息牌居中。'
+        drafts = [post, structured_post('format_2',2), structured_post('format_3',3)]
+        # The new copy schema has no legacy cover fields, including on a fresh run.
+        for draft in drafts:
+            for key in ('title_lines','cover_subtitle','cover_highlight'):
+                draft.pop(key, None)
+        visual_prompt = visual_plan()
         def image_call(*, prompt, output, size, **kwargs):
             Image.new('RGB', (1080, 1440), '#152638').save(output)
             data = output.read_bytes()
             return {'output': str(output), 'model': kwargs['model'], 'requested_size': size,
                     'width': 1080, 'height': 1440, 'bytes': len(data), 'sha256': __import__('hashlib').sha256(data).hexdigest()}
         with patch.object(gateway, 'load_config', return_value=settings), \
-             patch.object(copy, 'claude_call', return_value=({'posts': [post, structured_post('format_2',2), structured_post('format_3',3)]}, {})), \
+             patch.object(copy, 'claude_call', return_value=({'posts': drafts}, {})), \
              patch.object(copy, 'visual_prompt_call', return_value=(visual_prompt, {'model':'vision-test','usage':{'prompt_tokens':12}})) as vision, \
              patch.object(gateway, 'generate_image', side_effect=image_call) as generate, \
              redirect_stdout(io.StringIO()):
@@ -391,15 +416,16 @@ class PipelineTests(unittest.TestCase):
                 timeout=120, background=None))
         self.assertEqual(generate.call_args.kwargs['size'], '1080x1440')
         self.assertIn('竖版3:4，1080×1440px', generate.call_args.kwargs['prompt'])
-        self.assertIn('参考图采用深色代码工作台', generate.call_args.kwargs['prompt'])
+        self.assertIn('暖米白纯文字便签', generate.call_args.kwargs['prompt'])
         self.assertNotIn(post['image_prompt'], generate.call_args.kwargs['prompt'])
-        self.assertEqual(vision.call_args.args[0]['title_lines'], post['title_lines'])
+        self.assertEqual(vision.call_args.args[0], {'model':'GLM5.3'})
         self.assertTrue(vision.call_args.args[1])
         self.assertEqual(result['posts'][0]['image_metadata']['mode'], 'direct_poster')
         self.assertEqual((result['posts'][0]['image_metadata']['width'], result['posts'][0]['image_metadata']['height']), (1080, 1440))
         manifest = json.loads((self.base/'direct/manifest.json').read_text())
         self.assertEqual(manifest['vision_calls'][0]['model'], 'vision-test')
-        self.assertEqual(manifest['posts'][0]['visual_prompt'], visual_prompt)
+        self.assertEqual(manifest['posts'][0]['visual_plan'], visual_prompt)
+        self.assertEqual(manifest['posts'][0]['cover_texts'], visual_prompt['cover_texts'])
 
         generate.assert_called_once()
         vision.assert_called_once()
@@ -420,30 +446,37 @@ class PipelineTests(unittest.TestCase):
         for i, extension in enumerate(['jpg', 'webp', 'png', 'jpg']):
             image = image_dir / f'{i}.{extension}'
             Image.new('RGB', (8, 8), '#223344').save(image)
-            references.append({'image_paths': [str(image.relative_to(self.base))]})
-        post = {'title_lines':['标题','GLM5.3','卖点'], 'cover_subtitle':'长任务',
-                'cover_highlight':'开发人群', 'body':'本次核心卖点。', 'audience':'开发者'}
+            references.append({'id':str(i),'collection_name':'大字报','cover_ocr':'旧型号\n原图短字','image_paths': [str(image.relative_to(self.base))]})
+        (self.base/'rules').mkdir(exist_ok=True)
+        for source in ['rules/content-spec.md','rules/banned-words-quick.yaml','data/model-corpus.md']:
+            shutil.copy(ROOT/source, self.base/source)
+        post = {'model':'GLM-5.3', 'title_lines':['标题','GLM-5.3','卖点'], 'cover_subtitle':'旧副标题污染唯一标记',
+                'cover_highlight':'旧高亮污染唯一标记', 'body':'本次核心卖点。', 'audience':'开发者'}
         response = {'model':'vision-selected','usage':{'prompt_tokens':123},
-                    'choices':[{'finish_reason':'stop','message':{'content':'冷暖对比与清晰大字的原创海报'}}]}
+                    'choices':[{'finish_reason':'stop','message':{'content':json.dumps(visual_plan(model='GLM-5.3'),ensure_ascii=False)}}]}
         settings = {'CONTENT_OPS_BASE_URL':'https://offline.invalid/v1', 'CONTENT_OPS_API_KEY':'test',
                     'CONTENT_OPS_VISION_MODEL':'vision-selected'}
         with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', return_value=response) as request:
             prompt, log = copy.visual_prompt_call(post, references, settings, 1, self.base/'visual.txt', 'xianyu')
             payload = request.call_args.args[1]
             self.assertEqual(payload['model'], 'vision-selected')
-            self.assertEqual(payload['max_tokens'], 2400)
+            self.assertEqual(payload['max_tokens'], 4000)
             content = payload['messages'][0]['content']
-            self.assertEqual(len(content), 4)
+            self.assertEqual(len(content), 2)
             self.assertIn('方图1:1', content[0]['text'])
-            self.assertNotIn('3:4', content[0]['text'])
-            self.assertIn('本次核心卖点', content[0]['text'])
+            self.assertIn('方图1:1，1080×1080px', content[0]['text'])
+            for pollution in ['本次核心卖点。','旧副标题污染唯一标记','旧高亮污染唯一标记','避免告示牌贴纸感','明确主物件、场景、冷暖光影']:
+                self.assertNotIn(pollution, content[0]['text'])
+            self.assertIn('旧型号', content[0]['text'])
+            self.assertIn('封面吸睛大字与四大版式专属短词库', content[0]['text'])
+            self.assertIn('risk_rules', content[0]['text'])
             for i, part in enumerate(content[1:]):
                 encoded = part['image_url']['url']
                 self.assertEqual(base64.b64decode(encoded.split(',')[1]), (image_dir/f"{i}.{['jpg','webp','png'][i]}").read_bytes())
-            self.assertEqual(log['reference_images'], 3)
+            self.assertEqual(log['reference_images'], 1)
             self.assertEqual(log['usage']['prompt_tokens'], 123)
             self.assertTrue(all(len(x['sha256']) == 64 for x in log['sources']))
-            self.assertEqual((self.base/'visual.txt').read_text(), prompt)
+            self.assertEqual(json.loads((self.base/'visual.txt').read_text())['cover_texts'], prompt['cover_texts'])
         with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json') as request:
             with self.assertRaisesRegex(ValueError, '没有可读取'):
                 copy.visual_prompt_call(post, [{'image_paths':['../../secret.jpg']}], settings, 1, self.base/'absent.txt', 'xhs')
@@ -465,6 +498,187 @@ class PipelineTests(unittest.TestCase):
         with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', return_value={'choices':[]}):
             with self.assertRaisesRegex(ValueError, '可能不支持图像输入'):
                 copy.visual_prompt_call(post, references, settings, 1, self.base/'no-choice.txt', 'xhs')
+
+    def test_collection_selection_uses_platform_layouts_and_manual_aliases(self):
+        rows, collections = [], []
+        for index, (platform, layout) in enumerate([('xhs','大字报'),('xhs','上中下'),('xianyu','左右下'),('xianyu','环绕'),('xhs','大字报')]):
+            identifier = 'ref' + str(index)
+            relative = f'data/images/{platform}/{identifier}/cover.png'
+            file = self.base/relative
+            file.parent.mkdir(parents=True)
+            Image.new('RGB',(8,8)).save(file)
+            rows.append({'platform':platform,'id':identifier,'title':'参考标题','body':'参考正文','cover_ocr':'参考短字','images':[relative]})
+            collections.append({'name':layout,'reference_ids':[f'{platform}:{identifier}']})
+        rows.append({'platform':'xhs','id':'unclassified','title':'不应选中','metrics':{'likes':999999}})
+        (self.base/'data/collections.json').write_text(json.dumps({'collections':collections},ensure_ascii=False))
+        source = lambda platform=None: [p for p in rows if not platform or p['platform']==platform]
+        with patch.object(copy,'ROOT',self.base), patch.object(copy,'load_posts',side_effect=source):
+            refs,contexts,hashes = copy.load_references(None,platform='xhs')
+            self.assertEqual([r['collection_name'] for r in refs],['大字报','上中下','大字报'])
+            self.assertTrue(all(r['platform']=='xhs' for r in refs))
+            self.assertEqual(contexts[0]['cover_ocr'],'参考短字')
+            self.assertEqual(len(hashes),3)
+            refs,_,_ = copy.load_references(None,platform='xianyu')
+            self.assertEqual([r['collection_name'] for r in refs],['左右下','环绕'])
+            for preset in ['top_middle_bottom','上中下','code_ide','card_3d']:
+                refs,_,_ = copy.load_references(None,style_preset=preset)
+                self.assertEqual([r['id'] for r in refs],['ref1'])
+            selected = self.base/'manual.json'
+            selected.write_text(json.dumps([{'platform':'xhs','id':'ref4'}]))
+            refs,_,_ = copy.load_references(selected)
+            self.assertEqual(refs[0]['id'],'ref4')
+            self.assertEqual(refs[0]['collection_names'],['大字报'])
+            for row in rows:
+                for relative in row.get('images',[]): (self.base/relative).unlink()
+            with self.assertRaisesRegex(ValueError,'没有可读取'):
+                copy.load_references(None)
+
+    def test_collection_selection_accepts_image_only_material(self):
+        relative = 'data/images/xhs/imageonly/cover.png'
+        image = self.base/relative
+        image.parent.mkdir(parents=True)
+        Image.new('RGB',(8,8)).save(image)
+        row = {'platform':'xhs','id':'imageonly','images':[relative]}
+        (self.base/'data/collections.json').write_text(json.dumps({'collections':[
+            {'name':'大字报','reference_ids':['xhs:imageonly']}]}))
+        with patch.object(copy,'ROOT',self.base), patch.object(copy,'load_posts',return_value=[row]):
+            refs, contexts, _ = copy.load_references(None,platform='xhs')
+            self.assertEqual([(r['id'],r['collection_name']) for r in refs],[('imageonly','大字报')])
+            self.assertEqual(contexts[0]['cover_ocr'],'')
+            parts, _ = copy.reference_image_parts(refs,max_images=1)
+            self.assertEqual(len(parts),1)
+
+    def test_existing_empty_collections_never_fall_back_to_unclassified(self):
+        (self.base/'data').mkdir()
+        (self.base/'data/collections.json').write_text('{"collections":[]}')
+        row = {'platform':'xhs','id':'unclassified','title':'热门但未分类','metrics':{'likes':999999}}
+        with patch.object(copy,'ROOT',self.base), patch.object(copy,'load_posts',return_value=[row]):
+            with self.assertRaisesRegex(ValueError,'缺少参考图素材'):
+                copy.load_references(None,platform='xhs')
+
+    def test_collection_multiple_memberships_choose_requested_layout(self):
+        row = {'platform':'xhs','id':'multi','title':'人工分类','body':'只供文案参考','images':[]}
+        selected = self.base/'manual.json'
+        selected.write_text('[{"platform":"xhs","id":"multi"}]')
+        with patch.object(copy,'load_posts',return_value=[row]), patch.object(copy,'collection_memberships',return_value={'xhs:multi':['大字报','上中下']}):
+            refs,_,_ = copy.load_references(selected,style_preset='top_middle_bottom')
+            self.assertEqual(refs[0]['collection_name'],'上中下')
+            self.assertEqual(refs[0]['collection_names'],['大字报','上中下'])
+
+    def test_visual_plan_four_layouts_and_contract_rejections(self):
+        for layout in copy.LAYOUTS:
+            plan = visual_plan(layout=layout)
+            with self.subTest(layout=layout):
+                self.assertIs(copy.validate_visual_plan(plan,'GLM5.3','xhs',layout),plan)
+                self.assertIn('锁定版式：'+layout,copy.direct_image_prompt({'model':'GLM5.3'},'xhs',plan))
+                with self.assertRaisesRegex(ValueError,'改变了参考图'):
+                    copy.validate_visual_plan(plan,'GLM5.3','xhs','环绕' if layout!='环绕' else '大字报')
+        mutations = [
+            lambda p:p.update(structure={}),
+            lambda p:p['structure']['text_regions'][0].update(line_lengths=[]),
+            lambda p:p['cover_texts'][2].update(text='错误型号'),
+            lambda p:p['cover_texts'][3].update(text='GLM5.3'),
+            lambda p:p['cover_texts'][0].update(text='长句'*20),
+            lambda p:p['cover_texts'][0].update(text='两行\n文字'),
+            lambda p:p['cover_texts'].reverse(),
+        ]
+        for mutate in mutations:
+            plan=visual_plan();mutate(plan)
+            with self.subTest(mutate=mutate),self.assertRaises(ValueError):
+                copy.validate_visual_plan(plan,'GLM5.3','xhs')
+        for layout in ('上中下','左右下','环绕'):
+            plan=visual_plan(layout=layout);plan['cover_texts'][2]['text']='这是一句超过六字的技术说明'
+            with self.subTest(layout=layout),self.assertRaises(ValueError):
+                copy.validate_visual_plan(plan,'GLM5.3','xhs')
+        plan=visual_plan(layout='环绕')
+        plan['cover_texts'] += [{'role':'subtitle','text':'多步任务好跑','position':f'卡{i}副标'} for i in range(4)]
+        copy.validate_visual_plan(plan,'GLM5.3','xianyu')
+        plan['cover_texts'].pop()
+        with self.assertRaisesRegex(ValueError,'环绕'):
+            copy.validate_visual_plan(plan,'GLM5.3','xianyu')
+
+    def test_visual_plan_risk_words_and_typography_subject_guard(self):
+        for platform in ('xhs','xianyu'):
+            for text in ('API','Token','5折','OpenAI','量大管饱'):
+                plan=visual_plan();plan['cover_texts'][0]['text']=text
+                with self.subTest(platform=platform,text=text),self.assertRaisesRegex(ValueError,'风险词'):
+                    copy.validate_visual_plan(plan,'GLM5.3',platform)
+            plan=visual_plan();plan['visual_prompt']+='加入API字样'
+            with self.assertRaisesRegex(ValueError,'风险词'):
+                copy.validate_visual_plan(plan,'GLM5.3',platform)
+        for prompt in ('中央添加3D代码屏。','加入电脑插画。','add a robot in the center.'):
+            with self.subTest(prompt=prompt),self.assertRaisesRegex(ValueError,'不得添加'):
+                copy.validate_visual_plan(visual_plan(prompt=prompt),'GLM5.3','xhs')
+        copy.validate_visual_plan(visual_plan(prompt='纯纸张便签，禁止3D物件、电脑和代码屏。'),'GLM5.3','xhs')
+
+    def test_cover_corpus_is_model_scoped_and_all_combinations_pass_risk_check(self):
+        models=('GLM-5.3','Kimi K3.1 Pro','DeepSeek V4.1')
+        for model in models:
+            corpus=copy.extract_cover_corpus(model)
+            combinations=corpus.split('### 【大字报】4行爽点组合库',1)[1].split('### 【上中下',1)[0]
+            groups=[line[2:].split(' / ') for line in combinations.splitlines() if line.startswith('- ')]
+            self.assertGreaterEqual(len(groups),8)
+            self.assertIn('封面通用组件短词库',corpus)
+            for other in models:
+                if other!=model: self.assertNotIn(other,corpus)
+            for group in groups:
+                self.assertEqual(len(group),4)
+                self.assertEqual(group[2],model)
+                plan=visual_plan(model)
+                for part,text in zip(plan['cover_texts'],group):part['text']=text
+                copy.validate_visual_plan(plan,model,'xhs')
+            copy.check_cover_words(corpus,'xianyu',model)
+        for absent in ('Unknown','GLM-5','GLM-5.3 Pro','GLM-5.30','Kimi K3.2 Pro','DeepSeek V4.10'):
+            with self.subTest(absent=absent),self.assertRaisesRegex(ValueError,'缺少封面'):
+                copy.extract_cover_corpus(absent)
+
+    def test_manual_layout_conflict_fails_before_vision_request(self):
+        image=self.base/'data/images/xhs/ref/cover.png'
+        image.parent.mkdir(parents=True);Image.new('RGB',(8,8)).save(image)
+        ref={'id':'ref','collection_name':'大字报','image_paths':[str(image.relative_to(self.base))]}
+        with patch.object(copy,'ROOT',self.base),patch.object(gateway,'request_json') as request:
+            with self.assertRaisesRegex(ValueError,'冲突'):
+                copy.visual_prompt_call({'model':'GLM-5.3'},[ref],{},1,self.base/'unused.txt','xhs',style_mode='manual',style_preset='top_middle_bottom')
+            request.assert_not_called()
+
+    def test_resume_reuses_checked_visual_plan_and_rejects_legacy_pipeline(self):
+        image=self.base/'data/images/xhs/ref/cover.png'
+        image.parent.mkdir(parents=True);Image.new('RGB',(8,8)).save(image)
+        row={'platform':'xhs','id':'ref','title':'参考','body':'参考正文','images':[str(image.relative_to(self.base))]}
+        (self.base/'data/collections.json').write_text('{"collections":[{"name":"大字报","reference_ids":["xhs:ref"]}]}')
+        (self.base/'rules').mkdir()
+        for source in ('rules/content-spec.md','data/model-corpus.md'):shutil.copy(ROOT/source,self.base/source)
+        settings={'CONTENT_OPS_API_KEY':'test','CONTENT_OPS_BASE_URL':'https://offline.invalid/v1'}
+        argv=['--model','GLM5.3','--count','1','--copy-multiplier','1','--output',str(self.base/'batch'),'--brief','开发任务，便宜量大']
+        def generate(*,output,**kwargs):
+            Image.new('RGB',(1080,1440)).save(output)
+            return {'width':1080,'height':1440,'bytes':len(output.read_bytes()),'sha256':__import__('hashlib').sha256(output.read_bytes()).hexdigest()}
+        with patch.object(copy,'ROOT',self.base),patch.object(copy,'load_posts',return_value=[row]), \
+             patch.object(gateway,'load_config',return_value=settings), \
+             patch.object(copy,'claude_call',return_value=({'posts':[structured_post()]},{})) as text, \
+             patch.object(copy,'visual_prompt_call',return_value=(visual_plan(),{'model':'offline-vision'})) as vision, \
+             patch.object(gateway,'generate_image',side_effect=gateway.ImageGenerationError('offline failure')) as images,redirect_stdout(io.StringIO()):
+            self.assertEqual(copy.main(argv),1)
+            manifest_path=self.base/'batch/manifest.json'
+            manifest=json.loads(manifest_path.read_text())
+            self.assertEqual(manifest['posts'][0]['collection_name'],'大字报')
+            self.assertEqual(manifest['generation_pipeline'],copy.PIPELINE_VERSION)
+            self.assertEqual(vision.call_args.args[0],{'model':'GLM5.3'})
+            images.side_effect=generate
+            self.assertEqual(copy.main([*argv,'--resume']),0)
+            self.assertEqual((text.call_count,vision.call_count,images.call_count),(1,1,2))
+            self.assertEqual(copy.main([*argv,'--resume']),0)
+            self.assertEqual(images.call_count,2)
+            corpus=self.base/'data/model-corpus.md'
+            saved=corpus.read_text();corpus.write_text(saved+'\n')
+            self.assertEqual(copy.main([*argv,'--resume']),0) # trailing whitespace does not change selected corpus
+            corpus.write_text(saved.replace('挖到宝了！','好消息来了！'))
+            self.assertEqual(copy.main([*argv,'--resume']),1)
+            corpus.write_text(saved)
+            manifest=json.loads(manifest_path.read_text());manifest['generation_pipeline']='copy_vision_image_v1'
+            manifest_path.write_text(json.dumps(manifest))
+            self.assertEqual(copy.main([*argv,'--resume']),1)
+            self.assertEqual((text.call_count,vision.call_count,images.call_count),(1,1,2))
 
     def test_saved_gateway_fields_override_inherited_environment(self):
         config = self.base / 'gateway.env'
@@ -498,12 +712,12 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '风险词'):
             copy.validate_style('manual', '', '包含 API 禁词', platform='xhs', model='GLM5.3')
         instruction = copy.build_style_instruction('manual', 'code_ide', '暗黑极客风、蓝紫霓虹光')
-        self.assertIn('预设流派【极客代码屏】', instruction)
+        self.assertIn('预设流派【上中下】', instruction)
         self.assertIn('自定义画面感觉要求：暗黑极客风、蓝紫霓虹光', instruction)
         post = {'image_prompt': '工作台海报', 'title_lines': ['效率提升', 'GLM5.3', '需求拆解'],
                 'cover_subtitle': '完整工作流', 'cover_highlight': '适合独立开发者'}
-        direct = copy.direct_image_prompt(post, 'xhs', '视觉提示词', style_mode='manual', style_preset='code_ide', style_prompt='蓝紫霓虹光')
-        self.assertIn('风格与画面感觉要求：预设流派【极客代码屏】', direct)
+        direct = copy.direct_image_prompt({'model':'GLM5.3'}, 'xhs', visual_plan(layout='上中下',prompt='蓝紫霓虹光与卡片海报'), style_mode='manual', style_preset='code_ide', style_prompt='蓝紫霓虹光')
+        self.assertIn('锁定版式：上中下', direct)
         self.assertIn('蓝紫霓虹光', direct)
 
     def test_copy_options_config_precedence_and_invalid_inputs(self):
@@ -607,7 +821,7 @@ class PipelineTests(unittest.TestCase):
             argv=['--model','GLM5.3','--platform',platform,'--count','2','--copy-format',fmt,'--copy-multiplier',str(multiplier),'--output',str(output)]
             with self.subTest(fmt=fmt), patch.object(gateway,'load_config',return_value=settings), \
                  patch.object(copy,'claude_call',side_effect=text_call) as calls, \
-                 patch.object(copy,'visual_prompt_call',return_value=('工作台海报',{'model':'offline'})), \
+                 patch.object(copy,'visual_prompt_call',return_value=(visual_plan(),{'model':'offline'})), \
                  patch.object(gateway,'generate_image',side_effect=image_call) as images, redirect_stdout(io.StringIO()):
                 self.assertEqual(copy.main(argv),0)
                 self.assertEqual(calls.call_count,2)

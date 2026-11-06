@@ -38,6 +38,17 @@ test('brief and cover style validate type, length, controls; old input stays com
   ]) assert.throws(() => validateContentOpsInput({...input,...bad}), {statusCode:400});
 });
 
+test('four collection presets and legacy IDs validate and appear in the UI', async () => {
+  const canonical = ['bold_typo','top_middle_bottom','left_right_bottom','surround'];
+  const names = ['大字报','上中下','左右下','环绕'];
+  const html = await readFile(join(root,'hanabi/index.html'),'utf8');
+  for (const preset of [...canonical,...names,'code_ide','card_3d','comparison','promo']) {
+    const validated = validateContentOpsInput({...input,styleMode:'manual',stylePreset:preset});
+    assert.equal(validated.stylePreset,preset);
+  }
+  for (let i=0;i<canonical.length;i++) assert.ok(html.includes(`value="${canonical[i]}">${names[i]}`));
+});
+
 test('existing DB migrates, brief and manual style persist, single argv is safe, idempotency includes style, history escapes client-side', async () => {
   const dir = await mkdtemp(join(root,'scratch/t37-node-')), db = new DatabaseSync(':memory:');
   try {
