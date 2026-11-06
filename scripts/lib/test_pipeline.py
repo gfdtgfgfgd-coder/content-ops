@@ -34,6 +34,17 @@ def structured_post(fmt='format_1', n=1):
 
 
 class PipelineTests(unittest.TestCase):
+    def test_edited_xianyu_recalculates_missing_signal(self):
+        posts = [{'id': 'clean', 'platform': 'xianyu', 'title': '正常标题', 'metrics': {'wants': 8}},
+                 {'id': 'banned', 'platform': 'xianyu', 'body': '命中风险', 'metrics': {'wants': 3}}]
+        with patch.object(preferences, 'read_posts', return_value=posts), patch.object(
+                preferences, 'clean_reference_hits', side_effect=[[], ['风险']]) as check:
+            refs = preferences.xianyu_references(self.base, [], 'xianyu', 10)
+        self.assertEqual([row['clean_for_style_reference'] for row in refs], [True, False])
+        self.assertEqual(refs[1]['banned_word_hits'], ['风险'])
+        self.assertEqual(check.call_count, 2)
+
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -631,3 +642,68 @@ class DoctorTests(unittest.TestCase):
             self.assertEqual(len(report['duplicates']), 1)
             self.assertTrue(any('多出的入口' in error for error in report['errors']))
             self.assertTrue(any('large.txt' in error for error in report['errors']))
+
+
+class PruneReferencesTests(unittest.TestCase):
+    def fixture(self, root):
+        (root / 'data/images/xhs/bb').mkdir(parents=True)
+        (root / 'data/images/xhs/bb/1.png').write_bytes(b'unwanted')
+        rows = [{'id':'aa','platform':'xhs','title':'keep'}, {'id':'bb','platform':'xhs'}, {'id':'cc','platform':'xianyu'}, {'id':'dd','platform':'other'}]
+        raw = ''.join(json.dumps(row) + '\n' for row in rows).encode()
+        (root / 'data/posts.jsonl').write_bytes(raw)
+        (root / 'data/collections.json').write_text(json.dumps({'collections':[{'reference_ids':['aa','xianyu:bb']}]}))
+        def git(*args):
+            return subprocess.run(['git','-C',str(root),*args],check=True,capture_output=True)
+        git('init');git('add','data/posts.jsonl','data/collections.json')
+        git('-c','user.name=Test','-c','user.email=test@localhost','commit','-m','初始测试')
+        return raw, git
+
+    def test_prune_whitelist_backup_and_seal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw, git = self.fixture(root)
+            with redirect_stdout(io.StringIO()):
+                store.prune(['--root',str(root)])
+            self.assertEqual((root/'data/posts.jsonl').read_bytes(),raw)
+            with redirect_stdout(io.StringIO()):
+                store.prune(['--root',str(root),'--apply'])
+            self.assertEqual([row['id'] for row in store.read_posts(root/'data/posts.jsonl')],['aa','cc','dd'])
+            self.assertEqual(next((root/'data').glob('posts.jsonl.bak.*')).read_bytes(),raw)
+            self.assertFalse((root/'data/images/xhs/bb').exists())
+            self.assertEqual(git('show','HEAD:data/posts.jsonl').stdout,(root/'data/posts.jsonl').read_bytes())
+            self.assertFalse((root/'data/.posts.lock').exists())
+
+    def test_prune_git_failure_restores_files_and_lock(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw, git = self.fixture(root)
+            (root/'.git/index.lock').write_text('busy')
+            with self.assertRaises(subprocess.CalledProcessError), redirect_stdout(io.StringIO()):
+                store.prune(['--root',str(root),'--apply'])
+            self.assertEqual((root/'data/posts.jsonl').read_bytes(),raw)
+            self.assertEqual((root/'data/images/xhs/bb/1.png').read_bytes(),b'unwanted')
+            self.assertFalse((root/'data/.posts.lock').exists())
+            (root/'.git/index.lock').unlink()
+            (root/'data/.posts.lock').write_text('do not break')
+            with self.assertRaises(FileExistsError):
+                store.prune(['--root',str(root),'--apply'])
+
+    def test_prune_rejects_symlink_and_shared_image(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw, git = self.fixture(root)
+            rows = [json.loads(line) for line in raw.splitlines()]
+            rows[2]['images']=['data/images/xhs/bb/1.png']
+            (root/'data/posts.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows))
+            with self.assertRaises(ValueError):
+                store.prune(['--root',str(root),'--apply'])
+            (root/'data/posts.jsonl').write_bytes(raw)
+            shutil.rmtree(root/'data/images/xhs/bb')
+            (root/'data/images/xhs/bb').symlink_to(root/'data',target_is_directory=True)
+            with self.assertRaises(ValueError):
+                store.prune(['--root',str(root),'--apply'])
+            self.assertEqual((root/'data/posts.jsonl').read_bytes(),raw)
+
+
+if __name__ == '__main__':
+    unittest.main()

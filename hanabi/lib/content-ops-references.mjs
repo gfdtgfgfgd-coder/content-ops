@@ -318,11 +318,11 @@ export class ContentOpsReferences {
     this.dialog.innerHTML = `<form class="ref-editor-form">
       <header><h2 id="ref-editor-title">添加素材</h2><button type="button" class="ref-text-button" data-ref-close aria-label="关闭素材编辑器">关闭</button></header>
       <label>平台<select name="platform">${options([['xhs','小红书'],['xianyu','闲鱼']])}</select></label>
-      <div class="ref-upload" tabindex="0" role="button" aria-label="选择或拖拽封面图片" data-ref-drop><strong>封面图片（选填）</strong><span>点击选择或拖拽一张 PNG / JPEG / WebP，最大 15MB</span><input type="file" name="upload" accept="image/png,image/jpeg,image/webp" hidden></div>
-      <div class="ref-editor-preview" hidden><img alt="封面预览"><button type="button" class="ref-text-button" data-ref-remove>移除图片</button><span data-ref-image-note></span></div>
+      <div class="ref-upload" tabindex="0" role="button" aria-label="添加图片，点击选择或拖拽多张图片" data-ref-drop><strong>➕ 添加图片（选填）</strong><span>可继续追加或拖拽多张 PNG / JPEG / WebP；每张不超过 15MB，单次新增共 45MB</span><input type="file" name="upload" accept="image/png,image/jpeg,image/webp" multiple hidden></div>
+      <div class="ref-editor-preview" role="list" aria-label="素材图片编辑队列" hidden></div>
       <label>标题（选填）<input name="title" maxlength="200000"></label>
       <label>正文内容（选填）<textarea name="body" rows="6" maxlength="200000"></textarea></label>
-      <label>封面字样 / OCR（选填）<textarea name="cover_ocr" rows="2" maxlength="200000"></textarea></label>
+      <label>封面字样 / OCR（选填）<textarea name="cover_ocr" rows="6" maxlength="200000"></textarea></label>
       <label>模型 / 型号（选填）<input name="model" maxlength="200000"></label>
       <label class="ref-editor-good"><input type="checkbox" name="good">设为精选</label>
       <p class="ref-editor-status" role="status" aria-live="polite"></p>
@@ -333,6 +333,7 @@ export class ContentOpsReferences {
     this.editorStatus = this.dialog.querySelector('.ref-editor-status');
     this.preview = this.dialog.querySelector('.ref-editor-preview');
     this.dialog.querySelectorAll('[data-ref-close]').forEach(close => close.addEventListener('click', () => { if (!this.mutating) this.dialog.close(); }));
+    this.dialog.addEventListener('close', () => { this.imageVersion++; this.readingImage = false; });
     this.dialog.addEventListener('cancel', event => { if (this.mutating) event.preventDefault(); });
     this.form.addEventListener('submit', event => { event.preventDefault(); void this.saveEditor(); });
     this.form.elements.upload.addEventListener('click', event => event.stopPropagation());
@@ -344,10 +345,11 @@ export class ContentOpsReferences {
       event.preventDefault(); drop.classList.toggle('ref-upload--active', name === 'dragover');
       if (name === 'drop' && !this.mutating) void this.chooseImage(event.dataTransfer.files);
     });
-    this.dialog.querySelector('[data-ref-remove]').addEventListener('click', () => {
-      if (this.mutating) return;
-      this.imageVersion++; this.readingImage = false; this.editorImage = null; this.hasImage = false;
-      this.form.elements.upload.value = ''; this.showPreview('');
+    this.preview.addEventListener('click', event => {
+      const remove = event.target.closest('[data-ref-remove]');
+      if (!remove || this.mutating || this.readingImage) return;
+      this.editorImages.splice(Number(remove.dataset.refRemove), 1);
+      this.showPreview();
     });
   }
 
@@ -359,32 +361,41 @@ export class ContentOpsReferences {
     for (const name of ['title','cover_ocr','model']) this.form.elements[name].value = post?.[name] || '';
     this.form.elements.body.value = post?.body_full || '';
     this.form.elements.good.checked = post?.label_good === true;
-    this.editorImage = undefined; this.hasImage = Boolean(post && imageList(post).length);
+    this.editorImages = post ? imageList(post).map(source => ({source, path:decodeURIComponent(source.replace('/api/content-ops/image/', 'data/images/'))})) : [];
     this.imageVersion = (this.imageVersion || 0) + 1; this.readingImage = false;
-    this.showPreview(post ? imageList(post)[0] : '');
+    this.showPreview();
     this.dialog.showModal();
   }
 
-  showPreview(source) {
-    this.preview.hidden = !source;
-    const image = this.preview.querySelector('img');
-    if (source) image.src = source; else image.removeAttribute('src');
-    const count = this.editorImage === undefined && this.editing ? imageList(this.editing).length : 1;
-    this.preview.querySelector('[data-ref-image-note]').textContent = count > 1 ? `共 ${count} 张；上传会替换封面，移除会删除全部图片` : '';
+  showPreview() {
+    this.hasImage = this.editorImages.length > 0;
+    this.preview.hidden = !this.hasImage;
+    this.preview.innerHTML = this.editorImages.map((image,index) => `<figure class="ref-editor-image" role="listitem"><img src="${esc(image.source)}" alt="第 ${index + 1} 张素材图片" decoding="async"><figcaption>${index === 0 ? '封面 · ' : ''}第 ${index + 1} 张${image.upload ? ' · 新增' : ''}</figcaption><button type="button" class="ref-image-remove" data-ref-remove="${index}" aria-label="删除第 ${index + 1} 张图片">✕</button></figure>`).join('');
   }
 
   async chooseImage(files) {
-    if (files.length !== 1) { this.editorStatus.textContent = '请选择一张封面图片。'; return; }
-    const file = files[0], version = ++this.imageVersion;
-    this.readingImage = false;
-    if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 15 * 1024 * 1024) {
-      this.editorStatus.textContent = '仅支持 PNG / JPEG / WebP，图片不能超过 15MB。'; return;
+    if (this.mutating || this.readingImage) return;
+    const additions = Array.from(files || []);
+    this.form.elements.upload.value = '';
+    if (!additions.length) return;
+    if (this.editorImages.length + additions.length > 200 || this.editorImages.filter(image => image.upload).length + additions.length > 50) {
+      this.editorStatus.textContent = '最多保留 200 张，单次最多新增 50 张图片。'; return;
     }
+    if (additions.some(file => !['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 15 * 1024 * 1024)) {
+      this.editorStatus.textContent = '仅支持 PNG / JPEG / WebP，每张图片不能超过 15MB。'; return;
+    }
+    if (additions.reduce((size,file) => size + file.size, this.editorImages.reduce((size,image) => size + (image.bytes || 0), 0)) > 45 * 1024 * 1024) {
+      this.editorStatus.textContent = '单次新增图片总大小不能超过 45MB。'; return;
+    }
+    const version = ++this.imageVersion;
     this.readingImage = true; this.editorStatus.textContent = '正在读取图片…';
     try {
-      const source = await new Promise((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('图片读取失败，请重新选择。')); reader.readAsDataURL(file); });
+      const images = await Promise.all(additions.map(async file => {
+        const source = await new Promise((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('图片读取失败，请重新选择。')); reader.readAsDataURL(file); });
+        return {source,upload:source,bytes:file.size};
+      }));
       if (version !== this.imageVersion) return;
-      this.editorImage = source; this.hasImage = true; this.showPreview(source); this.editorStatus.textContent = '';
+      this.editorImages.push(...images); this.showPreview(); this.editorStatus.textContent = '';
     } catch (error) { if (version === this.imageVersion) this.editorStatus.textContent = error.message; }
     finally { if (version === this.imageVersion) this.readingImage = false; }
   }
@@ -414,8 +425,9 @@ export class ContentOpsReferences {
     const payload = {};
     for (const name of ['platform','title','body','cover_ocr','model']) payload[name] = this.form.elements[name].value;
     payload.label = {good:this.form.elements.good.checked};
-    if (!this.hasImage && !payload.title.trim() && !payload.body.trim()) { this.editorStatus.textContent = '请至少提供图片、标题或正文中的一项。'; return; }
-    if (this.editorImage !== undefined) payload.image = this.editorImage;
+    if (!this.hasImage && !payload.title.trim() && !payload.body.trim()) { this.editorStatus.textContent = '请至少保留一张图片或填写标题/正文。'; return; }
+    payload.retained_images = this.editorImages.filter(image => image.path).map(image => image.path);
+    payload.new_images = this.editorImages.filter(image => image.upload).map(image => image.upload);
     const old = this.editing;
     this.mutating = true; this.form.querySelectorAll('button,input,textarea,select').forEach(element => element.disabled = true);
     this.editorStatus.textContent = '正在保存…';

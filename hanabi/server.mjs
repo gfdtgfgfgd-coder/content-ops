@@ -124,7 +124,7 @@ async function route(req, res) {
       if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` || req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { error: '仅允许当前 Hanabi 页面修改素材。' }, headers);
       if (!remove && !/^application\/json(?:;|$)/iu.test(req.headers['content-type'] || '')) return send(res, 415, { error: '请使用 JSON 提交素材。' }, headers);
       if (remove) return send(res, 200, { deleted: await references.deleteReference(id) }, headers);
-      const payload = await body(req, 21 * 1024 * 1024);
+      const payload = await body(req, 65 * 1024 * 1024);
       return send(res, create ? 201 : 200, { reference: create ? await references.addReference(payload) : await references.updateReference(id, payload) }, headers);
     }
     if (req.method === 'GET' && pathname.startsWith('/api/content-ops/image/')) { const imagePath = referenceImageRequestPath(req.url); const image = await references.image(imagePath); const bytes = await readFile(image.path); res.writeHead(200, { 'Content-Type': image.mimeType, 'Content-Length': bytes.length, 'Cache-Control': 'no-store' }); return res.end(bytes); }

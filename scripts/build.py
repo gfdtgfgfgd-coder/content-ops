@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import sys
 
-COMMANDS = {'migrate-posts': ('store', 'migrate'), 'clean': ('cleaning', 'clean'), 'distill': ('preferences', 'main'), 'audience': ('cleaning', 'audience'), 'package': ('packaging', 'main'), 'install-runtime': ('runtime', 'main')}
+COMMANDS = {'migrate-posts': ('store', 'migrate'), 'prune-references': ('store', 'prune'), 'clean': ('cleaning', 'clean'), 'distill': ('preferences', 'main'), 'audience': ('cleaning', 'audience'), 'package': ('packaging', 'main'), 'install-runtime': ('runtime', 'main')}
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)

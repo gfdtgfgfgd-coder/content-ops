@@ -234,15 +234,16 @@ def xianyu_references(directory: Path, rules: list[dict[str, Any]], platform: st
     result = []
     for rank, (post, wants) in enumerate(posts[:limit], start=1):
         signal = post.get("signal") if isinstance(post.get("signal"), dict) else {}
+        hits = clean_reference_hits(post, rules, platform)
         clean = signal.get("clean_for_style_reference")
         if not isinstance(clean, bool):
-            raise ValueError(f"闲鱼 {post['id']} 尚无 signal.clean_for_style_reference")
+            clean = not hits
         result.append({
             "id": post["id"],
             "wants": wants,
             "rank": rank,
             "clean_for_style_reference": clean,
-            "banned_word_hits": clean_reference_hits(post, rules, platform),
+            "banned_word_hits": hits,
         })
     return result
 

@@ -15,3 +15,8 @@ hanabi/node_modules/
 *.app
 
 # 本机临时脚本与中间产物
+
+# 素材安全清理的本机快照与事务暂存
+data/posts.jsonl.bak.*
+data/.posts.lock
+data/.posts-prune-*.tmp

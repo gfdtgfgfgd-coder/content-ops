@@ -169,7 +169,7 @@ function uploadedImage(value){
 
 function referenceFields(payload){
   if(!payload||typeof payload!=='object'||Array.isArray(payload))throw fail('素材字段无效。');
-  const allowed=new Set(['platform','title','body','cover_ocr','model','model_category','layout_style','label','image']);
+  const allowed=new Set(['platform','title','body','cover_ocr','model','model_category','layout_style','label','image','retained_images','new_images']);
   if(Object.keys(payload).some(key=>!allowed.has(key)))throw fail('包含不支持的素材字段。');
   const fields={};
   for(const key of ['title','body','cover_ocr','model'])if(Object.hasOwn(payload,key)){
@@ -359,13 +359,26 @@ export class ContentOpsReferenceStore {
       return {ok:true,count:ids.length};
     });
   }
+  imageEdits(payload,old){
+    const explicit=Object.hasOwn(payload,'retained_images')||Object.hasOwn(payload,'new_images');
+    if(!explicit)return null;
+    if(Object.hasOwn(payload,'image'))throw fail('不能同时提交旧版封面和多图编辑字段。');
+    const retained=Object.hasOwn(payload,'retained_images')?payload.retained_images:(old?.images||[]);
+    const additions=Object.hasOwn(payload,'new_images')?payload.new_images:[];
+    if(!Array.isArray(retained)||!Array.isArray(additions)||retained.length+additions.length>200||additions.length>50||new Set(retained).size!==retained.length)throw fail('图片列表无效，最多保留 200 张，单次最多新增 50 张。');
+    const originals=new Set(old?.images||[]),prefix=`data/images/${old?.platform||payload.platform||'xhs'}/${old?.id||''}/`;
+    if(retained.some(path=>typeof path!=='string'||!originals.has(path)||!path.startsWith(prefix)||!imageName.test(path.slice(prefix.length))))throw fail('保留图片必须属于当前素材，不能引用其他文件。');
+    const images=additions.map(uploadedImage);
+    if(images.reduce((size,image)=>size+image.bytes.length,0)>45*1024*1024)throw fail('单次新增图片总大小不能超过 45MB。',413);
+    return {retained,images};
+  }
   async addReference(payload){
     const fields=referenceFields(payload),image=payload.image==null?null:uploadedImage(payload.image);
     return this.mutate(async()=>{
-      const posts=await this.records();
+      const edits=this.imageEdits(payload,null),posts=await this.records();
       let id;do{id=randomBytes(12).toString('hex');}while(posts.some(post=>post.id===id));
       const post={id,platform:'xhs',title:'',body:'',cover_ocr:'',model:'',label:{good:false},...fields,images:[],source:'user_added',fetched_at:new Date().toISOString()};
-      return this.saveReference(posts,null,post,image,payload.image!==undefined);
+      return this.saveReference(posts,null,post,image,payload.image!==undefined,edits);
     });
   }
   async updateReference(id,updates){
@@ -373,18 +386,19 @@ export class ContentOpsReferenceStore {
     const fields=referenceFields(updates),image=updates.image==null?null:uploadedImage(updates.image);
     return this.mutate(async()=>{
       const posts=await this.records(),old=posts.find(post=>post.id===id);if(!old)throw fail('素材不存在。',404);
-      const post={...old,...fields,label:{...old.label,...fields.label}};
+      const edits=this.imageEdits(updates,old),post={...old,...fields,label:{...old.label,...fields.label}};
       // Content changes invalidate derived risk signals, not the original metrics.
       delete post.signal;
-      return this.saveReference(posts,old,post,image,Object.hasOwn(updates,'image'));
+      return this.saveReference(posts,old,post,image,Object.hasOwn(updates,'image'),edits);
     });
   }
-  async saveReference(posts,old,post,image,changeImage){
+  async saveReference(posts,old,post,image,changeImage,edits=null){
     const oldImages=Array.isArray(post.images)?post.images:[];
-    const hasImage=changeImage?Boolean(image):oldImages.length>0;
-    if(!hasImage&&!post.title?.trim()&&!post.body?.trim())throw fail('请至少提供图片、标题或正文中的一项。');
+    const hasImage=edits?edits.retained.length+edits.images.length>0:changeImage?Boolean(image):oldImages.length>0;
+    if(!hasImage&&!post.title?.trim()&&!post.body?.trim())throw fail('请至少保留一张图片或填写标题/正文。');
     const relocate=old&&old.platform!==post.platform;
-    const changeDirectory=changeImage||relocate;
+    const changedImages=Boolean(edits&&(edits.images.length||JSON.stringify(edits.retained)!==JSON.stringify(oldImages)));
+    const changeDirectory=changeImage||relocate||changedImages;
     const collections=relocate?await this.readCollections():[];
     const nextCollections=collections.map(collection=>({...collection,reference_ids:collection.reference_ids.map(id=>id===referenceKey(old)?referenceKey(post):id)}));
     const collectionsChanged=collections.some(collection=>collection.reference_ids.includes(referenceKey(old)));
@@ -398,6 +412,24 @@ export class ContentOpsReferenceStore {
         if(relocate&&await lstat(target).then(()=>true,error=>{if(error.code==='ENOENT')return false;throw error;}))throw fail('目标素材目录已存在。',409);
         const token=randomBytes(12).toString('hex');staging=join(parent,`.${post.id}-${token}.tmp`);backup=oldDir+`.${token}.bak`;
         await mkdir(staging);
+        if(edits){
+          post.images=[];
+          for(const previous of edits.retained){
+            const filename=previous.split('/').at(-1),source=join(oldDir,filename);
+            const original=await lstat(source).catch(error=>{if(error.code!=='ENOENT')throw error;});
+            if(!original||!original.isFile()||original.isSymbolicLink()||!within(oldDir,await realpath(source)))throw fail('保留图片缺失或不是安全的本地文件，请移除后重试。');
+            await cp(source,join(staging,filename),{dereference:false,errorOnExist:true,force:false});
+            post.images.push(`data/images/${post.platform}/${post.id}/${filename}`);
+          }
+          for(const addition of edits.images){
+            const filename=`upload-${randomBytes(12).toString('hex')}.${addition.ext}`;
+            const file=await open(join(staging,filename),'wx',0o600);
+            try{await file.writeFile(addition.bytes);await file.sync();}finally{await file.close();}
+            post.images.push(`data/images/${post.platform}/${post.id}/${filename}`);
+          }
+          // Removed crawler URLs must not later rehydrate deleted carousel images.
+          post.image_urls=[];
+        }else{
         if(info)await cp(oldDir,staging,{recursive:true,dereference:false});
         if(changeImage){
           // A replacement updates the cover; remaining carousel images are retained.
@@ -410,6 +442,7 @@ export class ContentOpsReferenceStore {
             post.images=[`data/images/${post.platform}/${post.id}/${filename}`,...oldImages.slice(1).map(path=>path.replace(`data/images/${old?.platform||post.platform}/`,`data/images/${post.platform}/`))].filter((path,index,all)=>all.indexOf(path)===index);
           }else{await rm(staging,{recursive:true,force:true});await mkdir(staging);post.images=[];}
         }else if(relocate)post.images=oldImages.map(path=>path.replace(`data/images/${old.platform}/`,`data/images/${post.platform}/`));
+        }
         if(info){await rename(oldDir,backup);backedUp=true;}
         await rename(staging,target);installed=true;
       }

@@ -742,11 +742,19 @@ test('references HTTP roundtrip uses real routes, image headers, errors and isol
     response=await request(`${path}/${reference.id}`,{body:'PUT 正文'},'PUT');assert.equal(response.status,200);
     response=await fetch(url+path);data=await response.json();assert.equal(data.posts[0].title,'新标题');assert.equal(data.posts[0].body_full,'PUT 正文');assert.match(data.posts[0].image,/1.webp$/u);
     response=await fetch(`${url}/api/content-ops/image/xhs/${reference.id}/1.png`);assert.equal(response.status,404);
+    response=await request(`${path}/${reference.id}/edit`,{retained_images:[`data/images/xhs/${reference.id}/1.webp`],new_images:[png.toString('base64'),webp.toString('base64')],cover_ocr:'首行\n\n末行'});assert.equal(response.status,200);
+    let gallery=(await response.json()).reference;assert.equal(gallery.images.length,3);
+    const removedImage=gallery.images[0];
+    response=await request(`${path}/${reference.id}/edit`,{retained_images:[gallery.images[2]],new_images:[]});assert.equal(response.status,200);
+    response=await fetch(url+path);data=await response.json();assert.equal(data.posts[0].images.length,1);assert.equal(data.posts[0].cover_ocr,'首行\n\n末行');
+    response=await fetch(`${url}/api/content-ops/image/xhs/${reference.id}/${removedImage.split('/').at(-1)}`);assert.equal(response.status,404);
+    response=await request(`${path}/${reference.id}/edit`,{retained_images:[],new_images:[]});assert.equal(response.status,200);
+    response=await fetch(url+path);data=await response.json();assert.deepEqual(data.posts[0].images,[]);
     response=await fetch(url+path,{method:'POST',headers:{origin:'https://unrelated.invalid','content-type':'application/json'},body:'{"title":"blocked"}'});assert.equal(response.status,403);
     response=await fetch(url+path,{method:'POST',body:'{}'});assert.equal(response.status,415);
     response=await fetch(url+path,{method:'POST',headers:{'content-type':'application/json'},body:'{'});assert.equal(response.status,400);
     response=await request(path,{});assert.equal(response.status,400);
-    response=await request(path,{title:'A'.repeat(21*1024*1024)});assert.equal(response.status,413);
+    response=await request(path,{title:'A'.repeat(65*1024*1024)});assert.equal(response.status,413);
     response=await request(`${path}/%zz/edit`,{title:'x'});assert.equal(response.status,400);
     response=await request(`${path}/${reference.id}/delete`,{});assert.equal(response.status,200);
     response=await request(path,{body:'纯文'});const other=(await response.json()).reference;
@@ -904,4 +912,92 @@ test('selected copy switches body and tags, falls back for legacy posts, renders
   assert.match(renderPostContent(post.copies[1].text),/<strong>卖点B<\/strong>/);
   assert.match(renderPostContent('# 标题\n\n**长卖点\n自动换行**'),/<strong>长卖点\n自动换行<\/strong>/);
   assert.doesNotMatch(renderPostContent('# 标题\n\n**<img src=x onerror=alert(1)>**'),/<img/);
+});
+
+
+test('multi-image edits keep order, remove files, append safely and relocate collections', async t => {
+  const {dir,store}=await referenceFixture(t);
+  const post=await store.addReference({title:'多图素材',cover_ocr:'第一行\n第二行\n\n第四行',new_images:[png,png,webp]});
+  assert.equal(post.images.length,3);
+  const [first,removed,last]=post.images;
+  // An unreferenced crawler artifact must not survive a gallery rewrite.
+  await writeFile(join(dir,`data/images/xhs/${post.id}/logo.png`),png);
+  post.image_urls=['https://example.invalid/deleted-crawler.jpg'];await store.writeRecords([post]);
+  const collection=await store.createCollection({name:'保留合集'});
+  await store.updateCollection(collection.id,{reference_ids:[`xhs:${post.id}`]});
+  let updated=await store.updateReference(post.id,{retained_images:[last,first],new_images:[webp],body:'多图正文'});
+  assert.deepEqual(updated.images.slice(0,2),[last,first]);
+  assert.equal(updated.images.length,3);assert.deepEqual(updated.image_urls,[]);
+  await assert.rejects(()=>readFile(join(dir,removed)),{code:'ENOENT'});
+  await assert.rejects(()=>readFile(join(dir,`data/images/xhs/${post.id}/logo.png`)),{code:'ENOENT'});
+  assert.deepEqual(await readFile(join(dir,updated.images[0])),webp);
+  assert.deepEqual(await readFile(join(dir,updated.images[2])),webp);
+  assert.equal(updated.cover_ocr,'第一行\n第二行\n\n第四行');
+  const listed=await store.list(new URLSearchParams({platform:'xhs',limit:'all'}));
+  assert.equal(listed.posts[0].images.length,3);assert.equal(listed.posts[0].cover_ocr,updated.cover_ocr);
+  updated=await store.updateReference(post.id,{platform:'xianyu',retained_images:[updated.images[2],last],new_images:[png]});
+  assert.equal(updated.images.length,3);assert.ok(updated.images.every(path=>path.startsWith(`data/images/xianyu/${post.id}/`)));
+  assert.deepEqual((await store.readCollections()).find(item=>item.id===collection.id).reference_ids,[`xianyu:${post.id}`]);
+  assert.deepEqual(await readdir(join(dir,'data/images/xhs')),[]);
+  const text=await store.updateReference(post.id,{retained_images:[],new_images:[]});assert.deepEqual(text.images,[]);
+  await assert.rejects(()=>readFile(join(dir,updated.images[0])),{code:'ENOENT'});
+  assert.deepEqual(await readdir(join(dir,'data/images/xianyu')),[]);
+});
+
+test('multi-image validation rejects forged paths, duplicates, incompatible fields and empty content', async t => {
+  const {dir,store}=await referenceFixture(t),post=await store.addReference({new_images:[png,webp]});
+  const other=await store.addReference({title:'其他素材',image:png}),before=await readFile(join(dir,'data/posts.jsonl'),'utf8');
+  for(const payload of [
+    {retained_images:'bad'}, {new_images:null}, {retained_images:[post.images[0],post.images[0]]},
+    {retained_images:[other.images[0]]}, {retained_images:[`data/images/xhs/${post.id}/../1.png`]},
+    {retained_images:['/etc/passwd']}, {new_images:['!!!!']}, {new_images:[png.subarray(0,-12)]},
+    {retained_images:[],cover_ocr:'OCR 不是标题正文'}, {new_images:[],image:png},
+    {new_images:Array(51).fill(png)}
+  ])await assert.rejects(()=>store.updateReference(post.id,payload));
+  await assert.rejects(()=>store.addReference({retained_images:[post.images[0]],title:'伪造'}));
+  assert.equal(await readFile(join(dir,'data/posts.jsonl'),'utf8'),before);
+  assert.deepEqual(await readFile(join(dir,post.images[0])),png);
+  assert.deepEqual(await readdir(join(dir,`data/images/xhs/${post.id}`)),post.images.map(path=>path.split('/').at(-1)).sort());
+  const same=await store.updateReference(post.id,{retained_images:post.images,new_images:[]});assert.deepEqual(same.images,post.images);
+});
+
+test('multi-image transaction restores original records and files on commit or disk failure', async t => {
+  const {dir,store}=await referenceFixture(t),post=await store.addReference({title:'原图',new_images:[png,webp]});
+  const before=await readFile(join(dir,'data/posts.jsonl'),'utf8'),write=store.writeRecords.bind(store);
+  await writeFile(join(dir,'.git/index.lock'),'busy');
+  await assert.rejects(()=>store.updateReference(post.id,{retained_images:[post.images[1]],new_images:[png]}),{statusCode:503});
+  await rm(join(dir,'.git/index.lock'));
+  store.writeRecords=async()=>{throw new Error('simulated gallery disk failure');};
+  await assert.rejects(()=>store.updateReference(post.id,{retained_images:[],new_images:[png]}),/gallery disk failure/u);
+  store.writeRecords=write;
+  assert.equal(await readFile(join(dir,'data/posts.jsonl'),'utf8'),before);
+  assert.deepEqual(await readFile(join(dir,post.images[0])),png);assert.deepEqual(await readFile(join(dir,post.images[1])),webp);
+  assert.deepEqual(await readdir(join(dir,'data/images/xhs')),[post.id]);
+});
+
+test('multi-image retention rejects symlinks and missing files without touching outside files', async t => {
+  const {dir,store}=await referenceFixture(t),post=await store.addReference({title:'图片',new_images:[png,webp]});
+  const outside=join(dir,'outside.png');await writeFile(outside,png);
+  await rm(join(dir,post.images[0]));await symlink(outside,join(dir,post.images[0]));
+  await assert.rejects(()=>store.updateReference(post.id,{retained_images:post.images,new_images:[png]}),{statusCode:400});
+  assert.deepEqual(await readFile(outside),png);
+  await rm(join(dir,post.images[0]));
+  await assert.rejects(()=>store.updateReference(post.id,{retained_images:post.images,new_images:[png]}),{statusCode:400});
+  const fixed=await store.updateReference(post.id,{retained_images:[post.images[1]],new_images:[]});assert.equal(fixed.images.length,1);
+  assert.deepEqual(await readFile(outside),png);
+});
+
+test('multi-image editor submits retained and appended queues and guards empty/reading state', async () => {
+  const editor=Object.create(ContentOpsReferences.prototype),requests=[];
+  const elements=Object.fromEntries(['platform','title','body','cover_ocr','model'].map(name=>[name,{value:name==='platform'?'xhs':name==='cover_ocr'?'一\n二':''}]));
+  elements.good={checked:false};
+  Object.assign(editor,{form:{elements,querySelectorAll:()=>[]},editorStatus:{textContent:''},editing:{id:'aa',platform:'xhs'},editorImages:[],hasImage:false,
+    dialog:{close(){}},reconcileSelection(){},async refreshAfterMutation(){},async mutationRequest(path,payload){requests.push({path,payload});return {reference:{id:'aa',platform:'xhs'}};}});
+  await editor.saveEditor();assert.equal(requests.length,0);assert.match(editor.editorStatus.textContent,/请至少保留/u);
+  editor.editorImages=[{path:'data/images/xhs/aa/3.jpg',source:'/api/content-ops/image/xhs/aa/3.jpg'},{upload:'new-base64',source:'new-base64'}];editor.hasImage=true;
+  await editor.saveEditor();assert.deepEqual(requests[0].payload.retained_images,['data/images/xhs/aa/3.jpg']);assert.deepEqual(requests[0].payload.new_images,['new-base64']);assert.equal(requests[0].payload.cover_ocr,'一\n二');
+  editor.readingImage=true;await editor.saveEditor();assert.equal(requests.length,1);
+  const source=await readFile(join(root,'hanabi/lib/content-ops-references.mjs'),'utf8'),css=await readFile(join(root,'hanabi/lib/content-ops-references.css'),'utf8');
+  assert.match(source,/name="cover_ocr" rows="6"/u);assert.match(source,/name="upload"[^>]+multiple/u);
+  assert.match(css,/resize:vertical/u);assert.match(css,/min-height:120px/u);
 });
