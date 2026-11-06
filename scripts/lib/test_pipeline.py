@@ -610,6 +610,8 @@ class PipelineTests(unittest.TestCase):
             with self.subTest(prompt=prompt),self.assertRaisesRegex(ValueError,'不得添加'):
                 copy.validate_visual_plan(visual_plan(prompt=prompt),'GLM5.3','xhs')
         copy.validate_visual_plan(visual_plan(prompt='纯纸张便签，禁止3D物件、电脑和代码屏。'),'GLM5.3','xhs')
+        hyphen_plan = visual_plan('GLM-5.3', prompt='纯纸张便签，第一行大字，禁止出现API或水印。')
+        copy.validate_visual_plan(hyphen_plan, 'GLM5.3', 'xhs', '大字报')
 
     def test_cover_corpus_is_model_scoped_and_all_combinations_pass_risk_check(self):
         models=('GLM-5.3','Kimi K3.1 Pro','DeepSeek V4.1')

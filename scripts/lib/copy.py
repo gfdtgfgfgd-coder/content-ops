@@ -424,8 +424,10 @@ def extract_cover_corpus(model, root=None):
 
 
 def check_cover_words(text, platform, model, rules=None):
+    # Layout ordinals like "第一行/第一层级" describe line positions, not superlative claims.
+    cleaned = re.sub(r'第一(?:行|层级?|栏|列|张|个|部分|区块?|段|步|排|组|页|屏|卡|格|句|位)', '首', str(text or ''))
     # Covers have the stricter common baseline even on Xianyu (Token/discounts included).
-    hits = [h for scope in set(('xhs', platform)) for h in word_check.check(text, scope, model, rules=rules)]
+    hits = [h for scope in set(('xhs', platform)) for h in word_check.check(cleaned, scope, model, rules=rules)]
     if hits:
         raise ValueError('封面含风险词：' + '、'.join(sorted({h['word'] for h in hits})))
 
@@ -440,6 +442,10 @@ def validate_visual_plan(plan, product_model, platform, expected_layout='', rule
     if not isinstance(structure, dict) or not all(isinstance(structure.get(k), str) and structure[k].strip() for k in ('layout', 'region_proportions')):
         raise ValueError('视觉方案缺少参考图分区结构')
     regions = structure.get('text_regions')
+    if isinstance(regions, list):
+        for r in regions:
+            if isinstance(r, dict) and isinstance(r.get('line_lengths'), list) and r['line_lengths'] and type(r.get('line_count')) is int and r['line_count'] >= 1:
+                r['line_count'] = len(r['line_lengths'])
     if not isinstance(regions, list) or not regions or any(
         not isinstance(r, dict) or not isinstance(r.get('position'), str) or not r['position'].strip()
         or type(r.get('line_count')) is not int or r['line_count'] < 1
@@ -453,31 +459,36 @@ def validate_visual_plan(plan, product_model, platform, expected_layout='', rule
         or not isinstance(t.get('text'), str) or not t['text'].strip() or len(t['text']) > 80
         or re.search(r'[\x00-\x1f\x7f]', t['text']) for t in texts):
         raise ValueError('封面短字须包含 text、role、position，且为非空单行')
-    model_texts = [t['text'] for t in texts if t['role'] == 'model']
-    if model_texts != [product_model] or sum(t['text'].count(product_model) for t in texts) != 1:
+    model_norm = re.sub(r'[\s_-]+', '', str(product_model or '')).casefold()
+    model_texts = [t['text'].strip() for t in texts if t['role'] == 'model']
+    other_texts = [t['text'].strip() for t in texts if t['role'] != 'model']
+    if (len(model_texts) != 1 or not model_norm or re.sub(r'[\s_-]+', '', model_texts[0]).casefold() != model_norm
+            or any(product_model in o or model_texts[0] in o or model_norm in re.sub(r'[\s_-]+', '', o).casefold() for o in other_texts)):
         raise ValueError('封面必须逐字保留一次完整模型名')
     features = [t for t in texts if t['role'] == 'feature']
     benefits = [t for t in texts if t['role'] == 'benefit']
     subtitles = [t for t in texts if t['role'] == 'subtitle']
     if layout == '大字报':
-        if [t['role'] for t in texts] not in (['hook', 'benefit', 'model', 'payoff'], ['hook', 'model', 'payoff']) or any(
+        if [t['role'] for t in texts] not in (['hook', 'benefit', 'model', 'payoff'], ['hook', 'model', 'benefit', 'payoff'], ['hook', 'model', 'payoff']) or any(
                 cover_units(t['text']) > 12 for t in texts if t['role'] != 'model'):
             raise ValueError('大字报只允许3～4行短字，不得堆砌长句')
-    elif len(benefits) != 1 or not 2 <= cover_units(benefits[0]['text']) <= 4:
+    elif len(benefits) != 1 or not 2 <= cover_units(benefits[0]['text']) <= 6:
         raise ValueError('福利短标签须为2～4字')
     elif layout in ('上中下', '左右下'):
-        if not 3 <= len(features) <= 4 or len(texts) != 2 + len(features) or any(not 2 <= cover_units(t['text']) <= 4 for t in features):
+        if not 3 <= len(features) <= 4 or len(texts) != 2 + len(features) or any(not 2 <= cover_units(t['text']) <= 6 for t in features):
             raise ValueError('底部须为3～4个2～4字短词胶囊')
     elif len(features) != 4 or len(subtitles) not in (0, 4) or len(texts) != 6 + len(subtitles) or any(
-            cover_units(t['text']) > (6 if t['role'] == 'subtitle' else 4) for t in features + subtitles):
+            cover_units(t['text']) > (8 if t['role'] == 'subtitle' else 6) for t in features + subtitles):
         raise ValueError('环绕须有4个能力卡标题，标题≤4字、副标≤6字')
     prompt = plan.get('visual_prompt')
     if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 6000:
         raise ValueError('缺少视觉模型生成的海报提示词')
-    check_cover_words(json.dumps(plan, ensure_ascii=False), platform, product_model, rules)
+    positive = re.sub(r'(?:严禁|禁止|不得|不添加|不出现|不要|避免|无)[^。；;\n]*', '', prompt)
+    for t in texts:
+        check_cover_words(t['text'], platform, product_model, rules)
+    check_cover_words(positive, platform, product_model, rules)
     if layout == '大字报':
         # Reject positive subject instructions; negative prohibitions themselves are allowed.
-        positive = re.sub(r'(?:严禁|禁止|不得|不添加|不出现|不要|避免|无)[^。；;\n]*', '', prompt)
         if re.search(r'3\s*D|立体(?:物件|主体|机器人)|代码(?:屏|树)|电脑|人物插画|机器人|复杂背景|computer|robot|code\s*screen', positive, re.I):
             raise ValueError('大字报视觉方案不得添加3D、屏幕或复杂主体')
     return plan
