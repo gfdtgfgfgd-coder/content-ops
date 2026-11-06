@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "distilled_at": "2026-11-05",
+  "distilled_at": "2026-11-06",
   "sources": [
     "simin-persona",
     "risk-words",
@@ -27,8 +27,8 @@
       "bytes": 4700
     },
     "rules/banned-words-quick.yaml": {
-      "sha256": "507c9af7237ad25b8ed41959bdfa23d2c32a11fdd6510005f0c158e86085fb53",
-      "bytes": 6620
+      "sha256": "cf0e3ae3c839a92c8dbc69bd9dd766608b0e0dc8c900a3d4a391d873bb4e9ae5",
+      "bytes": 6364
     },
     "rules/content-spec.md": {
       "sha256": "131b371bb6d8beadd03648a164dac276cdf8538c0a8ff6587f982e95e95568b6",
@@ -407,8 +407,7 @@
         "(?:神器|神奇)",
         "(?<![A-Za-z])(?:Cursor|Hermes\\s*Agent)(?![A-Za-z])",
         "源头便宜出",
-        "毫秒级",
-        "(?<![A-Za-z])(?:Roo\\s*Code|Continue)(?![A-Za-z])"
+        "毫秒级"
       ],
       "model_specific_bans": {
         "seedance": [
@@ -681,17 +680,6 @@
           ],
           "replace": "低延迟",
           "reason": "运营反馈明确禁用「毫秒级」（Q51，2026-11-06）",
-          "added_at": "2026-11-06"
-        },
-        {
-          "word": "(?<![A-Za-z])(?:Roo\\s*Code|Continue)(?![A-Za-z])",
-          "regex": true,
-          "level": "ban",
-          "platform": [
-            "xhs"
-          ],
-          "replace": "CC、wbuddy",
-          "reason": "运营反馈明确要求将 Roo Code、Continue 换成 cc、wbuddy 等（Q51，2026-11-06）",
           "added_at": "2026-11-06"
         }
       ],

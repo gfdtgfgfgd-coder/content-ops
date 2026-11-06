@@ -167,11 +167,3 @@
   replace: 低延迟
   reason: 运营反馈明确禁用「毫秒级」（Q51，2026-11-06）
   added_at: "2026-11-06"
-
-- word: '(?<![A-Za-z])(?:Roo\s*Code|Continue)(?![A-Za-z])'
-  regex: true
-  level: ban
-  platform: [xhs]
-  replace: CC、wbuddy
-  reason: 运营反馈明确要求将 Roo Code、Continue 换成 cc、wbuddy 等（Q51，2026-11-06）
-  added_at: "2026-11-06"
