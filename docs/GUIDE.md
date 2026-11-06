@@ -133,7 +133,7 @@ python3 scripts/check.py --help
 | D6–D9：素材、隐私与模型职责 | 小红书质量以人工精选为准、闲鱼按「想要」排序；企微原文留本机；规则与风格终审交规划 agent，执行与图像任务由可替换模型承担。 |
 | D10–D15：内容与偏好事实源 | 平台价格表达及封面层级写入 `rules/content-spec.md`；persona 保存在 `skills/simin-persona/SKILL.md`，每帖受众标签使用 `rules/audience-tags.yaml`。风险词机器源仅 `rules/banned-words-quick.yaml`。 |
 | D16–D19：工作台与对外红线 | Hanabi 是 content-ops 专用工作台；Model Price Watch 只用于调研、不进入当日生成链路；小红书与闲鱼禁 API 字样，所有对外内容禁境外模型品牌与型号。 |
-| D20–D24：单源、分层与生产链路 | D20 由 `doctor.py` 和 repo budget 落门禁；D21 采用 Lilith、规划 agent、执行 agent、批量 agent 四元分工；D22 文案/视觉/图像分阶段、分类即时派生、文档白名单直读；D23 素材 CRUD 直接维护 `data/posts.jsonl`；D24 模型语料唯一源为 `data/model-corpus.md`，由 Hanabi 只读展示并按配置供生成使用。 |
+| D20–D24：单源、分层与生产链路 | D20 由 `doctor.py` 和 repo budget 落门禁；跟踪文件预算曾落后实际仓库数量，2026-11-07 按当前131个有效工作区文件同步门槛（含需保留的输出 sidecar），字节及单文件上限不变；D21 采用 Lilith、规划 agent、执行 agent、批量 agent 四元分工；D22 文案/视觉/图像分阶段、分类即时派生、文档白名单直读；D23 素材 CRUD 直接维护 `data/posts.jsonl`；D24 模型语料唯一源为 `data/model-corpus.md`，由 Hanabi 只读展示并按配置供生成使用。 |
 | 角色术语 | 旧记录中的 Codex/Gemini 等名称仅是历史实现，不是固定角色要求；按四元分工理解，模型供应商可替换。 |
 | X1–X4：否决项 | 不以外部大模型重写底层、不全站抓取、不训练思敏偏好模型、不把界面永久排除；偏好以可审的 SKILL.md 管理，当前 Hanabi 工作台按 D16 承担可视化入口。 |
 

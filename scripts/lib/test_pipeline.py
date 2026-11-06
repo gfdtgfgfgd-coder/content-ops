@@ -574,21 +574,14 @@ class PipelineTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'改变了参考图'):
                     copy.validate_visual_plan(plan,'GLM5.3','xhs','环绕' if layout!='环绕' else '大字报')
         mutations = [
-            lambda p:p.update(structure={}),
-            lambda p:p['structure']['text_regions'][0].update(line_lengths=[]),
             lambda p:p['cover_texts'][2].update(text='错误型号'),
             lambda p:p['cover_texts'][3].update(text='GLM5.3'),
             lambda p:p['cover_texts'][0].update(text='长句'*20),
             lambda p:p['cover_texts'][0].update(text='两行\n文字'),
-            lambda p:p['cover_texts'].reverse(),
         ]
         for mutate in mutations:
             plan=visual_plan();mutate(plan)
             with self.subTest(mutate=mutate),self.assertRaises(ValueError):
-                copy.validate_visual_plan(plan,'GLM5.3','xhs')
-        for layout in ('上中下','左右下','环绕'):
-            plan=visual_plan(layout=layout);plan['cover_texts'][2]['text']='这是一句超过六字的技术说明'
-            with self.subTest(layout=layout),self.assertRaises(ValueError):
                 copy.validate_visual_plan(plan,'GLM5.3','xhs')
         plan=visual_plan(layout='环绕')
         plan['cover_texts'] += [{'role':'subtitle','text':'多步任务好跑','position':f'卡{i}副标'} for i in range(4)]
@@ -596,6 +589,62 @@ class PipelineTests(unittest.TestCase):
         plan['cover_texts'].pop()
         with self.assertRaisesRegex(ValueError,'环绕'):
             copy.validate_visual_plan(plan,'GLM5.3','xianyu')
+
+    def test_visual_plan_repairs_auxiliary_structure_and_accepts_role_order(self):
+        cases = [
+            {'layout':None,'region_proportions':[],'text_regions':[
+                '第一行左对齐','第二行居中','第三行型号','第四行左对齐']},
+            {'layout':{'unexpected':'shape'},'region_proportions':None,'text_regions':[
+                {'position':'整块文字区','line_count':4,'line_lengths':[4,5,7,6]},
+                {'position':'第二行'}, {'position':'第三行'}, {'position':'第四行'}]},
+            {'layout':'纯文字构图','region_proportions':'原图比例','text_regions':{
+                'position':'主文字区'}},
+            {'layout':'纯文字构图','region_proportions':'原图比例','text_regions':[
+                {'position':'整块文字区','line_count':2,'line_lengths':[4,5]}]},
+        ]
+        for structure in cases:
+            plan=visual_plan(model='GLM-5.3')
+            plan['structure']=structure
+            with self.subTest(structure=structure):
+                copy.validate_visual_plan(plan,'GLM5.3','xhs')
+                self.assertTrue(plan['structure']['layout'])
+                self.assertTrue(plan['structure']['region_proportions'])
+                self.assertEqual(sum(region['line_count'] for region in plan['structure']['text_regions']),4)
+                self.assertTrue(all(len(region['line_lengths'])==region['line_count'] for region in plan['structure']['text_regions']))
+
+        for roles in (['hook','model','benefit','payoff'], ['payoff','benefit','model','hook'],
+                      ['benefit','model','hook'], ['hook','payoff','model']):
+            plan=visual_plan(model='GLM-5.3')
+            values={'hook':'挖到好内容','benefit':'便宜好用','payoff':'编程更顺'}
+            plan['cover_texts']=[{'role':role,'text':'GLM-5.3' if role=='model' else values[role],
+                                  'position':f'第{index+1}行'} for index,role in enumerate(roles)]
+            copy.validate_visual_plan(plan,'GLM5.3','xhs')
+
+        for layout in ('上中下','左右下','环绕'):
+            plan=visual_plan(model='GLM-5.3',layout=layout)
+            feature=next(item for item in plan['cover_texts'] if item['role']=='feature')
+            feature['text']='高性价比功能组合'
+            copy.validate_visual_plan(plan,'GLM5.3','xianyu' if layout!='上中下' else 'xhs')
+            self.assertLessEqual(copy.cover_units(feature['text']),8)
+
+        plan=visual_plan(model='GLM5.3')
+        plan['structure']['text_regions']=[{'position':'第一行左侧','line_count':4,'line_lengths':[4,5,7,6]}]
+        plan['visual_prompt']='纸张便签，第一行放置钩子，第二行放置利益点，第三行展示型号，第四行展示爽点。'
+        copy.validate_visual_plan(plan,'GLM5.3','xhs')
+
+    def test_historical_hanabi_visual_failures_validate_when_present(self):
+        samples = [
+            ROOT/'outputs/2026-11-06/hanabi/ccddd502-6c7b-4a92-9544-3776d555dfed/vision-prompt-1.txt',
+            ROOT/'outputs/2026-11-07/hanabi/dad5ce81-ec6b-4c89-9a4c-b7eafe35fe13/vision-prompt-1.txt',
+        ]
+        present = [path for path in samples if path.is_file()]
+        if not present:
+            self.skipTest('本机未提供忽略跟踪的历史 Hanabi 失败样本')
+        for path in present:
+            with self.subTest(path=path):
+                plan=json.loads(path.read_text(encoding='utf-8'))
+                copy.validate_visual_plan(plan,'GLM5.3','xhs')
+
 
     def test_visual_plan_risk_words_and_typography_subject_guard(self):
         for platform in ('xhs','xianyu'):
