@@ -1,5 +1,6 @@
 # 内容生产规范
 
+> 最近更新时间：2026-11-06
 > 业务规范唯一源。风险词与正则不在本文复制，统一读取 `rules/banned-words-quick.yaml`；封面基础色值见 `rules/cover-palettes.json`。本文件供生成脚本、Hanabi 操作规范面板和规划复核共同使用。
 
 ## 账号调性与通用红线
