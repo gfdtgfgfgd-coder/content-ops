@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 from PIL import Image
-from . import cleaning, copy, fetching, gateway, preferences, store, words
+from . import cleaning, compact_posts, copy, fetching, gateway, preferences, store, words
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -34,17 +34,6 @@ def structured_post(fmt='format_1', n=1):
 
 
 class PipelineTests(unittest.TestCase):
-    def test_edited_xianyu_recalculates_missing_signal(self):
-        posts = [{'id': 'clean', 'platform': 'xianyu', 'title': '正常标题', 'metrics': {'wants': 8}},
-                 {'id': 'banned', 'platform': 'xianyu', 'body': '命中风险', 'metrics': {'wants': 3}}]
-        with patch.object(preferences, 'read_posts', return_value=posts), patch.object(
-                preferences, 'clean_reference_hits', side_effect=[[], ['风险']]) as check:
-            refs = preferences.xianyu_references(self.base, [], 'xianyu', 10)
-        self.assertEqual([row['clean_for_style_reference'] for row in refs], [True, False])
-        self.assertEqual(refs[1]['banned_word_hits'], ['风险'])
-        self.assertEqual(check.call_count, 2)
-
-
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -67,6 +56,31 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(store.read_posts(path), rows[::-1])
         self.assertTrue(path.read_bytes().endswith(b'\n'))
         self.assertIn('中文', path.read_text())
+
+    def test_compact_posts_keeps_content_and_falls_back_to_image_urls(self):
+        source = self.base / 'posts.jsonl'
+        target = self.base / 'posts-clean.jsonl'
+        original = {
+            'id': 'one', 'title': '标题\n保留换行', 'body': '正文，标点不变。\n第二行',
+            'images': [], 'image_urls': ['https://example/cover.jpg'], 'metrics': {'likes': 3},
+        }
+        source.write_text(json.dumps(original, ensure_ascii=False) + '\n', encoding='utf-8')
+
+        self.assertEqual(compact_posts.compact_posts(source, target), 1)
+        result = json.loads(target.read_text(encoding='utf-8'))
+        self.assertEqual(result, {
+            'title': original['title'], 'body': original['body'], 'images': original['image_urls']
+        })
+        self.assertEqual(set(result), {'title', 'body', 'images'})
+
+    def test_compact_posts_rejects_records_without_images(self):
+        source = self.base / 'posts.jsonl'
+        target = self.base / 'posts-clean.jsonl'
+        source.write_text(json.dumps({'title': '标题', 'body': '正文', 'images': []}) + '\n', encoding='utf-8')
+
+        with self.assertRaisesRegex(ValueError, '第 1 行没有可用图片'):
+            compact_posts.compact_posts(source, target)
+        self.assertFalse(target.exists())
 
     def test_duplicate_rejected_without_overwriting(self):
         path = self.base / 'posts.jsonl'
@@ -160,6 +174,16 @@ class PipelineTests(unittest.TestCase):
             bundle = preferences.build_bundle(self.base, self.base / 'config/preference-build.json', '2026-11-05')
         self.assertEqual(bundle['style_references']['xhs_good_posts'], [])
         self.assertEqual(bundle['style_references']['xianyu_top_posts'], [])
+
+    def test_edited_xianyu_recalculates_missing_signal(self):
+        posts = [{'id': 'clean', 'platform': 'xianyu', 'title': '正常标题', 'metrics': {'wants': 8}},
+                 {'id': 'banned', 'platform': 'xianyu', 'body': '命中风险', 'metrics': {'wants': 3}}]
+        with patch.object(preferences, 'read_posts', return_value=posts), patch.object(
+                preferences, 'clean_reference_hits', side_effect=[[], ['风险']]) as check:
+            refs = preferences.xianyu_references(self.base, [], 'xianyu', 10)
+        self.assertEqual([row['clean_for_style_reference'] for row in refs], [True, False])
+        self.assertEqual(refs[1]['banned_word_hits'], ['风险'])
+        self.assertEqual(check.call_count, 2)
 
     def test_preferences_loader_and_fallback(self):
         with redirect_stdout(io.StringIO()):
@@ -519,7 +543,7 @@ class PipelineTests(unittest.TestCase):
             lambda p:p.update(title='标题\t控制符'),
             lambda p:p['sections'][0].update(text='第一行\n第二行\n第三行'),
             lambda p:p['sections'][1].update(text='缺少加粗的核心卖点'),
-            lambda p:p['sections'][2].update(text='只有一行价格反差'),
+            lambda p:p['sections'][2].update(text='第一行价格\n第二行价格\n第三行价格\n第四行价格超限'),
         ]
         for mutate in mutations:
             post=structured_post();mutate(post)

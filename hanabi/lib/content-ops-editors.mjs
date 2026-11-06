@@ -71,6 +71,9 @@ export class ContentOpsEditors {
     root.querySelector('#persona-form-anti').addEventListener('submit', event => { event.preventDefault(); void this.addPersona('add_anti_pattern', event.currentTarget); });
     root.querySelector('#persona-form-quote').addEventListener('submit', event => { event.preventDefault(); void this.addPersona('add_quote', event.currentTarget); });
     root.querySelector('#banned-add-form')?.addEventListener('submit', event => { event.preventDefault(); void this.addWord(event.currentTarget); });
+    const editDialog = root.querySelector('#banned-edit-dialog');
+    root.querySelectorAll('[data-banned-edit-close]').forEach(button => button.addEventListener('click', () => editDialog?.close()));
+    root.querySelector('#banned-edit-form')?.addEventListener('submit', event => { event.preventDefault(); void this.editWord(event.currentTarget); });
     void this.reload();
   }
 
@@ -173,7 +176,7 @@ export class ContentOpsEditors {
     }
     const latestUpdate = words.map(item => item.added_at || item.updated_at || '').filter(Boolean).sort().at(-1) || '';
     this.root.querySelector('#banned-count').textContent = `${words.length} 条${latestUpdate ? ` · 更新时间 ${latestUpdate}` : ''}`;
-    this.bannedStatus.textContent = `已读取 ${words.length} 条风险规则；词库只增不删${latestUpdate ? `（最近更新：${latestUpdate}，最新词条已置顶）` : ''}。`;
+    this.bannedStatus.textContent = `已读取 ${words.length} 条风险规则${latestUpdate ? `（最近更新：${latestUpdate}，最新词条已置顶）` : ''}；支持新增、修改与删除。`;
     this.wordsBody.replaceChildren();
     const sortedWords = words.map((entry, index) => ({entry, index})).sort((a, b) => String(b.entry.added_at || b.entry.updated_at || '').localeCompare(String(a.entry.added_at || a.entry.updated_at || '')) || a.index - b.index).map(item => item.entry);
     for (const entry of sortedWords) {
@@ -191,6 +194,17 @@ export class ContentOpsEditors {
         code.title = `底层匹配正则：${entry.word}`;
         wordCell.append(code);
       }
+      const actionsCell = node('td', null, 'editor-actions-cell');
+      const actionGroup = node('div', null, 'editor-row-actions');
+      const editBtn = node('button', '修改', 'button button-outline editor-btn-sm');
+      editBtn.type = 'button';
+      editBtn.addEventListener('click', () => this.showEditWordDialog(entry));
+      const deleteBtn = node('button', '删除', 'button button-outline editor-btn-sm editor-btn-danger');
+      deleteBtn.type = 'button';
+      deleteBtn.addEventListener('click', () => void this.deleteWord(entry));
+      actionGroup.append(editBtn, deleteBtn);
+      actionsCell.append(actionGroup);
+
       row.append(
         wordCell,
         node('td', entry.level || '—'),
@@ -199,6 +213,7 @@ export class ContentOpsEditors {
         node('td', entry.replace || '—'),
         node('td', entry.reason || '—'),
         node('td', entry.added_at || entry.updated_at || '—'),
+        actionsCell,
       );
       this.wordsBody.append(row);
     }
@@ -254,6 +269,97 @@ export class ContentOpsEditors {
       document.dispatchEvent(new CustomEvent('content-ops:spec-sync', {detail:{trigger:'word_add',addedItem:{word,regex:payload.regex,level:payload.level,platform,replace:payload.replace,reason:payload.reason}}}));
     } catch (error) { this.showRetry(this.bannedStatus, `保存失败：${error.message}。表单内容已保留。`); }
     finally { this.savingWord = false; form.querySelector('button[type="submit"]').disabled = !this.bannedRevision; }
+  }
+
+  showEditWordDialog(entry) {
+    const dialog = this.root.querySelector('#banned-edit-dialog');
+    const form = dialog?.querySelector('#banned-edit-form');
+    if (!dialog || !form) return;
+    form.reset();
+    form.elements.target_word.value = entry.word || '';
+    form.elements.word.value = entry.word || '';
+    form.elements.regex.value = String(Boolean(entry.regex));
+    form.elements.level.value = entry.level || 'ban';
+    const scope = Array.isArray(entry.platform) ? entry.platform : entry.platform ? [entry.platform] : [];
+    form.querySelectorAll('input[name="platform"]').forEach(cb => {
+      cb.checked = scope.includes(cb.value);
+    });
+    form.elements.replace.value = entry.replace || '';
+    form.elements.reason.value = entry.reason || '';
+    const models = entry.model_scope ?? entry.models ?? [];
+    form.elements.model_scope.value = Array.isArray(models) ? models.join(', ') : models || '';
+    const status = dialog.querySelector('#banned-edit-status');
+    if (status) status.textContent = '';
+    dialog.showModal();
+    form.elements.word.focus();
+  }
+
+  async editWord(form) {
+    if (this.savingWord) return;
+    const dialog = form.closest('dialog');
+    const status = dialog?.querySelector('#banned-edit-status') || this.bannedStatus;
+    const values = new FormData(form);
+    const target_word = String(values.get('target_word') || '').trim();
+    const word = String(values.get('word') || '').trim();
+    const platform = values.getAll('platform').filter(value => platforms.has(value));
+    if (!word || !platform.length) {
+      status.textContent = '请填写词或规则，并至少选择一个平台。';
+      return;
+    }
+    const payload = {
+      action: 'edit',
+      target_word,
+      word,
+      regex: String(values.get('regex')) === 'true',
+      level: String(values.get('level') || 'ban'),
+      platform,
+      replace: String(values.get('replace') || '').trim(),
+      reason: String(values.get('reason') || '').trim(),
+      model_scope: String(values.get('model_scope') || '').trim(),
+      revision: this.bannedRevision,
+    };
+    status.textContent = '正在保存修改…';
+    this.savingWord = true;
+    form.querySelector('button[type="submit"]').disabled = true;
+    try {
+      const saved = await request('/api/content-ops/banned-words', payload);
+      dialog?.close();
+      await this.reload();
+      this.bannedStatus.append(document.createTextNode(` 已更新「${word}」并提交 ${saved.commit || '已记录'}，正在分析规范…`));
+      document.dispatchEvent(new CustomEvent('content-ops:spec-sync', {
+        detail: { trigger: 'word_add', addedItem: { action: 'edit', word, regex: payload.regex, level: payload.level, platform, replace: payload.replace, reason: payload.reason } }
+      }));
+    } catch (error) {
+      status.textContent = `保存失败：${error.message}。表单内容已保留。`;
+    } finally {
+      this.savingWord = false;
+      form.querySelector('button[type="submit"]').disabled = !this.bannedRevision;
+    }
+  }
+
+  async deleteWord(entry) {
+    if (this.savingWord) return;
+    const word = String(entry.word || '');
+    if (!confirm(`确定要删除风险词规则「${word}」吗？\n删除后系统将不再对此词进行拦截。`)) return;
+    this.bannedStatus.textContent = `正在删除「${word}」…`;
+    this.savingWord = true;
+    try {
+      const saved = await request('/api/content-ops/banned-words', {
+        action: 'delete',
+        target_word: word,
+        word,
+        revision: this.bannedRevision,
+      });
+      await this.reload();
+      this.bannedStatus.append(document.createTextNode(` 已删除「${word}」并提交 ${saved.commit || '已记录'}，正在分析规范…`));
+      document.dispatchEvent(new CustomEvent('content-ops:spec-sync', {
+        detail: { trigger: 'word_add', addedItem: { action: 'delete', word } }
+      }));
+    } catch (error) {
+      this.showRetry(this.bannedStatus, `删除失败：${error.message}。`);
+    } finally {
+      this.savingWord = false;
+    }
   }
 
 }

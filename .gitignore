@@ -15,6 +15,7 @@ hanabi/node_modules/
 *.app
 
 # 本机临时脚本与中间产物
+data/posts-clean.jsonl
 
 # 素材安全清理的本机快照与事务暂存
 data/posts.jsonl.bak.*

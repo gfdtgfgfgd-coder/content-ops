@@ -179,6 +179,54 @@ test('spec sync apply rebuilds the bundle and commits only the canonical spec an
   assert.equal(bundle.sources.includes('content-spec'),true);
 });
 
+test('banned words support add, edit, and delete with bundle rebuild and git commits', async t => {
+  const dir=await mkdtemp(join(root,'scratch/banned-test-'));
+  t.after(()=>rm(dir,{recursive:true,force:true}));
+  execFileSync('git',['clone','--quiet','--shared',root,dir]);
+  execFileSync('git',['-C',dir,'config','user.name','Hanabi Test']);
+  execFileSync('git',['-C',dir,'config','user.email','hanabi-test@localhost']);
+  execFileSync('git',['-C',dir,'config','core.hooksPath','/dev/null']);
+
+  await copyFile(join(root,'scripts/lib/preferences.py'),join(dir,'scripts/lib/preferences.py'));
+  execFileSync('git',['-C',dir,'add','scripts/lib/preferences.py']);
+  execFileSync('git',['-C',dir,'-c','commit.gpgsign=false','commit','--quiet','--allow-empty','-m','测试夹具同步偏好构建逻辑']);
+
+  const editor=new ContentOpsEditor({
+    root:dir,
+    run:(command,args,options)=>editorCommand(command,args,{
+      ...options,
+      env:{...process.env,PYTHONPATH:join(root,'scratch/.venv/lib/python3.11/site-packages')}
+    })
+  });
+
+  const addRes=await editor.mutate('words',{
+    action:'add',word:'单元测试词A',level:'warn',platform:['xhs'],replace:'替换A',reason:'测试添加'
+  });
+  assert.equal(addRes.ok,true);
+  assert.ok(addRes.words.words.some(w=>w.word==='单元测试词A'));
+
+  const editRes=await editor.mutate('words',{
+    action:'edit',target_word:'单元测试词A',word:'单元测试词B',regex:false,level:'ban',platform:['xhs','xianyu'],replace:'替换B',reason:'测试更新'
+  });
+  assert.equal(editRes.ok,true);
+  const updated=editRes.words.words.find(w=>w.word==='单元测试词B');
+  assert.ok(updated);
+  assert.equal(updated.level,'ban');
+  assert.equal(updated.replace,'替换B');
+  assert.ok(!editRes.words.words.some(w=>w.word==='单元测试词A'));
+
+  const delRes=await editor.mutate('words',{
+    action:'delete',target_word:'单元测试词B'
+  });
+  assert.equal(delRes.ok,true);
+  assert.ok(!delRes.words.words.some(w=>w.word==='单元测试词B'));
+
+  await assert.rejects(
+    async()=>editor.mutate('words',{action:'delete',target_word:'API'}),
+    /受审稿证据保护，不可删除/
+  );
+});
+
 test('failed probes remain failed on GET and never expose upstream body or credentials',async t=>{
   for(const fetchRequest of [()=>Promise.resolve(Response.json({error:'private upstream diagnostic'},{status:401})),
     ()=>Promise.resolve(new Response('<html>login page</html>')),

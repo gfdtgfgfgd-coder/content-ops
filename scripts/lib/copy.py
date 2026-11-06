@@ -124,8 +124,8 @@ def structured_body(post, expected_format, platform):
         sections[0]['text'] = intro
     if not re.search(r'\*\*[^*]+\*\*', content['selling_points']):
         raise ValueError('核心卖点须使用 Markdown 加粗')
-    if len(content['price'].splitlines()) != 2:
-        raise ValueError('价格反差板块须独立两行短句')
+    if not (1 <= len(content['price'].splitlines()) <= 3):
+        raise ValueError('价格活动板块须为1–3行高亮短句')
     if 'compatibility' in content and not re.search(r'(?<![A-Za-z])CC(?![A-Za-z])', content['compatibility'], re.I):
         raise ValueError('工具区块须包含兼容 CC 的说明；未核实时须明确待确认')
     title = post.get('title')
@@ -632,7 +632,7 @@ def run(args):
            '只写标题、正文、标签、人群和文案结构，不要生成 image_prompt 或任何图像提示词；海报视觉由独立多模态模型分析真实参考封面后生成。',
            '3–5个标签，其中一个为去空格的完整模型名；所有可见文字遵守当前风险词库和平台价格规则。',
            '逐篇严格遵守 copy_plan 指定的 copy_format，以及 format_sections 中的区块顺序，不得增加、遗漏或调换区块。只在 sections 中写正文，body 由程序拼接。',
-           'intro简单引入，不超过两行、34字；selling_points写四个核心短卖点，格式统一为「【emoji】 **短卖点**：【短句1】，【短句2】。」，每个短句6–12字极短干练，拒绝废话水词；emoji适量克制，正文普通段落不每行堆砌；price独立两行短句，体现能力与开销的反差，遵守平台价格规则。',
+           'intro简单引入，不超过两行、34字；selling_points写四个核心大卖点，冒号前面为普通人一眼看懂的清晰大卖点并Markdown加粗，格式统一为「【emoji】 **大卖点**：【短句1】，【短句2】。」，每个短句6–12字极短干练，拒绝生僻黑话和毫秒级/秒级等夸大词；price采用吸睛活动小标题加符号高亮分行（如‼️好消息‼️好消息‼️/‼️限时活动‼️/活动重磅来袭：配合💰或💥高亮2–3行），突出重点，遵守平台价格规则。',
            'compatibility采用接地气、开发者日常口吻的多样化接驳话术（如支持一键拉进CC开发环境、轻松接驳CC与本地工作流、完美融入CC编程环境等），包含兼容CC且严禁篇篇机械重复同句；scenarios结合当篇卖点给出2–3个具体落地场景，同批每篇不同；audience单行干练罗列3–4个目标角色（如开发者、研发、全栈工程师、极客），同批每篇不同；hook以自然行动号召收尾。',
            '同一张封面下的文案共用相同产品与核心卖点，切换不同切入角度；同批使用不同angle和正文，避免只换同义词。'],
        'schema':{'posts':[{'title':'简短笔记标题', 'copy_format':'按copy_plan', 'sections':[{'kind':'按format_sections', 'text':'区块正文'}], 'title_lines':['痛点或利益点开场',model,'本次核心卖点'],
