@@ -393,6 +393,21 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             copy.direct_image_prompt(post, 'xhs', '旧纯文本提示词')
 
+    def test_bold_typo_layered_render_locks_width_and_line_spacing(self):
+        background = self.base / 'background.png'
+        output = self.base / 'poster.png'
+        Image.new('RGB', (1080, 1440), '#B8E9D8').save(background)
+        texts = visual_plan()['cover_texts']
+        font = Path('/System/Library/Fonts/Hiragino Sans GB.ttc')
+        result = copy.render_bold_typo(background, output, texts, font, (1080, 1440))
+        self.assertLessEqual(result['text_area_ratio'], .60)
+        self.assertGreaterEqual(result['minimum_side_margin_ratio'], .20)
+        boxes = [row['bbox'] for row in result['rendered_text']]
+        self.assertTrue(all(boxes[i + 1][1] - boxes[i][3] == result['line_gap_px'] for i in range(len(boxes) - 1)))
+        self.assertGreaterEqual(result['line_gap_px'], 28)
+        with Image.open(output) as rendered:
+            self.assertEqual(rendered.size, (1080, 1440))
+
     def test_fresh_generation_sends_final_poster_prompt_and_size(self):
         settings = {'CONTENT_OPS_API_KEY': 'offline-test-only', 'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1',
                     'CONTENT_OPS_TEXT_MODEL': 'glm-5.3', 'CONTENT_OPS_IMAGE_MODEL': 'qwen-image-3.0'}
@@ -423,12 +438,14 @@ class PipelineTests(unittest.TestCase):
                 output=self.base/'direct', resume=False, references=None, reference_max_chars=32000,
                 timeout=120, background=None))
         self.assertEqual(generate.call_args.kwargs['size'], '1080x1440')
-        self.assertIn('竖版3:4，1080×1440px', generate.call_args.kwargs['prompt'])
-        self.assertIn('暖米白纯文字便签', generate.call_args.kwargs['prompt'])
+        self.assertIn('竖版3:4', generate.call_args.kwargs['prompt'])
+        self.assertIn('严禁出现任何文字', generate.call_args.kwargs['prompt'])
         self.assertNotIn(post['image_prompt'], generate.call_args.kwargs['prompt'])
         self.assertEqual(vision.call_args.args[0], {'model':'GLM5.3'})
         self.assertTrue(vision.call_args.args[1])
-        self.assertEqual(result['posts'][0]['image_metadata']['mode'], 'direct_poster')
+        self.assertEqual(result['posts'][0]['image_metadata']['mode'], 'layered_poster')
+        self.assertLessEqual(result['posts'][0]['image_metadata']['text_area_ratio'], .60)
+        self.assertGreaterEqual(result['posts'][0]['image_metadata']['minimum_side_margin_ratio'], .20)
         self.assertEqual((result['posts'][0]['image_metadata']['width'], result['posts'][0]['image_metadata']['height']), (1080, 1440))
         manifest = json.loads((self.base/'direct/manifest.json').read_text())
         self.assertEqual(manifest['vision_calls'][0]['model'], 'vision-test')

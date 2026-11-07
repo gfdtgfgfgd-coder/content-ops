@@ -40,7 +40,7 @@ for alias, canonical in STYLE_ALIASES.items():
     STYLE_PRESETS[alias] = STYLE_PRESETS[canonical]
 LAYOUTS = ('大字报', '上中下', '左右下', '环绕')
 PLATFORM_LAYOUTS = {'xhs': ('大字报', '上中下'), 'xianyu': ('左右下', '环绕')}
-PIPELINE_VERSION = 'copy_vision_image_v2'
+PIPELINE_VERSION = 'copy_vision_image_v3'
 
 # Machine contract for the three body structures in rules/content-spec.md.
 COPY_FORMATS = {
@@ -662,6 +662,47 @@ def cover(background, output, post, palette, font_path, variant, size):
     image.save(output,format='PNG')
     return {'width':size[0],'height':size[1],'bytes':output.stat().st_size,'sha256':hashlib.sha256(output.read_bytes()).hexdigest()}
 
+def render_bold_typo(background, output, texts, font_path, size):
+    from PIL import Image, ImageDraw, ImageOps
+    image = ImageOps.fit(Image.open(background).convert('RGB'), size).convert('RGBA')
+    width, height = size
+    card = Image.new('RGBA', size, (0, 0, 0, 0))
+    card_draw = ImageDraw.Draw(card)
+    card_draw.rounded_rectangle((int(width * .05), int(height * .055), int(width * .95), int(height * .945)),
+                                radius=24, fill=(255, 254, 250, 255))
+    image = Image.alpha_composite(image, card)
+    draw = ImageDraw.Draw(image)
+    text_width = int(width * .60) - 44
+    rows = []
+    for item in texts:
+        font = fit_font(font_path, item['text'], 104, text_width)
+        stroke = max(1, round(font.size / 70))
+        bounds = draw.textbbox((0, 0), item['text'], font=font, stroke_width=stroke)
+        rows.append({'text': item['text'], 'font': font, 'bounds': bounds,
+                     'height': bounds[3] - bounds[1], 'width': bounds[2] - bounds[0],
+                     'stroke': stroke, 'role': item['role']})
+    gap = max(28, round(min(row['font'].size for row in rows) * .5))
+    total_height = sum(row['height'] for row in rows) + gap * (len(rows) - 1)
+    y = round((height - total_height) / 2)
+    rendered = []
+    for row in rows:
+        x = round((width - row['width']) / 2)
+        box = (x, y, x + row['width'], y + row['height'])
+        if row['role'] == 'benefit':
+            pad_x, pad_y = 22, 12
+            draw.rounded_rectangle((box[0] - pad_x, box[1] - pad_y, box[2] + pad_x, box[3] + pad_y),
+                                   radius=12, fill='#FFF17A')
+        draw.text((x - row['bounds'][0], y - row['bounds'][1]), row['text'],
+                  font=row['font'], fill='#171717', stroke_width=row['stroke'], stroke_fill='#171717')
+        rendered.append({'role': row['role'], 'text': row['text'], 'bbox': box})
+        y += row['height'] + gap
+    image.convert('RGB').save(output, format='PNG')
+    return {'width': width, 'height': height, 'bytes': output.stat().st_size,
+            'sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
+            'text_area_ratio': max((row['width'] / width for row in rows), default=0),
+            'minimum_side_margin_ratio': min((min(box[0], width - box[2]) / width for box in (r['bbox'] for r in rendered)), default=0),
+            'line_gap_px': gap, 'rendered_text': rendered}
+
 def poster_size(platform):
     return (1080, 1440) if platform == 'xhs' else (1080, 1080)
 
@@ -694,6 +735,14 @@ def direct_image_prompt(post, platform, visual_prompt=None, style_mode='auto', s
             f"画布规格：{ratio}，{width}×{height}px。{guard}"
             '直接完成封面短字排版，文字清楚、无遮挡，保留安全边距；不增加事实、价格、标志或水印。'
             f"海报文字仅使用以下准确文案（role、position是排版元数据，不印在图上）：{text_map}")
+
+def bold_typo_background_prompt(visual_prompt, platform, model):
+    validate_visual_plan(visual_prompt, model, platform)
+    ratio = '竖版3:4' if platform == 'xhs' else '方图1:1'
+    return (f'{ratio}纯净纸张便签背景，浅薄荷色细网格衬底，中央暖白纸张与细微纸纤维纹理，'
+            '只呈现平整纸面材质和柔和自然光，留出干净的中央排版区域。'
+            '画面中严禁出现任何文字、字母、数字、标点、伪文字、字形、标题、标志或水印；'
+            '不要绘制荧光笔条、圈线或箭头，这些装饰和全部文字由程序后期精确排版。背景干净、低对比，不出现主体物件。')
 
 def extract_model_corpus(model, root=None):
     corpus_file = (root or ROOT) / 'data/model-corpus.md'
@@ -909,13 +958,26 @@ def run(args):
                     'collection_name': visual_plan['collection_name'], 'visual_prompt': visual_plan['visual_prompt'],
                     'visual_prompt_model': vision_usage['model']})
                 save_json(out/'manifest.json',manifest)
-                prompt = direct_image_prompt({'model':model}, args.platform, visual_plan, rules=active_rules)
-                image_result = image_api.generate_image(prompt=prompt,output=image_path,model=manifest['image_model'],base_url=settings['CONTENT_OPS_BASE_URL'],api_key=settings['CONTENT_OPS_API_KEY'],size=f'{size[0]}x{size[1]}',timeout=args.timeout)
-                image_result['mode']='direct_poster'
-                image_result['prompt']=prompt
+                layered = visual_plan['collection_name'] == '大字报'
+                if layered and not font_path.exists():
+                    raise ValueError('未找到中文字体；请设置 CONTENT_OPS_FONT')
+                prompt = (bold_typo_background_prompt(visual_plan, args.platform, model) if layered
+                          else direct_image_prompt({'model':model}, args.platform, visual_plan, rules=active_rules))
+                generated_path = out/f'post-{index}-background.png' if layered else image_path
+                image_result = image_api.generate_image(prompt=prompt,output=generated_path,model=manifest['image_model'],base_url=settings['CONTENT_OPS_BASE_URL'],api_key=settings['CONTENT_OPS_API_KEY'],size=f'{size[0]}x{size[1]}',timeout=args.timeout)
                 if (image_result['width'], image_result['height']) != size:
                     raise ValueError(f"生图尺寸不符：要求 {size[0]}x{size[1]}，实际 {image_result['width']}x{image_result['height']}")
-                result={key:image_result[key] for key in ('width','height','bytes','sha256')}
+                if layered:
+                    background_metadata = {key: image_result[key] for key in ('width','height','bytes','sha256')}
+                    result = render_bold_typo(generated_path, image_path, visual_plan['cover_texts'], font_path, size)
+                    generated_path.unlink(missing_ok=True)
+                    image_result['mode'] = 'layered_poster'
+                    image_result['background_metadata'] = background_metadata
+                    image_result.update(result)
+                else:
+                    image_result['mode']='direct_poster'
+                    result={key:image_result[key] for key in ('width','height','bytes','sha256')}
+                image_result['prompt']=prompt
             manifest['posts'][index-1].update({'image':f'post-{index}.png','status':'completed','image_metadata':{**result,'platform':args.platform,'aspect_ratio':'3:4' if args.platform=='xhs' else '1:1','mode':image_result['mode']},'image_generation':image_result})
             save_json(out/'manifest.json',manifest)
             print(json.dumps({'event':'post_completed','index':index,'count':args.count}),flush=True)

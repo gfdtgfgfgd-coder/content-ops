@@ -70,8 +70,8 @@
 - Hanabi 手动流派与 CLI `--style-preset` 对应：`bold_typo`→大字报、`top_middle_bottom`→上中下、`left_right_bottom`→左右下、`surround`→环绕；亦接受中文名。旧 `code_ide` / `card_3d` 映射上中下，`comparison` 映射左右下，`promo` 映射环绕。手选所属合集与预设冲突在收费调用前失败；同帖属多个合集时优先匹配预设，自定义描述不能推翻锚图结构。
 - `CONTENT_OPS_VISION_MODEL` 每次接收一张原图、该图 OCR/合集、完整型号、该型号封面专节及当前风险规则；不接收正文、旧 `title_lines`、`cover_subtitle`、`cover_highlight` 或正文人群字段。文案模型不再承担封面短字生成。
 - 视觉返回 JSON：`collection_name`、`structure`（布局、分区比例、文字区位置/行数/行长）、`cover_texts`（role/text/position）与 `visual_prompt`。本机校验版式、完整型号、短字容量、风险词及大字报主体禁区，再把方案交给图像模型。空返回、不支持图像、截断或非法方案明确失败，不自动收费重试。
-- `manifest.json` 保存结构方案、封面短字、合集、参考原图哈希、视觉 usage 和封面语料哈希，链路标识为 `copy_vision_image_v2`。失败续跑可复用已校验方案和成功图片；旧版在线任务、新旧语料或参考哈希变化要求新目录，不覆盖原交付。显式 `--background` 仍为离线 Pillow 排版，不宣称同构生图。
-- 当前图像网关使用 `/images/generations`，未实现参考图片入参；原图只传多模态视觉模型，图像模型依据结构化提示词生成。不宣称已启用图生图垫图能力，也不保证像素级复刻。上线前仍须规划 agent 核对实际成图的文字、结构和合规。
+- `manifest.json` 保存结构方案、封面短字、合集、参考原图哈希、视觉 usage 和封面语料哈希，当前链路标识为 `copy_vision_image_v3`。大字报走分层路径：图像模型只生成无字纸面底图，Pillow 使用本机中等字重中文字体叠加文案和黄色强调条；manifest 记录最终文字跨度、最小侧边距和行间空隙。自动与手动选中大字报均适用。上中下、左右下和环绕仍由图像模型生成完整海报。失败续跑可复用已校验方案和成功图片；旧版在线任务、新旧语料或参考哈希变化要求新目录，不覆盖原交付。显式 `--background` 仍为既有离线 Pillow 排版。
+- 当前图像网关使用 `/images/generations`，未实现参考图片入参；原图只传多模态视觉模型，图像模型依据结构化提示词生成底图或完整海报。不宣称已启用图生图垫图能力，也不保证背景像素级复刻。大字报排版几何由代码保证；上线前仍须核对实际底图质感、文字、结构和合规。
 
 现行风险源优先于语料示例，冲突表达采用允许的替代词，不删除或豁免禁词。修改规范、语料或技能后运行 `python3 scripts/build.py distill`（第二次应为 `changed=false`），再运行 `python3 -m scripts.lib.test_pipeline`、`cd hanabi && node --test` 和 `python3 scripts/doctor.py`。测试使用临时参考图/假模型，不写生产素材、不消耗生图额度；`doctor` 也检查暂存区字节，提交前需复查。
 
@@ -133,7 +133,7 @@ python3 scripts/check.py --help
 | D6–D9：素材、隐私与模型职责 | 小红书质量以人工精选为准、闲鱼按「想要」排序；企微原文留本机；规则与风格终审交规划 agent，执行与图像任务由可替换模型承担。 |
 | D10–D15：内容与偏好事实源 | 平台价格表达及封面层级写入 `rules/content-spec.md`；persona 保存在 `skills/simin-persona/SKILL.md`，每帖受众标签使用 `rules/audience-tags.yaml`。风险词机器源仅 `rules/banned-words-quick.yaml`。 |
 | D16–D19：工作台与对外红线 | Hanabi 是 content-ops 专用工作台；Model Price Watch 只用于调研、不进入当日生成链路；小红书与闲鱼禁 API 字样，所有对外内容禁境外模型品牌与型号。 |
-| D20–D24：单源、分层与生产链路 | D20 由 `doctor.py` 和 repo budget 落门禁；跟踪文件预算曾落后实际仓库数量，2026-11-07 按当前131个有效工作区文件同步门槛（含需保留的输出 sidecar），字节及单文件上限不变；D21 采用 Lilith、规划 agent、执行 agent、批量 agent 四元分工；D22 文案/视觉/图像分阶段、分类即时派生、文档白名单直读；D23 素材 CRUD 直接维护 `data/posts.jsonl`；D24 模型语料唯一源为 `data/model-corpus.md`，由 Hanabi 只读展示并按配置供生成使用。 |
+| D20–D25：单源、分层与生产链路 | D20 由 `doctor.py` 和 repo budget 落门禁；跟踪文件预算曾落后实际仓库数量，2026-11-07 按当前131个有效工作区文件同步门槛（含需保留的输出 sidecar），字节及单文件上限不变；D21 采用 Lilith、规划 agent、执行 agent、批量 agent 四元分工；D22 文案/视觉/图像分阶段、分类即时派生、文档白名单直读；D23 素材 CRUD 直接维护 `data/posts.jsonl`；D24 模型语料唯一源为 `data/model-corpus.md`，由 Hanabi 只读展示并按配置供生成使用；D25 大字报改为 AI 无字底图加 Pillow 排字，其他版式继续完整海报直出。 |
 | 角色术语 | 旧记录中的 Codex/Gemini 等名称仅是历史实现，不是固定角色要求；按四元分工理解，模型供应商可替换。 |
 | X1–X4：否决项 | 不以外部大模型重写底层、不全站抓取、不训练思敏偏好模型、不把界面永久排除；偏好以可审的 SKILL.md 管理，当前 Hanabi 工作台按 D16 承担可视化入口。 |
 
