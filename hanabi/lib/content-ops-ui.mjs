@@ -1,4 +1,5 @@
 const storedRequest=()=>{try{return JSON.parse(sessionStorage.getItem('hanabi.content-ops-request')||'null');}catch{return null;}};
+const storedReferences=()=>{try{const value=JSON.parse(sessionStorage.getItem('content-ops-reference-selection')||'[]');return Array.isArray(value)?value.filter(ref=>ref&&['xhs','xianyu'].includes(ref.platform)&&ref.id!=null).map(ref=>({platform:ref.platform,id:String(ref.id)})):[];}catch{return[];}};
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const styleLabels={bold_typo:'撞色大字报',code_ide:'极客代码屏',card_3d:'3D卡片流程',comparison:'痛点对比',promo:'促销活动感'};
 const copyFormatLabels={all_variations:'全套多样化',format_1:'极简转化',format_2:'工具场景',format_3:'精准圈人'};
@@ -44,8 +45,7 @@ export class ContentOpsUI {
     this.referenceHint=document.querySelector('#content-ops-reference-hint');
     this.liveReferences=[];
     this.referenceLoadVersion=0;
-    this.historicalReferences=false;
-    window.addEventListener('content-ops:reference-selection',event=>{this.historicalReferences=false;void this.loadReferenceCards(event.detail?.references||[]);});
+    window.addEventListener('content-ops:reference-selection',event=>{void this.loadReferenceCards(event.detail?.references||[]);});
     document.addEventListener('content-ops:view',()=>this.renderReferenceCards());
     this.form.addEventListener('submit',event=>{event.preventDefault();void this.submit();});
     this.form.addEventListener('input',()=>{this.formEdited=true;if(!this.batch&&!this.busy)this.render();});
@@ -56,8 +56,8 @@ export class ContentOpsUI {
     this.imageDialog.addEventListener('click',event=>{if(event.target===this.imageDialog){const r=this.imageDialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)this.imageDialog.close();}});
     document.querySelector('#content-ops-style-mode')?.addEventListener('change',()=>this.syncStyleFields());
     document.querySelector('#content-ops-stop').onclick=()=>void this.stop();
-    document.querySelector('#content-ops-new').onclick=()=>{clearTimeout(this.timer);this.batch=null;this.historicalReferences=false;document.querySelector('#content-ops-history').value='';sessionStorage.removeItem('hanabi.content-ops-request');const current=window.contentOpsReferences?.getSelection?.()||[];void this.loadReferenceCards(current);window.dispatchEvent(new CustomEvent('content-ops:references',{detail:{references:current}}));this.render();document.querySelector('#content-ops-model').focus();};
-    document.querySelector('#content-ops-history').onchange=async event=>{if(!event.target.value||this.busy||this.batch?.status==='running')return;try{this.batch=(await api('/api/content-ops/batches/'+event.target.value)).batch;this.panel.open=true;this.applyBatchToForm(this.batch);this.historicalReferences=true;await this.loadReferenceCards(this.batch.references||[]);this.render();document.querySelector('[data-view="generate"]')?.click();this.schedule();}catch(error){this.notice.textContent=error.message;}};
+    document.querySelector('#content-ops-new').onclick=()=>{clearTimeout(this.timer);this.batch=null;document.querySelector('#content-ops-history').value='';sessionStorage.removeItem('hanabi.content-ops-request');void this.loadReferenceCards(storedReferences());this.render();document.querySelector('#content-ops-model').focus();};
+    document.querySelector('#content-ops-history').onchange=async event=>{if(!event.target.value||this.busy||this.batch?.status==='running')return;try{this.batch=(await api('/api/content-ops/batches/'+event.target.value)).batch;this.panel.open=true;this.applyBatchToForm(this.batch);await this.loadReferenceCards(storedReferences());this.render();document.querySelector('[data-view="generate"]')?.click();this.schedule();}catch(error){this.notice.textContent=error.message;}};
     this.result.addEventListener('click',async event=>{
       const tab=event.target.closest('[data-copy-version]'),copy=event.target.closest('[data-content-ops-copy]'),zoom=event.target.closest('[data-content-ops-zoom]'),chat=event.target.closest('[data-content-ops-chat]'),reference=event.target.closest('[data-content-ops-reference]');
       try{if(tab){const post=this.batch.posts[Number(tab.dataset.copyPost)];this.selectedCopies.set(`${this.batch.id}:${post.index}`,Number(tab.dataset.copyVersion));this.render();}
@@ -73,7 +73,7 @@ export class ContentOpsUI {
       event.preventDefault();tabs[next].click();this.result.querySelector(`[data-copy-post="${tab.dataset.copyPost}"][data-copy-version="${next}"]`)?.focus();
     });
     this.syncStyleFields();this.render();
-    const initial=window.contentOpsReferences?.getSelection?.()||[];void this.loadReferenceCards(initial);
+    const initial=storedReferences();void this.loadReferenceCards(initial);
     document.querySelector('#content-ops-ref-generate')?.addEventListener('click',()=>document.querySelector('[data-view="generate"]')?.click());
     void this.init();
   }
@@ -96,15 +96,15 @@ export class ContentOpsUI {
   renderReferenceCards(){
     if(!this.selectedRefs)return;
     const references=this.liveReferences,visible=document.querySelector('#view-generate')?.classList.contains('active');
-    this.selectedRefs.innerHTML=references.length?`<div class="selected-refs-heading"><strong>${this.historicalReferences?'本批引用素材':'已引用参考素材'} · ${references.length} 张</strong><button type="button" class="text-button" data-ref-clear>清空引用</button></div><div class="selected-refs-grid">${references.map((ref,index)=>`<article class="selected-ref-card"><button type="button" class="selected-ref-open" data-ref-open="${index}" aria-label="在素材库定位 ${esc(ref.title||ref.id)}"><img src="${esc(ref.image||'')}" alt="" ${ref.image?'':'hidden'}><span class="selected-ref-no-image" ${ref.image?'hidden':''}>暂无封面</span><span class="ops-platform-badge">${ref.platform==='xianyu'?'闲鱼':'小红书'}</span><strong>${esc(ref.title||ref.id)}</strong></button><button type="button" class="selected-ref-remove" data-ref-remove="${index}">移除</button></article>`).join('')}</div><p class="selected-refs-note">AI 视觉模型将读取以上封面作为构图、配色与字形排版参考</p>`:`<p>未指定参考素材，系统将自动匹配同平台高赞爆款 <button type="button" class="text-button" data-ref-pick>去素材库挑选 →</button></p>`;
+    this.selectedRefs.innerHTML=references.length?`<div class="selected-refs-heading"><strong>当前草稿引用素材 · ${references.length} 张</strong><button type="button" class="text-button" data-ref-clear>清空引用</button></div><div class="selected-refs-grid">${references.map((ref,index)=>`<article class="selected-ref-card"><button type="button" class="selected-ref-open" data-ref-open="${index}" aria-label="在素材库定位 ${esc(ref.title||ref.id)}"><img src="${esc(ref.image||'')}" alt="" ${ref.image?'':'hidden'}><span class="selected-ref-no-image" ${ref.image?'':'hidden'}>暂无封面</span><span class="ops-platform-badge">${ref.platform==='xianyu'?'闲鱼':'小红书'}</span><strong>${esc(ref.title||ref.id)}</strong></button><button type="button" class="selected-ref-remove" data-ref-remove="${index}">移除</button></article>`).join('')}</div><p class="selected-refs-note">AI 视觉模型将读取以上封面作为构图、配色与字形排版参考</p>`:`<p>未指定参考素材，系统将自动匹配同平台最佳参考 <button type="button" class="text-button" data-ref-pick>去素材库挑选 →</button></p>`;
     const count=references.length;
-    if(this.referenceHint)this.referenceHint.textContent=count?`当前已就绪 ${count} 张参考封面图，多模态模型将深度分析其视觉特征。`:'未指定参考素材，系统将自动匹配同平台高赞爆款。';
+    if(this.referenceHint)this.referenceHint.textContent=count?`当前已就绪 ${count} 张参考封面图，多模态模型将深度分析其视觉特征。`:'未指定参考素材，系统将自动匹配同平台最佳参考。';
     if(!this.selectedRefs.dataset.bound){
       this.selectedRefs.dataset.bound='true';this.selectedRefs.addEventListener('click',event=>{
         if(event.target.closest('[data-ref-pick]'))document.querySelector('[data-view="references"]')?.click();
         const open=event.target.closest('[data-ref-open]');if(open){const ref=this.liveReferences[Number(open.dataset.refOpen)];if(ref)window.dispatchEvent(new CustomEvent('content-ops:reference-focus',{detail:ref}));}
-        const remove=event.target.closest('[data-ref-remove]');if(remove){const index=Number(remove.dataset.refRemove);const target=this.liveReferences[index];this.historicalReferences=false;this.liveReferences=this.liveReferences.filter((_,i)=>i!==index);if(target)window.contentOpsReferences?.removeSelection?.(target);this.renderReferenceCards();}
-        if(event.target.closest('[data-ref-clear]')){this.historicalReferences=false;this.liveReferences=[];window.contentOpsReferences?.clearSelectionNow?.();window.dispatchEvent(new CustomEvent('content-ops:references',{detail:{references:[]}}));this.renderReferenceCards();}
+        const remove=event.target.closest('[data-ref-remove]');if(remove){const index=Number(remove.dataset.refRemove);const target=this.liveReferences[index];this.liveReferences=this.liveReferences.filter((_,i)=>i!==index);if(target)window.contentOpsReferences?.removeSelection?.(target);this.renderReferenceCards();}
+        if(event.target.closest('[data-ref-clear]')){this.liveReferences=[];window.contentOpsReferences?.clearSelectionNow?.();this.renderReferenceCards();}
       });
     }
     this.selectedRefs.hidden=!visible;
@@ -142,7 +142,7 @@ export class ContentOpsUI {
     const request=storedRequest();
     const requested=request&&(data.batches||[]).find(batch=>batch.id===request.batchId);
     this.batch=requested||(data.batches||[]).find(batch=>batch.status==='running')||null;
-    if(this.batch){this.panel.open=true;this.applyBatchToForm(this.batch);this.historicalReferences=true;await this.loadReferenceCards(this.batch.references||[]);this.render();this.schedule();}
+    if(this.batch){this.panel.open=true;this.applyBatchToForm(this.batch);await this.loadReferenceCards(storedReferences());this.render();this.schedule();}
     else {this.render();if(!config.available||!config.configured)this.notice.textContent='本机生成脚本或公司网关未配置，请检查使用说明。';}
   }catch(error){this.notice.textContent=error.message;}}
   async refreshConfig(){
@@ -156,7 +156,7 @@ export class ContentOpsUI {
   async submit(){
     if(this.busy||this.batch?.status==='running')return;
     let request=storedRequest();
-    const references=(!this.historicalReferences&&this.liveReferences?.length)?this.liveReferences.map(r=>({platform:r.platform,id:String(r.id)})):(window.contentOpsReferences?.getSelection?.()||[]);
+    const references=storedReferences();
     const brief=document.querySelector('#content-ops-brief').value;
     if(Array.from(brief).length>1000){this.notice.textContent='需求不能超过1000字。';return;}
     const styleMode=document.querySelector('#content-ops-style-mode')?.value||'auto';
@@ -180,8 +180,7 @@ export class ContentOpsUI {
   async poll(){try{const before=this.batch.status;this.batch=(await api('/api/content-ops/batches/'+this.batch.id)).batch;this.render();if(this.batch.status!==before){await this.refresh();const data=await api('/api/content-ops/batches');this.renderHistory(data.batches||[]);}}catch(error){this.notice.textContent='读取进度失败，可刷新恢复：'+error.message;}this.schedule();}
   async stop(){if(!this.batch)return;try{await api('/api/content-ops/batches/'+this.batch.id+'/stop',{});this.notice.textContent='正在停止，已有结果保留。';this.schedule();}catch(error){this.notice.textContent=error.message;}}
   render(){
-    const references=hydratedReferences(this.batch?.references,this.liveReferences);
-    window.dispatchEvent(new CustomEvent('content-ops:references',{detail:{references}}));
+    const references=this.batch?.references||[];
     const running=this.batch?.status==='running',locked=Boolean(this.busy||running);
     document.querySelector('#content-ops-submit').disabled=locked;document.querySelector('#content-ops-stop').hidden=!running;document.querySelector('#content-ops-new').hidden=!this.batch||locked;
     document.querySelector('#content-ops-history').disabled=locked;

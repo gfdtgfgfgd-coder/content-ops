@@ -198,14 +198,7 @@ def load_references(path, max_chars=32000, platform='xhs', model='', style_prese
             engagement = metrics.get('wants' if platform == 'xianyu' else 'likes') or 0
             return (-int(good), -relevance, -engagement, post['id'])
         ranked = sorted(candidates, key=rank)
-        # Include both platform layouts before adding a third high-ranked reference.
-        picks = []
-        for name in wanted:
-            match = next((p for p in ranked if name in names(p) and p not in picks), None)
-            if match:
-                picks.append(match)
-        picks.extend(p for p in ranked if p not in picks)
-        selected = [{'id': p['id'], 'platform': p['platform']} for p in picks[:3]]
+        selected = [{'id': ranked[0]['id'], 'platform': ranked[0]['platform']}] if ranked else []
     else:
         selected = json.loads(path.read_text(encoding='utf-8'))
         if not isinstance(selected, list):
@@ -690,6 +683,10 @@ def direct_image_prompt(post, platform, visual_prompt=None, style_mode='auto', s
     width, height = poster_size(platform)
     ratio = '竖版3:4' if platform == 'xhs' else '方图1:1'
     prompt = normalize_prompt_canvas(plan['visual_prompt'].strip(), platform)
+    if plan['collection_name'] == '大字报':
+        prompt = re.sub(r'粗重|超大|行距紧凑|充满画面|粗体', '适中', prompt)
+        prompt += ('大字报排版约束：文字主体居中，左右各留画布宽度20%的纯净空白安全区，文字总跨度不超过画布宽度60%；'
+                   '采用清爽、中等偏粗的无衬线字形，字腔通透、笔画均匀；行距宽松，行间空隙约为半个字高，整体呈松弛便签感。')
     text_map = json.dumps(plan['cover_texts'], ensure_ascii=False)
     guard = ('只做纯文字/纸张便签海报，禁止3D物件、代码屏、电脑插画、人物与复杂背景。'
              if plan['collection_name'] == '大字报' else '保持参考图分区比例，只替换同类元素形态，不增加无关主体。')
@@ -949,7 +946,7 @@ def main(argv=None):
     parser.add_argument('--style-preset',default='',help='四大合集：bold_typo / top_middle_bottom / left_right_bottom / surround；兼容旧流派参数与中文合集名')
     parser.add_argument('--style-prompt',default='',help='手动自定义画面感觉描述，不超过500字')
     parser.add_argument('--facts',type=Path,help='可选：带 claim/source 的已核验产品事实 JSON')
-    parser.add_argument('--references',type=Path,help='可选：手选参考 JSON 数组 {id,platform}；未选/空数组默认从同平台对应合集中选取最多3帖')
+    parser.add_argument('--references',type=Path,help='可选：手选参考 JSON 数组 {id,platform}；未选/空数组默认从同平台对应合集中选取1帖')
     parser.add_argument('--reference-max-chars',type=int,default=32000,help='所选参考帖上下文字符上限，超限时在调用前失败')
     parser.add_argument('--timeout',type=float,default=240)
     parser.add_argument('--resume',action='store_true',help='显式续跑同目录失败任务，复用已通过校验的文案与图片；未完成请求仍可能收费')

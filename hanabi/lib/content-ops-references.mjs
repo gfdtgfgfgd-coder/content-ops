@@ -56,7 +56,6 @@ export class ContentOpsReferences {
     this.clearSelection = root.querySelector('#content-ops-ref-clear');
     this.posts = [];
     this.references = [];
-    this.citedKeys = new Set();
     let savedSelection = [];
     try { savedSelection = JSON.parse(sessionStorage.getItem('content-ops-reference-selection') || '[]'); } catch {}
     this.selectedReferences = normalizeReferences(savedSelection).slice(0, 8);
@@ -123,7 +122,6 @@ export class ContentOpsReferences {
       figure.querySelector('.ref-image-error').hidden = false;
     }, true);
     // Capture also receives non-bubbling events dispatched on document.
-    window.addEventListener('content-ops:references', event => this.setReferences(event.detail), true);
     window.addEventListener('content-ops:reference-focus', event => void this.focusReference(event.detail), true);
     this.refreshBadges();
     void this.initialize();
@@ -611,10 +609,9 @@ export class ContentOpsReferences {
 
   badges(post) {
     const hits = (Array.isArray(post.banned_word_hits) ? post.banned_word_hits : []).map(hit => typeof hit === 'string' ? hit : hit?.word || hit?.term || hit?.pattern || hit?.id || '').filter(Boolean);
-    const cited = this.citedKeys.has(keyOf(post));
     const selected = this.selectedKeys.has(keyOf(post));
     const collections = Array.isArray(post.collection_names) ? post.collection_names : [];
-    return `<span class="ref-badge-platform">${post.platform === 'xhs' ? '小红书' : '闲鱼'}</span>${collections.length ? collections.map(name => `<span class="ref-badge-collection">合集：${esc(name)}</span>`).join('') : '<span class="ref-badge-uncategorized">未分类</span>'}${post.label_good === true ? '<span class="ref-badge-good">✅ 精选</span>' : ''}${hits.length ? `<span class="ref-badge-warn">⚠️ 含禁词：${esc([...new Set(hits)].join('、'))}</span>` : ''}${cited ? '<span class="ref-badge-cited">本批已引用</span>' : ''}${selected ? '<span class="ref-badge-selected">下批待引用</span>' : ''}`;
+    return `<span class="ref-badge-platform">${post.platform === 'xhs' ? '小红书' : '闲鱼'}</span>${collections.length ? collections.map(name => `<span class="ref-badge-collection">合集：${esc(name)}</span>`).join('') : '<span class="ref-badge-uncategorized">未分类</span>'}${post.label_good === true ? '<span class="ref-badge-good">✅ 精选</span>' : ''}${hits.length ? `<span class="ref-badge-warn">⚠️ 含禁词：${esc([...new Set(hits)].join('、'))}</span>` : ''}${selected ? '<span class="ref-badge-selected">下批待引用</span>' : ''}`;
   }
 
   collectionOptions(post) {
@@ -625,10 +622,9 @@ export class ContentOpsReferences {
   card(post) {
     const images = imageList(post);
     const body = String(post.body_full ?? post.body_preview ?? '');
-    const cited = this.citedKeys.has(keyOf(post));
     const key = keyOf(post), collapsed = this.isCardCollapsed(key);
     const outlineOpen = this.viewMode === 'collapsed' && !collapsed;
-    return `<article class="ref-card${post.label_good === true ? ' ref-card--good' : ''}${cited ? ' ref-card--cited' : ''}${post.banned_word_hits?.length ? ' ref-card--warned' : ''}${collapsed ? ' ref-card--collapsed' : ''}${outlineOpen ? ' ref-card--outline-open' : ''}" data-id="${esc(post.id)}" data-platform="${esc(post.platform)}" data-cited="${cited}" tabindex="-1">
+    return `<article class="ref-card${post.label_good === true ? ' ref-card--good' : ''}${post.banned_word_hits?.length ? ' ref-card--warned' : ''}${collapsed ? ' ref-card--collapsed' : ''}${outlineOpen ? ' ref-card--outline-open' : ''}" data-id="${esc(post.id)}" data-platform="${esc(post.platform)}" tabindex="-1">
       <div class="ref-card-head">
         <button class="ref-drag-handle" type="button" draggable="true" data-ref-drag-handle aria-label="拖动调整素材顺序" title="拖动调整顺序">⠿</button>
         <div class="ref-outline-badges">${this.badges(post)}</div>
@@ -637,7 +633,7 @@ export class ContentOpsReferences {
           <button class="ref-icon-button" type="button" data-ref-outline-expand aria-expanded="${!collapsed}" aria-label="${collapsed ? '展开图文' : '收起图文'}" title="${collapsed ? '展开图文' : '收起图文'}">${collapsed ? '▸' : '▾'}</button>
           <button class="ref-icon-button" type="button" data-ref-move-up aria-label="上移" title="上移">↑</button>
           <button class="ref-icon-button" type="button" data-ref-move-down aria-label="下移" title="下移">↓</button>
-          <button class="ref-text-button" type="button" data-ref-select aria-pressed="${this.selectedKeys.has(key) || cited}">${(this.selectedKeys.has(key) || cited) ? '移出引用' : '引用'}</button>
+          <button class="ref-text-button" type="button" data-ref-select aria-pressed="${this.selectedKeys.has(key)}">${this.selectedKeys.has(key) ? '移出引用' : '引用'}</button>
           <button class="ref-text-button" type="button" data-ref-edit>编辑</button><button class="ref-text-button ref-delete" type="button" data-ref-delete>删除</button>
         </div>
       </div>
@@ -817,9 +813,8 @@ export class ContentOpsReferences {
       const card = select.closest('.ref-card');
       const reference = {platform:card.dataset.platform,id:card.dataset.id};
       const key = keyOf(reference);
-      if (this.selectedKeys.has(key) || this.citedKeys.has(key)) {
+      if (this.selectedKeys.has(key)) {
         this.selectedKeys.delete(key);
-        this.citedKeys.delete(key);
         this.selectedReferences = this.selectedReferences.filter(item => keyOf(item) !== key);
       } else if (this.selectedReferences.length >= 8) {
         this.status.textContent = '一批最多选择 8 条参考帖。';
@@ -843,7 +838,6 @@ export class ContentOpsReferences {
   clearSelectionNow() {
     this.selectedReferences = [];
     this.selectedKeys.clear();
-    this.citedKeys.clear();
     this.saveSelection();
     this.refreshBadges();
   }
@@ -853,7 +847,6 @@ export class ContentOpsReferences {
     const key = keyOf(reference);
     this.selectedReferences = this.selectedReferences.filter(item => keyOf(item) !== key);
     this.selectedKeys.delete(key);
-    this.citedKeys.delete(key);
     this.saveSelection();
     this.refreshBadges();
   }
@@ -864,10 +857,9 @@ export class ContentOpsReferences {
       if (!post) continue;
       const key = keyOf(post);
       const selected = this.selectedKeys.has(key);
-      const cited = this.citedKeys.has(key);
       const button = card.querySelector('[data-ref-select]');
-      button.setAttribute('aria-pressed', String(selected || cited));
-      button.textContent = (selected || cited) ? '移出引用' : '引用';
+      button.setAttribute('aria-pressed', String(selected));
+      button.textContent = selected ? '移出引用' : '引用';
       card.querySelector('.ref-outline-badges').innerHTML = this.badges(post);
     }
     this.selectionLabel.textContent = this.selectedReferences.length ? `下批引用 ${this.selectedReferences.length} 条` : '';
@@ -883,18 +875,6 @@ export class ContentOpsReferences {
     if (!post) return;
     disclosure.querySelector('.ref-extra-images').innerHTML = imageList(post).slice(1).map((source,index) => this.image(source,post.title,index+1)).join('');
     disclosure.dataset.loaded = 'true';
-  }
-
-  setReferences(references) {
-    this.references = normalizeReferences(references);
-    this.citedKeys = new Set(this.references.map(keyOf));
-    for (const card of this.root.querySelectorAll('.ref-card')) {
-      const cited = this.citedKeys.has(`${card.dataset.platform}:${card.dataset.id}`);
-      card.classList.toggle('ref-card--cited', cited);
-      card.dataset.cited = String(cited);
-      const post = this.findPost(card);
-      if (post) card.querySelector('.ref-outline-badges').innerHTML = this.badges(post);
-    }
   }
 
   focusFirstCited() {

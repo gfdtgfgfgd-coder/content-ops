@@ -287,7 +287,9 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(calls.call_count, count)
         manifest = json.loads((self.base / 'batch/manifest.json').read_text())
         self.assertEqual(manifest['status'], 'completed')
-        self.assertEqual(manifest['references'][0]['platform'], 'xhs')
+        self.assertEqual(len(manifest['references']), 1)
+        self.assertEqual((manifest['references'][0]['platform'], manifest['references'][0]['id']),
+                         ('xhs', json.loads(refs.read_text())[0]['id']))
         self.assertEqual(manifest['posts'][0]['image_metadata']['mode'], 'offline_background_composition')
         self.assertEqual((manifest['posts'][0]['image_metadata']['width'], manifest['posts'][0]['image_metadata']['height']), (1080, 1440))
         self.assertTrue((self.base / 'batch/post-1.png').exists())
@@ -303,19 +305,19 @@ class PipelineTests(unittest.TestCase):
             return [r for r in rows if platform is None or r['platform'] == platform]
         with patch.object(copy, 'ROOT', self.base), patch.object(copy, 'load_posts', side_effect=source), patch.object(copy, 'collection_memberships', return_value={}):
             refs, contexts, hashes = copy.load_references(None)
-            self.assertEqual([r['id'] for r in refs], ['good', 'popular', 'normal'])
-            self.assertEqual(len(hashes), 3)
+            self.assertEqual([r['id'] for r in refs], ['good'])
+            self.assertEqual(len(hashes), 1)
             self.assertTrue(all(r['platform'] == 'xhs' for r in contexts))
             self.assertEqual(copy.load_references(None, platform='xianyu')[0][0]['id'], 'wanted')
             path = self.base / 'manual.json'
             path.write_text(json.dumps([{'id': 'low', 'platform': 'xhs'}]))
             self.assertEqual(copy.load_references(path)[0][0]['id'], 'low')
             path.write_text('[]')
-            self.assertEqual(len(copy.load_references(path)[0]), 3)
+            self.assertEqual(len(copy.load_references(path)[0]), 1)
             with self.assertRaises(ValueError):
                 copy.load_references(None, max_chars=1)
         refs, contexts, _ = copy.load_references(None, platform='xhs', model='Kimi K3.1 Pro')
-        self.assertEqual(len(refs), 3)
+        self.assertEqual(len(refs), 1)
         self.assertTrue(all(r['platform'] == 'xhs' and r['title'] for r in refs))
 
     def test_relaxed_voice_title_dynamic_audience_and_cover_risk(self):
@@ -382,6 +384,12 @@ class PipelineTests(unittest.TestCase):
         xianyu = copy.direct_image_prompt(post, 'xianyu', conflicting)
         self.assertIn('方图1:1，1080×1080px', xianyu)
         self.assertNotIn('3:4', xianyu)
+        big_typo = copy.direct_image_prompt(post, 'xhs', visual_plan(layout='大字报', prompt='粗重超大、行距紧凑、充满画面、粗体'))
+        self.assertIn('左右各留画布宽度20%', big_typo)
+        self.assertIn('文字总跨度不超过画布宽度60%', big_typo)
+        self.assertIn('行间空隙约为半个字高', big_typo)
+        for forbidden in ['粗重', '超大', '行距紧凑', '充满画面', '粗体']:
+            self.assertNotIn(forbidden, big_typo)
         with self.assertRaises(ValueError):
             copy.direct_image_prompt(post, 'xhs', '旧纯文本提示词')
 
@@ -514,18 +522,21 @@ class PipelineTests(unittest.TestCase):
         source = lambda platform=None: [p for p in rows if not platform or p['platform']==platform]
         with patch.object(copy,'ROOT',self.base), patch.object(copy,'load_posts',side_effect=source):
             refs,contexts,hashes = copy.load_references(None,platform='xhs')
-            self.assertEqual([r['collection_name'] for r in refs],['大字报','上中下','大字报'])
+            self.assertEqual(len(refs),1)
+            self.assertIn(refs[0]['collection_name'],['大字报','上中下'])
             self.assertTrue(all(r['platform']=='xhs' for r in refs))
             self.assertEqual(contexts[0]['cover_ocr'],'参考短字')
-            self.assertEqual(len(hashes),3)
+            self.assertEqual(len(hashes),1)
             refs,_,_ = copy.load_references(None,platform='xianyu')
-            self.assertEqual([r['collection_name'] for r in refs],['左右下','环绕'])
+            self.assertEqual(len(refs),1)
+            self.assertIn(refs[0]['collection_name'],['左右下','环绕'])
             for preset in ['top_middle_bottom','上中下','code_ide','card_3d']:
                 refs,_,_ = copy.load_references(None,style_preset=preset)
                 self.assertEqual([r['id'] for r in refs],['ref1'])
             selected = self.base/'manual.json'
             selected.write_text(json.dumps([{'platform':'xhs','id':'ref4'}]))
             refs,_,_ = copy.load_references(selected)
+            self.assertEqual([(r['platform'],r['id']) for r in refs],[('xhs','ref4')])
             self.assertEqual(refs[0]['id'],'ref4')
             self.assertEqual(refs[0]['collection_names'],['大字报'])
             for row in rows:
