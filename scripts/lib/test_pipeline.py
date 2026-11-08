@@ -478,9 +478,24 @@ class PipelineTests(unittest.TestCase):
             post=structured_post();mutate(post)
             with self.subTest(mutate=mutate), self.assertRaises(ValueError):
                 copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_1')
-        post=structured_post('format_2');post['sections'][3]['text']='工具兼容情况待确认'
-        with self.assertRaisesRegex(ValueError,'CC'):
+        post=structured_post('format_2');post['sections'][3]['text']='无缝兼容各类环境，几分钟即可放开跑'
+        with self.assertRaisesRegex(ValueError,'核对'):
             copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_2')
+        checked=structured_post('format_2');checked['sections'][3]['text']='先核对当前工具和账号条件，未核实前不写已经接好。'
+        self.assertIn('先核对', copy.validate_posts({'posts':[checked]},1,'GLM5.3',copy_format='format_2')[0]['body'])
+
+    def test_glm_corpus_brief_stays_inside_checked_boundary(self):
+        brief = copy.corpus_for_brief(copy.extract_model_corpus('GLM-5.3'))
+        self.assertLess(len(brief), 700)
+        self.assertIn('不是又快又便宜的万能模型', brief)
+        self.assertNotIn('真实主能力', brief)
+        for word in ('无损', '不遗忘', '奶茶', '极速', '无限量', '即插即用', 'API', 'OpenAI'):
+            self.assertNotIn(word, brief)
+        kimi = copy.corpus_for_brief(copy.extract_model_corpus('Kimi K3.1 Pro'))
+        self.assertIn('MoE', kimi)
+        self.assertNotIn('生成可采用的边界', kimi)
+        self.assertEqual(copy.extract_model_corpus('GLM-5.3-Flash'), '')
+        self.assertEqual(copy.extract_model_corpus('GLM-5.2'), '')
         repeated_angles=[structured_post('format_1',n) for n in range(1,4)]
         repeated_angles[2]['angle']=repeated_angles[0]['angle']
         with self.assertRaisesRegex(ValueError,'不同结构'):
