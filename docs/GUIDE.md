@@ -51,6 +51,8 @@ AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，
 
 ### 图文修改模块
 
+- `~/Library/Application Support/Content Alchemy/recovered-batches/<id>/`：本机失败批次的追加式恢复记录，保存从原导出复制的检查点及后续成图，与本机历史数据库共同长期保留，不进 Git、不作为临时缓存清理；原始 `outputs/` 保持不变。
+
 - `hanabi/lib/content-ops-revisions.mjs`：修改版本存储、并发校验与单篇修改任务；追加记录并保留原始批次。
 - `hanabi/lib/content-ops-revision-ui.mjs`、`hanabi/lib/content-ops-revisions.css`：图文编辑、预览采用、区域框选及版本切换。
 - `scripts/lib/revision.py`：`scripts/generate.py revise` 子命令实现，文件式输入输出，承载文案改写、原图编辑与替换校验。
@@ -94,6 +96,10 @@ AI改写使用当前文案模型；AI改图使用当前图像模型，携带原�
 同一目标同时只允许一个修改任务；请求ID去重防止重复提交，采用操作用版本号与SQLite事务检测并发，拒绝覆盖其他窗口的新改动。关闭编辑器后可在版本记录继续查看任务；可取消正在进行的修改。取消只停止本机等待，已经发出的网关请求不保证撤销计费。服务重启将未完成修改标为失败，原稿保留。隔离验收使用 `scratch/revision-qa/`，可删，不访问真实密钥；自动回归仍在既有 Node/Python 测试入口内。
 
 ## 封面同构链路与排障
+
+失败或部分完成的历史批次若已有 `copy.json` 与 manifest，可点击「继续完成本批」（`POST /api/content-ops/batches/:id/resume`）。后端新建上述恢复目录，保留原始导出，核对原始需求、参考、偏好、语料及配方哈希后执行既有 `--resume`。已保存但未通过本机校验的 `vision-prompt-N.txt` 优先重新解析校验，成功后直接补缺失图片，不重发已完成的文案或视觉请求；校验仍失败则明确报错，不自动收费重试。恢复请求去重，运行中或完成后再次提交不会启动第二次生成。
+
+背景 `profile` 提示模型填写配方英文 `id`；兼容从唯一配方源读取的中文 `label`，以及英文标识大小写、空格、连字符变体，统一保存为标准 ID。未知显式名称仍拒绝并列出可用名称，缺省字段才沿用旧版关键词匹配，不能把有效中文名称误判为配方缺失。
 
 业务约束唯一源为 `rules/content-spec.md` 的封面章节；模型封面语料唯一源为 `data/model-corpus.md` 各模型专节和文末共享组件。工程实现集中在 `scripts/lib/copy.py`，不新增入口脚本，也不在 `/v1/*` 网关注入上下文。
 

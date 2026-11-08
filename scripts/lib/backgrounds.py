@@ -31,11 +31,17 @@ def normalize_style(style=None, visual_prompt=''):
         raise ValueError('大字报background_style须为对象')
     style = dict(style or {})
     profile_id = style.get('profile')
-    if profile_id is None:
+    if profile_id is None or isinstance(profile_id, str) and not profile_id.strip():
         # Legacy visual plans keep working; explicit new plans use a validated profile ID.
         profile_id = next((p['id'] for p in recipe()['profiles'][1:] if any(word in visual_prompt for word in p['keywords'])), recipe()['default'])
-    if profile_id not in profiles:
-        raise ValueError('大字报背景材质不在已配置配方中')
+    if not isinstance(profile_id, str):
+        raise ValueError('大字报背景材质名称须为文本')
+    key = lambda value: re.sub(r'[\s_-]+', '', value).casefold()
+    names = {key(name): p['id'] for p in recipe()['profiles'] for name in (p['id'], p['label'])}
+    canonical = names.get(key(profile_id))
+    if canonical is None:
+        raise ValueError('无法识别大字报背景材质：' + profile_id[:80] + '；可用名称：' + '、'.join(p['label'] for p in recipe()['profiles']))
+    profile_id = canonical
     profile = profiles[profile_id]
     result = {'profile': profile_id}
     for key in ('base', 'paper', 'ink', 'accent'):

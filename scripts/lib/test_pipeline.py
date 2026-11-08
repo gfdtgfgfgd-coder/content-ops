@@ -418,6 +418,49 @@ class PipelineTests(unittest.TestCase):
         for style in [{'profile':'unknown'},{'profile':'paper_shadow','base':'white'},{'profile':'paper_shadow','highlight_roles':['unknown']}]:
             with self.assertRaises(ValueError):backgrounds.normalize_style(style)
 
+    def test_background_profile_accepts_configured_chinese_labels_and_id_variants(self):
+        for profile in backgrounds.recipe()['profiles']:
+            for value in (profile['label'], ' '+profile['label']+' ', profile['id'].upper().replace('_','-')):
+                with self.subTest(value=value):
+                    style=backgrounds.normalize_style({'profile':value,'accent':'#38D1D0','highlight_roles':['hook','model']})
+                    self.assertEqual(style['profile'],profile['id'])
+                    self.assertEqual(style['accent'],'#38D1D0')
+                    self.assertEqual(style['highlight_roles'],['hook','model'])
+        with self.assertRaisesRegex(ValueError,'无法识别'):
+            backgrounds.normalize_style({'profile':'truly_unknown_material'})
+        for value in ([],{},42):
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError,'须为文本'):
+                backgrounds.normalize_style({'profile':value})
+
+    def test_resume_reuses_copy_and_raw_visual_response_after_local_validation_failure(self):
+        settings={'CONTENT_OPS_API_KEY':'offline-test-only','CONTENT_OPS_BASE_URL':'https://offline.invalid/v1'}
+        output=self.base/'raw-resume';argv=['--model','GLM5.3','--platform','xhs','--count','1','--output',str(output)]
+        drafts=[structured_post('format_1',1),structured_post('format_2',2),structured_post('format_3',3)]
+        plan=visual_plan();plan['background_style']={'profile':backgrounds.recipe()['profiles'][0]['label']}
+        def rejected_visual(post,refs,settings,timeout,raw_output,platform,**kwargs):
+            raw_output.write_text(json.dumps(plan,ensure_ascii=False))
+            raise ValueError('local background validation failed')
+        def generate(*,output,**kwargs):
+            Image.new('RGB',(1080,1440),'#D9DFD6').save(output)
+            return {'width':1080,'height':1440,'bytes':output.stat().st_size,'sha256':__import__('hashlib').sha256(output.read_bytes()).hexdigest()}
+        context=[{'id':'fixture','collection_name':'大字报','image_paths':['fixture.png']}]
+        with patch.object(gateway,'load_config',return_value=settings), \
+             patch.object(copy,'load_references',return_value=([],context,{'fixture':'unchanged'})), \
+             patch.object(copy,'reference_image_parts',return_value=([],[{'id':'fixture','sha256':'unchanged'}])), \
+             patch.object(copy,'readable_reference',return_value=True), \
+             patch.object(copy,'claude_call',return_value=({'posts':drafts},{})) as writer, \
+             patch.object(copy,'visual_prompt_call',side_effect=rejected_visual) as vision, \
+             patch.object(gateway,'generate_image',side_effect=generate) as image,redirect_stdout(io.StringIO()),redirect_stderr(io.StringIO()):
+            self.assertEqual(copy.main(argv),1)
+            raw_before=(output/'vision-prompt-1.txt').read_bytes()
+            self.assertEqual(copy.main(argv+['--resume']),0)
+        self.assertEqual(writer.call_count,1);self.assertEqual(vision.call_count,1);self.assertEqual(image.call_count,1)
+        self.assertEqual((output/'vision-prompt-1.txt').read_bytes(),raw_before)
+        manifest=json.loads((output/'manifest.json').read_text())
+        self.assertEqual(manifest['status'],'completed')
+        self.assertTrue(manifest['vision_calls'][-1]['reused_raw_response'])
+        self.assertEqual(manifest['posts'][0]['visual_plan']['background_style']['profile'],'paper_shadow')
+
     def test_background_surfaces_are_reproducible_and_flat_ai_has_visible_material(self):
         from PIL import ImageStat
         source=Image.new('RGB',(300,400),'white')

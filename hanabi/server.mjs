@@ -108,7 +108,8 @@ async function route(req, res) {
     }
     const revisionMatch=pathname.match(/^\/api\/content-ops\/revisions\/([\w-]+)$/u);
     if(req.method==='GET'&&revisionMatch)return send(res,200,{revision:revisions.public(revisions.get(revisionMatch[1]))},{'Cache-Control':'no-store'});
-    const batchMatch = pathname.match(/^\/api\/content-ops\/batches\/([^/]+)(?:\/(stop))?$/u);
+    const batchMatch = pathname.match(/^\/api\/content-ops\/batches\/([^/]+)(?:\/(stop|resume))?$/u);
+    if(batchMatch&&req.method==='POST'&&batchMatch[2]==='resume'){if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机Hanabi页面继续生成。'});await body(req);return send(res,200,await production.resume(decodeURIComponent(batchMatch[1])));}
     if (batchMatch) { const id = decodeURIComponent(batchMatch[1]); if (req.method === 'GET' && !batchMatch[2]) return send(res, 200, { batch: production.public(production.get(id)) }); if (req.method === 'POST' && batchMatch[2] === 'stop') return send(res, 200, { batch: production.stop(id) }); }
     if (req.method === 'GET' && pathname === '/api/content-ops/collections') return send(res, 200, { collections: await references.readCollections() }, { 'Cache-Control': 'no-store' });
     const collectionMatch = pathname.match(/^\/api\/content-ops\/collections(?:\/([^/]+))?$/u);

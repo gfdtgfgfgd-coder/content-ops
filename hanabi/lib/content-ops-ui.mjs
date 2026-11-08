@@ -57,6 +57,7 @@ export class ContentOpsUI {
     this.imageDialog.addEventListener('click',event=>{if(event.target===this.imageDialog){const r=this.imageDialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)this.imageDialog.close();}});
     document.querySelector('#content-ops-style-mode')?.addEventListener('change',()=>this.syncStyleFields());
     document.querySelector('#content-ops-stop').onclick=()=>void this.stop();
+    document.querySelector('#content-ops-resume')?.addEventListener('click',()=>void this.resume());
     document.querySelector('#content-ops-new').onclick=()=>{clearTimeout(this.timer);this.batch=null;document.querySelector('#content-ops-history').value='';sessionStorage.removeItem('hanabi.content-ops-request');sessionStorage.removeItem('hanabi.content-ops-review-batch');void this.loadReferenceCards(storedReferences());this.render();document.querySelector('#content-ops-model').focus();};
     document.querySelector('#content-ops-history').onchange=async event=>{if(!event.target.value||this.busy||this.batch?.status==='running')return;try{this.batch=(await api('/api/content-ops/batches/'+event.target.value)).batch;this.panel.open=true;this.applyBatchToForm(this.batch);await this.loadReferenceCards(storedReferences());this.render();document.querySelector('[data-view="generate"]')?.click();this.schedule();}catch(error){this.notice.textContent=error.message;}};
     this.result.addEventListener('click',async event=>{
@@ -185,11 +186,19 @@ export class ContentOpsUI {
   }
   schedule(){clearTimeout(this.timer);if(this.batch?.status==='running')this.timer=setTimeout(()=>void this.poll(),1800);}
   async poll(){try{const before=this.batch.status;this.batch=(await api('/api/content-ops/batches/'+this.batch.id)).batch;this.render();if(this.batch.status!==before){await this.refresh();const data=await api('/api/content-ops/batches');this.renderHistory(data.batches||[]);}}catch(error){this.notice.textContent='读取进度失败，可刷新恢复：'+error.message;}this.schedule();}
+  async resume(){
+    if(!this.batch||this.busy||this.batch.status==='running')return;
+    this.busy=true;this.render();this.notice.textContent='正在复用已有文案和视觉响应，仅继续未完成阶段…';let failure='';
+    try{const data=await api('/api/content-ops/batches/'+this.batch.id+'/resume',{});this.batch=data.batch;this.render();this.schedule();}
+    catch(error){failure=error.message;}
+    finally{this.busy=false;this.render();if(failure)this.notice.textContent=failure;}
+  }
   async stop(){if(!this.batch)return;try{await api('/api/content-ops/batches/'+this.batch.id+'/stop',{});this.notice.textContent='正在停止，已有结果保留。';this.schedule();}catch(error){this.notice.textContent=error.message;}}
   render(){
     const references=this.batch?.references||[];
     const running=this.batch?.status==='running',locked=Boolean(this.busy||running);
     document.querySelector('#content-ops-submit').disabled=locked;document.querySelector('#content-ops-stop').hidden=!running;document.querySelector('#content-ops-new').hidden=!this.batch||locked;
+    const resume=document.querySelector('#content-ops-resume');if(resume)resume.hidden=locked||!this.batch?.resumable;
     document.querySelector('#content-ops-history').disabled=locked;
     for(const control of this.form.querySelectorAll('input,select,textarea'))control.disabled=locked;
     this.result.setAttribute('aria-busy',String(locked));

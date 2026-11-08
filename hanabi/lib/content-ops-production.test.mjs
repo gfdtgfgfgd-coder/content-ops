@@ -1269,3 +1269,35 @@ test('revision HTTP routes enforce local mutations and preserve adopted copy on 
   response=await send(path.replace('/revisions','/apply'),{kind:'copy',copyIndex:1,baseRevision:'original',revisionId:'original'});assert.equal(response.status,409);
   response=await fetch(url+path+'?kind=copy&copyIndex=1');const history=await response.json();assert.equal(history.currentRevision,first.id);assert.equal(history.original.text,'# 原稿A\n\n正文A');
 });
+
+test('batch resume creates a non-destructive snapshot and starts only one continuation',async t=>{
+  const {dir,db,production}=await revisionFixture(t);
+  const originalDir=join(dir,'original');const raw=JSON.stringify({product_model:'GLM5.3',platform:'xhs',posts:[]});
+  await writeFile(join(originalDir,'manifest.json'),raw);await writeFile(join(originalDir,'copy.json'),'{"posts":[]}');
+  await writeFile(join(originalDir,'vision-prompt-1.txt'),'{"background_style":{"profile":"光影纸张"}}');
+  db.prepare("UPDATE content_ops_batches SET status='failed' WHERE id='batch-123'").run();
+  db.prepare("UPDATE analysis_jobs SET status='failed' WHERE id='job-12345'").run();
+  const calls=[];production.run=async(...args)=>{calls.push(args);};
+  assert.equal(production.public(production.get('batch-123')).resumable,true);
+  const [first,second]=await Promise.all([production.resume('batch-123'),production.resume('batch-123')]);
+  assert.equal(first.batch.status,'running');assert.equal(second.batch.id,'batch-123');assert.equal(calls.length,1);
+  assert.deepEqual(calls[0],['batch-123',{resume:true}]);
+  const current=production.get('batch-123');assert.notEqual(current.output_dir,originalDir);assert.ok(current.output_dir.startsWith(join(dir,'recovered-batches')));
+  assert.equal(await readFile(join(originalDir,'manifest.json'),'utf8'),raw);
+  assert.equal(await readFile(join(originalDir,'post-1.md'),'utf8'),'unchanged export');
+  assert.equal(await readFile(join(current.output_dir,'vision-prompt-1.txt'),'utf8'),await readFile(join(originalDir,'vision-prompt-1.txt'),'utf8'));
+  assert.equal(JSON.parse(await readFile(join(current.output_dir,'manifest.json'),'utf8')).recovery.source_output_dir,originalDir);
+  await production.resume('batch-123');assert.equal(calls.length,1);
+});
+
+test('batch resume refuses missing copy checkpoints and abnormal snapshot files before generation',async t=>{
+  const {dir,db,production}=await revisionFixture(t);
+  db.prepare("UPDATE content_ops_batches SET status='failed' WHERE id='batch-123'").run();
+  const calls=[];production.run=async(...args)=>calls.push(args);
+  await assert.rejects(()=>production.resume('batch-123'),/尚无完整/u);
+  await writeFile(join(dir,'original/copy.json'),'{"posts":[]}');
+  await writeFile(join(dir,'original/manifest.json'),JSON.stringify({product_model:'GLM5.3',platform:'xhs'}));
+  await symlink(join(dir,'original/post-1.md'),join(dir,'original/post-1-copy-2.md'));
+  await assert.rejects(()=>production.resume('batch-123'),/异常文件/u);
+  assert.equal(production.get('batch-123').status,'failed');assert.equal(production.get('batch-123').output_dir,join(dir,'original'));assert.equal(calls.length,0);
+});

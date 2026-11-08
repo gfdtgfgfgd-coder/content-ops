@@ -581,7 +581,7 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
                    'structure': {'layout': '原图结构分析', 'region_proportions': '原图各分区比例和位置关系',
                                  'text_regions': [{'position': '原图文字区位置', 'line_count': 4, 'line_lengths': [6, 5, 7, 6]}]},
                    'cover_texts': [{'role': 'model/benefit/hook/payoff/feature/subtitle', 'text': '本次独立封面短字', 'position': '对应文字区位置'}],
-                   'background_style': {'profile':'从background_profiles选择与参考图材质最接近的一项，仅大字报需要', 'description':'只描述参考图的底色、纸张材质、纹理、边框和光影，不含任何要印出的文字', 'base':'#RRGGBB参考底色', 'ink':'#RRGGBB文字色', 'accent':'#RRGGBB强调色', 'highlight_roles':['hook','model']},
+                   'background_style': {'profile':'仅填写background_profiles中匹配项的id英文标识，不填name中文名称；仅大字报需要', 'description':'只描述参考图的底色、纸张材质、纹理、边框和光影，不含任何要印出的文字', 'base':'#RRGGBB参考底色', 'ink':'#RRGGBB文字色', 'accent':'#RRGGBB强调色', 'highlight_roles':['hook','model']},
                    'visual_prompt': '严格同构换装的中文生图提示词，仅包含cover_texts中的可见文案'}}
     content = [{'type': 'text', 'text': (
         '你是多模态封面结构策划师。看所附一张原图，先拆解并锁死布局、分区比例、文字行数、每行字数和位置。'
@@ -959,10 +959,20 @@ def run(args):
                     if not usable:
                         raise ValueError('所选参考帖没有可读取的本地图片')
                     anchor = usable[(index - 1) % len(usable)]
-                    visual_plan, vision_usage = visual_prompt_call(
-                        {'model': model}, [anchor], settings, args.timeout, out/f'vision-prompt-{index}.txt', args.platform,
-                        style_mode=style_mode, style_preset=style_preset, style_prompt=style_prompt, rules=active_rules,
-                    )
+                    raw_visual = out/f'vision-prompt-{index}.txt'
+                    if args.resume and raw_visual.is_file():
+                        # Raw provider output is retained even when local validation rejected it.
+                        # Input and reference hashes above must match before it can be reused.
+                        visual_plan = validate_visual_plan(parse_json(raw_visual.read_text(encoding='utf-8')), model,
+                            args.platform, anchor.get('collection_name', ''), active_rules)
+                        vision_usage = {'model':manifest['vision_model'], 'reused_raw_response':True,
+                                        'raw_response_file':raw_visual.name, 'usage_not_recorded':True}
+                        print(json.dumps({'event':'vision_response_reused','index':index}),flush=True)
+                    else:
+                        visual_plan, vision_usage = visual_prompt_call(
+                            {'model': model}, [anchor], settings, args.timeout, raw_visual, args.platform,
+                            style_mode=style_mode, style_preset=style_preset, style_prompt=style_prompt, rules=active_rules,
+                        )
                     manifest.setdefault('vision_calls', []).append(vision_usage)
                 validate_visual_plan(visual_plan, model, args.platform, rules=active_rules)
                 manifest['posts'][index-1].update({'visual_plan': visual_plan, 'cover_texts': visual_plan['cover_texts'],
