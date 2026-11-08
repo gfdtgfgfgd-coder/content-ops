@@ -12,7 +12,7 @@ const idPattern = /^[\w-]{8,100}$/u;
 const validText = (value, max) => typeof value === 'string' && value.trim() && [...value].length <= max && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/u.test(value);
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const coverFontCatalog = () => parse(readFileSync(join(PACKAGE_ROOT, 'config/cover-fonts.json'), 'utf8'), { default: 'source_han_sans', fonts: [] });
-const defaultTypography = () => ({ scale: 1, align: 'center', font: coverFontCatalog().default || 'source_han_sans' });
+const defaultTypography = () => ({ scale: 1.2, align: 'center', font: coverFontCatalog().default || 'source_han_sans' });
 const defaultColorGrade = () => ({ brightness: 100, contrast: 100, saturation: 100, warmth: 100 });
 const normalizeTypography = value => {
   const catalog = coverFontCatalog();
@@ -111,7 +111,8 @@ export class ContentOpsRevisions {
     const backgroundStyle={profile:profile.id,base:profile.base,ink:profile.ink,accent:profile.accent,highlight_roles:profile.highlight_roles,...style};
     return {...source,prompt:own?source.prompt:request.prompt||'',renderMode:own?source.renderMode:request.mode==='layered_poster'||plan.collection_name==='大字报'?'layered_poster':'direct_poster',
       coverTexts:own?source.coverTexts||[]:plan.cover_texts||saved.cover_texts||[],
-      backgroundStyle:own?source.backgroundStyle||{}:backgroundStyle,typography:own?{...defaultTypography(),...(source.typography||{})}:defaultTypography(),
+      backgroundStyle:own?source.backgroundStyle||{}:backgroundStyle,
+      typography:own?{...defaultTypography(),...(source.typography||{})}:{scale:1,align:'center',font:coverFontCatalog().default||'source_han_sans'},
       colorGrade:own?{...defaultColorGrade(),...(source.colorGrade||{})}:defaultColorGrade(),
       sourceRows:source.sha256===sourceHash&&source.rendered_text?.length?source.rendered_text:audit.render?.rendered_text||
         (source.image===target.original.image&&saved.image_generation?.sha256===sourceHash?saved.image_generation.rendered_text||[]:[]),

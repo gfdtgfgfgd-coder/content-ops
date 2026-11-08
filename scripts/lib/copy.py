@@ -612,6 +612,7 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
         '上中下/左右下返回model+benefit+3～4个feature；环绕返回model+benefit+4个feature，可另附4个subtitle；'
         '大字报返回3～4行，依次钩子、利益、型号、爽点（三行可合并钩子与利益）。'
         '大字报必须单独观察并返回background_style：区分揉皱纸、深灰网格、蓝色笔记本、光影纸张和彩色便笺，保留参考图实际底色、墨色和荧光笔色；不要无论参考图是什么都写成暖白纸。'
+        'highlight_roles默认且必须包含model（高亮完整型号行）；可另加至多一行，不要只高亮钩子或利益而漏掉型号。'
         'visual_prompt写可执行构图与准确短字；其他三类由图像模型直接排字，大字报只生成无字材质底图，文字由本机叠加。\n'
         + layout_spec + '\n本次输入：' + json.dumps(contract, ensure_ascii=False))}, *images]
     try:
@@ -686,6 +687,13 @@ def cover(background, output, post, palette, font_path, variant, size):
 
 def cover_fonts():
     return json.loads((PACKAGE_ROOT / 'config/cover-fonts.json').read_text(encoding='utf-8'))
+
+
+# Auto-fit caps for layered posters: model line stays largest (运营要求型号一眼可辨).
+# 新生成默认排版比例见 DEFAULT_TYPOGRAPHY_SCALE；未显式传入时 normalize 仍回落 1.0。
+BOLD_FONT_MAX = 120
+BOLD_MODEL_FONT_MAX = 144
+DEFAULT_TYPOGRAPHY_SCALE = 1.2
 
 
 def normalize_typography(value=None):
@@ -779,12 +787,15 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
     width, height = size
     ink = backgrounds.readable_ink(material_metadata['text_surface_color'], style['ink'])
     measure = ImageDraw.Draw(image)
-    text_width = int(width * .60) - 44
+    # 总字号放大时同步加宽文字区（上限约84%），并在拟合预算内吃掉 scale，避免先贴满60%再乘比例撑破版心。
+    span = min(.60 * typography['scale'], .84)
+    text_width = int(width * span) - 44
     rows = []
     for item in texts:
         line_scale = normalize_line_scale(item.get('scale', 1) if isinstance(item, dict) else 1)
-        font = fit_font(font_path, item['text'], 104, text_width)
-        font = font.font_variant(size=max(1, round(font.size * typography['scale'] * line_scale)))
+        combined = typography['scale'] * line_scale
+        maximum = BOLD_MODEL_FONT_MAX if item.get('role') == 'model' else BOLD_FONT_MAX
+        font = fit_font(font_path, item['text'], max(1, round(maximum * combined)), text_width)
         stroke = max(1, round(font.size / 70))
         bounds = measure.textbbox((0, 0), item['text'], font=font, stroke_width=stroke)
         rows.append({'text': item['text'], 'font': font, 'bounds': bounds,
@@ -1125,7 +1136,8 @@ def run(args):
                     raise ValueError(f"生图尺寸不符：要求 {size[0]}x{size[1]}，实际 {image_result['width']}x{image_result['height']}")
                 if layered:
                     background_metadata = {key: image_result[key] for key in ('width','height','bytes','sha256')}
-                    result = render_bold_typo(generated_path, image_path, visual_plan['cover_texts'], font_path, size, visual_plan.get('background_style'))
+                    result = render_bold_typo(generated_path, image_path, visual_plan['cover_texts'], font_path, size, visual_plan.get('background_style'),
+                                              typography={'scale': DEFAULT_TYPOGRAPHY_SCALE, 'align': 'center'})
                     generated_path.unlink(missing_ok=True)
                     image_result['mode'] = 'layered_poster'
                     image_result['background_metadata'] = background_metadata

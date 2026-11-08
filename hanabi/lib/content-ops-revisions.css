@@ -77,7 +77,13 @@
 .revision-image-tools .revision-ai{margin-top:16px}.revision-empty-image{padding:80px 20px;text-align:center;color:var(--text-soft);border:1px dashed var(--line-strong)}
 @media(max-width:800px){.revision-footer .revision-footer-note{flex:1 0 100%}.revision-footer>div:last-child{width:100%;justify-content:flex-end}}
 
+.revision-colors{display:grid;gap:12px}.revision-colors>h3{margin:0;font-size:14px}
+.revision-colors>label{display:grid;gap:8px}
 .revision-color-field{display:flex;align-items:center;gap:8px;min-width:0}.revision-controls .revision-color-field input[type=color]{width:44px;min-width:44px;height:44px;padding:4px;cursor:pointer;flex-shrink:0}.revision-color-field input:not([type=color]){flex:1}.revision-color-field input[type=color]::-webkit-color-swatch-wrapper{padding:0}.revision-color-field input[type=color]::-webkit-color-swatch{border:0;border-radius:3px}
+.revision-swatches{display:flex;flex-wrap:wrap;gap:8px}
+.revision-controls .revision-swatch{width:28px;height:28px;min-height:28px;padding:0;border:1px solid color-mix(in srgb,var(--line-strong) 70%,transparent);border-radius:6px;background:var(--swatch);cursor:pointer;box-shadow:inset 0 0 0 1px rgb(255 255 255 / 35%)}
+.revision-controls .revision-swatch:hover{transform:translateY(-1px)}
+.revision-controls .revision-swatch[aria-selected=true]{outline:2px solid var(--text);outline-offset:2px}
 .revision-grade{display:grid;gap:10px;margin-top:4px;padding-top:14px;border-top:1px solid var(--line)}
 .revision-grade h3{margin:0;font-size:14px}
 .revision-grade-row{display:grid;grid-template-columns:auto 36px minmax(0,1fr);align-items:center;gap:10px;font-size:12px;font-weight:550}

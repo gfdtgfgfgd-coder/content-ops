@@ -417,6 +417,10 @@ class PipelineTests(unittest.TestCase):
         for line in plan['cover_texts']:self.assertNotIn(line['text'],prompt)
         for style in [{'profile':'unknown'},{'profile':'paper_shadow','base':'white'},{'profile':'paper_shadow','highlight_roles':['unknown']}]:
             with self.assertRaises(ValueError):backgrounds.normalize_style(style)
+        forced=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['hook','benefit']})
+        self.assertEqual(forced['highlight_roles'],['model'])
+        kept=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['hook','model']})
+        self.assertEqual(kept['highlight_roles'],['hook','model'])
 
     def test_background_profile_accepts_configured_chinese_labels_and_id_variants(self):
         for profile in backgrounds.recipe()['profiles']:
@@ -578,8 +582,8 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(vision.call_args.args[0], {'model':'GLM5.3'})
         self.assertTrue(vision.call_args.args[1])
         self.assertEqual(result['posts'][0]['image_metadata']['mode'], 'layered_poster')
-        self.assertLessEqual(result['posts'][0]['image_metadata']['text_area_ratio'], .60)
-        self.assertGreaterEqual(result['posts'][0]['image_metadata']['minimum_side_margin_ratio'], .20)
+        self.assertLessEqual(result['posts'][0]['image_metadata']['text_area_ratio'], .72)
+        self.assertGreaterEqual(result['posts'][0]['image_metadata']['minimum_side_margin_ratio'], .14)
         self.assertEqual((result['posts'][0]['image_metadata']['width'], result['posts'][0]['image_metadata']['height']), (1080, 1440))
         manifest = json.loads((self.base/'direct/manifest.json').read_text())
         self.assertEqual(manifest['posts'][0]['image_requests'][0]['prompt'],generate.call_args.kwargs['prompt'])
@@ -1300,9 +1304,9 @@ class RevisionTests(unittest.TestCase):
         texts=visual_plan()['cover_texts'];font=Path('/System/Library/Fonts/Hiragino Sans GB.ttc')
         for size in [(1080,1440),(1080,1080)]:
             baseline=copy.render_bold_typo(source,self.base/'center.png',texts,font,size,preserve_background=True)
-            enlarged=copy.render_bold_typo(source,self.base/'left.png',texts,font,size,preserve_background=True,typography={'scale':1.5,'align':'left'})
+            enlarged=copy.render_bold_typo(source,self.base/'left.png',texts,font,size,preserve_background=True,typography={'scale':1.2,'align':'left'})
             self.assertEqual(len({row['bbox'][0] for row in enlarged['rendered_text']}),1)
-            self.assertGreater(enlarged['text_area_ratio'],baseline['text_area_ratio']*1.4)
+            self.assertGreater(enlarged['text_area_ratio'],baseline['text_area_ratio']*1.15)
             self.assertGreaterEqual(enlarged['minimum_side_margin_ratio'],.05)
             for before,after in zip(baseline['rendered_text'],enlarged['rendered_text']):
                 self.assertGreater(after['font_size'],before['font_size'])

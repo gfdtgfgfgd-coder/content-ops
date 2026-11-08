@@ -54,6 +54,9 @@ def normalize_style(style=None, visual_prompt=''):
     roles = style.get('highlight_roles', profile['highlight_roles'])
     if not isinstance(roles, list) or len(roles) > 3 or any(role not in ('hook','benefit','model','payoff') for role in roles) or len(roles) != len(set(roles)):
         raise ValueError('大字报高亮角色无效')
+    # 默认高亮型号：视觉模型若只高亮钩子/利益而漏型号，整组回落到型号高亮，不保留错位高亮。
+    if 'model' not in roles:
+        roles = ['model']
     result['highlight_roles'] = roles
     description = style.get('description', profile['prompt'])
     if not isinstance(description, str) or not description.strip() or len(description) > 1200 or re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', description):
