@@ -72,3 +72,5 @@
 .revision-image-tools>summary,.revision-prompt-history>summary{cursor:pointer;font-size:13px;color:var(--text-soft);padding-bottom:10px}
 .revision-image-tools .revision-ai{margin-top:16px}.revision-empty-image{padding:80px 20px;text-align:center;color:var(--text-soft);border:1px dashed var(--line-strong)}
 @media(max-width:800px){.revision-footer .revision-footer-note{flex:1 0 100%}.revision-footer>div:last-child{width:100%;justify-content:flex-end}}
+
+.revision-color-field{display:flex;align-items:center;gap:8px;min-width:0}.revision-controls .revision-color-field input[type=color]{width:44px;min-width:44px;height:44px;padding:4px;cursor:pointer;flex-shrink:0}.revision-color-field input:not([type=color]){flex:1}.revision-color-field input[type=color]::-webkit-color-swatch-wrapper{padding:0}.revision-color-field input[type=color]::-webkit-color-swatch{border:0;border-radius:3px}
