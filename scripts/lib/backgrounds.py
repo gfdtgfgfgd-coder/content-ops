@@ -44,7 +44,7 @@ def normalize_style(style=None, visual_prompt=''):
     profile_id = canonical
     profile = profiles[profile_id]
     result = {'profile': profile_id}
-    for key in ('base', 'paper', 'ink', 'accent'):
+    for key in ('base', 'ink', 'accent'):
         value = style.get(key) if style.get(key) is not None else profile.get(key)
         if value is None:
             continue
@@ -134,32 +134,9 @@ def render_surface(source, size, style=None, seed=''):
         for x in range(0,width,grid_step): draw.line((x,0,x,height),fill=line,width=1)
         for y in range(0,height,grid_step): draw.line((0,y,width,y),fill=line,width=1)
         image = Image.alpha_composite(image.convert('RGBA'),layer).convert('RGB')
-    if material in ('shadow','notebook'):
-        inset = round(width*config['paper_inset_ratio'])
-        mask = Image.new('L',size);draw = ImageDraw.Draw(mask)
-        draw.rectangle((inset,inset,width-inset,height-inset),fill=255)
-        shadow = Image.new('RGBA',size);shadow_draw=ImageDraw.Draw(shadow)
-        shadow_draw.rectangle((inset+8,inset+12,width-inset+8,height-inset+12),fill=(20,35,45,45))
-        image = Image.alpha_composite(image.convert('RGBA'),shadow.filter(ImageFilter.GaussianBlur(12))).convert('RGB')
-        # The paper itself is textured, rather than an opaque white cover that erases the AI layer.
-        image = Image.composite(tint(style.get('paper',style['base'])),image,mask)
-        if material=='notebook':
-            draw=ImageDraw.Draw(image)
-            for y in range(round(height*.12),round(height*.92),round(height*.09)):
-                x=round(width*.105);r=round(width*.012)
-                draw.ellipse((x-r,y-r,x+r,y+r),fill=style['base'])
-                draw.arc((x-r*3,y-r,x+r,y+r),60,300,fill=style['base'],width=max(2,r//3))
-    # Small abstract corner marks are original geometric decorations, never copied from a reference.
-    draw=ImageDraw.Draw(image)
-    if material=='creased':
-        for i in range(3):
-            x=round(width*(.86+i*.018));y=round(height*.065);s=round(width*.018)
-            draw.line(((x,y),(x+s,y+s),(x,y+s*2)),fill=style['accent'],width=max(2,width//180))
-    else:
-        x,y=round(width*.86),round(height*.91);s=round(width*.022)
-        draw.line(((x-s,y),(x+s,y)),fill=style['accent'],width=max(2,width//180))
-        draw.line(((x,y-s),(x,y+s)),fill=style['accent'],width=max(2,width//180))
+    # The canvas IS the material. Never add an inset sheet, rectangular shadow,
+    # backing board, or fixed corner decoration over the reference surface.
     return image, {'profile':style['profile'],'label':profile['label'],'style':style,
-                   'text_surface_color':style.get('paper',style['base']) if material in ('shadow','notebook') else style['base'],
+                   'text_surface_color':style['base'], 'surface_layout':'full_bleed',
                    'recipe_sha256':recipe_hash(),'source_luminance_std':round(source_std,3),'flat_ai_background':flat,
                    'material_source':'ai_shading_and_local_surface' if not flat else 'local_surface_over_flat_ai_background'}

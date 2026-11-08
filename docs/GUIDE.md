@@ -43,10 +43,13 @@
 
 - `config/bold-typo-backgrounds.json`：背景材质配方、默认配色及关键词，唯一可编辑配方源，不保存外部图片或素材库副本。
 - `scripts/lib/backgrounds.py`：读取配方，归一化视觉模型的背景描述，生成可复现的纸张/网格/笔记本材质层；供既有生成链路调用。
+- `scratch/full-bleed-qa/`：本轮满幅材质的隔离验证输入、背景与成图；由已存视觉方案和现行生成函数重建，不是版本源，验收后删除。
 
 大字报不再固定薄荷网格白底。视觉模型返回 `background_style={profile,description,base,ink,accent,highlight_roles}`，`profile` 从配方源选择；颜色为 `#RRGGBB`，高亮行引用已有 `cover_texts.role`。旧方案缺失此字段时按其视觉描述匹配配方，最终按真实配方记录，不声称旧模型已提取。图像模型仅画无字材质；`render_surface` 保留 AI 灰度明暗并叠加可复现的材质层，`render_bold_typo` 直接在其上排字，不再盖不透明白卡。深底和浅高亮各自计算可读墨色，留白和行距仍遵守内容规范。
 
 AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，不自动追加收费调用。manifest 记录 `background_recipe_sha256`、实际 `background_style`、AI底纹明暗标准差和材质来源；配方改变后旧大字报需新目录生成，不覆盖原交付。默认配方及参数唯一源为上述 JSON，修改后无需重建纹理资产，下一次生成会重新读取。
+
+材质配方v2统一采用 `surface_layout=full_bleed`：整个画布是一张连续材质，不再合成内缩纸面、矩形投影、第二层衬底或固定角落加号。旧方案的 `paper` 颜色字段兼容忽略，不再生成内层纸面，文字底色按实际 `base` 计算。生图提示只传选中配方及参考细节，并约束材质延伸至四边，不再并列提供多种材质让模型混用。AI仍可能不完全服从提示，真实成图必须检查；本机合成不再主动制造纸框。
 
 背景调研来源：[ambientCG许可](https://docs.ambientcg.com/license/)、[Poly Haven许可](https://polyhaven.com/license)。两者提供 CC0 资产；本轮未引入外部图片，而使用原创程序材质与一张真实生成的无字纹理，避免把下载图、素材库原封面或文字残影当新背景。后续如引入外部资产须逐个保留来源、许可证、校验和重建方式。
 

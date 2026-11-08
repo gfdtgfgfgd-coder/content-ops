@@ -590,7 +590,7 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
                    'structure': {'layout': '原图结构分析', 'region_proportions': '原图各分区比例和位置关系',
                                  'text_regions': [{'position': '原图文字区位置', 'line_count': 4, 'line_lengths': [6, 5, 7, 6]}]},
                    'cover_texts': [{'role': 'model/benefit/hook/payoff/feature/subtitle', 'text': '本次独立封面短字', 'position': '对应文字区位置'}],
-                   'background_style': {'profile':'仅填写background_profiles中匹配项的id英文标识，不填name中文名称；仅大字报需要', 'description':'只描述参考图的底色、纸张材质、纹理、边框和光影，不含任何要印出的文字', 'base':'#RRGGBB参考底色', 'ink':'#RRGGBB文字色', 'accent':'#RRGGBB强调色', 'highlight_roles':['hook','model']},
+                   'background_style': {'profile':'仅填写background_profiles中匹配项的id英文标识，不填name中文名称；仅大字报需要', 'description':'只描述参考图铺满画布的底色、材质、纹理和柔和光影，不含要印出的文字；不添加内嵌纸张、衬底、矩形边框或闭合投影', 'base':'#RRGGBB参考底色', 'ink':'#RRGGBB文字色', 'accent':'#RRGGBB强调色', 'highlight_roles':['hook','model']},
                    'visual_prompt': '严格同构换装的中文生图提示词，仅包含cover_texts中的可见文案'}}
     content = [{'type': 'text', 'text': (
         '你是多模态封面结构策划师。看所附一张原图，先拆解并锁死布局、分区比例、文字行数、每行字数和位置。'
@@ -754,13 +754,15 @@ def bold_typo_background_prompt(visual_prompt, platform, model):
     plan = validate_visual_plan(visual_prompt, model, platform)
     style = backgrounds.normalize_style(plan.get('background_style'),plan['visual_prompt'])
     plan['background_style'] = style
+    profile = next(p for p in backgrounds.recipe()['profiles'] if p['id'] == style['profile'])
     ratio = '竖版3:4' if platform == 'xhs' else '方图1:1'
-    return (f"{ratio}无字背景材质。参考材质：{style['description']}。"
+    return (f"{ratio}无字背景材质。选定材质：{profile['label']}，{profile['prompt']}。参考细节：{style['description']}。"
             f"主底色{style['base']}，墨色参考{style['ink']}，点缀色参考{style['accent']}。"
-            '材质、折痕、颗粒与柔和明暗必须贯穿整幅画面，中央也保留纹理，不要默认薄荷网格配纯白矩形卡片。'
-            '只生成平面纸张、网格或便笺材质，没有立体物件与插画主体。'
+            '只画上述选定材质的平面微距纹理，材质铺满画布并延伸至四条边；画面本身就是材质，不是桌面上放着一张纸。'
+            '中央和四边保留连续纹理与柔和明暗；不额外混入其他类型的网格、笔记本或便笺元素。'
+            '不出现内嵌纸张、第二张纸、纸张外轮廓、衬底、相框、卡片边界或四边闭合的矩形投影；没有立体物件与插画主体。'
             '画面中严禁出现任何文字、字母、数字、标点、伪文字、字形、标题、标志或水印；'
-            '不要绘制荧光笔条、圈线或箭头，全部短字与高亮由本机后期排版。')
+            '不要绘制荧光笔条、圈线、箭头、加号或角标，全部短字与高亮由本机后期排版。')
 
 def extract_model_corpus(model, root=None):
     corpus_file = (root or ROOT) / 'data/model-corpus.md'

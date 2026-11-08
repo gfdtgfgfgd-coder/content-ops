@@ -413,7 +413,7 @@ class PipelineTests(unittest.TestCase):
         plan['background_style']={'profile':'charcoal_grid','base':'#23282C','ink':'#F0F2EC','accent':'#85E070','highlight_roles':['model'],'description':'哑光深灰纸面和细网格'}
         prompt=copy.bold_typo_background_prompt(plan,'xhs','GLM5.3')
         self.assertIn('深灰',prompt);self.assertIn('#23282C',prompt)
-        self.assertIn('中央也保留纹理',prompt);self.assertIn('严禁出现任何文字',prompt)
+        self.assertIn('中央和四边保留连续纹理',prompt);self.assertIn('严禁出现任何文字',prompt)
         for line in plan['cover_texts']:self.assertNotIn(line['text'],prompt)
         for style in [{'profile':'unknown'},{'profile':'paper_shadow','base':'white'},{'profile':'paper_shadow','highlight_roles':['unknown']}]:
             with self.assertRaises(ValueError):backgrounds.normalize_style(style)
@@ -491,6 +491,43 @@ class PipelineTests(unittest.TestCase):
         copy.render_bold_typo(path,output,visual_plan()['cover_texts'],Path('/System/Library/Fonts/Hiragino Sans GB.ttc'),(1080,1440),{'profile':'paper_shadow'})
         with Image.open(output) as poster:
             self.assertGreater(sum(poster.getpixel((800,200)))-sum(poster.getpixel((250,200))),30)
+
+    def test_paper_surfaces_have_no_inset_sheet_or_rectangular_shadow(self):
+        source=Image.new('RGB',(300,400),'white')
+        for profile in ('paper_shadow','blue_notebook'):
+            with self.subTest(profile=profile):
+                # Old saved plans can carry a second paper color. It must no
+                # longer create a second surface inside the full canvas.
+                image,meta=backgrounds.render_surface(source,source.size,
+                    {'profile':profile,'base':'#547382','paper':'#FFFFFF'},'fixed-seed')
+                self.assertEqual(meta['text_surface_color'],'#547382')
+                self.assertEqual(meta['surface_layout'],'full_bleed')
+                # Detect the real regression at the previous 7.5% inset edges:
+                # full-width texture may vary, but cannot jump to another sheet.
+                inset=round(image.width*.075)
+                pairs=[((x-1,y),(x,y)) for x in (inset,image.width-inset) for y in range(40,360)]
+                pairs += [((x,y-1),(x,y)) for y in (inset,image.height-inset) for x in range(40,260)]
+                jump=max(abs(a-b) for first,second in pairs for a,b in zip(image.getpixel(first),image.getpixel(second)))
+                self.assertLessEqual(jump,12)
+
+    def test_background_layers_never_stamp_fixed_accent_symbols(self):
+        source=Image.new('RGB',(300,400),'white')
+        for profile in backgrounds.recipe()['profiles']:
+            with self.subTest(profile=profile['id']):
+                image,_=backgrounds.render_surface(source,source.size,
+                    {'profile':profile['id'],'accent':'#FF00FF'},'fixed-seed')
+                self.assertNotIn((255,0,255),image.getdata())
+
+    def test_bold_background_prompt_locks_selected_full_canvas_material(self):
+        for profile in backgrounds.recipe()['profiles']:
+            with self.subTest(profile=profile['id']):
+                plan=visual_plan();plan['background_style']={'profile':profile['id']}
+                prompt=copy.bold_typo_background_prompt(plan,'xhs','GLM5.3')
+                self.assertIn('选定材质：'+profile['label'],prompt)
+                self.assertIn(profile['prompt'],prompt)
+                self.assertIn('材质铺满画布并延伸至四条边',prompt)
+                self.assertIn('不出现内嵌纸张',prompt)
+                self.assertNotIn('只生成平面纸张、网格或便笺材质',prompt)
 
     def test_dark_background_uses_light_ink_and_accent_uses_readable_ink(self):
         source=self.base/'material.png';output=self.base/'dark.png'
