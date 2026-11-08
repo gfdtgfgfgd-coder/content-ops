@@ -920,8 +920,24 @@ class PipelineTests(unittest.TestCase):
                 self.assertEqual(copy.resolve_product_model(informal,require_cover=True),canonical)
                 self.assertIn('封面吸睛大字',copy.extract_cover_corpus(informal))
         for absent in ('Unknown','GLM-5','GLM-5.3 Pro','GLM-5.30','Kimi K3.2 Pro','DeepSeek V4.10'):
-            with self.subTest(absent=absent),self.assertRaisesRegex(ValueError,'未匹配语料库|缺少封面'):
-                copy.extract_cover_corpus(absent)
+            with self.subTest(absent=absent):
+                with self.assertRaisesRegex(ValueError,'未匹配语料库|缺少封面'):
+                    copy.extract_cover_corpus(absent,allow_fallback=False)
+                fallback=copy.extract_cover_corpus(absent,allow_fallback=True)
+                self.assertIn(absent if absent!='Unknown' else 'Unknown',fallback)
+                self.assertIn('封面通用组件短词库',fallback)
+        # Real failure: mobile_body used to split price emoji lines past the 1–3 limit.
+        price_post={'copy_format':'format_3','title':'好价来了冲一波','sections':[
+            {'kind':'intro','text':'复杂任务还在卡额度？换上这套直接放开跑。'},
+            {'kind':'selling_points','text':'💻 **AI代码编程**：跨文件重构顺手，报错自己修。'},
+            {'kind':'price','text':'活动重磅来袭：\n💥Kimi K3.1 Pro便宜，调用成本更低\n💥高频跑复杂任务，性价比拉满！'},
+            {'kind':'compatibility','text':'轻松接进主流开发工作台。'},
+            {'kind':'audience','text':'程序员、独立开发、全栈工程师'},
+            {'kind':'hook','text':'这波好价别犹豫，火速安排！'}]}
+        body=copy.structured_body(price_post,'format_3','xhs')
+        self.assertIn('Kimi K3.1 Pro',body)
+        self.assertLessEqual(len(price_post['sections'][2]['text'].splitlines()),3)
+        self.assertIn('CC',price_post['sections'][3]['text'])
 
     def test_manual_layout_conflict_fails_before_vision_request(self):
         image=self.base/'data/images/xhs/ref/cover.png'
@@ -1052,15 +1068,22 @@ class PipelineTests(unittest.TestCase):
             lambda p:p.update(title='标题\t控制符'),
             lambda p:p['sections'][0].update(text='第一行\n第二行\n第三行'),
             lambda p:p['sections'][1].update(text='缺少加粗的核心卖点'),
-            lambda p:p['sections'][2].update(text='第一行价格\n第二行价格\n第三行价格\n第四行价格超限'),
         ]
         for mutate in mutations:
             post=structured_post();mutate(post)
             with self.subTest(mutate=mutate), self.assertRaises(ValueError):
                 copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_1')
+        # Soft repairs: overlong price merges to 3 lines; missing CC is appended.
+        price_post=structured_post()
+        price_post['sections'][2]['text']='活动重磅来袭：\n💥好价来了调用更省\n💥高频调试不心疼\n💥长任务随便跑'
+        with redirect_stdout(io.StringIO()):
+            copy.validate_posts({'posts':[price_post]},1,'GLM5.3',copy_format='format_1')
+        self.assertLessEqual(len(price_post['sections'][2]['text'].splitlines()),3)
         post=structured_post('format_2');post['sections'][3]['text']='工具兼容情况待确认'
-        with self.assertRaisesRegex(ValueError,'CC'):
-            copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_2')
+        with redirect_stdout(io.StringIO()):
+            fixed=copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_2')
+        self.assertIn('CC',post['sections'][3]['text'])
+        self.assertIn('CC',fixed[0]['body'])
         repeated_angles=[structured_post('format_1',n) for n in range(1,4)]
         repeated_angles[2]['angle']=repeated_angles[0]['angle']
         with self.assertRaisesRegex(ValueError,'不同结构'):

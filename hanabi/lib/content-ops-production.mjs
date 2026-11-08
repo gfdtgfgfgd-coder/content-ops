@@ -45,12 +45,8 @@ export function validateContentOpsInput(body, defaults = {}) {
   const rawModel = body.model.trim();
   let model = rawModel;
   if (Array.isArray(defaults.productModels) && defaults.productModels.length) {
-    try {
-      model = resolveProductModel(rawModel, defaults.productModels, { requireCover: body.backgroundMode === 'fresh' });
-    } catch (error) {
-      if (body.backgroundMode === 'fresh' || !/未匹配语料库/u.test(error.message)) throw error;
-      model = rawModel;
-    }
+    try { model = resolveProductModel(rawModel, defaults.productModels, { requireCover: false }); }
+    catch { model = rawModel; }
   }
   return { model, platform: body.platform, count: body.count, copyFormat, copyMultiplier, backgroundMode: body.backgroundMode, styleMode, stylePreset, stylePrompt, requestId: body.requestId, references, brief };
 }

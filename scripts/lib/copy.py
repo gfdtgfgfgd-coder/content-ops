@@ -65,6 +65,34 @@ def copy_options(copy_format=None, copy_multiplier=None, settings=None):
 def format_for(copy_format, offset):
     return tuple(COPY_FORMATS)[offset % len(COPY_FORMATS)] if copy_format == 'all_variations' else copy_format
 
+def normalize_price_section(text):
+    """Keep 1–3 highlight lines; do not reflow with mobile_body (emoji+型号行会被拆爆）。"""
+    lines = [line.strip() for line in str(text or '').splitlines() if line.strip()]
+    if not lines:
+        raise ValueError('价格活动板块须为1–3行高亮短句')
+    if len(lines) > 3:
+        lines = lines[:2] + [' '.join(lines[2:])]
+        print('WARN: 价格活动板块超过3行，已合并为3行。')
+    return '\n'.join(lines)
+
+
+def ensure_selling_point_bold(text):
+    if re.search(r'\*\*[^*]+\*\*', text):
+        return text
+    repaired = re.sub(r'(^|\n)((?:[\W_]*)?[^\n：:]{1,16})([：:])', r'\1**\2**\3', text, count=4)
+    if not re.search(r'\*\*[^*]+\*\*', repaired):
+        raise ValueError('核心卖点须使用 Markdown 加粗')
+    print('WARN: 核心卖点缺少加粗，已自动补全。')
+    return repaired
+
+
+def ensure_compatibility_cc(text):
+    if re.search(r'(?<![A-Za-z])CC(?![A-Za-z])', text, re.I):
+        return text
+    print('WARN: 工具区块未写 CC，已自动补一句兼容说明。')
+    return text.rstrip() + '\n兼容 CC、wbuddy 等主流开发工作台。'
+
+
 def structured_body(post, expected_format, platform):
     if post.get('copy_format') != expected_format:
         raise ValueError('文案结构与指定格式不符：' + expected_format)
@@ -79,10 +107,21 @@ def structured_body(post, expected_format, platform):
         if not isinstance(text, str) or not text.strip() or re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text):
             raise ValueError('文案区块必须为非空文本，不能含控制字符')
         text = text.strip()
-        if platform == 'xhs' and section['kind'] != 'intro':
-            text = mobile_body(text, maximum=20, allow_heading_runs=section['kind'] == 'selling_points')
+        kind = section['kind']
+        if kind == 'price':
+            text = normalize_price_section(text)
+        elif kind == 'selling_points':
+            text = ensure_selling_point_bold(text)
+            if platform == 'xhs':
+                text = mobile_body(text, maximum=20, allow_heading_runs=True)
+        elif kind == 'compatibility':
+            text = ensure_compatibility_cc(text)
+            if platform == 'xhs':
+                text = mobile_body(text, maximum=20)
+        elif platform == 'xhs' and kind != 'intro':
+            text = mobile_body(text, maximum=20)
         section['text'] = text
-        content[section['kind']] = text
+        content[kind] = text
     intro = content['intro']
     intro_length = len(intro.replace('\n', ''))
     if intro_length > 34:
@@ -106,12 +145,13 @@ def structured_body(post, expected_format, platform):
         intro = mobile_body(intro, maximum=20)
         content['intro'] = intro
         sections[0]['text'] = intro
-    if not re.search(r'\*\*[^*]+\*\*', content['selling_points']):
-        raise ValueError('核心卖点须使用 Markdown 加粗')
-    if not (1 <= len(content['price'].splitlines()) <= 3):
-        raise ValueError('价格活动板块须为1–3行高亮短句')
-    if 'compatibility' in content and not re.search(r'(?<![A-Za-z])CC(?![A-Za-z])', content['compatibility'], re.I):
-        raise ValueError('工具区块须包含兼容 CC 的说明；未核实时须明确待确认')
+    # Final guard: never let post-processing leave price outside 1–3 lines.
+    price_text = normalize_price_section(content['price'])
+    content['price'] = price_text
+    for section in sections:
+        if section.get('kind') == 'price':
+            section['text'] = price_text
+            break
     title = post.get('title')
     if not isinstance(title, str) or not title.strip() or re.search(r'[\x00-\x1f\x7f]', title):
         raise ValueError('笔记标题须为非空单行文本，小红书不超过20字')
@@ -518,12 +558,50 @@ def resolve_product_model(model, root=None, *, require_cover=False):
     return chosen['id']
 
 
-def extract_cover_corpus(model, root=None):
-    canonical = resolve_product_model(model, root, require_cover=True)
+def fallback_cover_corpus(model, root=None):
+    """Synthetic cover words for freeform / not-yet-catalogued product names."""
+    name = str(model or '').strip() or '当前型号'
+    combos = [
+        ('挖到宝了', '便宜量大', '赶紧冲'),
+        ('闭眼入', '好价来了', '真香'),
+        ('就离谱', '便宜又好用', '效率拉满'),
+        ('放心冲', '调用成本降下来了', '跑起来真稳'),
+        ('这价有点香', '好价来袭', '写起来顺手'),
+        ('好消息来了', '便宜管饱', '长任务放心跑'),
+        ('别再算额度了', '量大不心疼', '复杂活一次成'),
+        ('安排上了', '性价比拉满', '工作流直接接'),
+    ]
+    lines = [
+        '## 10. 封面吸睛大字与四大版式专属短词库',
+        '',
+        f'（自动回落模板：型号「{name}」尚未建立语料专节；正式上线请补 data/model-corpus.md。）',
+        '',
+        '### 【大字报】4行爽点组合库',
+        '',
+    ]
+    lines.extend(f'- {hook} / {benefit} / {name} / {payoff}' for hook, benefit, payoff in combos)
+    lines.extend(['', '### 【上中下 / 左右下 / 环绕】组件短词库', '',
+                  '- 好用顺手 / 便宜量大 / 稳定可靠 / 效率拉满', ''])
+    content = ((root or ROOT) / 'data/model-corpus.md').read_text(encoding='utf-8')
+    common = re.search(r'^## 封面通用组件短词库\s*$(.*)', content, re.M | re.S)
+    return '\n'.join(lines) + ('\n\n' + common.group(0).strip() if common else '')
+
+
+def extract_cover_corpus(model, root=None, *, allow_fallback=True):
+    try:
+        canonical = resolve_product_model(model, root, require_cover=True)
+    except ValueError:
+        if not allow_fallback:
+            raise
+        print(f'WARN: 型号「{model}」未匹配语料专节，已使用通用封面短词回落。')
+        return fallback_cover_corpus(model, root)
     section = extract_model_corpus(canonical, root)
     match = re.search(r'^## \d+\. 封面吸睛大字与四大版式专属短词库\s*$', section, re.M)
     if not match:
-        raise ValueError('模型缺少封面专属短词库：' + canonical)
+        if not allow_fallback:
+            raise ValueError('模型缺少封面专属短词库：' + canonical)
+        print(f'WARN: 型号「{canonical}」专节缺少封面短词库，已使用通用回落。')
+        return fallback_cover_corpus(canonical, root)
     content = ((root or ROOT) / 'data/model-corpus.md').read_text(encoding='utf-8')
     common = re.search(r'^## 封面通用组件短词库\s*$(.*)', content, re.M | re.S)
     return section[match.start():].strip() + ('\n\n' + common.group(0).strip() if common else '')
@@ -1016,20 +1094,19 @@ def run(args):
         raise ValueError('需求须为不超过1000字的文本，不能含控制字符')
     preference_block, preference_version, snapshots, palettes, active_rules = load_preferences(args.preferences, args.platform, args.preference_max_chars)
     validate_input(raw_model,args.count,args.platform,active_rules)
-    # Canonicalize informal UI names (e.g. kimi k3.1 → Kimi K3.1 Pro) before billing stages.
-    # Cached-background mode may keep freeform names when no corpus section exists yet.
+    # Canonicalize informal UI names when possible; unknown names stay freeform and use cover fallback.
     try:
-        model = resolve_product_model(raw_model, getattr(args, 'root', ROOT), require_cover=not bool(args.background))
+        model = resolve_product_model(raw_model, getattr(args, 'root', ROOT), require_cover=False)
     except ValueError:
-        if args.background:
-            model = raw_model
-        else:
-            raise
+        model = raw_model
     brief_source = 'user_provided' if brief else 'model_corpus'
     if not brief:
         corpus_snippet = extract_model_corpus(model, getattr(args, 'root', ROOT))
         if corpus_snippet:
             brief = f"参考模型营销语料库中关于 {model} 的主能力与卖点：" + corpus_snippet[:700]
+        else:
+            brief = f'围绕产品「{model}」写小红书种草图文：突出好用、好价、易上手与具体场景，不编造未核实参数。'
+            brief_source = 'model_fallback'
     style_mode, style_preset, style_prompt = validate_style(
         getattr(args, 'style_mode', 'auto'),
         getattr(args, 'style_preset', ''),
@@ -1076,7 +1153,7 @@ def run(args):
     references, reference_context, reference_hashes = load_references(getattr(args, 'references', None), getattr(args, 'reference_max_chars', 32000), args.platform, model, style_preset if style_mode == 'manual' else '')
     reference_images = reference_image_parts(reference_context)[1] if not args.background else []
     if not args.background:
-        cover_corpus = extract_cover_corpus(model)
+        cover_corpus = extract_cover_corpus(model, allow_fallback=True)
         check_cover_words(cover_corpus, args.platform, model, active_rules)
         if style_mode == 'manual' and style_preset and any(
                 r.get('collection_name') and r['collection_name'] != STYLE_PRESETS[style_preset]['label'] for r in reference_context):

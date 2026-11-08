@@ -119,10 +119,15 @@ export class ContentOpsUI {
   }
   syncStyleFields(){
     const manual=document.querySelector('#content-ops-style-mode')?.value==='manual';
+    const advanced=document.querySelector('#content-ops-style-advanced');
     const presetField=document.querySelector('#content-ops-style-preset-field');
     const promptField=document.querySelector('#content-ops-style-prompt-field');
     if(presetField)presetField.hidden=!manual;
     if(promptField)promptField.hidden=!manual;
+    if(advanced){
+      advanced.hidden=!manual;
+      if(manual)advanced.open=true;
+    }
   }
   applyBatchToForm(batch){
     if(!batch)return;
@@ -166,7 +171,7 @@ export class ContentOpsUI {
     const list=document.querySelector('#content-ops-model-list');
     const hint=document.querySelector('#content-ops-model-hint');
     if(list)list.innerHTML=models.map(model=>`<option value="${esc(model.id)}"></option>`).join('');
-    if(hint)hint.textContent=models.length?`语料已接入：${models.map(model=>model.id).join('、')}。可输入正式名或别名（如 kimi k3.1）。`:'尚未读到 model-corpus 专节；新模型请先补语料与封面短词库。';
+    if(hint)hint.textContent=models.length?`语料已接入：${models.map(model=>model.id).join('、')}。可输入正式名、别名，或任意新型号（无专节时封面短词自动回落）。`:'尚未读到 model-corpus 专节；仍可直接输入型号生成，封面短词走通用回落。';
   }
   renderHistory(batches){const history=document.querySelector('#content-ops-history');history.innerHTML='<option value="">查看已保存批次</option>'+batches.map(batch=>`<option value="${esc(batch.id)}">${esc(batch.model)} · ${batch.count} 张图 / ${batch.copyCount??batch.count} 篇 · ${esc(({running:'生成中',completed:'已完成',partial:'部分完成',failed:'失败'})[batch.status]||batch.status)}</option>`).join('');history.value=this.batch?.id||'';}
   async submit(){

@@ -20,7 +20,7 @@ test('product models resolve informal aliases and reject unknown families before
   assert.equal(resolveProductModel('GLM5.3', models, { requireCover: true }), 'GLM-5.3');
   assert.equal(validateContentOpsInput({ ...input, model: 'kimi k3.1' }, { productModels: models }).model, 'Kimi K3.1 Pro');
   assert.throws(() => resolveProductModel('Kimi K3.2 Pro', models, { requireCover: true }), /未匹配语料库/);
-  assert.throws(() => validateContentOpsInput({ ...input, model: 'Unknown Model' }, { productModels: models }), /未匹配语料库/);
+  assert.equal(validateContentOpsInput({ ...input, model: 'Unknown Model' }, { productModels: models }).model, 'Unknown Model');
 });
 
 test('brief and cover style validate type, length, controls; old input stays compatible', () => {
