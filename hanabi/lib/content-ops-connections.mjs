@@ -7,7 +7,6 @@ const fields = {
   baseUrl: 'CONTENT_OPS_BASE_URL', apiKey: 'CONTENT_OPS_API_KEY',
   textModel: 'CONTENT_OPS_TEXT_MODEL', visionModel: 'CONTENT_OPS_VISION_MODEL', imageModel: 'CONTENT_OPS_IMAGE_MODEL', analysisModel: 'CONTENT_OPS_ANALYSIS_MODEL'
 };
-const defaults = { CONTENT_OPS_TEXT_MODEL: 'claude-sonnet-4-6', CONTENT_OPS_VISION_MODEL: 'claude-sonnet-4-6', CONTENT_OPS_IMAGE_MODEL: 'qwen-image-3.0', CONTENT_OPS_ANALYSIS_MODEL: 'claude-sonnet-4-6' };
 const fail = message => Object.assign(new Error(message), { statusCode: 400 });
 export function parseGatewayEnv(raw) {
   const settings = {};
@@ -25,6 +24,8 @@ async function readEnvFile(path) {
   catch (error) { if (error.code === 'ENOENT') return ''; throw new Error('无法读取本机网关配置文件。'); }
 }
 export async function loadGatewaySettings(root, environment = process.env) {
+  const template = parseGatewayEnv(await readFile(new URL('../../config/gateway.env.example', import.meta.url), 'utf8'));
+  const defaults = Object.fromEntries(Object.values(fields).filter(name => name.endsWith('_MODEL')).map(name => [name, template[name]]));
   const file = parseGatewayEnv(await readEnvFile(join(root, 'scratch/gateway.env')));
   const settings = { ...file, ...environment };
   // UI-managed fields take their authoritative values from the file when present.

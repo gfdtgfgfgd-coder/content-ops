@@ -30,7 +30,7 @@ class ImageGenerationError(RuntimeError):
     pass
 
 
-def load_config(path: Path | None) -> dict[str, str]:
+def read_env_file(path: Path | None) -> dict[str, str]:
     """Read simple KEY=value settings without executing a shell."""
     settings: dict[str, str] = {}
     if path and path.exists():
@@ -47,9 +47,18 @@ def load_config(path: Path | None) -> dict[str, str]:
             if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
                 value = value[1:-1]
             settings[name] = value
-    file_settings = settings.copy()
+    return settings
+
+
+MODEL_DEFAULTS = {name: value for name, value in read_env_file(ROOT / 'config/gateway.env.example').items()
+                  if name.startswith('CONTENT_OPS_') and name.endswith('_MODEL')}
+
+
+def load_config(path: Path | None) -> dict[str, str]:
+    file_settings = read_env_file(path)
+    settings = {**MODEL_DEFAULTS, **file_settings}
     settings.update(os.environ)
-    for name in ('CONTENT_OPS_BASE_URL', 'CONTENT_OPS_API_KEY', 'CONTENT_OPS_TEXT_MODEL', 'CONTENT_OPS_VISION_MODEL', 'CONTENT_OPS_IMAGE_MODEL'):
+    for name in ('CONTENT_OPS_BASE_URL', 'CONTENT_OPS_API_KEY', *MODEL_DEFAULTS):
         if name in file_settings:
             settings[name] = file_settings[name]
     return settings

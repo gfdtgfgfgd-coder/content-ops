@@ -106,8 +106,10 @@ const modelsOK = () => Promise.resolve(Response.json({data:[{id:'text-test'}]}))
 test('connections masks keys, atomically saves, preserves unrelated env, reads manual edits, and reports tests', async t=>{
   const {service,path,dir}=await connectionFixture(t,modelsOK);
   const before=await service.get();assert.equal(before.connection.state,'untested');assert.equal(before.apiKey,'••••••••');
-  assert.equal(before.visionModel,'claude-sonnet-4-6');
-  assert.equal(before.analysisModel,'claude-sonnet-4-6');
+  assert.equal(before.textModel,'gemini-3.8-flash');
+  assert.equal(before.visionModel,'gpt-6.1-terra');
+  assert.equal(before.imageModel,'gpt-image-2.6-sunburst');
+  assert.equal(before.analysisModel,'deepseek-v4.1-flash-1017');
   const saved=await service.save(connectionInput);
   assert.equal(saved.ok,true);assert.equal(saved.connection.state,'ok');assert.equal((await service.get()).connection.state,'ok');
   assert.equal(JSON.stringify(saved).includes('last-test-key'),false);

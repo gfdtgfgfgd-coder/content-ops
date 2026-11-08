@@ -24,9 +24,9 @@
 | 闲鱼数据 | 来源于 `data/posts.jsonl`（platform=xianyu） |
 | 运营偏好 | 提炼自企微运营反馈，详见 `skills/simin-persona/SKILL.md` |
 | 使用者 | lilith 一人；做顺了同事（阮思敏，运营）会用 |
-| 生成脚本 | 文案与封面已解耦；自动参考从四大人工合集按平台选 1 篇，手选严格按用户选区；单张海报只看一张结构锚图；视觉模型返回结构、独立短字与同构换装方案，图像模型按平台规格直出完整海报。校验器对结构辅助字段自动推断修复；详见本轮 CHANGELOG |
+| 生成脚本 | 文案与封面已解耦；自动参考从四大人工合集按平台选 1 篇，手选严格按用户选区；单张海报只看一张结构锚图；视觉模型返回结构、独立短字与同构换装方案，图像模型按平台规格直出完整海报。校验器对结构辅助字段自动推断修复；详见本轮 CHANGELOG四项模型默认值统一读取 `config/gateway.env.example`，本机配置优先。 |
 | 界面 | 生成与预览合为双栏工作台，导航为生成图文、素材库、原料库、操作规范。原料库含运营偏好与风险词库（只增不删）；规范同步支持分析、建议重分析、确认/取消。模型配置读写本机 `scratch/gateway.env`，含文案、视觉、生图与规则提炼分析模型。文档由白名单 API 实时读取仓库源文件 |
-| 本轮进展 | 当前49条素材（合集内小红书26条、闲鱼23条），按合集白名单清理316条未分类小红书及316个图片目录，释放32.2MiB；备份留本机，数据提交 `30aeb25` 已推送。编辑支持多图预览、逐张删除、多选/拖拽追加及纯文字保存；OCR默认六行、可纵向拖拽且保留换行。工作区Node45项、Python38项通过；本轮隔离提交版本Node44项、Python36项与doctor通过；编辑保存改为单卡原位更新，深滚动与大纲不再跳顶；新增两项回归，上轮工作区Node47项、Python38项与doctor通过。本轮新增合集选图、四类结构、独立短词风控、断点与旧链路隔离回归；最终验收见 CHANGELOG。生产数据禁止暴力回滚，详情见GUIDE。 |
+| 本轮进展 | 2026-11-08：本机已从旧 main 切到 `codex/reference-collections-outline`，同步 45 张精选参考图及既有功能更新，并合并 main 的四项默认模型配置；图片与回归验收见 TODO |
 | 最近内容交付 | T28：Kimi闲鱼双方图中段沿品牌黑白灰＋蓝色；顶部型号/价词设专属黄粉紫、朱红暖黄，不扩散至场景。占位与卖点保留，预设色值对比4.882—12.238:1。未生图或做平台检测，详见 [T28任务卡](docs/CHANGELOG.md) 和 [闲鱼方图提示词](outputs/2026-11-03/kimi31-xianyu-square-prompts.md) |
 | Hanabi 程序包 | 源码即仓库内 `hanabi/`，双击或运行 `start.command`；不再发布 ZIP（旧 ZIP 是 app 与 content-ops 双份副本，已删），说明见 [hanabi/releases/README.md](hanabi/releases/README.md) |
 
@@ -39,7 +39,7 @@ data/                  原始数据（进 git）
   sources/             素材来源账号与置顶链接（选材口径见内容规范）
   posts.jsonl          素材唯一源；条数随用户维护变化，不作为固定测试基线
   wecom/               企微聊天提炼（raw/ 不进 git）
-  images/              图片（不进 git，按 JSON 重下）
+  images/              精选参考图（进 git，随修复分支同步）
   reference-posts.json 好帖与高想要帖子索引（25 + 14）
 rules/                 规则库
   content-spec.md      内容生产、视觉、平台与素材选用统一规范
@@ -70,9 +70,9 @@ config/                清洗与偏好构建配置（网关模板见 config/gate
 在新电脑克隆仓库后，或日常启动服务：
 
 ```bash
-cd ~/Desktop && git clone https://github.com/gfdtgfgfgd-coder/content-ops.git
+cd ~/Desktop && git clone --branch codex/reference-collections-outline https://github.com/gfdtgfgfgd-coder/content-ops.git
 cd content-ops && ./start.command
 ```
 （或者直接在访达中双击 `start.command`）
 
-私有仓，需 `gh auth login` 登录 gfdtgfgfgd-coder 账号。所有电脑克隆到 `~/Desktop/content-ops`，路径统一任务卡才不断。换电脑前 `git push`，到新电脑先 `git pull`。图片不进 git，靠 `scripts/` 里的脚本按 JSON 重下。
+私有仓，需 `gh auth login` 登录 gfdtgfgfgd-coder 账号。所有电脑克隆到 `~/Desktop/content-ops`，路径统一任务卡才不断。换电脑前 `git push`，到新电脑先 `git pull`。精选参考图已进 Git，随 `codex/reference-collections-outline` 分支同步；该分支尚未合入 `main`。
