@@ -35,10 +35,7 @@ def regenerate_image(data, settings, output):
         plan = {'collection_name':'大字报','structure':{},'cover_texts':texts,'visual_prompt':'满幅平面背景'}
         copy.validate_visual_plan(plan,data['model'],data['platform'])
         style = backgrounds.normalize_style(data.get('background_style'))
-        font = next((path for path in [Path(settings.get('CONTENT_OPS_FONT','missing-font')),
-                    Path.home()/'Library/Fonts/SourceHanSansSC-Medium.otf',Path('/System/Library/Fonts/Hiragino Sans GB.ttc')] if path.is_file()),None)
-        if font is None:
-            raise ValueError('未找到中文字体，请配置CONTENT_OPS_FONT')
+        font = copy.resolve_cover_font(typography, settings)
     size = copy.poster_size(data['platform'])
     background = Path(data['background_path']) if data.get('background_path') else output.with_name(output.stem+'-background.png')
     if background.exists():
@@ -64,10 +61,7 @@ def typeset_image(data, settings, output):
     copy.validate_visual_plan({'collection_name':'大字报','structure':{},'cover_texts':texts,'visual_prompt':'满幅平面背景'},data['model'],data['platform'])
     style = backgrounds.normalize_style(data.get('background_style'))
     typography = copy.normalize_typography(data.get('typography'))
-    font = next((path for path in [Path(settings.get('CONTENT_OPS_FONT','missing-font')),
-                Path.home()/'Library/Fonts/SourceHanSansSC-Medium.otf',Path('/System/Library/Fonts/Hiragino Sans GB.ttc')] if path.is_file()),None)
-    if font is None:
-        raise ValueError('未找到中文字体，请配置CONTENT_OPS_FONT')
+    font = copy.resolve_cover_font(typography, settings)
     recovered = False
     with Image.open(data['source_image']) as source:
         count=int(source.info.get('hanabi_background_parts','0'))

@@ -1,0 +1,46 @@
+{
+  "default": "source_han_sans",
+  "fonts": [
+    {
+      "id": "source_han_sans",
+      "label": "思源黑体",
+      "paths": [
+        "~/Library/Fonts/SourceHanSansSC-Medium.otf",
+        "/System/Library/Fonts/Hiragino Sans GB.ttc",
+        "/System/Library/Fonts/STHeiti Medium.ttc"
+      ]
+    },
+    {
+      "id": "hiragino_sans",
+      "label": "冬青黑体",
+      "paths": [
+        "/System/Library/Fonts/Hiragino Sans GB.ttc",
+        "/System/Library/Fonts/STHeiti Medium.ttc"
+      ]
+    },
+    {
+      "id": "stheiti",
+      "label": "华文黑体",
+      "paths": [
+        "/System/Library/Fonts/STHeiti Medium.ttc",
+        "/System/Library/Fonts/Hiragino Sans GB.ttc"
+      ]
+    },
+    {
+      "id": "source_han_serif",
+      "label": "思源宋体",
+      "paths": [
+        "~/Library/Fonts/SourceHanSerifCN-Bold.otf",
+        "/System/Library/Fonts/Supplemental/Songti.ttc"
+      ]
+    },
+    {
+      "id": "songti",
+      "label": "宋体",
+      "paths": [
+        "/System/Library/Fonts/Supplemental/Songti.ttc",
+        "~/Library/Fonts/SourceHanSerifCN-Bold.otf"
+      ]
+    }
+  ]
+}

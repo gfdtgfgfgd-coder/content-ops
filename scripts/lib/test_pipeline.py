@@ -1309,7 +1309,7 @@ class RevisionTests(unittest.TestCase):
                 self.assertEqual(before['highlighted'],after['highlighted'])
                 self.assertGreater(after['bbox'][1],12);self.assertLess(after['bbox'][3],size[1]-12)
         data={'kind':'image','action':'regenerate','platform':'xhs','model':'GLM5.3','prompt':'蓝色纸面',
-              'render_mode':'layered_poster','cover_texts':texts,'typography':{'scale':1.2,'align':'left'}}
+              'render_mode':'layered_poster','cover_texts':texts,'typography':{'scale':1.2,'align':'left','font':'songti'}}
         def generate(**kwargs):
             Image.new('RGB',(1080,1440),'#c4dded').save(kwargs['output'])
             return {'model':'selected-image','width':1080,'height':1440}
@@ -1317,8 +1317,11 @@ class RevisionTests(unittest.TestCase):
             result=self.revision.run(data,self.settings,self.base/'regenerated.png')
         self.assertEqual(result['typography'],data['typography'])
         self.assertEqual(len({row['bbox'][0] for row in result['rendered_text']}),1)
+        sans=copy.render_bold_typo(source,self.base/'sans.png',texts,copy.resolve_cover_font({'font':'source_han_sans'}), (1080,1440),preserve_background=True,typography={'scale':1,'align':'center','font':'source_han_sans'})
+        serif=copy.render_bold_typo(source,self.base/'serif.png',texts,copy.resolve_cover_font({'font':'songti'}), (1080,1440),preserve_background=True,typography={'scale':1,'align':'center','font':'songti'})
+        self.assertNotEqual(sans['sha256'],serif['sha256'])
         with patch.object(gateway,'generate_image') as call:
-            for invalid in [[],{'scale':True,'align':'left'},{'scale':1.6,'align':'left'},{'scale':.5,'align':'left'},{'scale':1,'align':'invalid'}]:
+            for invalid in [[],{'scale':True,'align':'left'},{'scale':1.6,'align':'left'},{'scale':.5,'align':'left'},{'scale':1,'align':'invalid'},{'scale':1,'align':'left','font':'missing_font'}]:
                 with self.subTest(invalid=invalid),self.assertRaises(ValueError):
                     self.revision.run({**data,'typography':invalid},self.settings,self.base/'invalid.png')
             call.assert_not_called()
@@ -1330,17 +1333,18 @@ class RevisionTests(unittest.TestCase):
         copy.render_bold_typo(bg,source,texts,font,(1080,1440),preserve_background=True)
         with Image.open(source) as image:self.assertGreater(int(image.info['hanabi_background_parts']),1)
         data={'kind':'image','action':'typeset','platform':'xhs','model':'GLM5.3','source_image':str(source),'cover_texts':texts,
-              'typography':{'scale':1.2,'align':'left'},'background_style':{},'prompt':'原背景词'}
+              'typography':{'scale':1.2,'align':'left','font':'hiragino_sans'},'background_style':{},'prompt':'原背景词'}
         settings={**self.settings,'CONTENT_OPS_FONT':str(font)}
         with patch.object(gateway,'generate_image') as generate,patch.object(gateway,'request_json') as chat,patch.object(self.revision,'multipart_request') as edit:
             preview=self.revision.run(data,settings,self.base/'preview.png')
             saved=self.revision.run(data,settings,self.base/'saved.png')
             generate.assert_not_called();chat.assert_not_called();edit.assert_not_called()
-        expected=self.base/'expected.png';copy.render_bold_typo(bg,expected,texts,font,(1080,1440),preserve_background=True,typography=data['typography'])
+        expected=self.base/'expected.png';copy.render_bold_typo(bg,expected,texts,copy.resolve_cover_font(data['typography'],settings),(1080,1440),preserve_background=True,typography=data['typography'])
         with Image.open(expected) as e,Image.open(self.base/'preview.png') as p,Image.open(self.base/'saved.png') as s:
             self.assertIsNone(ImageChops.difference(e.convert('RGB'),p.convert('RGB')).getbbox())
             self.assertIsNone(ImageChops.difference(s.convert('RGB'),p.convert('RGB')).getbbox())
         self.assertFalse(preview['backgroundRecovered']);self.assertEqual(preview['typography'],saved['typography'])
+        self.assertEqual(preview['typography']['font'],'hiragino_sans')
         self.assertEqual(preview['model'],'local-typesetter')
 
     def test_legacy_typesetting_repairs_only_recorded_boxes_and_missing_records_do_not_call_models(self):

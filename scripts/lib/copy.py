@@ -13,6 +13,7 @@ import sys
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[2]
+PACKAGE_ROOT = Path(__file__).resolve().parents[2]
 try:
     import yaml
 except ImportError:
@@ -683,14 +684,38 @@ def cover(background, output, post, palette, font_path, variant, size):
     image.save(output,format='PNG')
     return {'width':size[0],'height':size[1],'bytes':output.stat().st_size,'sha256':hashlib.sha256(output.read_bytes()).hexdigest()}
 
+def cover_fonts():
+    return json.loads((PACKAGE_ROOT / 'config/cover-fonts.json').read_text(encoding='utf-8'))
+
+
 def normalize_typography(value=None):
+    catalog = cover_fonts()
     value = {} if value is None else value
     if not isinstance(value, dict):
         raise ValueError('文字排版参数无效')
     scale, align = value.get('scale', 1), value.get('align', 'center')
+    font = value.get('font', catalog['default'])
+    ids = {item['id'] for item in catalog['fonts']}
     if type(scale) not in (int, float) or not .6 <= scale <= 1.5 or align not in ('center', 'left'):
         raise ValueError('字号比例须为60%～150%，对齐方式须为居中或左对齐')
-    return {'scale': scale, 'align': align}
+    if font not in ids:
+        raise ValueError('字体无效')
+    return {'scale': scale, 'align': align, 'font': font}
+
+
+def resolve_cover_font(typography=None, settings=None):
+    catalog = cover_fonts()
+    typography = normalize_typography(typography)
+    settings = settings or {}
+    entry = next(item for item in catalog['fonts'] if item['id'] == typography['font'])
+    candidates = []
+    if typography['font'] == catalog['default'] and settings.get('CONTENT_OPS_FONT'):
+        candidates.append(Path(settings['CONTENT_OPS_FONT']).expanduser())
+    candidates.extend(Path(path).expanduser() for path in entry['paths'])
+    for path in candidates:
+        if path.is_file():
+            return path
+    raise ValueError(f'未找到字体「{entry["label"]}」，请安装对应字体或配置 CONTENT_OPS_FONT')
 
 
 def render_bold_typo(background, output, texts, font_path, size, background_style=None, *, preserve_background=False, typography=None):
@@ -846,8 +871,7 @@ def run(args):
     copy_count = args.count * copy_multiplier
     if not settings.get('CONTENT_OPS_API_KEY') or not settings.get('CONTENT_OPS_BASE_URL','').startswith('https://'):
         raise ValueError('未配置公司网关 HTTPS 地址或本机令牌，见 docs/GUIDE.md')
-    default_font=next((path for path in [Path.home()/'Library/Fonts/SourceHanSansSC-Medium.otf',Path('/System/Library/Fonts/Hiragino Sans GB.ttc')] if path.exists()),Path('missing-font'))
-    font_path = Path(settings.get('CONTENT_OPS_FONT',str(default_font))).expanduser()
+    font_path = resolve_cover_font(settings=settings)
     if args.background and not font_path.exists():
         raise ValueError('未找到中文字体；请设置 CONTENT_OPS_FONT')
     facts = json.loads(args.facts.read_text()) if args.facts else {'model':model,'verified_claims':[], 'note':'未提供独立核验事实；本次卖点可来自用户简报，来源分别记录'}

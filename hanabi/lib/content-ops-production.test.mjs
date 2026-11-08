@@ -1433,22 +1433,23 @@ test('failed prompt regeneration retains editable input and missing images can b
 
 test('image typography reaches renderer and restores with versions; invalid settings fail before spawn',async t=>{
   const {revisions,calls}=await revisionFixture(t);
+  const typography={scale:1.2,align:'left',font:'songti'};
   const input={kind:'image',copyIndex:0,action:'regenerate',renderMode:'layered_poster',prompt:'浅蓝纸张',requestId:'typography-request-123',baseRevision:'original',
-    typography:{scale:1.2,align:'left'},coverTexts:[{role:'hook',text:'挖到宝了'},{role:'benefit',text:'便宜量大'},{role:'model',text:'GLM5.3'}],backgroundStyle:{profile:'paper_shadow'}};
-  for(const typography of [[],{scale:true,align:'left'},{scale:1.6,align:'left'},{scale:.5,align:'left'},{scale:1,align:'bad'}])await assert.rejects(()=>revisions.create('batch-123','job-12345',{...input,typography}),{statusCode:400});
+    typography,coverTexts:[{role:'hook',text:'挖到宝了'},{role:'benefit',text:'便宜量大'},{role:'model',text:'GLM5.3'}],backgroundStyle:{profile:'paper_shadow'}};
+  for(const bad of [[],{scale:true,align:'left'},{scale:1.6,align:'left'},{scale:.5,align:'left'},{scale:1,align:'bad'},{scale:1,align:'left',font:'missing_font'}])await assert.rejects(()=>revisions.create('batch-123','job-12345',{...input,typography:bad}),{statusCode:400});
   assert.equal(calls.length,0);
-  const pending=await revisions.create('batch-123','job-12345',input);assert.deepEqual(pending.result.typography,input.typography);
-  const ready=await revisionDone(revisions,pending.id);assert.equal(ready.status,'ready',ready.error);assert.deepEqual(calls[0].input.typography,input.typography);
+  const pending=await revisions.create('batch-123','job-12345',input);assert.deepEqual(pending.result.typography,typography);
+  const ready=await revisionDone(revisions,pending.id);assert.equal(ready.status,'ready',ready.error);assert.deepEqual(calls[0].input.typography,typography);
   revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:'original',revisionId:ready.id});
-  assert.deepEqual(revisions.history('batch-123','job-12345','image',0).current.typography,input.typography);
+  assert.deepEqual(revisions.history('batch-123','job-12345','image',0).current.typography,typography);
   revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:ready.id,revisionId:'original'});
-  assert.deepEqual(revisions.history('batch-123','job-12345','image',0).current.typography,{scale:1,align:'center'});
+  assert.deepEqual(revisions.history('batch-123','job-12345','image',0).current.typography,{scale:1,align:'center',font:'source_han_sans'});
 });
 
 test('live typesetting preview is ephemeral, source-bound and local; saving keeps original and restores editable fields',async t=>{
   const {dir,db,revisions,calls}=await revisionFixture(t);
   await writeFile(join(dir,'original/manifest.json'),JSON.stringify({posts:[{index:1,visual_plan:{collection_name:'大字报',cover_texts:[]},image_requests:[{prompt:'原背景词',mode:'layered_poster'}]}]}));
-  const body={baseRevision:'original',sourceRevision:'original',typography:{scale:1.2,align:'left'},coverTexts:[{role:'hook',text:'挖到宝了'},{role:'benefit',text:'便宜量大'},{role:'model',text:'GLM5.3'}],backgroundStyle:{profile:'paper_shadow'}};
+  const body={baseRevision:'original',sourceRevision:'original',typography:{scale:1.2,align:'left',font:'hiragino_sans'},coverTexts:[{role:'hook',text:'挖到宝了'},{role:'benefit',text:'便宜量大'},{role:'model',text:'GLM5.3'}],backgroundStyle:{profile:'paper_shadow'}};
   const result=await revisions.preview('batch-123','job-12345',body);assert.match(result.image,/^data:image\/png;base64,/u);
   assert.equal(db.prepare('SELECT count(*) as n FROM content_ops_revisions').get().n,0);
   assert.deepEqual(await readdir(join(dir,'scratch/hanabi-runtime/previews')),[]);assert.equal(calls[0].input.action,'typeset');

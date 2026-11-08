@@ -68,6 +68,8 @@
 .revision-controls .revision-cover-highlight{display:flex;align-items:center;gap:6px;min-height:42px;white-space:nowrap;font-size:12px}
 .revision-controls .revision-cover-highlight input[type=checkbox]{width:16px;height:16px;padding:0;display:inline}
 .revision-palette{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.revision-cover-fields>.revision-palette:first-of-type{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:800px){.revision-cover-fields>.revision-palette:first-of-type{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .revision-image-tools,.revision-prompt-history{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
 .revision-image-tools>summary,.revision-prompt-history>summary{cursor:pointer;font-size:13px;color:var(--text-soft);padding-bottom:10px}
 .revision-image-tools .revision-ai{margin-top:16px}.revision-empty-image{padding:80px 20px;text-align:center;color:var(--text-soft);border:1px dashed var(--line-strong)}
