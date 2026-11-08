@@ -20,7 +20,7 @@ except ModuleNotFoundError:
     if runtime.exists() and Path(sys.executable).absolute() != runtime.absolute():
         os.execv(str(runtime), [str(runtime), '-m', 'scripts.lib.test_pipeline', *sys.argv[1:]])
     raise
-from . import cleaning, compact_posts, copy, fetching, gateway, preferences, store, words
+from . import cleaning, compact_posts, copy, fetching, gateway, preferences, store, words, backgrounds
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -407,6 +407,55 @@ class PipelineTests(unittest.TestCase):
         self.assertGreaterEqual(result['line_gap_px'], 28)
         with Image.open(output) as rendered:
             self.assertEqual(rendered.size, (1080, 1440))
+
+    def test_background_prompt_preserves_reference_material_and_color_without_copy_text(self):
+        plan=visual_plan(prompt='深灰网格背景，浅色文字与绿色高亮。')
+        plan['background_style']={'profile':'charcoal_grid','base':'#23282C','ink':'#F0F2EC','accent':'#85E070','highlight_roles':['model'],'description':'哑光深灰纸面和细网格'}
+        prompt=copy.bold_typo_background_prompt(plan,'xhs','GLM5.3')
+        self.assertIn('深灰',prompt);self.assertIn('#23282C',prompt)
+        self.assertIn('中央也保留纹理',prompt);self.assertIn('严禁出现任何文字',prompt)
+        for line in plan['cover_texts']:self.assertNotIn(line['text'],prompt)
+        for style in [{'profile':'unknown'},{'profile':'paper_shadow','base':'white'},{'profile':'paper_shadow','highlight_roles':['unknown']}]:
+            with self.assertRaises(ValueError):backgrounds.normalize_style(style)
+
+    def test_background_surfaces_are_reproducible_and_flat_ai_has_visible_material(self):
+        from PIL import ImageStat
+        source=Image.new('RGB',(300,400),'white')
+        for profile in backgrounds.recipe()['profiles']:
+            with self.subTest(profile=profile['id']):
+                style={'profile':profile['id']}
+                image,metadata=backgrounds.render_surface(source,(300,400),style,'fixed-seed')
+                again,_=backgrounds.render_surface(source,(300,400),style,'fixed-seed')
+                self.assertEqual(image.tobytes(),again.tobytes())
+                self.assertTrue(metadata['flat_ai_background'])
+                self.assertGreater(max(ImageStat.Stat(image).stddev),.5)
+                self.assertNotEqual(image.getpixel((150,70)),(255,255,255))
+        dark,_=backgrounds.render_surface(source,(300,400),{'profile':'charcoal_grid'},'fixed-seed')
+        self.assertLess(sum(dark.getpixel((150,70)))/3,60)
+
+    def test_ai_material_shading_survives_under_text_surface_and_white_card_is_gone(self):
+        from PIL import ImageDraw
+        source=Image.new('RGB',(1080,1440),'#FFFFFF')
+        ImageDraw.Draw(source).rectangle((0,0,540,1440),fill='#707070')
+        image,meta=backgrounds.render_surface(source,(1080,1440),{'profile':'paper_shadow'},'fixed-seed')
+        self.assertFalse(meta['flat_ai_background'])
+        left=image.getpixel((250,200));right=image.getpixel((800,200))
+        self.assertGreater(sum(right)-sum(left),30)
+        self.assertNotEqual(image.getpixel((540,100)),(255,254,250))
+        path=self.base/'shaded-paper.png';output=self.base/'shaded-poster.png';source.save(path)
+        copy.render_bold_typo(path,output,visual_plan()['cover_texts'],Path('/System/Library/Fonts/Hiragino Sans GB.ttc'),(1080,1440),{'profile':'paper_shadow'})
+        with Image.open(output) as poster:
+            self.assertGreater(sum(poster.getpixel((800,200)))-sum(poster.getpixel((250,200))),30)
+
+    def test_dark_background_uses_light_ink_and_accent_uses_readable_ink(self):
+        source=self.base/'material.png';output=self.base/'dark.png'
+        Image.new('RGB',(540,720),'white').save(source)
+        result=copy.render_bold_typo(source,output,visual_plan()['cover_texts'],Path('/System/Library/Fonts/Hiragino Sans GB.ttc'),(540,720),{'profile':'charcoal_grid'})
+        style=result['background_surface']['style']
+        for row in result['rendered_text']:
+            self.assertGreaterEqual(backgrounds.contrast(style['accent'] if row['highlighted'] else style['base'],row['fill']),4.5)
+        self.assertEqual([row['role'] for row in result['rendered_text'] if row['highlighted']],['model'])
+        self.assertGreaterEqual(result['minimum_side_margin_ratio'],.20)
 
     def test_fresh_generation_sends_final_poster_prompt_and_size(self):
         settings = {'CONTENT_OPS_API_KEY': 'offline-test-only', 'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1',

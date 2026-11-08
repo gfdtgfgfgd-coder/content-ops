@@ -21,7 +21,7 @@ except ImportError:
         os.execv(str(local), [str(local), *sys.argv])
     raise SystemExit('缺少 PyYAML；请运行 ./start.command 初始化环境')
 
-from . import gateway as image_api, words as word_check
+from . import gateway as image_api, words as word_check, backgrounds
 from .preferences import load_preferences
 from .store import load_posts
 # 偏好加载路径：data/distilled-preferences.json（T13 产出）；回退：simin-persona 等分散文件。
@@ -547,6 +547,8 @@ def validate_visual_plan(plan, product_model, platform, expected_layout='', rule
         # Reject positive subject instructions; negative prohibitions themselves are allowed.
         if re.search(r'3\s*D|立体(?:物件|主体|机器人)|代码(?:屏|树)|电脑|人物插画|机器人|复杂背景|computer|robot|code\s*screen', positive, re.I):
             raise ValueError('大字报视觉方案不得添加3D、屏幕或复杂主体')
+        if plan.get('background_style') is not None:
+            plan['background_style'] = backgrounds.normalize_style(plan['background_style'],prompt)
     return plan
 
 
@@ -574,11 +576,12 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
     contract = {
         'model': product_model, 'reference': source, 'collection_name': expected_layout or '看图识别四大版式',
         'cover_corpus': extract_cover_corpus(product_model), 'risk_rules': applicable_rules,
-        'canvas': ratio, 'style': style_instruction,
+        'canvas': ratio, 'style': style_instruction, 'background_profiles': backgrounds.style_options(),
         'schema': {'collection_name': '四大版式之一，与参考合集一致',
                    'structure': {'layout': '原图结构分析', 'region_proportions': '原图各分区比例和位置关系',
                                  'text_regions': [{'position': '原图文字区位置', 'line_count': 4, 'line_lengths': [6, 5, 7, 6]}]},
                    'cover_texts': [{'role': 'model/benefit/hook/payoff/feature/subtitle', 'text': '本次独立封面短字', 'position': '对应文字区位置'}],
+                   'background_style': {'profile':'从background_profiles选择与参考图材质最接近的一项，仅大字报需要', 'description':'只描述参考图的底色、纸张材质、纹理、边框和光影，不含任何要印出的文字', 'base':'#RRGGBB参考底色', 'ink':'#RRGGBB文字色', 'accent':'#RRGGBB强调色', 'highlight_roles':['hook','model']},
                    'visual_prompt': '严格同构换装的中文生图提示词，仅包含cover_texts中的可见文案'}}
     content = [{'type': 'text', 'text': (
         '你是多模态封面结构策划师。看所附一张原图，先拆解并锁死布局、分区比例、文字行数、每行字数和位置。'
@@ -590,7 +593,8 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
         '封面独立从当前模型专属语料选词，不写技术说明长句。语料不是事实证明，不新增数字、评测、价格或承诺。'
         '上中下/左右下返回model+benefit+3～4个feature；环绕返回model+benefit+4个feature，可另附4个subtitle；'
         '大字报返回3～4行，依次钩子、利益、型号、爽点（三行可合并钩子与利益）。'
-        'visual_prompt只写可执行构图与准确封面短字，不复述禁词红线；图像模型直接完成排字，不留待后期加字。\n'
+        '大字报必须单独观察并返回background_style：区分揉皱纸、深灰网格、蓝色笔记本、光影纸张和彩色便笺，保留参考图实际底色、墨色和荧光笔色；不要无论参考图是什么都写成暖白纸。'
+        'visual_prompt写可执行构图与准确短字；其他三类由图像模型直接排字，大字报只生成无字材质底图，文字由本机叠加。\n'
         + layout_spec + '\n本次输入：' + json.dumps(contract, ensure_ascii=False))}, *images]
     try:
         response = image_api.request_json(settings['CONTENT_OPS_BASE_URL'].rstrip('/') + '/chat/completions',
@@ -662,15 +666,13 @@ def cover(background, output, post, palette, font_path, variant, size):
     image.save(output,format='PNG')
     return {'width':size[0],'height':size[1],'bytes':output.stat().st_size,'sha256':hashlib.sha256(output.read_bytes()).hexdigest()}
 
-def render_bold_typo(background, output, texts, font_path, size):
-    from PIL import Image, ImageDraw, ImageOps
-    image = ImageOps.fit(Image.open(background).convert('RGB'), size).convert('RGBA')
+def render_bold_typo(background, output, texts, font_path, size, background_style=None):
+    from PIL import Image, ImageDraw
+    style = backgrounds.normalize_style(background_style)
+    with Image.open(background) as source:
+        image, material_metadata = backgrounds.render_surface(source, size, style, hashlib.sha256(background.read_bytes()).hexdigest())
     width, height = size
-    card = Image.new('RGBA', size, (0, 0, 0, 0))
-    card_draw = ImageDraw.Draw(card)
-    card_draw.rounded_rectangle((int(width * .05), int(height * .055), int(width * .95), int(height * .945)),
-                                radius=24, fill=(255, 254, 250, 255))
-    image = Image.alpha_composite(image, card)
+    ink = backgrounds.readable_ink(material_metadata['text_surface_color'], style['ink'])
     draw = ImageDraw.Draw(image)
     text_width = int(width * .60) - 44
     rows = []
@@ -688,20 +690,23 @@ def render_bold_typo(background, output, texts, font_path, size):
     for row in rows:
         x = round((width - row['width']) / 2)
         box = (x, y, x + row['width'], y + row['height'])
-        if row['role'] == 'benefit':
+        highlighted = row['role'] in style['highlight_roles']
+        if highlighted:
             pad_x, pad_y = 22, 12
             draw.rounded_rectangle((box[0] - pad_x, box[1] - pad_y, box[2] + pad_x, box[3] + pad_y),
-                                   radius=12, fill='#FFF17A')
+                                   radius=8, fill=style['accent'])
         draw.text((x - row['bounds'][0], y - row['bounds'][1]), row['text'],
-                  font=row['font'], fill='#171717', stroke_width=row['stroke'], stroke_fill='#171717')
-        rendered.append({'role': row['role'], 'text': row['text'], 'bbox': box})
+                  font=row['font'], fill=backgrounds.readable_ink(style['accent'],ink) if highlighted else ink,
+                  stroke_width=row['stroke'], stroke_fill=backgrounds.readable_ink(style['accent'],ink) if highlighted else ink)
+        rendered.append({'role': row['role'], 'text': row['text'], 'bbox': box, 'highlighted':highlighted,
+                         'fill':backgrounds.readable_ink(style['accent'],ink) if highlighted else ink})
         y += row['height'] + gap
     image.convert('RGB').save(output, format='PNG')
     return {'width': width, 'height': height, 'bytes': output.stat().st_size,
             'sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
             'text_area_ratio': max((row['width'] / width for row in rows), default=0),
             'minimum_side_margin_ratio': min((min(box[0], width - box[2]) / width for box in (r['bbox'] for r in rendered)), default=0),
-            'line_gap_px': gap, 'rendered_text': rendered}
+            'line_gap_px': gap, 'rendered_text': rendered, 'background_surface': material_metadata}
 
 def poster_size(platform):
     return (1080, 1440) if platform == 'xhs' else (1080, 1080)
@@ -737,12 +742,16 @@ def direct_image_prompt(post, platform, visual_prompt=None, style_mode='auto', s
             f"海报文字仅使用以下准确文案（role、position是排版元数据，不印在图上）：{text_map}")
 
 def bold_typo_background_prompt(visual_prompt, platform, model):
-    validate_visual_plan(visual_prompt, model, platform)
+    plan = validate_visual_plan(visual_prompt, model, platform)
+    style = backgrounds.normalize_style(plan.get('background_style'),plan['visual_prompt'])
+    plan['background_style'] = style
     ratio = '竖版3:4' if platform == 'xhs' else '方图1:1'
-    return (f'{ratio}纯净纸张便签背景，浅薄荷色细网格衬底，中央暖白纸张与细微纸纤维纹理，'
-            '只呈现平整纸面材质和柔和自然光，留出干净的中央排版区域。'
+    return (f"{ratio}无字背景材质。参考材质：{style['description']}。"
+            f"主底色{style['base']}，墨色参考{style['ink']}，点缀色参考{style['accent']}。"
+            '材质、折痕、颗粒与柔和明暗必须贯穿整幅画面，中央也保留纹理，不要默认薄荷网格配纯白矩形卡片。'
+            '只生成平面纸张、网格或便笺材质，没有立体物件与插画主体。'
             '画面中严禁出现任何文字、字母、数字、标点、伪文字、字形、标题、标志或水印；'
-            '不要绘制荧光笔条、圈线或箭头，这些装饰和全部文字由程序后期精确排版。背景干净、低对比，不出现主体物件。')
+            '不要绘制荧光笔条、圈线或箭头，全部短字与高亮由本机后期排版。')
 
 def extract_model_corpus(model, root=None):
     corpus_file = (root or ROOT) / 'data/model-corpus.md'
@@ -837,7 +846,7 @@ def run(args):
                 'created_at':datetime.now(ZoneInfo('Asia/Shanghai')).isoformat(), 'facts':facts,
                 'brief':brief, 'brief_source':brief_source,
                 'style_mode':style_mode, 'style_preset':style_preset, 'style_prompt':style_prompt,
-                'generation_pipeline':PIPELINE_VERSION,
+                'generation_pipeline':PIPELINE_VERSION, 'background_recipe_sha256':backgrounds.recipe_hash(),
                 'reference_images':reference_images,
                 'cover_corpus_sha256':hashlib.sha256(cover_corpus.encode()).hexdigest() if not args.background else None,
                 'reference_mode':'manual' if getattr(args, 'references', None) and json.loads(args.references.read_text()) else 'automatic',
@@ -848,6 +857,8 @@ def run(args):
             raise ValueError('偏好版本已改变；请用新目录生成，避免混用旧文案与新规则')
         if previous.get('references', []) != references or previous.get('reference_hashes', {}) != reference_hashes:
             raise ValueError('参考帖选择或来源已改变；请用新目录生成，避免混用引用')
+        if any(p.get('collection_name')=='大字报' for p in previous.get('posts',[])) and previous.get('background_recipe_sha256') != manifest['background_recipe_sha256']:
+            raise ValueError('大字报背景配方已改变，请保留原稿并用新目录生成')
         if previous.get('cover_corpus_sha256') != manifest['cover_corpus_sha256']:
             raise ValueError('封面专属语料已改变，请用新目录生成')
         if previous.get('reference_images', []) != reference_images:
@@ -969,7 +980,7 @@ def run(args):
                     raise ValueError(f"生图尺寸不符：要求 {size[0]}x{size[1]}，实际 {image_result['width']}x{image_result['height']}")
                 if layered:
                     background_metadata = {key: image_result[key] for key in ('width','height','bytes','sha256')}
-                    result = render_bold_typo(generated_path, image_path, visual_plan['cover_texts'], font_path, size)
+                    result = render_bold_typo(generated_path, image_path, visual_plan['cover_texts'], font_path, size, visual_plan.get('background_style'))
                     generated_path.unlink(missing_ok=True)
                     image_result['mode'] = 'layered_poster'
                     image_result['background_metadata'] = background_metadata

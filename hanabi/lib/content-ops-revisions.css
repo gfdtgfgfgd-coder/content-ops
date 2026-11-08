@@ -35,3 +35,5 @@
 #content-ops-form>.content-ops-selected-refs{grid-column:1/-1}
 @media(max-width:800px){.revision-dialog{width:100vw;max-height:100dvh;height:100dvh;border:0;border-radius:0}.revision-workspace{grid-template-columns:minmax(0,1fr);overflow:auto}.revision-preview,.revision-controls{overflow:visible;padding:18px}.revision-media{max-width:320px}.revision-header{padding:16px 18px}.revision-header h2{font-size:18px}.revision-footer{padding:14px 18px;flex-wrap:wrap;gap:10px}.revision-footer>div{margin-left:auto}.revision-preview-bar{flex-wrap:wrap}.revision-copy-preview{min-height:180px;padding:18px}}
 @media(prefers-reduced-motion:reduce){.revision-dialog *{scroll-behavior:auto}}
+
+.revision-version-note{display:block;margin-top:4px;color:var(--text-soft);font-size:11px;font-style:normal;line-height:1.5;overflow-wrap:anywhere}

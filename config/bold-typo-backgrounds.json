@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "default": "paper_shadow",
+  "profiles": [
+    {"id":"paper_shadow","label":"光影纸张","material":"shadow","base":"#D8E5E3","paper":"#EFEFE7","ink":"#171B1B","accent":"#85D6C5","highlight_roles":["hook","model"],"keywords":["光影","树影","纸纤维","暖白","便签"],"prompt":"带自然侧光和柔和斑驳投影的灰白纸张，纸纤维可见，浅青灰衬底，纸面内部保留明暗和材质，不是纯色白卡"},
+    {"id":"crumpled_paper","label":"揉皱纸","material":"creased","base":"#DDDFDC","ink":"#181B19","accent":"#EEA5D8","highlight_roles":["model"],"keywords":["揉皱","褶皱","皱纸","折痕"],"prompt":"整幅展开后揉皱的浅灰纸，真实不规则折面、明暗褶皱和压痕贯穿全画面，保留中部纸面质感，折痕不过度压暗文字区域"},
+    {"id":"charcoal_grid","label":"深灰网格","material":"grid","base":"#252A2C","ink":"#EFF3EB","accent":"#9AE882","highlight_roles":["model"],"keywords":["深灰","黑底","炭黑","暗色","深色网格"],"prompt":"深炭灰哑光纸面，低对比细网格和细密颗粒贯穿全画面，边缘有轻微亮度变化，不出现白色卡片、屏幕、代码或物件"},
+    {"id":"blue_notebook","label":"浅蓝笔记本","material":"notebook","base":"#A4C9EF","paper":"#EDF3F8","ink":"#151D27","accent":"#F0DE79","highlight_roles":["model"],"keywords":["笔记本","活页","装订","蓝色网格","线圈"],"prompt":"浅蓝网格衬底、微蓝纸张和细薄纸边阴影，左侧装订孔作为低调边缘细节，纸面保留纤维与轻微侧光，不是悬浮UI卡片"},
+    {"id":"pastel_note","label":"薄荷彩纸","material":"fibers","base":"#BFE6D9","ink":"#172820","accent":"#F0B2DC","highlight_roles":["model"],"keywords":["薄荷","浅蓝","浅粉","彩纸","马卡龙"],"prompt":"有可辨纸纤维和细密颗粒的低饱和薄荷彩纸，柔和侧光形成轻微色阶，材质铺满画幅，没有中央白卡"},
+    {"id":"lemon_paper","label":"浅黄便笺","material":"fibers","base":"#F6E9B5","ink":"#181C16","accent":"#A1DD7C","highlight_roles":["model"],"keywords":["柠檬","浅黄","淡黄","黄色纸"],"prompt":"柔和浅黄色便笺纸，完整纸面带细密纤维、轻微磨边与侧光，颜色贯穿整幅，中央不是纯白色"}
+  ],
+  "render": {"grain":5,"ai_texture_strength":0.36,"crease_strength":0.23,"grid_step_ratio":0.034,"paper_inset_ratio":0.075,"contrast_min":4.5}
+}
