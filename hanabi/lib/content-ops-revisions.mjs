@@ -284,7 +284,29 @@ export class ContentOpsRevisions {
       this.db.exec('ROLLBACK');
       throw error;
     }
-    return { batch: this.production.public(this.production.get(batchId)) };
+    const batch = this.production.public(this.production.get(batchId));
+    let corpusGap = null;
+    try {
+      const row = this.production.get(batchId);
+      let manifest = {};
+      try { manifest = JSON.parse(readFileSync(join(row.output_dir, 'manifest.json'), 'utf8')); } catch {}
+      const post = batch.posts?.find(item => item.jobId === jobId) || batch.posts?.[0];
+      const adoptedText = body.kind === 'copy' ? (post?.copies?.[body.copyIndex]?.text || post?.text || '') : '';
+      const coverTexts = body.kind === 'image' ? (manifest.posts?.find(item => item.index === post?.index)?.cover_texts || []) : [];
+      corpusGap = {
+        trigger: 'corpus_gap',
+        targetDoc: 'model-corpus',
+        addedItem: {
+          displayModel: batch.model,
+          corpusModel: batch.corpusModel || row.corpus_model || batch.model,
+          kind: body.kind,
+          adoptedText: String(adoptedText).slice(0, 4000),
+          coverTexts,
+          researchNotes: manifest.research_notes || null,
+        },
+      };
+    } catch {}
+    return { batch, corpusGap };
   }
   recover() {
     this.db.prepare("UPDATE content_ops_revisions SET status='failed',error='服务已重启；原稿保留，修改任务不会自动重跑。' WHERE status='running'").run();

@@ -579,7 +579,7 @@ class PipelineTests(unittest.TestCase):
         self.assertIn('竖版3:4', generate.call_args.kwargs['prompt'])
         self.assertIn('严禁出现任何文字', generate.call_args.kwargs['prompt'])
         self.assertNotIn(post['image_prompt'], generate.call_args.kwargs['prompt'])
-        self.assertEqual(vision.call_args.args[0], {'model':'GLM-5.3'})
+        self.assertEqual(vision.call_args.args[0], {'model':'GLM5.3', 'corpus_model':'GLM-5.3'})
         self.assertTrue(vision.call_args.args[1])
         self.assertEqual(result['posts'][0]['image_metadata']['mode'], 'layered_poster')
         self.assertLessEqual(result['posts'][0]['image_metadata']['text_area_ratio'], .72)
@@ -918,7 +918,14 @@ class PipelineTests(unittest.TestCase):
                                    ('deepseek v4.1','DeepSeek V4.1')):
             with self.subTest(informal=informal):
                 self.assertEqual(copy.resolve_product_model(informal,require_cover=True),canonical)
-                self.assertIn('封面吸睛大字',copy.extract_cover_corpus(informal))
+                adapted=copy.extract_cover_corpus(canonical,display_model=informal)
+                self.assertIn('封面吸睛大字',adapted)
+                self.assertIn(informal,adapted)
+                if informal!=canonical and canonical not in informal:
+                    self.assertNotIn(canonical,adapted)
+        rewritten=copy.rewrite_corpus_display_name('组合 / Kimi K3.1 Pro / 收尾','Kimi K3.1 Pro','kimi k3.1')
+        self.assertEqual(rewritten,'组合 / kimi k3.1 / 收尾')
+        self.assertEqual(copy.ensure_display_product_name('速来！Kimi K3.1 Pro直接拿下','kimi k3.1','Kimi K3.1 Pro'),'速来！kimi k3.1直接拿下')
         for absent in ('Unknown','GLM-5','GLM-5.3 Pro','GLM-5.30','Kimi K3.2 Pro','DeepSeek V4.10'):
             with self.subTest(absent=absent):
                 with self.assertRaisesRegex(ValueError,'未匹配语料库|缺少封面'):
@@ -972,7 +979,7 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(manifest['generation_pipeline'],copy.PIPELINE_VERSION)
             self.assertEqual(manifest['posts'][0]['image_requests'][0]['status'],'failed')
             self.assertEqual(manifest['posts'][0]['image_requests'][0]['prompt'],images.call_args.kwargs['prompt'])
-            self.assertEqual(vision.call_args.args[0],{'model':'GLM-5.3'})
+            self.assertEqual(vision.call_args.args[0],{'model':'GLM5.3','corpus_model':'GLM-5.3'})
             images.side_effect=generate
             self.assertEqual(copy.main([*argv,'--resume']),0)
             self.assertEqual((text.call_count,vision.call_count,images.call_count),(1,1,2))

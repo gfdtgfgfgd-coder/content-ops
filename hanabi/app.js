@@ -198,10 +198,35 @@ function mountDocumentViews() {
     const syncButton = document.createElement('button'); syncButton.type='button'; syncButton.className='button button-outline'; syncButton.textContent='同步原料库'; syncButton.addEventListener('click',()=>void openSpecSync({trigger:'manual'}));
     const headingRow = document.createElement('header'); headingRow.className='doc-view-heading'; headingRow.append(heading,syncButton);
     const tabs = document.createElement('div'); tabs.className = 'doc-tabs'; tabs.setAttribute('role','tablist'); tabs.setAttribute('aria-label',title);
+    const searchRow = document.createElement('label'); searchRow.className='doc-live-search';
+    const searchInput = document.createElement('input'); searchInput.type='search'; searchInput.placeholder=view==='documents'?'活搜索：规范 / 手册 / 语料库关键词或型号':'搜索原料…'; searchInput.setAttribute('aria-label','文档活搜索');
+    const searchHint = document.createElement('p'); searchHint.className='doc-live-search-hint'; searchHint.hidden=true;
+    searchRow.append(searchInput, searchHint);
     const reader = document.createElement('div'); reader.className = 'document-reader';
     const toc = document.createElement('nav'); toc.className = 'document-toc'; toc.setAttribute('aria-label','文档目录');
     const article = document.createElement('article'); article.className = 'document-content'; article.setAttribute('aria-live','polite');
-    reader.append(toc, article); panel.append(headingRow, tabs, reader); document.querySelector('.main-content').append(panel);
+    reader.append(toc, article); panel.append(headingRow, tabs, ...(view==='documents'?[searchRow]:[]), reader); document.querySelector('.main-content').append(panel);
+    const applySearch = () => {
+      if(view!=='documents'||reader.hidden)return;
+      const query=searchInput.value.trim().toLowerCase();
+      article.querySelectorAll('mark.doc-search-hit').forEach(node=>{const parent=node.parentNode;parent.replaceChild(document.createTextNode(node.textContent),node);parent.normalize();});
+      if(!query){searchHint.hidden=true;searchHint.textContent='';return;}
+      let hits=0;
+      const walk=node=>{
+        if(node.nodeType===Node.TEXT_NODE){
+          const text=node.textContent,lower=text.toLowerCase(),index=lower.indexOf(query);
+          if(index<0)return;
+          const mark=document.createElement('mark');mark.className='doc-search-hit';mark.textContent=text.slice(index,index+query.length);
+          const after=document.createTextNode(text.slice(index+query.length));
+          const parent=node.parentNode;parent.insertBefore(document.createTextNode(text.slice(0,index)),node);parent.insertBefore(mark,node);parent.insertBefore(after,node);parent.removeChild(node);hits+=1;walk(after);return;
+        }
+        if(node.nodeType===Node.ELEMENT_NODE&&!['SCRIPT','STYLE','MARK'].includes(node.tagName))[...node.childNodes].forEach(walk);
+      };
+      walk(article);
+      searchHint.hidden=false;
+      searchHint.textContent=hits?`命中 ${hits} 处。`:`未找到「${searchInput.value.trim()}」。若是新型号，生成时会按输入名适配；采用成稿后可走缺口写回确认。`;
+    };
+    searchInput.addEventListener('input',()=>applySearch());
     const editors = new Map();
     for (const [id, label] of docs) {
       const tab = document.createElement('button'); tab.type = 'button'; tab.textContent = label; tab.dataset.doc = id;
@@ -264,6 +289,7 @@ function mountDocumentViews() {
         if (restore) {
           restoreScroll(name);
         }
+        applySearch();
       } catch (error) {if (request === version) article.textContent = `文档读取失败：${error.message}`;}
     };
     tabs.addEventListener('click', event => {const tab = event.target.closest('[data-doc]'); if(tab) void select(tab.dataset.doc);});
@@ -290,15 +316,18 @@ const syncDialog=document.querySelector('#spec-sync-dialog');
 let syncDraft=null;
 async function openSpecSync(input){
   if(!syncDialog.open)syncDialog.showModal();
+  const corpus=input.trigger==='corpus_gap'||input.targetDoc==='model-corpus';
+  syncDialog.querySelector('#spec-sync-title').textContent=corpus?'型号语料缺口确认':'同步操作规范确认';
   syncDialog.querySelector('#spec-sync-status').textContent='正在调用分析模型…';
   syncDialog.querySelector('[data-spec-sync-apply]').disabled=true;
   if(input.trigger==='manual')showView('content-spec',{replace:false,restore:false});
+  if(corpus)showView('corpus',{replace:false,restore:false});
   try{await analyzeSpec(input);}catch(error){syncDialog.querySelector('#spec-sync-status').textContent=`分析失败：${error.message}`;}
 }
 async function analyzeSpec(input){
   const result=await api('/api/content-ops/spec-sync/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});
   syncDraft=result;
-  syncDialog.querySelector('#spec-sync-status').textContent='请审核差异后确认或继续调整。';
+  syncDialog.querySelector('#spec-sync-status').textContent=result.targetDoc==='model-corpus'?'仅缺口草案，确认后才写入语料库；取消不影响已采用图文。':'请审核差异后确认或继续调整。';
   syncDialog.querySelector('#spec-sync-summary').textContent=result.summary||'模型未提供摘要。';
   syncDialog.querySelector('#spec-sync-before').textContent=result.before;
   syncDialog.querySelector('#spec-sync-after').textContent=result.updatedContent;
@@ -311,13 +340,13 @@ syncDialog.querySelector('[data-spec-sync-reanalyze]').addEventListener('click',
   if(!syncDraft)return;const feedback=syncDialog.querySelector('[name="feedback"]').value.trim();
   if(!feedback){syncDialog.querySelector('#spec-sync-status').textContent='请先填写修改建议。';return;}
   syncDialog.querySelector('[data-spec-sync-reanalyze]').disabled=true;
-  try{await analyzeSpec({trigger:'manual',previousDraft:syncDraft.updatedContent,feedback});syncDialog.querySelector('[name="feedback"]').value='';}
+  try{await analyzeSpec({trigger:syncDraft.targetDoc==='model-corpus'?'corpus_gap':'manual',targetDoc:syncDraft.targetDoc||'content-spec',previousDraft:syncDraft.updatedContent,feedback,addedItem:syncDraft.addedItem});syncDialog.querySelector('[name="feedback"]').value='';}
   catch(error){syncDialog.querySelector('#spec-sync-status').textContent=`重新分析失败：${error.message}`;}
   finally{syncDialog.querySelector('[data-spec-sync-reanalyze]').disabled=false;}
 });
 syncDialog.querySelector('[data-spec-sync-apply]').addEventListener('click',async event=>{
   if(!syncDraft)return;const button=event.currentTarget;button.disabled=true;
-  try{const saved=await api('/api/content-ops/spec-sync/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({updatedContent:syncDraft.updatedContent,revision:syncDraft.revision,summary:syncDraft.summary})});syncDialog.querySelector('#spec-sync-status').textContent=`已同步并提交 ${saved.commit}。`;showView('content-spec',{replace:false,restore:false});setTimeout(()=>{syncDraft=null;syncDialog.close();},700);}
+  try{const saved=await api('/api/content-ops/spec-sync/apply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({updatedContent:syncDraft.updatedContent,revision:syncDraft.revision,summary:syncDraft.summary,targetDoc:syncDraft.targetDoc||'content-spec'})});syncDialog.querySelector('#spec-sync-status').textContent=`已同步并提交 ${saved.commit}。`;showView(syncDraft.targetDoc==='model-corpus'?'corpus':'content-spec',{replace:false,restore:false});setTimeout(()=>{syncDraft=null;syncDialog.close();},700);}
   catch(error){syncDialog.querySelector('#spec-sync-status').textContent=`同步失败：${error.message}`;button.disabled=false;}
 });
 

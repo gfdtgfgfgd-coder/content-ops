@@ -184,7 +184,7 @@ export class ContentOpsUI {
     const list=document.querySelector('#content-ops-model-list');
     const hint=document.querySelector('#content-ops-model-hint');
     if(list)list.innerHTML=models.map(model=>`<option value="${esc(model.id)}"></option>`).join('');
-    if(hint)hint.textContent=models.length?`语料已接入：${models.map(model=>model.id).join('、')}。可输入正式名、别名，或任意新型号（无专节时封面短词自动回落）。`:'尚未读到 model-corpus 专节；仍可直接输入型号生成，封面短词走通用回落。';
+    if(hint)hint.textContent=models.length?`语料已接入：${models.map(model=>model.id).join('、')}。输入名会原样出现在封面/文案；命中别名时只借用语料事实，不改对外型号写法。`:'尚未读到 model-corpus 专节；仍可按输入名生成，封面短词走通用回落。';
   }
   renderHistory(batches){const history=document.querySelector('#content-ops-history');history.innerHTML='<option value="">查看已保存批次</option>'+batches.map(batch=>`<option value="${esc(batch.id)}">${esc(batch.model)} · ${batch.count} 张图 / ${batch.copyCount??batch.count} 篇 · ${esc(({running:'生成中',completed:'已完成',partial:'部分完成',failed:'失败'})[batch.status]||batch.status)}</option>`).join('');history.value=this.batch?.id||'';}
   async submit(){

@@ -18,9 +18,13 @@ test('product models resolve informal aliases and reject unknown families before
   assert.deepEqual(models.map(item => item.id).sort(), ['DeepSeek V4.1', 'GLM-5.3', 'Kimi K3.1 Pro']);
   assert.equal(resolveProductModel('kimi k3.1', models, { requireCover: true }), 'Kimi K3.1 Pro');
   assert.equal(resolveProductModel('GLM5.3', models, { requireCover: true }), 'GLM-5.3');
-  assert.equal(validateContentOpsInput({ ...input, model: 'kimi k3.1' }, { productModels: models }).model, 'Kimi K3.1 Pro');
+  const aliased = validateContentOpsInput({ ...input, model: 'kimi k3.1' }, { productModels: models });
+  assert.equal(aliased.model, 'kimi k3.1');
+  assert.equal(aliased.corpusModel, 'Kimi K3.1 Pro');
   assert.throws(() => resolveProductModel('Kimi K3.2 Pro', models, { requireCover: true }), /未匹配语料库/);
-  assert.equal(validateContentOpsInput({ ...input, model: 'Unknown Model' }, { productModels: models }).model, 'Unknown Model');
+  const freeform = validateContentOpsInput({ ...input, model: 'Unknown Model' }, { productModels: models });
+  assert.equal(freeform.model, 'Unknown Model');
+  assert.equal(freeform.corpusModel, 'Unknown Model');
 });
 
 test('brief and cover style validate type, length, controls; old input stays compatible', () => {
@@ -66,10 +70,11 @@ test('existing DB migrates, brief and manual style persist, single argv is safe,
     const server = await readFile(join(root,'hanabi/server.mjs'),'utf8');
     db.exec(server.match(/db\.exec\(`([\s\S]*?)`\);/)[1]);
     assert.equal(db.prepare('PRAGMA table_info(content_ops_batches)').all().some(c=>c.name==='brief'),false);
-    await mkdir(join(dir,'scripts'),{recursive:true});await mkdir(join(dir,'scratch'),{recursive:true});
+    await mkdir(join(dir,'scripts'),{recursive:true});await mkdir(join(dir,'scratch'),{recursive:true});await mkdir(join(dir,'data'),{recursive:true});
     await writeFile(join(dir,'scripts/generate.py'),'# offline marker, never executed');
     await mkdir(join(dir,'scratch/.venv/bin'),{recursive:true});await writeFile(join(dir,'scratch/.venv/bin/python'),'offline marker');
     await writeFile(join(dir,'scratch/gateway.env'),'CONTENT_OPS_API_KEY=offline-placeholder\nCONTENT_OPS_BASE_URL=https://offline.invalid/v1\n');
+    await copyFile(join(root,'data/model-corpus.md'),join(dir,'data/model-corpus.md'));
     const captured=[];
     const spawnProcess=(command,args,options)=>{
       captured.push({command,args,options});const child=new EventEmitter();
@@ -82,6 +87,8 @@ test('existing DB migrates, brief and manual style persist, single argv is safe,
     assert.equal(batch.brief,brief);assert.equal(batch.styleMode,'manual');assert.equal(batch.stylePreset,'code_ide');assert.equal(batch.stylePrompt,'暗黑极客风、蓝紫霓虹光');
     assert.equal(captured.length,1);assert.equal(captured[0].command,join(dir,'scratch/.venv/bin/python'));
     assert.equal(captured[0].args[captured[0].args.indexOf('--brief')+1],brief);
+    assert.equal(captured[0].args[captured[0].args.indexOf('--model')+1],'Kimi K3.1 Pro');
+    assert.equal(captured[0].args[captured[0].args.indexOf('--corpus-model')+1],'Kimi K3.1 Pro');
     assert.equal(captured[0].args[captured[0].args.indexOf('--style-mode')+1],'manual');
     assert.equal(captured[0].args[captured[0].args.indexOf('--style-preset')+1],'code_ide');
     assert.equal(captured[0].args[captured[0].args.indexOf('--style-prompt')+1],'暗黑极客风、蓝紫霓虹光');
@@ -92,6 +99,11 @@ test('existing DB migrates, brief and manual style persist, single argv is safe,
     const restored=new ContentOpsProduction({db,root:dir,uploadDir:join(dir,'uploads'),spawnProcess});
     assert.equal(restored.list()[0].brief,brief);assert.equal(restored.list()[0].stylePreset,'code_ide');
     await restored.recover();assert.equal(restored.get(batch.id).status,'failed');assert.equal(captured.length,1);
+    const aliased=await restored.create({...input,requestId:'alias-display-123',model:'kimi k3.1',brief,...stylePayload});
+    assert.equal(aliased.batch.model,'kimi k3.1');assert.equal(aliased.batch.corpusModel,'Kimi K3.1 Pro');
+    assert.equal(captured.at(-1).args[captured.at(-1).args.indexOf('--model')+1],'kimi k3.1');
+    assert.equal(captured.at(-1).args[captured.at(-1).args.indexOf('--corpus-model')+1],'Kimi K3.1 Pro');
+    await restored.recover();
     const old=await restored.create({...input,requestId:'offline-old-123'});assert.equal(old.batch.brief,'');assert.equal(old.batch.styleMode,'auto');
     const ui=await readFile(join(root,'hanabi/lib/content-ops-ui.mjs'),'utf8');
     assert.match(ui,/esc\(this\.batch\.brief\)/);

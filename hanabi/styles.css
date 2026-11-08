@@ -2164,6 +2164,10 @@ body { font-size: var(--font-body); line-height: 1.65; }
 .doc-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;border-bottom:1px solid var(--line)}
 .doc-tabs button{min-height:40px;padding:8px 12px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--text-soft);font:inherit;cursor:pointer}
 .doc-tabs button[aria-selected="true"]{border-bottom-color:var(--accent);color:var(--text);font-weight:650}
+.doc-live-search{display:grid;gap:6px;margin:0 0 14px;font-size:13px;color:var(--text-soft)}
+.doc-live-search input{min-height:40px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--text);font:inherit}
+.doc-live-search-hint{margin:0;font-size:12px;line-height:1.6;color:var(--text-muted)}
+mark.doc-search-hit{background:color-mix(in srgb,var(--accent) 28%,#fff);color:inherit;padding:0 2px;border-radius:3px}
 .document-content{max-width:900px;color:var(--text);line-height:1.8;overflow-wrap:anywhere}
 .document-content h2,.document-content h3,.document-content h4,.document-content h5{margin:24px 0 9px;line-height:1.45}
 .document-content h2{font-size:21px}.document-content h3{font-size:18px}.document-content h4,.document-content h5{font-size:16px}

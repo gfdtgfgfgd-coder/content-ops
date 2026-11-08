@@ -324,10 +324,11 @@ export class ContentOpsRevisionUI {
   async apply(){
     if(this.busy||!this.candidateId)return;
     const token=this.token;this.setBusy(true);
-    try{const {batch}=await api(this.endpoint('apply'),{kind:this.kind,copyIndex:this.copyIndex,baseRevision:this.expectedRevision,revisionId:this.candidateId});
+    try{const data=await api(this.endpoint('apply'),{kind:this.kind,copyIndex:this.copyIndex,baseRevision:this.expectedRevision,revisionId:this.candidateId});const {batch,corpusGap}=data;
       if(this.host.batch?.id===batch.id){const before=this.host.batch.status;this.host.batch=batch;this.host.render();if(before!==batch.status){const history=await api('/api/content-ops/batches').catch(()=>null);if(history)this.host.renderHistory?.(history.batches||[]);}}
       if(token!==this.token)return;
-      this.dirty=false;this.expectedRevision=this.candidateId;await this.refreshHistory(token);if(token!==this.token)return;this.q('[data-preview-label]').textContent='当前采用版';this.status('已采用。工作台预览、复制和下载均使用此版。');
+      this.dirty=false;this.expectedRevision=this.candidateId;await this.refreshHistory(token);if(token!==this.token)return;this.q('[data-preview-label]').textContent='当前采用版';this.status(corpusGap?'已采用。可确认是否把缺口补进型号语料库。':'已采用。工作台预览、复制和下载均使用此版。');
+      if(corpusGap)window.dispatchEvent(new CustomEvent('content-ops:spec-sync',{detail:corpusGap}));
     }catch(error){if(token===this.token)this.status(error.message,true);}
     finally{if(token===this.token)this.setBusy(false);}
   }
