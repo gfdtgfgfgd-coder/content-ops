@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ContentOpsProduction, validateContentOpsInput } from './content-ops-production.mjs';
 import { listProductModels, resolveProductModel } from './content-ops-models.mjs';
-import { parsePostText, renderPostContent } from './content-ops-ui.mjs';
+import { parsePostText, renderPostContent, nextGenerateRequest, generateSubmitLabel } from './content-ops-ui.mjs';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const input = {model:'Kimi K3.1 Pro',platform:'xhs',count:1,backgroundMode:'fresh',requestId:'offline-test-123'};
 
@@ -950,6 +950,22 @@ test('references block another live process lock and recover a lock left by an e
   await assert.rejects(()=>stat(path),{code:'ENOENT'});
 });
 
+
+test('failed batches force a new generate request and rename the submit button', () => {
+  const stored={signature:'same',id:'old-request-id'};
+  assert.equal(nextGenerateRequest(stored,'same','running',()=>'fresh-id').id,'old-request-id');
+  assert.equal(nextGenerateRequest(stored,'same',undefined,()=>'fresh-id').id,'old-request-id');
+  assert.equal(nextGenerateRequest(stored,'same','failed',()=>'fresh-id').id,'fresh-id');
+  assert.equal(nextGenerateRequest(stored,'same','partial',()=>'fresh-id').id,'fresh-id');
+  assert.equal(nextGenerateRequest(stored,'same','completed',()=>'fresh-id').id,'fresh-id');
+  assert.equal(nextGenerateRequest(stored,'changed','running',()=>'fresh-id').id,'fresh-id');
+  assert.equal(generateSubmitLabel({}),'开始生成');
+  assert.equal(generateSubmitLabel({batchStatus:'failed'}),'重新生成');
+  assert.equal(generateSubmitLabel({batchStatus:'partial'}),'重新生成');
+  assert.equal(generateSubmitLabel({batchStatus:'completed'}),'再生成一批');
+  assert.equal(generateSubmitLabel({busy:true,batchStatus:'failed'}),'创建中…');
+  assert.equal(generateSubmitLabel({running:true}),'生成中…');
+});
 
 test('platform card presentation preserves Markdown paragraphs, tags and legacy plain copy',()=>{
   const source='# 标题 · 型号\r\n\r\n第一段\r\n短行\r\n\r\n第二段 #正文话题\r\n\r\n#标签一 #GLM5.3\r\n#标签二\r\n';

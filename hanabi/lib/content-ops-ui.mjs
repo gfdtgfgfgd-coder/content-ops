@@ -4,6 +4,19 @@ const storedReferences=()=>{try{const value=JSON.parse(sessionStorage.getItem('c
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const styleLabels={bold_typo:'撞色大字报',code_ide:'极客代码屏',card_3d:'3D卡片流程',comparison:'痛点对比',promo:'促销活动感'};
 const copyFormatLabels={all_variations:'全套多样化',format_1:'极简转化',format_2:'工具场景',format_3:'精准圈人'};
+const TERMINAL_BATCH=new Set(['failed','partial','completed']);
+/** Mint a fresh request when the current batch already finished; otherwise keep idempotent retries. */
+export function nextGenerateRequest(stored,signature,batchStatus,createId=()=>crypto.randomUUID()){
+  if(TERMINAL_BATCH.has(batchStatus)||!stored||stored.signature!==signature)return{signature,id:createId()};
+  return stored;
+}
+export function generateSubmitLabel({busy=false,running=false,batchStatus=''}={}){
+  if(busy)return'创建中…';
+  if(running)return'生成中…';
+  if(batchStatus==='failed'||batchStatus==='partial')return'重新生成';
+  if(batchStatus==='completed')return'再生成一批';
+  return'开始生成';
+}
 export const copiesForPost=post=>Array.isArray(post?.copies)&&post.copies.length?post.copies:(post?.text?[{index:1,text:post.text}]:[]);
 export const selectedCopy=(post,position=0)=>copiesForPost(post)[position]||copiesForPost(post)[0]||{text:''};
 const hydratedReferences=(references,liveReferences)=>Array.isArray(references)?references.map(ref=>liveReferences.find(item=>item.platform===ref.platform&&String(item.id)===String(ref.id))||ref):[];
@@ -176,7 +189,6 @@ export class ContentOpsUI {
   renderHistory(batches){const history=document.querySelector('#content-ops-history');history.innerHTML='<option value="">查看已保存批次</option>'+batches.map(batch=>`<option value="${esc(batch.id)}">${esc(batch.model)} · ${batch.count} 张图 / ${batch.copyCount??batch.count} 篇 · ${esc(({running:'生成中',completed:'已完成',partial:'部分完成',failed:'失败'})[batch.status]||batch.status)}</option>`).join('');history.value=this.batch?.id||'';}
   async submit(){
     if(this.busy||this.batch?.status==='running')return;
-    let request=storedRequest();
     const references=storedReferences();
     const brief=document.querySelector('#content-ops-brief').value;
     if(Array.from(brief).length>1000){this.notice.textContent='需求不能超过1000字。';return;}
@@ -189,10 +201,11 @@ export class ContentOpsUI {
     if(!Number.isInteger(copyMultiplier)||copyMultiplier<1||copyMultiplier>5){this.notice.textContent='每张封面文案数须为 1–5 的整数。';return;}
     const body={copyFormat,copyMultiplier,brief,model:document.querySelector('#content-ops-model').value.trim(),platform:document.querySelector('#content-ops-platform').value,count:Number(document.querySelector('#content-ops-count').value),backgroundMode:document.querySelector('#content-ops-background').value,styleMode,stylePreset,stylePrompt,references};
     const signature=JSON.stringify(body);
-    // Keep the same id after an uncertain network response; never bill twice.
-    if(!request||request.signature!==signature)request={signature,id:crypto.randomUUID()};
+    // Idempotent while in-flight; failed/completed batches must mint a new id or the API silently returns the old row.
+    const request=nextGenerateRequest(storedRequest(),signature,this.batch?.status);
     body.requestId=request.id;sessionStorage.setItem('hanabi.content-ops-request',JSON.stringify(request));
-    let failure='';this.busy=true;this.render();this.notice.textContent='正在创建图文任务…';
+    const redo=['failed','partial'].includes(this.batch?.status);
+    let failure='';this.busy=true;this.render();this.notice.textContent=redo?'正在重新生成…':'正在创建图文任务…';
     try{const data=await api('/api/content-ops/generate',body);this.batch=data.batch;request.batchId=this.batch.id;sessionStorage.setItem('hanabi.content-ops-request',JSON.stringify(request));this.render();await this.refresh();this.schedule();}
     catch(error){failure=error.message;}
     finally{this.busy=false;this.render();if(failure)this.notice.textContent=failure;}
@@ -210,7 +223,10 @@ export class ContentOpsUI {
   render(){
     const references=this.batch?.references||[];
     const running=this.batch?.status==='running',locked=Boolean(this.busy||running);
-    document.querySelector('#content-ops-submit').disabled=locked;document.querySelector('#content-ops-stop').hidden=!running;document.querySelector('#content-ops-new').hidden=!this.batch||locked;
+    const submit=document.querySelector('#content-ops-submit');
+    submit.disabled=locked;
+    submit.textContent=generateSubmitLabel({busy:this.busy,running,batchStatus:this.batch?.status||''});
+    document.querySelector('#content-ops-stop').hidden=!running;document.querySelector('#content-ops-new').hidden=!this.batch||locked;
     const resume=document.querySelector('#content-ops-resume');if(resume)resume.hidden=locked||!this.batch?.resumable;
     document.querySelector('#content-ops-history').disabled=locked;
     for(const control of this.form.querySelectorAll('input,select,textarea'))control.disabled=locked;
