@@ -4,9 +4,9 @@
 <key>Label</key><string>com.lilith.hanabi.server</string>
 <key>ProgramArguments</key><array>
   <string>/Users/mac/.local/bin/node</string>
-  <string>/Users/mac/Desktop/content-ops/hanabi/server.mjs</string>
+  <string>/Users/mac/Desktop/Hanabi/hanabi/server.mjs</string>
 </array>
-<key>WorkingDirectory</key><string>/Users/mac/Desktop/content-ops</string>
+<key>WorkingDirectory</key><string>/Users/mac/Desktop/Hanabi/hanabi</string>
 <key>RunAtLoad</key><true/>
 <key>KeepAlive</key><true/>
 <key>ThrottleInterval</key><integer>3</integer>
@@ -14,6 +14,6 @@
   <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
   <key>CONTENT_ALCHEMY_PORT</key><string>6187</string>
 </dict>
-<key>StandardOutPath</key><string>/Users/mac/Desktop/content-ops/scratch/hanabi.log</string>
-<key>StandardErrorPath</key><string>/Users/mac/Desktop/content-ops/scratch/hanabi-error.log</string>
+<key>StandardOutPath</key><string>/Users/mac/Desktop/Hanabi/scratch/hanabi.log</string>
+<key>StandardErrorPath</key><string>/Users/mac/Desktop/Hanabi/scratch/hanabi-error.log</string>
 </dict></plist>

@@ -1435,13 +1435,15 @@ test('image typography reaches renderer and restores with versions; invalid sett
   const {revisions,calls}=await revisionFixture(t);
   const typography={scale:1.2,align:'left',font:'songti'};
   const coverTexts=[{role:'hook',text:'挖到宝了',scale:1.1},{role:'benefit',text:'便宜量大',scale:.8},{role:'model',text:'GLM5.3',scale:1.5}];
+  const colorGrade={brightness:120,contrast:110,saturation:90,warmth:105};
   const input={kind:'image',copyIndex:0,action:'regenerate',renderMode:'layered_poster',prompt:'浅蓝纸张',requestId:'typography-request-123',baseRevision:'original',
-    typography,coverTexts,backgroundStyle:{profile:'paper_shadow'}};
+    typography,coverTexts,colorGrade,backgroundStyle:{profile:'paper_shadow'}};
   for(const bad of [[],{scale:true,align:'left'},{scale:1.6,align:'left'},{scale:.5,align:'left'},{scale:1,align:'bad'},{scale:1,align:'left',font:'missing_font'}])await assert.rejects(()=>revisions.create('batch-123','job-12345',{...input,typography:bad}),{statusCode:400});
   await assert.rejects(()=>revisions.create('batch-123','job-12345',{...input,requestId:'bad-line-scale',coverTexts:[{role:'hook',text:'挖到宝了',scale:1.6},{role:'benefit',text:'便宜量大'},{role:'model',text:'GLM5.3'}]}),{statusCode:400});
+  await assert.rejects(()=>revisions.create('batch-123','job-12345',{...input,requestId:'bad-grade',colorGrade:{brightness:10,contrast:100,saturation:100,warmth:100}}),{statusCode:400});
   assert.equal(calls.length,0);
-  const pending=await revisions.create('batch-123','job-12345',input);assert.deepEqual(pending.result.typography,typography);assert.deepEqual(pending.result.coverTexts,coverTexts);
-  const ready=await revisionDone(revisions,pending.id);assert.equal(ready.status,'ready',ready.error);assert.deepEqual(calls[0].input.typography,typography);assert.deepEqual(calls[0].input.cover_texts,coverTexts);
+  const pending=await revisions.create('batch-123','job-12345',input);assert.deepEqual(pending.result.typography,typography);assert.deepEqual(pending.result.coverTexts,coverTexts);assert.deepEqual(pending.result.colorGrade,colorGrade);
+  const ready=await revisionDone(revisions,pending.id);assert.equal(ready.status,'ready',ready.error);assert.deepEqual(calls[0].input.typography,typography);assert.deepEqual(calls[0].input.cover_texts,coverTexts);assert.deepEqual(calls[0].input.color_grade,colorGrade);
   revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:'original',revisionId:ready.id});
   assert.deepEqual(revisions.history('batch-123','job-12345','image',0).current.typography,typography);
   revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:ready.id,revisionId:'original'});

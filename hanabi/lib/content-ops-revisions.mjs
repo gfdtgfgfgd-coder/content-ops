@@ -13,6 +13,7 @@ const validText = (value, max) => typeof value === 'string' && value.trim() && [
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const coverFontCatalog = () => parse(readFileSync(join(PACKAGE_ROOT, 'config/cover-fonts.json'), 'utf8'), { default: 'source_han_sans', fonts: [] });
 const defaultTypography = () => ({ scale: 1, align: 'center', font: coverFontCatalog().default || 'source_han_sans' });
+const defaultColorGrade = () => ({ brightness: 100, contrast: 100, saturation: 100, warmth: 100 });
 const normalizeTypography = value => {
   const catalog = coverFontCatalog();
   const ids = new Set((catalog.fonts || []).map(font => font.id));
@@ -22,6 +23,18 @@ const normalizeTypography = value => {
     throw fail('字号比例须为60%～150%，对齐方式须为居中或左对齐，字体须为可用封面字体。');
   }
   return { scale: typography.scale, align: typography.align, font };
+};
+const normalizeColorGrade = value => {
+  const grade = value ?? defaultColorGrade();
+  const bounds = { brightness: [50, 150], contrast: [50, 150], saturation: [0, 200], warmth: [50, 150] };
+  if (!grade || typeof grade !== 'object') throw fail('背景调色参数无效。');
+  const normalized = {};
+  for (const [key, [low, high]] of Object.entries(bounds)) {
+    const raw = grade[key] ?? 100;
+    if (!Number.isFinite(raw) || raw < low || raw > high) throw fail(`背景${key}须为${low}～${high}。`);
+    normalized[key] = raw;
+  }
+  return normalized;
 };
 const normalizeCoverTexts = texts => {
   if (!Array.isArray(texts) || texts.length < 3 || texts.length > 4) throw fail('请填写3～4行封面文字及文字/高亮颜色。');
@@ -99,6 +112,7 @@ export class ContentOpsRevisions {
     return {...source,prompt:own?source.prompt:request.prompt||'',renderMode:own?source.renderMode:request.mode==='layered_poster'||plan.collection_name==='大字报'?'layered_poster':'direct_poster',
       coverTexts:own?source.coverTexts||[]:plan.cover_texts||saved.cover_texts||[],
       backgroundStyle:own?source.backgroundStyle||{}:backgroundStyle,typography:own?{...defaultTypography(),...(source.typography||{})}:defaultTypography(),
+      colorGrade:own?{...defaultColorGrade(),...(source.colorGrade||{})}:defaultColorGrade(),
       sourceRows:source.sha256===sourceHash&&source.rendered_text?.length?source.rendered_text:audit.render?.rendered_text||
         (source.image===target.original.image&&saved.image_generation?.sha256===sourceHash?saved.image_generation.rendered_text||[]:[]),
       promptOrigin:own||audit.render_input?'revision':source.image!==target.original.image?'original_fallback':'original'};
@@ -144,6 +158,7 @@ export class ContentOpsRevisions {
       if(body.renderMode==='layered_poster'){
         if(!body.backgroundStyle||typeof body.backgroundStyle!=='object')throw fail('请填写3～4行封面文字及文字/高亮颜色。');
         body.coverTexts=normalizeCoverTexts(body.coverTexts);
+        body.colorGrade=normalizeColorGrade(body.colorGrade);
       }
     }
     if(body.action==='typeset'&&(body.renderMode!=='layered_poster'||body.prompt!==this.imageContext(target,source).prompt))throw fail('背景词已修改或当前图不是分层海报，请先重新生图或恢复背景词。');
@@ -162,7 +177,7 @@ export class ContentOpsRevisions {
     if (this.db.prepare("SELECT 1 FROM content_ops_revisions WHERE job_id=? AND kind=? AND copy_index=? AND status='running'").get(jobId, body.kind, copyIndex)) throw fail('这项内容正在修改，请等待结果。', 409);
     if (this.children.size >= 3) throw fail('已有三项修改在进行，请稍后再试。', 409);
     const id = randomUUID();
-    const pending=['regenerate','typeset'].includes(body.action)?{prompt:body.prompt,renderMode:body.renderMode,coverTexts:body.coverTexts||[],backgroundStyle:body.backgroundStyle||{},typography:body.typography||defaultTypography(),sourceRevision:body.sourceRevision||target.revisionId}:{};
+    const pending=['regenerate','typeset'].includes(body.action)?{prompt:body.prompt,renderMode:body.renderMode,coverTexts:body.coverTexts||[],backgroundStyle:body.backgroundStyle||{},typography:body.typography||defaultTypography(),colorGrade:body.colorGrade||defaultColorGrade(),sourceRevision:body.sourceRevision||target.revisionId}:{};
     this.db.prepare("INSERT INTO content_ops_revisions(id,request_id,signature,batch_id,job_id,kind,copy_index,base_revision,action,instructions,status,created_at,result) VALUES(?,?,?,?,?,?,?,?,?,?,'running',?,?)").run(id, body.requestId, signature, batchId, jobId, body.kind, copyIndex, target.revisionId, body.action, body.instructions || '', new Date().toISOString(),JSON.stringify(pending));
     void this.run(id, { ...target, result: source }, body);
     return this.public(this.get(id));
@@ -186,7 +201,7 @@ export class ContentOpsRevisions {
         source_text: body.sourceText || target.result.text, text: body.text, brief: target.row.brief || '', facts: manifest.facts || {},
         instructions: body.instructions, region: body.region, image_data: body.imageData,
         prompt:body.prompt,render_mode:body.renderMode,cover_texts:body.coverTexts,background_style:body.backgroundStyle,typography:body.typography,
-        background_path:join(dir,'background.png') };
+        color_grade:body.colorGrade,background_path:join(dir,'background.png') };
       if (body.kind === 'image'&&body.action!=='regenerate') data.source_image = await this.sourcePath(target.result.image);
       if(body.action==='typeset'){data.source_rows=this.imageContext(target,target.result).sourceRows;data.background_recovered=target.result.backgroundRecovered;}
       const input = join(dir, 'request.json');
@@ -237,11 +252,12 @@ export class ContentOpsRevisions {
     if(context.renderMode!=='layered_poster'||!source.image)throw fail('此图片不支持本机文字排版，请使用完整海报提示词或原图修改。');
     const coverTexts=normalizeCoverTexts(body.coverTexts);
     const typography=normalizeTypography(body.typography);
+    const colorGrade=normalizeColorGrade(body.colorGrade);
     const id=randomUUID(),dir=join(this.root,'scratch/hanabi-runtime/previews',id),output=join(dir,'result.json'),image=join(dir,'image.png');
     this.previewChildren.set(id,null);
     try{
       const data={kind:'image',action:'typeset',platform:target.row.platform,model:target.row.model,source_image:await this.sourcePath(source.image),source_rows:context.sourceRows,
-        background_recovered:source.backgroundRecovered,prompt:context.prompt,cover_texts:coverTexts,background_style:body.backgroundStyle,typography};
+        background_recovered:source.backgroundRecovered,prompt:context.prompt,cover_texts:coverTexts,background_style:body.backgroundStyle,typography,color_grade:colorGrade};
       await mkdir(dir,{recursive:true,mode:0o700});await writeFile(join(dir,'request.json'),JSON.stringify(data),{flag:'wx',mode:0o600});
       const python=[join(this.root,'scratch/.venv/bin/python'),join(this.root,'.venv/bin/python')].find(p=>existsSync(p))||'python3';
       await this.invoke(python,[join(this.root,'scripts/generate.py'),'revise','--input',join(dir,'request.json'),'--output',output,'--image-output',image,'--config',join(this.root,'scratch/gateway.env')],child=>this.previewChildren.set(id,child),20000);

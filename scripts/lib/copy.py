@@ -725,10 +725,47 @@ def normalize_line_scale(value=1):
     return scale
 
 
-def render_bold_typo(background, output, texts, font_path, size, background_style=None, *, preserve_background=False, typography=None):
+def normalize_color_grade(value=None):
+    value = {} if value is None else value
+    if not isinstance(value, dict):
+        raise ValueError('背景调色参数无效')
+    bounds = {'brightness': (50, 150), 'contrast': (50, 150), 'saturation': (0, 200), 'warmth': (50, 150)}
+    grade = {}
+    for key, (low, high) in bounds.items():
+        raw = value.get(key, 100)
+        if type(raw) not in (int, float) or not low <= raw <= high:
+            raise ValueError(f'{key}调色须为{low}～{high}')
+        grade[key] = float(raw)
+    return grade
+
+
+def apply_color_grade(image, grade=None):
+    from PIL import Image, ImageEnhance
+    grade = normalize_color_grade(grade)
+    if all(grade[key] == 100 for key in grade):
+        return image
+    result = image.convert('RGB')
+    if grade['brightness'] != 100:
+        result = ImageEnhance.Brightness(result).enhance(grade['brightness'] / 100)
+    if grade['contrast'] != 100:
+        result = ImageEnhance.Contrast(result).enhance(grade['contrast'] / 100)
+    if grade['saturation'] != 100:
+        result = ImageEnhance.Color(result).enhance(grade['saturation'] / 100)
+    if grade['warmth'] != 100:
+        delta = (grade['warmth'] - 100) / 100
+        red, green, blue = result.split()
+        shift = 48 * delta
+        red = red.point(lambda pixel: max(0, min(255, int(pixel + shift))))
+        blue = blue.point(lambda pixel: max(0, min(255, int(pixel - shift))))
+        result = Image.merge('RGB', (red, green, blue))
+    return result
+
+
+def render_bold_typo(background, output, texts, font_path, size, background_style=None, *, preserve_background=False, typography=None, color_grade=None):
     from PIL import Image, ImageDraw, ImageOps, ImageStat
     style = backgrounds.normalize_style(background_style)
     typography = normalize_typography(typography)
+    color_grade = normalize_color_grade(color_grade)
     with Image.open(background) as source:
         if preserve_background:
             image = ImageOps.fit(source.convert('RGB'),size)
@@ -741,7 +778,7 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
             image, material_metadata = backgrounds.render_surface(source, size, style, hashlib.sha256(background.read_bytes()).hexdigest())
     width, height = size
     ink = backgrounds.readable_ink(material_metadata['text_surface_color'], style['ink'])
-    draw = ImageDraw.Draw(image)
+    measure = ImageDraw.Draw(image)
     text_width = int(width * .60) - 44
     rows = []
     for item in texts:
@@ -749,7 +786,7 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
         font = fit_font(font_path, item['text'], 104, text_width)
         font = font.font_variant(size=max(1, round(font.size * typography['scale'] * line_scale)))
         stroke = max(1, round(font.size / 70))
-        bounds = draw.textbbox((0, 0), item['text'], font=font, stroke_width=stroke)
+        bounds = measure.textbbox((0, 0), item['text'], font=font, stroke_width=stroke)
         rows.append({'text': item['text'], 'font': font, 'bounds': bounds,
                      'height': bounds[3] - bounds[1], 'width': bounds[2] - bounds[0],
                      'stroke': stroke, 'role': item['role'], 'scale': line_scale})
@@ -766,6 +803,8 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
     parts=[encoded[i:i+512*1024] for i in range(0,len(encoded),512*1024)]
     layers.add_text('hanabi_background_parts',str(len(parts)))
     for index,part in enumerate(parts):layers.add_itxt(f'hanabi_background_{index}',part,zip=True)
+    image = apply_color_grade(image, color_grade)
+    draw = ImageDraw.Draw(image)
     rendered = []
     for row in rows:
         x = block_left if typography['align'] == 'left' else round((width - row['width']) / 2)
@@ -787,7 +826,8 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
             'sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
             'text_area_ratio': max((row['width'] / width for row in rows), default=0),
             'minimum_side_margin_ratio': min((min(box[0], width - box[2]) / width for box in (r['bbox'] for r in rendered)), default=0),
-            'line_gap_px': gap, 'rendered_text': rendered, 'background_surface': material_metadata, 'typography':typography}
+            'line_gap_px': gap, 'rendered_text': rendered, 'background_surface': material_metadata,
+            'typography':typography, 'colorGrade': color_grade}
 
 def poster_size(platform):
     return (1080, 1440) if platform == 'xhs' else (1080, 1080)

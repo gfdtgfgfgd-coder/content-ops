@@ -28,6 +28,7 @@ def regenerate_image(data, settings, output):
         raise ValueError('重新生成方式无效')
     copy.check_cover_words(copy.positive_visual_text(prompt),data['platform'],data['model'],context='生图提示词')
     typography = copy.normalize_typography(data.get('typography'))
+    color_grade = copy.normalize_color_grade(data.get('color_grade'))
     style, texts = None, []
     if mode == 'layered_poster':
         copy.check_bold_typo_subject(copy.positive_visual_text(prompt))
@@ -48,8 +49,9 @@ def regenerate_image(data, settings, output):
             size=f'{size[0]}x{size[1]}',timeout=240)
         if (result['width'],result['height']) != size:
             raise ValueError('图像模型返回画幅不符；未采用，不自动重试')
-        rendered = copy.render_bold_typo(background,output,texts,font,size,style,preserve_background=True,typography=typography) if mode=='layered_poster' else {}
+        rendered = copy.render_bold_typo(background,output,texts,font,size,style,preserve_background=True,typography=typography,color_grade=color_grade) if mode=='layered_poster' else {}
         return {**result,**rendered,'prompt':prompt,'renderMode':mode,'coverTexts':texts,'backgroundStyle':style,'typography':typography,
+                'colorGrade':color_grade if mode=='layered_poster' else None,
                 'imageRequest':{'prompt':prompt,'model':result['model'],'size':f'{size[0]}x{size[1]}','mode':mode,'status':'completed'}}
     finally:
         background.unlink(missing_ok=True)
@@ -65,6 +67,7 @@ def typeset_image(data, settings, output):
         copy.normalize_line_scale(item.get('scale', 1) if isinstance(item, dict) else 1)
     style = backgrounds.normalize_style(data.get('background_style'))
     typography = copy.normalize_typography(data.get('typography'))
+    color_grade = copy.normalize_color_grade(data.get('color_grade'))
     font = copy.resolve_cover_font(typography, settings)
     recovered = False
     with Image.open(data['source_image']) as source:
@@ -109,9 +112,9 @@ def typeset_image(data, settings, output):
     if background.exists():raise ValueError('临时背景文件已存在，拒绝覆盖')
     try:
         image.save(background,format='PNG')
-        rendered=copy.render_bold_typo(background,output,texts,font,image.size,style,preserve_background=True,typography=typography)
+        rendered=copy.render_bold_typo(background,output,texts,font,image.size,style,preserve_background=True,typography=typography,color_grade=color_grade)
         return {**rendered,'prompt':data.get('prompt',''),'renderMode':'layered_poster','coverTexts':texts,'backgroundStyle':style,
-                'backgroundRecovered':bool(data.get('background_recovered') or recovered),'model':'local-typesetter','usage':{}}
+                'colorGrade':color_grade,'backgroundRecovered':bool(data.get('background_recovered') or recovered),'model':'local-typesetter','usage':{}}
     finally:
         background.unlink(missing_ok=True)
 

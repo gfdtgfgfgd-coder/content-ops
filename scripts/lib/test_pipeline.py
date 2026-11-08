@@ -1324,12 +1324,18 @@ class RevisionTests(unittest.TestCase):
         mixed=copy.render_bold_typo(source,self.base/'mixed.png',varied,font,(1080,1440),preserve_background=True,typography={'scale':1,'align':'center'})
         self.assertGreater(next(row['font_size'] for row in mixed['rendered_text'] if row['role']=='model'),
                            next(row['font_size'] for row in mixed['rendered_text'] if row['role']=='hook'))
+        graded=copy.render_bold_typo(source,self.base/'graded.png',texts,font,(1080,1440),preserve_background=True,
+                                     typography={'scale':1,'align':'center'},color_grade={'brightness':130,'contrast':120,'saturation':80,'warmth':115})
+        self.assertNotEqual(graded['sha256'],sans['sha256'])
+        self.assertEqual(graded['colorGrade']['brightness'],130)
         with patch.object(gateway,'generate_image') as call:
             for invalid in [[],{'scale':True,'align':'left'},{'scale':1.6,'align':'left'},{'scale':.5,'align':'left'},{'scale':1,'align':'invalid'},{'scale':1,'align':'left','font':'missing_font'}]:
                 with self.subTest(invalid=invalid),self.assertRaises(ValueError):
                     self.revision.run({**data,'typography':invalid},self.settings,self.base/'invalid.png')
             with self.assertRaises(ValueError):
                 self.revision.run({**data,'cover_texts':[{**texts[0],'scale':1.8},*texts[1:]]},self.settings,self.base/'bad-line.png')
+            with self.assertRaises(ValueError):
+                self.revision.run({**data,'color_grade':{'brightness':10}},self.settings,self.base/'bad-grade.png')
             call.assert_not_called()
 
     def test_live_typesetting_preserves_background_layer_and_matches_saved_pixels_without_models(self):
