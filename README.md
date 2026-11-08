@@ -24,9 +24,9 @@
 | 闲鱼数据 | 来源于 `data/posts.jsonl`（platform=xianyu） |
 | 运营偏好 | 提炼自企微运营反馈，详见 `skills/simin-persona/SKILL.md` |
 | 使用者 | lilith 一人；做顺了同事（阮思敏，运营）会用 |
-| 生成脚本 | 文案与封面已解耦；自动参考从四大人工合集按平台选 1 篇，手选严格按用户选区；单张海报只看一张结构锚图；视觉模型返回结构、独立短字与同构换装方案，图像模型按平台规格直出完整海报。校验器对结构辅助字段自动推断修复；详见本轮 CHANGELOG四项模型默认值统一读取 `config/gateway.env.example`，本机配置优先。 |
+| 生成脚本 | 文案与封面已解耦；自动参考从四大人工合集按平台选 1 篇，手选严格按用户选区；单张海报只看一张结构锚图；视觉模型返回结构、独立短字与同构换装方案，图像模型按平台规格直出完整海报。校验器对结构辅助字段自动推断修复；详见本轮 CHANGELOG。四项模型默认值统一读取 `config/gateway.env.example`，本机配置优先。 |
 | 界面 | 生成与预览合为双栏工作台，导航为生成图文、素材库、原料库、操作规范。原料库含运营偏好与风险词库（只增不删）；规范同步支持分析、建议重分析、确认/取消。模型配置读写本机 `scratch/gateway.env`，含文案、视觉、生图与规则提炼分析模型。文档由白名单 API 实时读取仓库源文件 |
-| 本轮进展 | 2026-11-08：本机已从旧 main 切到 `codex/reference-collections-outline`，同步 45 张精选参考图及既有功能更新，并合并 main 的四项默认模型配置；图片与回归验收见 TODO |
+| 本轮进展 | 2026-11-08：本机已从旧 main 切到 `codex/reference-collections-outline`，同步 45 张精选参考图及既有功能更新，并合并 main 的四项默认模型配置；已修复引用卡片有封面时仍显示“暂无封面”的重复占位问题；图片与回归验收见 TODO |
 | 最近内容交付 | T28：Kimi闲鱼双方图中段沿品牌黑白灰＋蓝色；顶部型号/价词设专属黄粉紫、朱红暖黄，不扩散至场景。占位与卖点保留，预设色值对比4.882—12.238:1。未生图或做平台检测，详见 [T28任务卡](docs/CHANGELOG.md) 和 [闲鱼方图提示词](outputs/2026-11-03/kimi31-xianyu-square-prompts.md) |
 | Hanabi 程序包 | 源码即仓库内 `hanabi/`，双击或运行 `start.command`；不再发布 ZIP（旧 ZIP 是 app 与 content-ops 双份副本，已删），说明见 [hanabi/releases/README.md](hanabi/releases/README.md) |
 
