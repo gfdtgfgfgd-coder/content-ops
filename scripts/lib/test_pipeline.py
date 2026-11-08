@@ -1258,6 +1258,43 @@ class RevisionTests(unittest.TestCase):
         self.assertIn('内容',payload['messages'][0]['content'])
         self.assertEqual(result['text'],'# 改写标题\n\n原始卖点')
 
+    def test_prompt_regeneration_submits_exact_prompt_without_copy_vision_or_image_edit(self):
+        for platform in ('xhs','xianyu'):
+            with self.subTest(platform=platform):
+                output=self.base/(platform+'.png');prompt='  蓝灰背景，GLM5.3，清晰完整海报。\n保留段落与空格  '
+                data={'kind':'image','action':'regenerate','platform':platform,'model':'GLM5.3','prompt':prompt,'render_mode':'direct_poster'}
+                def generate(**kwargs):
+                    size=copy.poster_size(platform);Image.new('RGB',size,'#234789').save(kwargs['output'])
+                    return {'output':str(kwargs['output']),'model':'selected-image','width':size[0],'height':size[1],'sha256':'fixture'}
+                with patch.object(gateway,'generate_image',side_effect=generate) as call,patch.object(gateway,'request_json') as vision,patch.object(self.revision,'multipart_request') as edit:
+                    result=self.revision.run(data,self.settings,output)
+                self.assertEqual(call.call_args.kwargs['prompt'],prompt)
+                self.assertEqual(result['prompt'],prompt);self.assertEqual(result['imageRequest']['prompt'],prompt)
+                self.assertEqual(call.call_args.kwargs['model'],'selected-image')
+                self.assertEqual(call.call_args.kwargs['size'],f"{copy.poster_size(platform)[0]}x{copy.poster_size(platform)[1]}")
+                vision.assert_not_called();edit.assert_not_called()
+
+    def test_layered_prompt_regeneration_keeps_new_background_colors_and_edited_cover_text(self):
+        output=self.base/'layered.png';texts=visual_plan()['cover_texts'];texts[-1]['text']='写代码真顺手'
+        data={'kind':'image','action':'regenerate','platform':'xhs','model':'GLM5.3','prompt':'整幅蓝色纸面纹理','render_mode':'layered_poster',
+              'cover_texts':texts,'background_style':{'profile':'paper_shadow','base':'#F3F3F1','ink':'#080808','accent':'#60DAD5','highlight_roles':['hook','model']}}
+        def generate(**kwargs):
+            Image.new('RGB',(1080,1440),'#234789').save(kwargs['output'])
+            return {'output':str(kwargs['output']),'model':'selected-image','width':1080,'height':1440}
+        with patch.object(gateway,'generate_image',side_effect=generate) as call:
+            result=self.revision.run(data,self.settings,output)
+        self.assertEqual(call.call_args.kwargs['prompt'],data['prompt'])
+        with Image.open(output) as image:self.assertEqual(image.getpixel((0,0)),(35,71,137))
+        self.assertEqual(result['rendered_text'][-1]['text'],'写代码真顺手')
+        self.assertEqual(result['background_surface']['material_source'],'generated_surface_preserved')
+        self.assertGreaterEqual(result['minimum_side_margin_ratio'],.2)
+        self.assertFalse((self.base/'layered-background.png').exists())
+        with patch.object(gateway,'generate_image') as call:
+            for change in ({'prompt':''},{'prompt':'加入电脑插画'},{'render_mode':'unknown'},{'cover_texts':[{'text':'API','role':'hook'}]}, {'background_style':{'accent':'invalid'}}):
+                with self.subTest(change=change),self.assertRaises(ValueError):
+                    self.revision.run({**data,**change},self.settings,self.base/'invalid.png')
+            call.assert_not_called()
+
     def test_image_edit_sends_original_mask_and_preserves_outside_region(self):
         source=self.base/'source.png';output=self.base/'new.png'
         Image.new('RGB',(100,120),'red').save(source)

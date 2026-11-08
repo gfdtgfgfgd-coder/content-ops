@@ -1,7 +1,7 @@
 // Original batches and exported files remain immutable. Revisions and current pointers live in SQLite.
 import { randomUUID, createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { readFile, mkdir, writeFile, rm, realpath } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 
@@ -46,7 +46,7 @@ export class ContentOpsRevisions {
     const original = this.production.original(row), post = original.posts.find(item => item.jobId === jobId);
     if (!post) throw fail('该批次没有这篇图文。', 404);
     const value = kind === 'copy' ? post.copies.find(copy => copy.index === copyIndex)?.text : post.image;
-    if (!value) throw fail(kind === 'copy' ? '这篇文案尚未生成。' : '这张图片尚未生成。');
+    if (!value && kind==='copy') throw fail('这篇文案尚未生成。');
     const revisionId = this.head(jobId, kind, copyIndex);
     const result = revisionId === 'original' ? kind === 'copy' ? { text: value } : { image: value } : parse(this.get(revisionId).result);
     return { row, post, kind, copyIndex, revisionId, result, original: kind === 'copy' ? { text: value } : { image: value } };
@@ -54,7 +54,21 @@ export class ContentOpsRevisions {
   history(batchId, jobId, kind, copyIndex) {
     const target = this.target(batchId, jobId, kind, copyIndex);
     const versions = this.db.prepare('SELECT * FROM content_ops_revisions WHERE job_id=? AND kind=? AND copy_index=? ORDER BY rowid DESC').all(jobId, kind, copyIndex).map(row => this.public(row));
-    return { currentRevision: target.revisionId, current: target.result, original: target.original, versions };
+    return { currentRevision: target.revisionId, current: kind==='image'?this.imageContext(target,target.result):target.result,
+      original:kind==='image'?this.imageContext(target,target.original):target.original, versions };
+  }
+  imageContext(target,source){
+    let manifest={};try{manifest=parse(readFileSync(join(target.row.output_dir,'manifest.json'),'utf8'));}catch{}
+    const saved=manifest.posts?.find(item=>Number(item.index)===target.post.index)||manifest.posts?.[target.post.index-1]||{};
+    const request=saved.image_requests?.at(-1)||saved.image_generation||{};
+    const own=source.renderMode&&['layered_poster','direct_poster'].includes(source.renderMode)&&typeof source.prompt==='string';
+    let recipe={};try{recipe=parse(readFileSync(join(this.root,'config/bold-typo-backgrounds.json'),'utf8'));}catch{}
+    const style=saved.visual_plan?.background_style||{},profile=recipe.profiles?.find(p=>p.id===(style.profile||recipe.default))||{};
+    const backgroundStyle={profile:profile.id,base:profile.base,ink:profile.ink,accent:profile.accent,highlight_roles:profile.highlight_roles,...style};
+    return {...source,prompt:own?source.prompt:request.prompt||'',renderMode:own?source.renderMode:request.mode==='layered_poster'||saved.visual_plan?.collection_name==='大字报'?'layered_poster':'direct_poster',
+      coverTexts:own?source.coverTexts||[]:saved.visual_plan?.cover_texts||saved.cover_texts||[],
+      backgroundStyle:own?source.backgroundStyle||{}:backgroundStyle,
+      promptOrigin:own?'revision':source.image!==target.original.image?'original_fallback':'original'};
   }
   decorate(batch) {
     for (const post of batch.posts) {
@@ -65,6 +79,10 @@ export class ContentOpsRevisions {
       post.text = post.copies[0]?.text || post.text;
       post.imageRevisionId = this.head(post.jobId, 'image', 0);
       if (post.imageRevisionId !== 'original') post.image = parse(this.get(post.imageRevisionId).result).image;
+      if(post.imageRevisionId!=='original'&&post.image&&batch.status!=='running'){post.status='completed';post.error='';}
+    }
+    if(batch.status!=='running'&&batch.posts.some(post=>post.imageRevisionId!=='original')&&batch.posts.every(post=>post.image&&post.text)){
+      batch.status='completed';batch.error='';batch.resumable=false;
     }
     return batch;
   }
@@ -73,7 +91,7 @@ export class ContentOpsRevisions {
     if (target.row.status === 'running') throw fail('请等待这一批生成结束后再修改。', 409);
   }
   async create(batchId, jobId, body) {
-    if (!body || typeof body.requestId !== 'string' || !idPattern.test(body.requestId) || !['manual', 'ai', 'upload'].includes(body.action)) throw fail('修改请求无效。');
+    if (!body || typeof body.requestId !== 'string' || !idPattern.test(body.requestId) || !['manual', 'ai', 'upload','regenerate'].includes(body.action)) throw fail('修改请求无效。');
     const copyIndex = body.copyIndex;
     const target = this.target(batchId, jobId, body.kind, copyIndex);
     let source = target.result;
@@ -87,6 +105,12 @@ export class ContentOpsRevisions {
     if (body.action === 'manual' && (body.kind !== 'copy' || !validText(body.text, 18000))) throw fail('请输入完整文案，最多18000字。');
     if (body.action === 'upload' && (body.kind !== 'image' || typeof body.imageData !== 'string' || body.imageData.length > 21 * 1024 * 1024 || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/u.test(body.imageData))) throw fail('请选择15MB以内的PNG、JPEG或WebP图片。');
     if (body.action === 'ai' && !validText(body.instructions, 2000)) throw fail('请输入修改要求，最多2000字。');
+    if(body.action==='regenerate'){
+      if(body.kind!=='image'||!validText(body.prompt,16000)||!['layered_poster','direct_poster'].includes(body.renderMode))throw fail('请输入完整生图提示词，最多16000字。');
+      if(body.renderMode==='layered_poster'&&(!Array.isArray(body.coverTexts)||body.coverTexts.length<3||body.coverTexts.length>4||!body.backgroundStyle||typeof body.backgroundStyle!=='object'))throw fail('请填写3～4行封面文字及文字/高亮颜色。');
+      if(body.renderMode==='layered_poster'&&body.coverTexts.some(t=>!t||!['hook','benefit','model','payoff'].includes(t.role)||!validText(t.text,80)))throw fail('封面文字须为3～4行有效短句。');
+    }
+    if(body.kind==='image'&&['ai','upload'].includes(body.action)&&!source.image)throw fail('这张图片尚未生成，请先编辑提示词重新生成。');
     if (body.region != null) {
       const r = body.region;
       if (body.kind !== 'image' || body.action !== 'ai' || !r || !['x','y','width','height'].every(key => typeof r[key] === 'number' && Number.isFinite(r[key])) || r.x < 0 || r.y < 0 || r.width <= 0 || r.height <= 0 || r.x + r.width > 1.000001 || r.y + r.height > 1.000001) throw fail('修改区域无效。');
@@ -101,7 +125,8 @@ export class ContentOpsRevisions {
     if (this.db.prepare("SELECT 1 FROM content_ops_revisions WHERE job_id=? AND kind=? AND copy_index=? AND status='running'").get(jobId, body.kind, copyIndex)) throw fail('这项内容正在修改，请等待结果。', 409);
     if (this.children.size >= 3) throw fail('已有三项修改在进行，请稍后再试。', 409);
     const id = randomUUID();
-    this.db.prepare("INSERT INTO content_ops_revisions(id,request_id,signature,batch_id,job_id,kind,copy_index,base_revision,action,instructions,status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,'running',?)").run(id, body.requestId, signature, batchId, jobId, body.kind, copyIndex, target.revisionId, body.action, body.instructions || '', new Date().toISOString());
+    const pending=body.action==='regenerate'?{prompt:body.prompt,renderMode:body.renderMode,coverTexts:body.coverTexts||[],backgroundStyle:body.backgroundStyle||{},sourceRevision:body.sourceRevision||target.revisionId}:{};
+    this.db.prepare("INSERT INTO content_ops_revisions(id,request_id,signature,batch_id,job_id,kind,copy_index,base_revision,action,instructions,status,created_at,result) VALUES(?,?,?,?,?,?,?,?,?,?,'running',?,?)").run(id, body.requestId, signature, batchId, jobId, body.kind, copyIndex, target.revisionId, body.action, body.instructions || '', new Date().toISOString(),JSON.stringify(pending));
     void this.run(id, { ...target, result: source }, body);
     return this.public(this.get(id));
   }
@@ -122,8 +147,10 @@ export class ContentOpsRevisions {
       const manifest = parse(await readFile(join(target.row.output_dir, 'manifest.json'), 'utf8').catch(() => '{}'));
       const data = { kind: body.kind, action: body.action, model: target.row.model, platform: target.row.platform,
         source_text: body.sourceText || target.result.text, text: body.text, brief: target.row.brief || '', facts: manifest.facts || {},
-        instructions: body.instructions, region: body.region, image_data: body.imageData };
-      if (body.kind === 'image') data.source_image = await this.sourcePath(target.result.image);
+        instructions: body.instructions, region: body.region, image_data: body.imageData,
+        prompt:body.prompt,render_mode:body.renderMode,cover_texts:body.coverTexts,background_style:body.backgroundStyle,
+        background_path:join(dir,'background.png') };
+      if (body.kind === 'image'&&body.action!=='regenerate') data.source_image = await this.sourcePath(target.result.image);
       const input = join(dir, 'request.json');
       await writeFile(input, JSON.stringify(data), { mode: 0o600, flag: 'wx' });
       if (this.get(id).status !== 'running') return;
@@ -138,7 +165,7 @@ export class ContentOpsRevisions {
         child.once('close', code => { clearTimeout(timer); resolvePromise(code); });
       });
       if (this.get(id).status !== 'running') return;
-      const result = parse(await readFile(output, 'utf8'));
+      const result = {...parse(this.get(id).result),...parse(await readFile(output, 'utf8'))};
       if (result.error) throw fail(String(result.error).slice(0, 1500));
       result.sourceRevision = body.sourceRevision || target.revisionId;
       if (body.kind === 'image') result.region = body.region || null;

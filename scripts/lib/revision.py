@@ -16,6 +16,45 @@ from . import gateway, words
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def regenerate_image(data, settings, output):
+    from . import copy, backgrounds
+    prompt = data.get('prompt')
+    if not isinstance(prompt,str) or not prompt.strip() or len(prompt)>16000 or re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]',prompt):
+        raise ValueError('提示词须为1–16000字，不能含控制字符')
+    if output.exists():
+        raise ValueError('修改结果文件已存在，拒绝覆盖')
+    mode = data.get('render_mode')
+    if mode not in ('direct_poster','layered_poster'):
+        raise ValueError('重新生成方式无效')
+    copy.check_cover_words(copy.positive_visual_text(prompt),data['platform'],data['model'],context='生图提示词')
+    style, texts = None, []
+    if mode == 'layered_poster':
+        copy.check_bold_typo_subject(copy.positive_visual_text(prompt))
+        texts = data.get('cover_texts')
+        plan = {'collection_name':'大字报','structure':{},'cover_texts':texts,'visual_prompt':'满幅平面背景'}
+        copy.validate_visual_plan(plan,data['model'],data['platform'])
+        style = backgrounds.normalize_style(data.get('background_style'))
+        font = next((path for path in [Path(settings.get('CONTENT_OPS_FONT','missing-font')),
+                    Path.home()/'Library/Fonts/SourceHanSansSC-Medium.otf',Path('/System/Library/Fonts/Hiragino Sans GB.ttc')] if path.is_file()),None)
+        if font is None:
+            raise ValueError('未找到中文字体，请配置CONTENT_OPS_FONT')
+    size = copy.poster_size(data['platform'])
+    background = Path(data['background_path']) if data.get('background_path') else output.with_name(output.stem+'-background.png')
+    if background.exists():
+        raise ValueError('背景结果文件已存在，拒绝覆盖')
+    try:
+        result = gateway.generate_image(prompt=prompt,output=background if mode=='layered_poster' else output,
+            model=settings['CONTENT_OPS_IMAGE_MODEL'],base_url=settings['CONTENT_OPS_BASE_URL'],api_key=settings['CONTENT_OPS_API_KEY'],
+            size=f'{size[0]}x{size[1]}',timeout=240)
+        if (result['width'],result['height']) != size:
+            raise ValueError('图像模型返回画幅不符；未采用，不自动重试')
+        rendered = copy.render_bold_typo(background,output,texts,font,size,style,preserve_background=True) if mode=='layered_poster' else {}
+        return {**result,**rendered,'prompt':prompt,'renderMode':mode,'coverTexts':texts,'backgroundStyle':style,
+                'imageRequest':{'prompt':prompt,'model':result['model'],'size':f'{size[0]}x{size[1]}','mode':mode,'status':'completed'}}
+    finally:
+        background.unlink(missing_ok=True)
+
+
 def validate_copy(text, platform, model):
     if not isinstance(text, str) or not text.strip() or len(text) > 18000 or re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text):
         raise ValueError('文案须为非空文本，最多18000字，不能含控制字符')
@@ -148,13 +187,16 @@ def revise_image(data, settings, output):
 def run(data, settings, image_output=None):
     if data.get('kind') not in ('copy', 'image') or data.get('platform') not in ('xhs', 'xianyu'):
         raise ValueError('修改类型或平台无效')
+    if data['action'] in ('ai','regenerate'):
+        if not settings.get('CONTENT_OPS_BASE_URL', '').startswith('https://') or not settings.get('CONTENT_OPS_API_KEY'):
+            raise ValueError('请先配置网关HTTPS地址与密钥')
     if data['action'] == 'ai':
         if not isinstance(data.get('instructions'), str) or not 1 <= len(data['instructions'].strip()) <= 2000:
             raise ValueError('修改要求须为1–2000字')
-        if not settings.get('CONTENT_OPS_BASE_URL', '').startswith('https://') or not settings.get('CONTENT_OPS_API_KEY'):
-            raise ValueError('请先配置网关HTTPS地址与密钥')
     if data['kind'] == 'copy' and data['action'] in ('manual', 'ai'):
         return revise_copy(data, settings)
+    if data['kind']=='image' and data['action']=='regenerate' and image_output:
+        return regenerate_image(data,settings,image_output)
     if data['kind'] == 'image' and data['action'] in ('upload', 'ai') and image_output:
         return revise_image(data, settings, image_output)
     raise ValueError('修改操作无效')

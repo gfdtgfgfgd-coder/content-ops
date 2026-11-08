@@ -1,6 +1,15 @@
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const api=async(path,body)=>{const response=await fetch(path,{cache:'no-store',method:body?'POST':'GET',headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const data=await response.json();if(!response.ok)throw new Error(data.error||'读取提示词失败');return data;};
 export const promptBlock=(title,text,note='')=>`<section class="ops-prompt-block"><header><h3>${esc(title)}</h3><button type="button" class="button button-outline" data-prompt-copy>复制</button></header>${note?`<p>${esc(note)}</p>`:''}<pre>${esc(text)}</pre></section>`;
+export function generationBlocks(data){
+  const sections=data.requests.map((request,i)=>promptBlock(`实际生图提示词 · 第 ${i+1} 次`,request.prompt,
+    [request.model,request.size,({prepared:'已准备，未确认完成',completed:'请求完成',failed:'请求失败'})[request.status]||request.status,request.mode==='layered_poster'?'仅生成无字背景，文字单独排版':'生成完整海报'].filter(Boolean).join(' · ')));
+  if(!sections.length)sections.push('<p>未保存实际生图请求；可在上方填写新提示词。</p>');
+  if(data.visionPrompt)sections.push(promptBlock('视觉模型方案',data.visionPrompt,data.visionModel));
+  if(data.visionRaw)sections.push(`<details><summary>视觉模型原始返回</summary>${promptBlock('原始响应',data.visionRaw)}</details>`);
+  if(data.coverTexts?.length)sections.push(promptBlock('原始封面准确文字',data.coverTexts.map(t=>t.text).join('\n')));
+  return sections.join('');
+}
 
 export class ContentOpsPromptUI {
   constructor(){
@@ -20,20 +29,6 @@ export class ContentOpsPromptUI {
     this.q('[data-prompt-body]').replaceChildren();this.q('[data-prompt-retry]').hidden=true;
     const preview=this.q('img');preview.hidden=!image;if(image)preview.src=image;else preview.removeAttribute('src');
     this.q('.ops-prompt-image').hidden=!image;this.status('正在读取提示词…');if(!this.dialog.open)this.dialog.showModal();return token;
-  }
-  async generation(batch,post){
-    const token=this.open('生成提示词',post.image,'展示本批保存的实际请求，不会重新调用模型。');
-    try{
-      const data=await api(`/api/content-ops/batches/${batch.id}/posts/${post.jobId}/prompts`);if(token!==this.token)return;
-      const sections=[];
-      for(const [i,request] of data.requests.entries())sections.push(promptBlock(`实际生图提示词 · 第 ${i+1} 次`,request.prompt,
-        [request.model,request.size,({prepared:'已准备，未确认完成',completed:'请求完成',failed:'请求失败'})[request.status]||request.status,request.mode==='layered_poster'?'本次只生成无字底纹，文字由本机排版':'生成完整海报'].filter(Boolean).join(' · ')));
-      if(!sections.length)sections.push('<p>这条记录没有保存实际生图请求；未发起生图或属于较早版本。</p>');
-      if(data.visionPrompt)sections.push(promptBlock('视觉模型给出的方案',data.visionPrompt,data.visionModel));
-      if(data.visionRaw)sections.push(`<details><summary>视觉模型原始返回</summary>${promptBlock('原始响应',data.visionRaw)}</details>`);
-      if(data.coverTexts.length)sections.push(promptBlock('封面准确文字',data.coverTexts.map(t=>t.text).join('\n')));
-      this.q('[data-prompt-body]').innerHTML=sections.join('');this.status(data.modified?'当前图已采用修改版；以下为本批原始生成记录。':'已读取保存的生成记录。');
-    }catch(error){if(token===this.token)this.status(error.message);}
   }
   async reference(source,title='素材图片'){
     const token=this.open('反推图片提示词',source,`${title} · 根据图片重建，并非原始生成词。`);

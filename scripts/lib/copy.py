@@ -423,6 +423,11 @@ def check_cover_words(text, platform, model, rules=None, *, context='封面'):
         raise ValueError(context + '含风险词：' + '、'.join(sorted({h['word'] for h in hits})))
 
 
+def positive_visual_text(text):
+    """Exclude negative instructions and positional metadata from advertising checks."""
+    return visual_position_text(re.sub(r'(?:严禁|禁止|不得|不添加|不出现|不要|避免|无)[^。；;\n]*', '', text))
+
+
 def visual_position_text(text):
     """Project instructions for risk checks, without rewriting the saved prompt.
 
@@ -440,6 +445,11 @@ def visual_position_text(text):
 def truncate_cover_units(text, maximum):
     units = re.findall(r'[A-Za-z]+|[0-9]+|[^\sA-Za-z0-9]', text)
     return ''.join(units[:maximum])
+
+
+def check_bold_typo_subject(positive):
+    if re.search(r'3\s*D|立体(?:物件|主体|机器人)|代码(?:屏|树)|电脑|人物插画|机器人|复杂背景|computer|robot|code\s*screen', positive, re.I):
+        raise ValueError('大字报视觉方案不得添加3D、屏幕或复杂主体')
 
 
 def validate_visual_plan(plan, product_model, platform, expected_layout='', rules=None):
@@ -547,15 +557,13 @@ def validate_visual_plan(plan, product_model, platform, expected_layout='', rule
     prompt = plan.get('visual_prompt')
     if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 6000:
         raise ValueError('缺少视觉模型生成的海报提示词')
-    positive = re.sub(r'(?:严禁|禁止|不得|不添加|不出现|不要|避免|无)[^。；;\n]*', '', prompt)
-    positive = visual_position_text(positive)
+    positive = positive_visual_text(prompt)
     for index, t in enumerate(texts, 1):
         check_cover_words(t['text'], platform, product_model, rules, context=f'封面短字第{index}项')
     check_cover_words(positive, platform, product_model, rules, context='视觉提示词')
     if layout == '大字报':
         # Reject positive subject instructions; negative prohibitions themselves are allowed.
-        if re.search(r'3\s*D|立体(?:物件|主体|机器人)|代码(?:屏|树)|电脑|人物插画|机器人|复杂背景|computer|robot|code\s*screen', positive, re.I):
-            raise ValueError('大字报视觉方案不得添加3D、屏幕或复杂主体')
+        check_bold_typo_subject(positive)
         if plan.get('background_style') is not None:
             plan['background_style'] = backgrounds.normalize_style(plan['background_style'],prompt)
     return plan
@@ -675,11 +683,19 @@ def cover(background, output, post, palette, font_path, variant, size):
     image.save(output,format='PNG')
     return {'width':size[0],'height':size[1],'bytes':output.stat().st_size,'sha256':hashlib.sha256(output.read_bytes()).hexdigest()}
 
-def render_bold_typo(background, output, texts, font_path, size, background_style=None):
-    from PIL import Image, ImageDraw
+def render_bold_typo(background, output, texts, font_path, size, background_style=None, *, preserve_background=False):
+    from PIL import Image, ImageDraw, ImageOps, ImageStat
     style = backgrounds.normalize_style(background_style)
     with Image.open(background) as source:
-        image, material_metadata = backgrounds.render_surface(source, size, style, hashlib.sha256(background.read_bytes()).hexdigest())
+        if preserve_background:
+            image = ImageOps.fit(source.convert('RGB'),size)
+            center = image.crop((int(size[0]*.2),int(size[1]*.3),int(size[0]*.8),int(size[1]*.7)))
+            mean = ImageStat.Stat(center).mean
+            color = '#'+''.join(f'{round(value):02X}' for value in mean)
+            material_metadata = {'style':style,'text_surface_color':color,'surface_layout':'full_bleed',
+                                 'material_source':'generated_surface_preserved'}
+        else:
+            image, material_metadata = backgrounds.render_surface(source, size, style, hashlib.sha256(background.read_bytes()).hexdigest())
     width, height = size
     ink = backgrounds.readable_ink(material_metadata['text_surface_color'], style['ink'])
     draw = ImageDraw.Draw(image)

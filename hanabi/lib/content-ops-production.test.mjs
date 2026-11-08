@@ -1150,7 +1150,7 @@ async function revisionFixture(t, mode='fake') {
     const child=new EventEmitter();child.kill=()=>queueMicrotask(()=>child.emit('close',1));calls.push({command,args,options});
     if(mode==='hold')return child;
     void (async()=>{
-      const data=JSON.parse(await readFile(args[args.indexOf('--input')+1],'utf8'));
+      const data=JSON.parse(await readFile(args[args.indexOf('--input')+1],'utf8'));calls.at(-1).input=data;
       const output=args[args.indexOf('--output')+1];
       if(mode==='error')await writeFile(output,JSON.stringify({error:'offline failure'}));
       else if(data.kind==='image'){
@@ -1395,4 +1395,36 @@ test('reverse limits concurrent images and preserves interrupted history without
   assert.equal(promptCalls.length,2);prompts.recover();prompts.shutdown();
   assert.equal((await promptDone(prompts,first.id)).status,'failed');assert.equal((await promptDone(prompts,second.id)).status,'failed');
   assert.equal((await prompts.inspect(target)).run.id,first.id);assert.equal(promptCalls.length,2);
+});
+
+test('image prompt revisions store exact pending/ready input, restore prompts and preserve original files',async t=>{
+  const {dir,revisions,production,calls}=await revisionFixture(t);
+  const prompt='  蓝色纸张，GLM5.3。\n保留完整文字与空格  ';
+  const input={kind:'image',copyIndex:0,action:'regenerate',renderMode:'direct_poster',prompt,requestId:'repaint-request-123',baseRevision:'original'};
+  const before=await readFile(join(dir,'original/post-1.md'));
+  const first=await revisions.create('batch-123','job-12345',input);assert.equal(first.result.prompt,prompt);
+  assert.equal((await revisions.create('batch-123','job-12345',input)).id,first.id);
+  const ready=await revisionDone(revisions,first.id);assert.equal(ready.status,'ready',ready.error);assert.equal(ready.result.prompt,prompt);
+  assert.equal(calls[0].input.prompt,prompt);assert.equal(calls[0].input.source_image,undefined);assert.equal(calls[0].input.render_mode,'direct_poster');
+  assert.equal(revisions.head('job-12345','image',0),'original');
+  revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:'original',revisionId:first.id});
+  assert.equal(revisions.history('batch-123','job-12345','image',0).current.prompt,prompt);
+  assert.equal(production.public(production.get('batch-123')).posts[0].image,ready.result.image);
+  await assert.rejects(()=>revisions.create('batch-123','job-12345',{...input,requestId:'stale-repaint-123'}),{statusCode:409});
+  revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:first.id,revisionId:'original'});
+  assert.deepEqual(await readFile(join(dir,'original/post-1.md')),before);assert.equal(calls.length,1);
+});
+
+test('failed prompt regeneration retains editable input and missing images can be repaired without changing original jobs',async t=>{
+  const failed=await revisionFixture(t,'error'),input={kind:'image',copyIndex:0,action:'regenerate',renderMode:'direct_poster',prompt:'蓝色纸面',requestId:'failed-repaint-123',baseRevision:'original'};
+  const first=await failed.revisions.create('batch-123','job-12345',input);const error=await revisionDone(failed.revisions,first.id);
+  assert.equal(error.status,'failed');assert.equal(error.result.prompt,input.prompt);assert.equal(failed.revisions.head('job-12345','image',0),'original');
+  const fixture=await revisionFixture(t);fixture.db.prepare("UPDATE content_ops_batches SET status='failed' WHERE id='batch-123'").run();
+  fixture.db.prepare("UPDATE analysis_jobs SET status='failed',attachments='[]' WHERE id='job-12345'").run();
+  assert.equal(fixture.revisions.history('batch-123','job-12345','image',0).original.image,null);
+  const version=await fixture.revisions.create('batch-123','job-12345',input);const ready=await revisionDone(fixture.revisions,version.id);assert.equal(ready.status,'ready',ready.error);
+  const adopted=fixture.revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:'original',revisionId:ready.id}).batch;
+  assert.equal(adopted.status,'completed');assert.equal(adopted.posts[0].status,'completed');assert.equal(fixture.production.get('batch-123').status,'failed');
+  const restored=fixture.revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:ready.id,revisionId:'original'}).batch;
+  assert.equal(restored.status,'failed');assert.equal(restored.posts[0].image,null);
 });
