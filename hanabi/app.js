@@ -344,10 +344,10 @@ const refreshConnections = async () => {
   fields.baseUrl.value = config.baseUrl || '';
   fields.apiKey.value = '';
   fields.apiKey.placeholder = config.hasKey ? `已配置 ${config.apiKey}，留空保留` : '请输入本机网关密钥';
-  fields.textModel.value = config.textModel || 'claude-sonnet-4-6';
-  fields.visionModel.value = config.visionModel || 'claude-sonnet-4-6';
-  fields.imageModel.value = config.imageModel || 'qwen-image-3.0';
-  fields.analysisModel.value = config.analysisModel || 'claude-sonnet-4-6';
+  fields.textModel.value = config.textModel || '';
+  fields.visionModel.value = config.visionModel || '';
+  fields.imageModel.value = config.imageModel || '';
+  fields.analysisModel.value = config.analysisModel || '';
   renderConnectionState(config);
 };
 const connectionError = error => {

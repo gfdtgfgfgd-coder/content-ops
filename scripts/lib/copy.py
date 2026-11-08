@@ -360,7 +360,7 @@ def validate_posts(value, count, model, rules=None, platform="xhs", copy_format=
     return posts
 
 def claude_call(system, user, settings, timeout, raw_output):
-    model = settings.get('CONTENT_OPS_TEXT_MODEL', 'claude-sonnet-4-6')
+    model = settings.get('CONTENT_OPS_TEXT_MODEL', image_api.MODEL_DEFAULTS['CONTENT_OPS_TEXT_MODEL'])
     response = image_api.request_json(settings['CONTENT_OPS_BASE_URL'].rstrip('/') + '/chat/completions',
         {'model': model, 'messages': [{'role':'system','content':system}, {'role':'user','content':user}],
          'temperature':0.4, 'max_tokens':8000,'response_format':{'type':'json_object'}}, settings['CONTENT_OPS_API_KEY'], timeout)
@@ -397,7 +397,7 @@ def reference_image_parts(references):
     return parts, sources
 
 def visual_prompt_call(post, references, settings, timeout, raw_output, platform, style_mode='auto', style_preset='', style_prompt=''):
-    model = settings.get('CONTENT_OPS_VISION_MODEL', 'claude-sonnet-4-6')
+    model = settings.get('CONTENT_OPS_VISION_MODEL', image_api.MODEL_DEFAULTS['CONTENT_OPS_VISION_MODEL'])
     if not model:
         raise ValueError('未配置多模态视觉提示词模型，请在 Hanabi「接口接入」中配置')
     images, sources = reference_image_parts(references)
@@ -588,9 +588,9 @@ def run(args):
         raise ValueError('输出目录已有生成结果，请指定新的 --output，避免覆盖')
     manifest = {'version':2,'status':'running','product_model':model,'platform':args.platform,'count':args.count,
                 'image_count':args.count, 'copy_count':copy_count, 'copy_multiplier':copy_multiplier, 'copy_format':copy_format,
-                'text_model':settings.get('CONTENT_OPS_TEXT_MODEL','claude-sonnet-4-6'),
-                'vision_model':settings.get('CONTENT_OPS_VISION_MODEL','claude-sonnet-4-6'),
-                'image_model':settings.get('CONTENT_OPS_IMAGE_MODEL','qwen-image-3.0'),
+                'text_model':settings.get('CONTENT_OPS_TEXT_MODEL', image_api.MODEL_DEFAULTS['CONTENT_OPS_TEXT_MODEL']),
+                'vision_model':settings.get('CONTENT_OPS_VISION_MODEL', image_api.MODEL_DEFAULTS['CONTENT_OPS_VISION_MODEL']),
+                'image_model':settings.get('CONTENT_OPS_IMAGE_MODEL', image_api.MODEL_DEFAULTS['CONTENT_OPS_IMAGE_MODEL']),
                 'created_at':datetime.now(ZoneInfo('Asia/Shanghai')).isoformat(), 'facts':facts,
                 'brief':brief, 'brief_source':brief_source,
                 'style_mode':style_mode, 'style_preset':style_preset, 'style_prompt':style_prompt,

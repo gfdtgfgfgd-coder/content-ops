@@ -65,7 +65,7 @@ export class ContentOpsProduction {
     const ready = Boolean(preferences?.version && preferences?.persona && preferences?.platform_rules);
     const distilledAt = preferences?.distilled_at;
     const { copyFormat, copyMultiplier } = validateCopyOptions(setting('CONTENT_OPS_COPY_FORMAT') || 'all_variations', Number(setting('CONTENT_OPS_COPY_MULTIPLIER') || 3));
-    return { copyFormat, copyMultiplier, available: existsSync(join(this.root, 'scripts/generate.py')), configured: Boolean(setting('CONTENT_OPS_API_KEY') && setting('CONTENT_OPS_BASE_URL')), cachedAvailable: existsSync(this.backgroundPath()), textModel: setting('CONTENT_OPS_TEXT_MODEL') || 'claude-sonnet-4-6', visionModel: setting('CONTENT_OPS_VISION_MODEL') || 'claude-sonnet-4-6', imageModel: setting('CONTENT_OPS_IMAGE_MODEL') || 'qwen-image-3.0', preferencesReady: ready, preferencesVersion: ready ? { version: preferences.version, distilledAt } : null };
+    return { copyFormat, copyMultiplier, available: existsSync(join(this.root, 'scripts/generate.py')), configured: Boolean(setting('CONTENT_OPS_API_KEY') && setting('CONTENT_OPS_BASE_URL')), cachedAvailable: existsSync(this.backgroundPath()), textModel: setting('CONTENT_OPS_TEXT_MODEL'), visionModel: setting('CONTENT_OPS_VISION_MODEL'), imageModel: setting('CONTENT_OPS_IMAGE_MODEL'), preferencesReady: ready, preferencesVersion: ready ? { version: preferences.version, distilledAt } : null };
   }
   backgroundPath() { return join(this.root, 'data/images/backgrounds/company-qwen-2026-11-01.png'); }
   get(id) { const row = this.db.prepare('SELECT * FROM content_ops_batches WHERE id=?').get(id); if (!row) throw fail('生成批次不存在。', 404); return row; }
