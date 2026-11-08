@@ -1323,6 +1323,42 @@ class RevisionTests(unittest.TestCase):
                     self.revision.run({**data,'typography':invalid},self.settings,self.base/'invalid.png')
             call.assert_not_called()
 
+    def test_live_typesetting_preserves_background_layer_and_matches_saved_pixels_without_models(self):
+        from PIL import ImageChops
+        bg=self.base/'noise.png';Image.effect_noise((1080,1440),30).convert('RGB').save(bg)
+        source=self.base/'source.png';font=Path('/System/Library/Fonts/Hiragino Sans GB.ttc');texts=visual_plan()['cover_texts']
+        copy.render_bold_typo(bg,source,texts,font,(1080,1440),preserve_background=True)
+        with Image.open(source) as image:self.assertGreater(int(image.info['hanabi_background_parts']),1)
+        data={'kind':'image','action':'typeset','platform':'xhs','model':'GLM5.3','source_image':str(source),'cover_texts':texts,
+              'typography':{'scale':1.2,'align':'left'},'background_style':{},'prompt':'原背景词'}
+        settings={**self.settings,'CONTENT_OPS_FONT':str(font)}
+        with patch.object(gateway,'generate_image') as generate,patch.object(gateway,'request_json') as chat,patch.object(self.revision,'multipart_request') as edit:
+            preview=self.revision.run(data,settings,self.base/'preview.png')
+            saved=self.revision.run(data,settings,self.base/'saved.png')
+            generate.assert_not_called();chat.assert_not_called();edit.assert_not_called()
+        expected=self.base/'expected.png';copy.render_bold_typo(bg,expected,texts,font,(1080,1440),preserve_background=True,typography=data['typography'])
+        with Image.open(expected) as e,Image.open(self.base/'preview.png') as p,Image.open(self.base/'saved.png') as s:
+            self.assertIsNone(ImageChops.difference(e.convert('RGB'),p.convert('RGB')).getbbox())
+            self.assertIsNone(ImageChops.difference(s.convert('RGB'),p.convert('RGB')).getbbox())
+        self.assertFalse(preview['backgroundRecovered']);self.assertEqual(preview['typography'],saved['typography'])
+        self.assertEqual(preview['model'],'local-typesetter')
+
+    def test_legacy_typesetting_repairs_only_recorded_boxes_and_missing_records_do_not_call_models(self):
+        bg=self.base/'blue.png';Image.new('RGB',(1080,1440),'#c4dded').save(bg)
+        original=self.base/'original.png';font=Path('/System/Library/Fonts/Hiragino Sans GB.ttc');texts=visual_plan()['cover_texts']
+        old=copy.render_bold_typo(bg,original,texts,font,(1080,1440),preserve_background=True)
+        source=self.base/'legacy.png'
+        with Image.open(original) as image:Image.frombytes('RGB',image.size,image.convert('RGB').tobytes()).save(source)
+        data={'kind':'image','action':'typeset','platform':'xhs','model':'GLM5.3','source_image':str(source),'source_rows':old['rendered_text'],
+              'cover_texts':texts,'typography':{'scale':.6,'align':'left'},'background_style':{}}
+        with patch.object(gateway,'generate_image') as generate,patch.object(gateway,'request_json') as chat:
+            result=self.revision.run(data,{**self.settings,'CONTENT_OPS_FONT':str(font)},self.base/'new.png')
+            with self.assertRaisesRegex(ValueError,'可信排版记录'):
+                self.revision.run({**data,'source_rows':None},self.settings,self.base/'invalid.png')
+            generate.assert_not_called();chat.assert_not_called()
+        self.assertTrue(result['backgroundRecovered'])
+        with Image.open(self.base/'new.png') as image:self.assertEqual(image.getpixel((0,0)),(196,221,237))
+
     def test_image_edit_sends_original_mask_and_preserves_outside_region(self):
         source=self.base/'source.png';output=self.base/'new.png'
         Image.new('RGB',(100,120),'red').save(source)

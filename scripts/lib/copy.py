@@ -726,6 +726,13 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
         raise ValueError('放大后的文字超出画布，请调小字号或缩短封面字')
     y = round((height - total_height) / 2)
     block_left = round((width - max(row['width'] for row in rows)) / 2)
+    import io
+    from PIL.PngImagePlugin import PngInfo
+    clean = io.BytesIO(); image.save(clean,format='PNG')
+    layers = PngInfo(); encoded=base64.b64encode(clean.getvalue()).decode()
+    parts=[encoded[i:i+512*1024] for i in range(0,len(encoded),512*1024)]
+    layers.add_text('hanabi_background_parts',str(len(parts)))
+    for index,part in enumerate(parts):layers.add_itxt(f'hanabi_background_{index}',part,zip=True)
     rendered = []
     for row in rows:
         x = block_left if typography['align'] == 'left' else round((width - row['width']) / 2)
@@ -741,7 +748,7 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
         rendered.append({'role': row['role'], 'text': row['text'], 'bbox': box, 'highlighted':highlighted,
                          'fill':backgrounds.readable_ink(style['accent'],ink) if highlighted else ink, 'font_size':row['font'].size})
         y += row['height'] + gap
-    image.convert('RGB').save(output, format='PNG')
+    image.convert('RGB').save(output, format='PNG',pnginfo=layers)
     return {'width': width, 'height': height, 'bytes': output.stat().st_size,
             'sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
             'text_area_ratio': max((row['width'] / width for row in rows), default=0),

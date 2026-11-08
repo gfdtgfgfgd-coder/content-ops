@@ -1,7 +1,7 @@
 // Original batches and exported files remain immutable. Revisions and current pointers live in SQLite.
 import { randomUUID, createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { readFile, mkdir, writeFile, rm, realpath } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 
@@ -13,7 +13,7 @@ const validText = (value, max) => typeof value === 'string' && value.trim() && [
 export class ContentOpsRevisions {
   constructor({ db, production, root, uploadDir, spawnProcess = spawn, timeout = 330000 }) {
     Object.assign(this, { db, production, root: resolve(root), uploadDir: resolve(uploadDir), spawnProcess, timeout });
-    this.children = new Map();
+    this.children = new Map();this.previewChildren=new Map();
     db.exec(`CREATE TABLE IF NOT EXISTS content_ops_revisions (
       id TEXT PRIMARY KEY, request_id TEXT NOT NULL UNIQUE, signature TEXT NOT NULL,
       batch_id TEXT NOT NULL, job_id TEXT NOT NULL, kind TEXT NOT NULL, copy_index INTEGER NOT NULL,
@@ -60,15 +60,25 @@ export class ContentOpsRevisions {
   imageContext(target,source){
     let manifest={};try{manifest=parse(readFileSync(join(target.row.output_dir,'manifest.json'),'utf8'));}catch{}
     const saved=manifest.posts?.find(item=>Number(item.index)===target.post.index)||manifest.posts?.[target.post.index-1]||{};
-    const request=saved.image_requests?.at(-1)||saved.image_generation||{};
+    let audit={};
+    const filename=/^\/api\/uploads\/([0-9a-f-]+)\.png$/iu.exec(source.image||'')?.[1];
+    let sourceHash='';try{sourceHash=createHash('sha256').update(readFileSync(join(this.uploadDir,filename+'.png'))).digest('hex');}catch{}
+    if(filename&&source.image!==target.original.image&&!source.rendered_text){
+      let dates=[];try{dates=readdirSync(join(this.root,'outputs')).filter(name=>/^\d{4}-\d{2}-\d{2}$/u.test(name));}catch{}
+      for(const date of dates){try{const item=parse(readFileSync(join(this.root,'outputs',date,'hanabi',filename,'manifest.json'),'utf8'));if(item.source_image===source.image&&item.render?.sha256===sourceHash){audit=item;break;}}catch{}}
+    }
+    const plan=audit.render_input?.plan||saved.visual_plan||{};
+    const request=audit.render_input?{prompt:audit.render_input.prompt,mode:'layered_poster'}:saved.image_requests?.at(-1)||saved.image_generation||{};
     const own=source.renderMode&&['layered_poster','direct_poster'].includes(source.renderMode)&&typeof source.prompt==='string';
     let recipe={};try{recipe=parse(readFileSync(join(this.root,'config/bold-typo-backgrounds.json'),'utf8'));}catch{}
-    const style=saved.visual_plan?.background_style||{},profile=recipe.profiles?.find(p=>p.id===(style.profile||recipe.default))||{};
+    const style=plan.background_style||{},profile=recipe.profiles?.find(p=>p.id===(style.profile||recipe.default))||{};
     const backgroundStyle={profile:profile.id,base:profile.base,ink:profile.ink,accent:profile.accent,highlight_roles:profile.highlight_roles,...style};
-    return {...source,prompt:own?source.prompt:request.prompt||'',renderMode:own?source.renderMode:request.mode==='layered_poster'||saved.visual_plan?.collection_name==='大字报'?'layered_poster':'direct_poster',
-      coverTexts:own?source.coverTexts||[]:saved.visual_plan?.cover_texts||saved.cover_texts||[],
+    return {...source,prompt:own?source.prompt:request.prompt||'',renderMode:own?source.renderMode:request.mode==='layered_poster'||plan.collection_name==='大字报'?'layered_poster':'direct_poster',
+      coverTexts:own?source.coverTexts||[]:plan.cover_texts||saved.cover_texts||[],
       backgroundStyle:own?source.backgroundStyle||{}:backgroundStyle,typography:own?source.typography||{scale:1,align:'center'}:{scale:1,align:'center'},
-      promptOrigin:own?'revision':source.image!==target.original.image?'original_fallback':'original'};
+      sourceRows:source.sha256===sourceHash&&source.rendered_text?.length?source.rendered_text:audit.render?.rendered_text||
+        (source.image===target.original.image&&saved.image_generation?.sha256===sourceHash?saved.image_generation.rendered_text||[]:[]),
+      promptOrigin:own||audit.render_input?'revision':source.image!==target.original.image?'original_fallback':'original'};
   }
   decorate(batch) {
     for (const post of batch.posts) {
@@ -91,7 +101,7 @@ export class ContentOpsRevisions {
     if (target.row.status === 'running') throw fail('请等待这一批生成结束后再修改。', 409);
   }
   async create(batchId, jobId, body) {
-    if (!body || typeof body.requestId !== 'string' || !idPattern.test(body.requestId) || !['manual', 'ai', 'upload','regenerate'].includes(body.action)) throw fail('修改请求无效。');
+    if (!body || typeof body.requestId !== 'string' || !idPattern.test(body.requestId) || !['manual', 'ai', 'upload','regenerate','typeset'].includes(body.action)) throw fail('修改请求无效。');
     const copyIndex = body.copyIndex;
     const target = this.target(batchId, jobId, body.kind, copyIndex);
     let source = target.result;
@@ -105,14 +115,15 @@ export class ContentOpsRevisions {
     if (body.action === 'manual' && (body.kind !== 'copy' || !validText(body.text, 18000))) throw fail('请输入完整文案，最多18000字。');
     if (body.action === 'upload' && (body.kind !== 'image' || typeof body.imageData !== 'string' || body.imageData.length > 21 * 1024 * 1024 || !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/u.test(body.imageData))) throw fail('请选择15MB以内的PNG、JPEG或WebP图片。');
     if (body.action === 'ai' && !validText(body.instructions, 2000)) throw fail('请输入修改要求，最多2000字。');
-    if(body.action==='regenerate'){
+    if(['regenerate','typeset'].includes(body.action)){
       const typography=body.typography??{scale:1,align:'center'};
       if(!typography||typeof typography!=='object'||!Number.isFinite(typography.scale)||typography.scale<.6||typography.scale>1.5||!['center','left'].includes(typography.align))throw fail('字号比例须为60%～150%，对齐方式须为居中或左对齐。');
       if(body.kind!=='image'||!validText(body.prompt,16000)||!['layered_poster','direct_poster'].includes(body.renderMode))throw fail('请输入完整生图提示词，最多16000字。');
       if(body.renderMode==='layered_poster'&&(!Array.isArray(body.coverTexts)||body.coverTexts.length<3||body.coverTexts.length>4||!body.backgroundStyle||typeof body.backgroundStyle!=='object'))throw fail('请填写3～4行封面文字及文字/高亮颜色。');
       if(body.renderMode==='layered_poster'&&body.coverTexts.some(t=>!t||!['hook','benefit','model','payoff'].includes(t.role)||!validText(t.text,80)))throw fail('封面文字须为3～4行有效短句。');
     }
-    if(body.kind==='image'&&['ai','upload'].includes(body.action)&&!source.image)throw fail('这张图片尚未生成，请先编辑提示词重新生成。');
+    if(body.action==='typeset'&&(body.renderMode!=='layered_poster'||body.prompt!==this.imageContext(target,source).prompt))throw fail('背景词已修改或当前图不是分层海报，请先重新生图或恢复背景词。');
+    if(body.kind==='image'&&['ai','upload','typeset'].includes(body.action)&&!source.image)throw fail('这张图片尚未生成，请先编辑提示词重新生成。');
     if (body.region != null) {
       const r = body.region;
       if (body.kind !== 'image' || body.action !== 'ai' || !r || !['x','y','width','height'].every(key => typeof r[key] === 'number' && Number.isFinite(r[key])) || r.x < 0 || r.y < 0 || r.width <= 0 || r.height <= 0 || r.x + r.width > 1.000001 || r.y + r.height > 1.000001) throw fail('修改区域无效。');
@@ -127,7 +138,7 @@ export class ContentOpsRevisions {
     if (this.db.prepare("SELECT 1 FROM content_ops_revisions WHERE job_id=? AND kind=? AND copy_index=? AND status='running'").get(jobId, body.kind, copyIndex)) throw fail('这项内容正在修改，请等待结果。', 409);
     if (this.children.size >= 3) throw fail('已有三项修改在进行，请稍后再试。', 409);
     const id = randomUUID();
-    const pending=body.action==='regenerate'?{prompt:body.prompt,renderMode:body.renderMode,coverTexts:body.coverTexts||[],backgroundStyle:body.backgroundStyle||{},typography:body.typography||{scale:1,align:'center'},sourceRevision:body.sourceRevision||target.revisionId}:{};
+    const pending=['regenerate','typeset'].includes(body.action)?{prompt:body.prompt,renderMode:body.renderMode,coverTexts:body.coverTexts||[],backgroundStyle:body.backgroundStyle||{},typography:body.typography||{scale:1,align:'center'},sourceRevision:body.sourceRevision||target.revisionId}:{};
     this.db.prepare("INSERT INTO content_ops_revisions(id,request_id,signature,batch_id,job_id,kind,copy_index,base_revision,action,instructions,status,created_at,result) VALUES(?,?,?,?,?,?,?,?,?,?,'running',?,?)").run(id, body.requestId, signature, batchId, jobId, body.kind, copyIndex, target.revisionId, body.action, body.instructions || '', new Date().toISOString(),JSON.stringify(pending));
     void this.run(id, { ...target, result: source }, body);
     return this.public(this.get(id));
@@ -153,19 +164,14 @@ export class ContentOpsRevisions {
         prompt:body.prompt,render_mode:body.renderMode,cover_texts:body.coverTexts,background_style:body.backgroundStyle,typography:body.typography,
         background_path:join(dir,'background.png') };
       if (body.kind === 'image'&&body.action!=='regenerate') data.source_image = await this.sourcePath(target.result.image);
+      if(body.action==='typeset'){data.source_rows=this.imageContext(target,target.result).sourceRows;data.background_recovered=target.result.backgroundRecovered;}
       const input = join(dir, 'request.json');
       await writeFile(input, JSON.stringify(data), { mode: 0o600, flag: 'wx' });
       if (this.get(id).status !== 'running') return;
       const python = [join(this.root, 'scratch/.venv/bin/python'), join(this.root, '.venv/bin/python')].find(path => existsSync(path)) || 'python3';
       const args = [join(this.root, 'scripts/generate.py'), 'revise', '--input', input, '--output', output,
         '--config', join(this.root, 'scratch/gateway.env'), ...(body.kind === 'image' ? ['--image-output', imageOutput] : [])];
-      await new Promise((resolvePromise, reject) => {
-        const child = this.spawnProcess(python, args, { cwd: this.root, env: process.env, stdio: ['ignore', 'ignore', 'ignore'], shell: false });
-        this.children.set(id, child);
-        const timer = setTimeout(() => { child.kill('SIGTERM'); reject(fail('修改超时；原稿保留，不会自动重试。')); }, this.timeout);
-        child.once('error', () => { clearTimeout(timer); reject(fail('修改程序启动失败，请检查Python环境。')); });
-        child.once('close', code => { clearTimeout(timer); resolvePromise(code); });
-      });
+      await this.invoke(python,args,child=>this.children.set(id,child),this.timeout);
       if (this.get(id).status !== 'running') return;
       const result = {...parse(this.get(id).result),...parse(await readFile(output, 'utf8'))};
       if (result.error) throw fail(String(result.error).slice(0, 1500));
@@ -187,6 +193,37 @@ export class ContentOpsRevisions {
       if (this.get(id).status !== 'ready') await rm(imageOutput, { force: true }).catch(() => {});
       await rm(dir, { recursive: true, force: true }).catch(() => {});
     }
+  }
+  invoke(python,args,onChild,timeout){
+    return new Promise((done,reject)=>{
+      const child=this.spawnProcess(python,args,{cwd:this.root,env:process.env,stdio:['ignore','ignore','ignore'],shell:false});onChild(child);
+      const timer=setTimeout(()=>{child.kill('SIGTERM');reject(fail('排版或修改超时，原稿保留。'));},timeout);
+      child.once('error',()=>{clearTimeout(timer);reject(fail('修改程序启动失败，请检查Python环境。'));});
+      child.once('close',code=>{clearTimeout(timer);done(code);});
+    });
+  }
+  async preview(batchId,jobId,body){
+    if(!body||typeof body!=='object'||Array.isArray(body))throw fail('预览参数无效。');
+    if(this.previewChildren.size>=2)throw fail('正在更新其他排版预览，请稍后再试。',429);
+    const target=this.target(batchId,jobId,'image',0);this.checkBase(target,body);
+    let source=target.result;
+    if(body.sourceRevision==='original')source=target.original;
+    else if(body.sourceRevision&&body.sourceRevision!==target.revisionId){const row=this.get(body.sourceRevision);if(row.batch_id!==batchId||row.job_id!==jobId||row.kind!=='image'||row.status!=='ready')throw fail('预览底稿无效。');source=parse(row.result);}
+    const context=this.imageContext(target,source);
+    if(context.renderMode!=='layered_poster'||!source.image)throw fail('此图片不支持本机文字排版，请使用完整海报提示词或原图修改。');
+    if(!Array.isArray(body.coverTexts)||body.coverTexts.length<3||body.coverTexts.length>4||body.coverTexts.some(t=>!t||!validText(t.text,80)))throw fail('请填写3～4行有效封面字。');
+    const id=randomUUID(),dir=join(this.root,'scratch/hanabi-runtime/previews',id),output=join(dir,'result.json'),image=join(dir,'image.png');
+    this.previewChildren.set(id,null);
+    try{
+      const data={kind:'image',action:'typeset',platform:target.row.platform,model:target.row.model,source_image:await this.sourcePath(source.image),source_rows:context.sourceRows,
+        background_recovered:source.backgroundRecovered,prompt:context.prompt,cover_texts:body.coverTexts,background_style:body.backgroundStyle,typography:body.typography};
+      await mkdir(dir,{recursive:true,mode:0o700});await writeFile(join(dir,'request.json'),JSON.stringify(data),{flag:'wx',mode:0o600});
+      const python=[join(this.root,'scratch/.venv/bin/python'),join(this.root,'.venv/bin/python')].find(p=>existsSync(p))||'python3';
+      await this.invoke(python,[join(this.root,'scripts/generate.py'),'revise','--input',join(dir,'request.json'),'--output',output,'--image-output',image,'--config',join(this.root,'scratch/gateway.env')],child=>this.previewChildren.set(id,child),20000);
+      const result=parse(await readFile(output,'utf8'));if(result.error)throw fail(result.error);
+      const bytes=await readFile(image);if(bytes.length>20*1024*1024)throw fail('排版预览过大。');
+      return {...result,image:'data:image/png;base64,'+bytes.toString('base64')};
+    }finally{this.previewChildren.delete(id);await rm(dir,{recursive:true,force:true});}
   }
   apply(batchId, jobId, body) {
     if (!body || typeof body.revisionId !== 'string') throw fail('采用版本请求无效。');
@@ -215,5 +252,5 @@ export class ContentOpsRevisions {
     this.children.get(id)?.kill('SIGTERM');
     return this.public(this.get(id));
   }
-  shutdown() { for (const child of this.children.values()) child?.kill('SIGTERM'); }
+  shutdown() { for(const child of this.previewChildren.values())child?.kill('SIGTERM');for (const child of this.children.values()) child?.kill('SIGTERM'); }
 }

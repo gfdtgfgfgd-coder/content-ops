@@ -105,7 +105,7 @@ async function route(req, res) {
     }
     const promptRun=pathname.match(/^\/api\/content-ops\/prompt-runs\/([\w-]+)$/u);
     if(promptRun&&req.method==='GET')return send(res,200,{run:prompts.public(prompts.get(promptRun[1]))},{'Cache-Control':'no-store'});
-    const revisionTarget = pathname.match(/^\/api\/content-ops\/batches\/([\w-]+)\/posts\/([\w-]+)\/(revisions|apply)$/u);
+    const revisionTarget = pathname.match(/^\/api\/content-ops\/batches\/([\w-]+)\/posts\/([\w-]+)\/(revisions|apply|preview)$/u);
     if (revisionTarget) {
       const [,batchId,jobId,action]=revisionTarget;
       const headers={'Cache-Control':'no-store'};
@@ -113,6 +113,7 @@ async function route(req, res) {
       if(req.method!=='POST')return send(res,405,{error:'方法不支持。'},headers);
       if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机Hanabi页面提交修改。'},headers);
       const input=await body(req,22*1024*1024);
+      if(action==='preview')return send(res,200,await revisions.preview(batchId,jobId,input),headers);
       return send(res,200,action==='apply'?revisions.apply(batchId,jobId,input):{revision:await revisions.create(batchId,jobId,input)},headers);
     }
     const cancelRevision=pathname.match(/^\/api\/content-ops\/revisions\/([\w-]+)\/cancel$/u);

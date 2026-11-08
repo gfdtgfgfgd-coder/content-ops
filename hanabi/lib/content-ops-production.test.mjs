@@ -1258,6 +1258,8 @@ test('revision HTTP routes enforce local mutations and preserve adopted copy on 
   const path='/api/content-ops/batches/batch-123/posts/job-12345/revisions';
   const send=(path,input,extra={})=>fetch(url+path,{method:'POST',headers:{'Content-Type':'application/json',...extra},body:JSON.stringify(input)});
   let response=await send(path,revisionInput,{Origin:'https://unrelated.invalid'});assert.equal(response.status,403);
+  response=await send(path.replace('/revisions','/preview'),{}, {Origin:'https://unrelated.invalid'});assert.equal(response.status,403);
+  response=await send(path.replace('/revisions','/preview'),null);assert.equal(response.status,400);
   response=await send(path,{...revisionInput,copyIndex:9});assert.equal(response.status,400);
   response=await send(path,revisionInput);assert.equal(response.status,200);const first=(await response.json()).revision;
   let ready;
@@ -1441,4 +1443,31 @@ test('image typography reaches renderer and restores with versions; invalid sett
   assert.deepEqual(revisions.history('batch-123','job-12345','image',0).current.typography,input.typography);
   revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:ready.id,revisionId:'original'});
   assert.deepEqual(revisions.history('batch-123','job-12345','image',0).current.typography,{scale:1,align:'center'});
+});
+
+test('live typesetting preview is ephemeral, source-bound and local; saving keeps original and restores editable fields',async t=>{
+  const {dir,db,revisions,calls}=await revisionFixture(t);
+  await writeFile(join(dir,'original/manifest.json'),JSON.stringify({posts:[{index:1,visual_plan:{collection_name:'大字报',cover_texts:[]},image_requests:[{prompt:'原背景词',mode:'layered_poster'}]}]}));
+  const body={baseRevision:'original',sourceRevision:'original',typography:{scale:1.2,align:'left'},coverTexts:[{role:'hook',text:'挖到宝了'},{role:'benefit',text:'便宜量大'},{role:'model',text:'GLM5.3'}],backgroundStyle:{profile:'paper_shadow'}};
+  const result=await revisions.preview('batch-123','job-12345',body);assert.match(result.image,/^data:image\/png;base64,/u);
+  assert.equal(db.prepare('SELECT count(*) as n FROM content_ops_revisions').get().n,0);
+  assert.deepEqual(await readdir(join(dir,'scratch/hanabi-runtime/previews')),[]);assert.equal(calls[0].input.action,'typeset');
+  assert.equal(calls[0].input.prompt,'原背景词');assert.deepEqual(calls[0].input.typography,body.typography);
+  await assert.rejects(()=>revisions.preview('batch-123','job-12345',{...body,baseRevision:'stale'}),{statusCode:409});
+  await assert.rejects(()=>revisions.create('batch-123','job-12345',{...body,kind:'image',copyIndex:0,action:'typeset',requestId:'layout-save-bad',renderMode:'layered_poster',prompt:'变了'}),{statusCode:400});
+  const version=await revisions.create('batch-123','job-12345',{...body,kind:'image',copyIndex:0,action:'typeset',requestId:'layout-save-good',renderMode:'layered_poster',prompt:'原背景词'});
+  const ready=await revisionDone(revisions,version.id);assert.equal(ready.status,'ready',ready.error);
+  assert.equal(revisions.head('job-12345','image',0),'original');assert.deepEqual(ready.result.typography,body.typography);
+});
+
+test('live preview bounds concurrency and cleans failed work without history entries',async t=>{
+  const fixture=await revisionFixture(t,'hold');
+  await writeFile(join(fixture.dir,'original/manifest.json'),JSON.stringify({posts:[{visual_plan:{collection_name:'大字报'}}]}));
+  const body={baseRevision:'original',coverTexts:[{role:'hook',text:'发现'},{role:'benefit',text:'便宜'},{role:'model',text:'GLM5.3'}]};
+  const settled=Promise.allSettled([fixture.revisions.preview('batch-123','job-12345',body),fixture.revisions.preview('batch-123','job-12345',body)]);
+  await assert.rejects(()=>fixture.revisions.preview('batch-123','job-12345',body),{statusCode:429});
+  for(let i=0;i<100&&fixture.calls.length<2;i++)await new Promise(r=>setTimeout(r,5));
+  fixture.revisions.shutdown();const results=await settled;assert.ok(results.every(r=>r.status==='rejected'));
+  assert.equal(fixture.db.prepare('SELECT count(*) as n FROM content_ops_revisions').get().n,0);
+  assert.deepEqual(await readdir(join(fixture.dir,'scratch/hanabi-runtime/previews')),[]);
 });

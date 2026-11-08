@@ -60,7 +60,7 @@ AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，
 - `scripts/lib/prompts.py`：既有 `scripts/generate.py reverse` 子命令的单图观察与提示词反推实现；输入图片是资料，不是指令。
 - `scratch/hanabi-runtime/prompts/<id>/`：一次反推的图片快照及文件式CLI输入输出，任务结束删除；原图与本机数据库记录保留，不作为第二份素材源。
 - `scratch/prompt-qa/`：提示词面板的隔离浏览器验收环境，含独立素材、历史数据库与离线视觉替身；不访问生产密钥/素材，验收后删除。
-- `scratch/repaint-qa/`：统一图片与提示词编辑器的隔离前端验收，使用独立历史数据库与离线图像替身，覆盖提示词生成、字号与对齐、预览采用、失败恢复及无图补图；验收后删除。
+- `scratch/repaint-qa/`：统一图片与提示词编辑器的隔离前端验收，使用独立历史数据库与离线图像替身，覆盖提示词生成、字号与对齐、排版即时预览及无模型保存、预览采用、失败恢复及无图补图；验收后删除。
 
 ### 图文修改模块
 
@@ -68,7 +68,9 @@ AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，
 
 - `hanabi/lib/content-ops-revisions.mjs`：修改版本存储、并发校验与单篇修改任务；追加记录并保留原始批次。
 - `hanabi/lib/content-ops-revision-ui.mjs`、`hanabi/lib/content-ops-revisions.css`：图文编辑、预览采用、区域框选及版本切换。
-- `scripts/lib/revision.py`：`scripts/generate.py revise` 子命令实现，文件式输入输出，承载文案改写、按提示词重新生成、原图编辑与替换校验。
+- `scratch/hanabi-runtime/previews/<id>/`：排版即时预览的请求、结果与PNG，均由当前图片背景层和控件参数重建，结束即删、不入版本历史；不含密钥。
+
+- `scripts/lib/revision.py`：`scripts/generate.py revise` 子命令实现，文件式输入输出，承载文案改写、按提示词重新生成、本机排版预览与保存、原图编辑与替换校验。
 
 ## 角色与系统边界
 
@@ -110,13 +112,17 @@ AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，
 
 在生成结果或历史批次的卡片上点击「图片与提示词」或「修改文案」。文案先选择 A/B/C，再修改标题、正文、标签，左侧即时预览；「保存文案并采用」进行本地校验后保存。AI 改写只处理当前文案，遵循原始简报、事实与现行规则，结果需点击「采用此版」。卡片上的复制与 Markdown 下载使用当前采用文案。
 
-图片编辑器默认展示可编辑提示词，点击「按提示词生成新图」只调用当前图像模型，不重新写文案或调用视觉模型。提交词原样传给图像模型，不隐式追加业务提示。大字报编辑背景词及3～4行封面短字、文字/高亮色，背景生成后本机准确排字；保留新底图实际颜色与材质，不用旧配方底色重新染色，封面文字区新增「字号比例（%）」60～150及「文字对齐」居中/左对齐。100%保持自动生成字号，120%会实际放大各行字形并同步加宽文字区，左对齐共用整组文字的左边线；高亮跟随字形，整组垂直居中，保留安全边距。原批次与未设置的旧版本默认100%居中。排版参数随版本保存，采用、重开与原稿恢复同步载回；改字号或对齐后先生成预览再采用。当前此按钮仍重新生成背景，不是只重排现有图片。其他版式编辑完整海报提示词，直接生成整张海报。缺图批次也可补图，采用后工作台显示完成；原任务和原文件不改，恢复原稿仍能显示原始失败状态。
+图片编辑器默认展示可编辑提示词，点击「按提示词生成新图」只调用当前图像模型，不重新写文案或调用视觉模型。提交词原样传给图像模型，不隐式追加业务提示。大字报编辑背景词及3～4行封面短字、文字/高亮色，背景生成后本机准确排字；保留新底图实际颜色与材质，不用旧配方底色重新染色，封面文字区新增「字号比例（%）」60～150及「文字对齐」居中/左对齐。100%保持自动生成字号，120%会实际放大各行字形并同步加宽文字区，左对齐共用整组文字的左边线；高亮跟随字形，整组垂直居中，保留安全边距。原批次与未设置的旧版本默认100%居中。排版参数随版本保存，采用、重开与原稿恢复同步载回；调整字号、对齐、封面文字、文字色或高亮后，停止输入约180ms自动请求本机排字预览，左侧直接显示真实PNG；连续修改只显示最新结果，预览不会新增修改历史。满意后点击「保存排版」追加本机排版版本并采用，不调用任何模型。改背景提示词仍须点击「按提示词生成新图」；背景词有未生成修改时不能保存排版，避免把旧背景标成新提示词。其他版式编辑完整海报提示词，直接生成整张海报。缺图批次也可补图，采用后工作台显示完成；原任务和原文件不改，恢复原稿仍能显示原始失败状态。
 
 原图修改入口收在「基于当前图片修改或上传替换」：填写修改要求可整图修改；开启框选后拖出矩形，仅修改区域内像素，区域外由本机合成保留。可上传 PNG/JPEG/WebP 替换，最多15MB、2000万像素，按原图尺寸等比适配并补白。改图与上传都先生成预览，再采用；下载预览图可保存尚未采用的候选图。选择历史版本后可继续修改或重新采用，最初原稿始终可恢复。
 
 修改的唯一事实源是本机历史数据库中追加的 `content_ops_revisions`，`content_ops_revision_heads` 仅记录当前采用版本指针。新增修改图片按唯一 ID 写入既有上传缓存，原始 `analysis_jobs`、生成 manifest、已导出 `outputs/` 均不覆盖。工作台响应在原始结果上应用当前指针；重新打开历史批次仍读取已采用版本。新图和AI结果未采用前不影响当前成稿，文案各版本与图片彼此独立。重新生成的提交词与参数在调用前存入同一版本记录，失败/取消也保留，可点击该版本载回编辑重试；未完成图不可采用。改词后必须重新生成才可采用，避免旧预览与新词混淆。
 
-业务入口为 `python3 scripts/generate.py revise --input request.json --output result.json [--image-output new.png] --config scratch/gateway.env`；参数文件由专用修改API构造。`kind=copy|image`，`action=manual|ai|upload|regenerate`；文案带 `source_text`/`text`，原图修改带可信 `source_image`，AI带 `instructions`，选区为归一化 `region={x,y,width,height}`，上传带 `image_data`。重新生成带原样 `prompt`、`render_mode=layered_poster|direct_poster`；大字报另带 `cover_texts`、`background_style` 与 `typography={scale,align}`（比例0.6～1.5，center/left），不要求已有图片；背景临时文件仅写任务目录。中间文件只在 `scratch/hanabi-runtime/revisions/<id>/`，完成后删除；可由同一输入重建，不作为第二份版本源。
+业务入口为 `python3 scripts/generate.py revise --input request.json --output result.json [--image-output new.png] --config scratch/gateway.env`；参数文件由专用修改API构造。`kind=copy|image`，`action=manual|ai|upload|regenerate|typeset`；文案带 `source_text`/`text`，原图修改带可信 `source_image`，AI带 `instructions`，选区为归一化 `region={x,y,width,height}`，上传带 `image_data`。本机排字 `typeset` 复用可信 `source_image` 的背景层，仅执行本机排字；提交词必须与来源图片对应，禁止通过保存排版伪造新背景词。重新生成带原样 `prompt`、`render_mode=layered_poster|direct_poster`；大字报另带 `cover_texts`、`background_style` 与 `typography={scale,align}`（比例0.6～1.5，center/left），不要求已有图片；背景临时文件仅写任务目录。中间文件只在 `scratch/hanabi-runtime/revisions/<id>/`，完成后删除；可由同一输入重建，不作为第二份版本源。
+
+即时预览入口为 `POST /api/content-ops/batches/:id/posts/:jobId/preview`，只接受本机同源JSON，核对当前版本与图片归属，最多2项同时运行、20秒超时。复用 `generate.py revise` 的 `typeset` 和正式保存相同的Pillow排字函数，返回PNG data URL，临时目录完成即删，不写历史数据库或上传缓存；错误不触发模型重试。
+
+新大字报PNG内嵌唯一无字背景层（`hanabi_background_parts` 与分段压缩 `hanabi_background_<n>`，每段不超过512KiB），为可重排的成图组成部分，不能当作第二份可编辑规则或文字源。背景来自该次生图与材质合成，后续排字仅读取这一层，避免重复叠字。旧图没有底层时，只有原manifest的成图SHA256或对应导出审计的SHA256与实际图匹配，才使用可信 `rendered_text` 范围从临近无字区域本机修复；文字区下方纹理无法逐像素恢复，界面明确标记「旧图背景修复」。没有可信记录则明确不支持，不猜位置、不收费清字；用户可主动重新生图建立背景层。历史上传图的导出审计仅从既有 `outputs/<日期>/hanabi/<图片ID>/manifest.json` 读取并核对 `source_image` 与成图哈希，不修改原审计、图片或原版本。修复后保存的新版本保留背景层及 `backgroundRecovered` 标记，原稿可恢复。
 
 AI改写使用当前文案模型；AI改图使用当前图像模型，携带原图和可选透明蒙版请求网关 `/images/edits`（multipart），不会降级到无图重生成。默认 `size=auto`，网关有特殊要求时可在本机配置 `CONTENT_OPS_EDIT_IMAGE_SIZE`。不支持接口、权限错误或超时明确失败并保留原稿；不自动重试。人工修改和上传无需模型调用。图片文字和改写事实仍须人工核对。
 

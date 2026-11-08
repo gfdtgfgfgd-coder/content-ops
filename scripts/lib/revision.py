@@ -56,6 +56,68 @@ def regenerate_image(data, settings, output):
         background.unlink(missing_ok=True)
 
 
+def typeset_image(data, settings, output):
+    from . import copy, backgrounds
+    if output.exists():
+        raise ValueError('修改结果文件已存在，拒绝覆盖')
+    texts = data.get('cover_texts')
+    copy.validate_visual_plan({'collection_name':'大字报','structure':{},'cover_texts':texts,'visual_prompt':'满幅平面背景'},data['model'],data['platform'])
+    style = backgrounds.normalize_style(data.get('background_style'))
+    typography = copy.normalize_typography(data.get('typography'))
+    font = next((path for path in [Path(settings.get('CONTENT_OPS_FONT','missing-font')),
+                Path.home()/'Library/Fonts/SourceHanSansSC-Medium.otf',Path('/System/Library/Fonts/Hiragino Sans GB.ttc')] if path.is_file()),None)
+    if font is None:
+        raise ValueError('未找到中文字体，请配置CONTENT_OPS_FONT')
+    recovered = False
+    with Image.open(data['source_image']) as source:
+        count=int(source.info.get('hanabi_background_parts','0'))
+        if not 0<=count<=60:raise ValueError('背景图层过大')
+        layer = ''.join(source.info.get(f'hanabi_background_{index}','') for index in range(count))
+        if source.width*source.height>20_000_000:raise ValueError('图片像素过大')
+        if layer:
+            raw = base64.b64decode(layer,validate=True)
+            if len(raw)>20*1024*1024:
+                raise ValueError('背景图层过大')
+            with Image.open(io.BytesIO(raw)) as clean:
+                if clean.size != source.size:
+                    raise ValueError('背景图层尺寸不符')
+                image = clean.convert('RGB')
+        else:
+            rows = data.get('source_rows')
+            if not isinstance(rows,list) or not 3 <= len(rows) <= 4:
+                raise ValueError('旧图没有可用背景图层或可信排版记录，请先生成一张新图')
+            image = source.convert('RGB'); recovered = True
+            width,height=image.size; boxes=[]
+            for row in rows:
+                box=row.get('bbox',[])
+                if len(box)!=4 or any(type(v) not in (float,int) for v in box):
+                    raise ValueError('旧图排版记录无效')
+                x1,y1,x2,y2=box;padx,pady=(24,14) if row.get('highlighted') else (2,2)
+                box=(max(0,int(x1-padx)),max(0,int(y1-pady)),min(width,int(x2+padx)),min(height,int(y2+pady)))
+                if box[0]>=box[2] or box[1]>=box[3]:
+                    raise ValueError('旧图文字范围无效')
+                boxes.append(box)
+            # Clone texture from the nearest equally sized text-free horizontal band.
+            # Pixels outside the recorded old glyph/highlight boxes stay unchanged.
+            original=image.copy()
+            for x1,y1,x2,y2 in boxes:
+                h=y2-y1
+                candidates=[y for y in range(0,height-h+1) if all(y+h<=b[1] or y>=b[3] for b in boxes)]
+                if not candidates:
+                    raise ValueError('旧图没有足够空白材质可修复，请重新生成背景')
+                top=min(candidates,key=lambda y:abs(y-y1))
+                image.paste(original.crop((x1,top,x2,top+h)),(x1,y1))
+    background=Path(data['background_path']) if data.get('background_path') else output.with_name(output.stem+'-surface.png')
+    if background.exists():raise ValueError('临时背景文件已存在，拒绝覆盖')
+    try:
+        image.save(background,format='PNG')
+        rendered=copy.render_bold_typo(background,output,texts,font,image.size,style,preserve_background=True,typography=typography)
+        return {**rendered,'prompt':data.get('prompt',''),'renderMode':'layered_poster','coverTexts':texts,'backgroundStyle':style,
+                'backgroundRecovered':bool(data.get('background_recovered') or recovered),'model':'local-typesetter','usage':{}}
+    finally:
+        background.unlink(missing_ok=True)
+
+
 def validate_copy(text, platform, model):
     if not isinstance(text, str) or not text.strip() or len(text) > 18000 or re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text):
         raise ValueError('文案须为非空文本，最多18000字，不能含控制字符')
@@ -196,6 +258,8 @@ def run(data, settings, image_output=None):
             raise ValueError('修改要求须为1–2000字')
     if data['kind'] == 'copy' and data['action'] in ('manual', 'ai'):
         return revise_copy(data, settings)
+    if data['kind']=='image' and data['action']=='typeset' and image_output:
+        return typeset_image(data,settings,image_output)
     if data['kind']=='image' and data['action']=='regenerate' and image_output:
         return regenerate_image(data,settings,image_output)
     if data['kind'] == 'image' and data['action'] in ('upload', 'ai') and image_output:
