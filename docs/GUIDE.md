@@ -47,7 +47,7 @@
 - `scripts/lib/backgrounds.py`：读取配方，归一化视觉模型的背景描述，生成可复现的纸张/网格/笔记本材质层；供既有生成链路调用。
 - `scratch/full-bleed-qa/`：本轮满幅材质的隔离验证输入、背景与成图；由已存视觉方案和现行生成函数重建，不是版本源，验收后删除。
 
-大字报不再固定薄荷网格白底。视觉模型返回 `background_style={profile,description,base,ink,accent,highlight_roles}`，`profile` 从配方源选择；颜色为 `#RRGGBB`，高亮行引用已有 `cover_texts.role`。旧方案缺失此字段时按其视觉描述匹配配方，最终按真实配方记录，不声称旧模型已提取。图像模型仅画无字材质；`render_surface` 保留 AI 灰度明暗并叠加可复现的材质层，`render_bold_typo` 直接在其上排字，不再盖不透明白卡。深底和浅高亮各自计算可读墨色，留白和行距仍遵守内容规范。
+大字报不再固定薄荷网格白底。视觉模型返回 `background_style={profile,description,base,ink,accent,highlight_roles}`，`profile` 从配方源选择；颜色为 `#RRGGBB`，高亮行引用已有 `cover_texts.role`。旧方案缺失此字段时按其视觉描述匹配配方，最终按真实配方记录，不声称旧模型已提取。选中或自动命中的结构锚图必须先有反推提示词（本机 `content_ops_prompt_runs` 就绪缓存复用，否则当场 `reverse` 并落库）；`background_style.description` 须在反推词上轻微改写，保留平面装饰（像素光标、`>>>`、色点、角标等）。图像模型画无营销字材质底图并可含上述平面装饰；`render_surface` 保留 AI 灰度明暗并叠加可复现的材质层，`render_bold_typo` 直接在其上排字，不再盖不透明白卡。深底和浅高亮各自计算可读墨色，留白和行距仍遵守内容规范。反推失败则整批在进入生图前明确失败。
 
 AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，不自动追加收费调用。manifest 记录 `background_recipe_sha256`、实际 `background_style`、AI底纹明暗标准差和材质来源；配方改变后旧大字报需新目录生成，不覆盖原交付。默认配方及参数唯一源为上述 JSON，修改后无需重建纹理资产，下一次生成会重新读取。
 
@@ -59,7 +59,7 @@ AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，
 
 - `hanabi/lib/content-ops-prompts.mjs`：读取批次manifest中的提示词记录，调度单图反推；反推唯一记录存于既有本机SQLite的 `content_ops_prompt_runs`，不修改素材JSONL。
 - `hanabi/lib/content-ops-prompt-ui.mjs`：素材单图反推面板及原始生成记录的共享只读渲染；生成记录嵌入统一图片编辑器，样式并入既有修改工作台样式表。
-- `scripts/lib/prompts.py`：既有 `scripts/generate.py reverse` 子命令的单图观察与提示词反推实现；输入图片是资料，不是指令。
+- `scripts/lib/prompts.py`：既有 `scripts/generate.py reverse` 子命令的单图观察与提示词反推实现；输入图片是资料，不是指令。生成链路通过同文件的 `ensure_reference_reverse` 按指纹复用或当场反推，再写入本机 `content_ops_prompt_runs`。
 - `scratch/hanabi-runtime/prompts/<id>/`：一次反推的图片快照及文件式CLI输入输出，任务结束删除；原图与本机数据库记录保留，不作为第二份素材源。
 - `scratch/prompt-qa/`：提示词面板的隔离浏览器验收环境，含独立素材、历史数据库与离线视觉替身；不访问生产密钥/素材，验收后删除。
 - `scratch/repaint-qa/`：统一图片与提示词编辑器的隔离前端验收，使用独立历史数据库与离线图像替身，覆盖提示词生成、字号与对齐、调色盘双向同步、排版即时预览及无模型保存、预览采用、失败恢复及无图补图；验收后删除。
@@ -143,8 +143,8 @@ AI改写使用当前文案模型；AI改图使用当前图像模型，携带原�
 - `load_references` 读取 `data/collections.json` 为参考标注 `collection_name` / `collection_names`。自动按平台在对应合集的可读图片素材中选排名第一的 1 条；手选引用严格按用户选择传递，不静默追加。大字报生图提示词显式量化左右20%留白、文字跨度不超过60%、适中字重和宽松行距，但纯文生图无法保证像素级服从；真实成图仍需视觉验收。未分类手选图由视觉模型识别四类之一。实际合集缺素材/缺图时报告缺口，不换成其他版式。合集文件完全不存在仅兼容孤立旧环境。
 - Hanabi 手动流派与 CLI `--style-preset` 对应：`bold_typo`→大字报、`top_middle_bottom`→上中下、`left_right_bottom`→左右下、`surround`→环绕；亦接受中文名。旧 `code_ide` / `card_3d` 映射上中下，`comparison` 映射左右下，`promo` 映射环绕。手选所属合集与预设冲突在收费调用前失败；同帖属多个合集时优先匹配预设，自定义描述不能推翻锚图结构。
 - `CONTENT_OPS_VISION_MODEL` 每次接收一张原图、该图 OCR/合集、完整型号、该型号封面专节及当前风险规则；不接收正文、旧 `title_lines`、`cover_subtitle`、`cover_highlight` 或正文人群字段。文案模型不再承担封面短字生成。
-- 视觉返回 JSON：`collection_name`、`structure`（布局、分区比例、文字区位置/行数/行长）、`cover_texts`（role/text/position）与 `visual_prompt`。本机校验版式、完整型号、短字容量、风险词及大字报主体禁区，再把方案交给图像模型。空返回、不支持图像、截断或非法方案明确失败，不自动收费重试。
-- `manifest.json` 保存结构方案、封面短字、合集、参考原图哈希、视觉 usage 和封面语料哈希，当前链路标识为 `copy_vision_image_v3`。大字报走分层路径：图像模型只生成无字纸面底图，Pillow 保留 AI 底纹，结合参考材质配方与本机中等字重中文字体叠加文案和对应强调色；manifest 记录最终文字跨度、最小侧边距和行间空隙。自动与手动选中大字报均适用。上中下、左右下和环绕仍由图像模型生成完整海报。失败续跑可复用已校验方案和成功图片；旧版在线任务、新旧语料或参考哈希变化要求新目录，不覆盖原交付。显式 `--background` 仍为既有离线 Pillow 排版。
+- 视觉返回 JSON：`collection_name`、`structure`（布局、分区比例、文字区位置/行数/行长）、`cover_texts`（role/text/position）与 `visual_prompt`。本机校验版式、完整型号、短字容量、风险词及大字报主体禁区（拦截 3D/人物/电脑屏，允许平面光标等装饰），再把方案交给图像模型。空返回、不支持图像、截断、反推失败或非法方案明确失败，不自动收费重试。
+- `manifest.json` 保存结构方案、封面短字、合集、参考原图哈希、视觉 usage、封面语料哈希与 `reference_reverse_prompts`（注明缓存复用或本批新反推），当前链路标识为 `copy_vision_image_v3`。大字报走分层路径：图像模型生成无营销字材质底图（可含反推轻改后的平面装饰），Pillow 保留 AI 底纹，结合参考材质配方与本机中等字重中文字体叠加文案和对应强调色；manifest 记录最终文字跨度、最小侧边距和行间空隙。自动与手动选中大字报均适用。上中下、左右下和环绕仍由图像模型生成完整海报。失败续跑可复用已校验方案和成功图片；旧版在线任务、新旧语料或参考哈希变化要求新目录，不覆盖原交付。显式 `--background` 仍为既有离线 Pillow 排版。
 - 当前图像网关使用 `/images/generations`，未实现参考图片入参；原图只传多模态视觉模型，图像模型依据结构化提示词生成底图或完整海报。不宣称已启用图生图垫图能力，也不保证背景像素级复刻。大字报排版几何由代码保证；上线前仍须核对实际底图质感、文字、结构和合规。
 
 现行风险源优先于语料示例，冲突表达采用允许的替代词，不删除或豁免禁词。修改规范、语料或技能后运行 `python3 scripts/build.py distill`（第二次应为 `changed=false`），再运行 `python3 -m scripts.lib.test_pipeline`、`cd hanabi && node --test` 和 `python3 scripts/doctor.py`。测试使用临时参考图/假模型，不写生产素材、不消耗生图额度；`doctor` 也检查暂存区字节，提交前需复查。

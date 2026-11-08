@@ -410,17 +410,26 @@ class PipelineTests(unittest.TestCase):
 
     def test_background_prompt_preserves_reference_material_and_color_without_copy_text(self):
         plan=visual_plan(prompt='深灰网格背景，浅色文字与绿色高亮。')
-        plan['background_style']={'profile':'charcoal_grid','base':'#23282C','ink':'#F0F2EC','accent':'#85E070','highlight_roles':['model'],'description':'哑光深灰纸面和细网格'}
+        plan['background_style']={'profile':'charcoal_grid','base':'#23282C','ink':'#F0F2EC','accent':'#85E070','highlight_roles':['model'],
+                                  'description':'哑光深灰纸面和细网格，右下角像素光标与红色色点轻微偏移'}
         prompt=copy.bold_typo_background_prompt(plan,'xhs','GLM5.3')
         self.assertIn('深灰',prompt);self.assertIn('#23282C',prompt)
-        self.assertIn('中央和四边保留连续纹理',prompt);self.assertIn('严禁出现任何文字',prompt)
-        for line in plan['cover_texts']:self.assertNotIn(line['text'],prompt)
+        self.assertIn('中央和四边保留连续纹理',prompt)
+        self.assertIn('平面装饰',prompt);self.assertIn('像素光标',prompt)
+        self.assertIn('严禁出现营销短字',prompt)
+        for line in plan['cover_texts']:
+            self.assertIn(line['text'], prompt)  # listed in ban clause
+            # Must not appear as printable cover copy outside the ban sentence.
+        self.assertIn('尤其不得印出', prompt)
         for style in [{'profile':'unknown'},{'profile':'paper_shadow','base':'white'},{'profile':'paper_shadow','highlight_roles':['unknown']}]:
             with self.assertRaises(ValueError):backgrounds.normalize_style(style)
         forced=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['hook','benefit']})
         self.assertEqual(forced['highlight_roles'],['model'])
         kept=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['hook','model']})
         self.assertEqual(kept['highlight_roles'],['hook','model'])
+        copy.check_bold_typo_subject(copy.positive_visual_text('平面像素光标与>>>角标点缀，无立体主体'))
+        with self.assertRaises(ValueError):
+            copy.check_bold_typo_subject(copy.positive_visual_text('加入电脑插画与3D机器人'))
 
     def test_background_profile_accepts_configured_chinese_labels_and_id_variants(self):
         for profile in backgrounds.recipe()['profiles']:
@@ -577,7 +586,8 @@ class PipelineTests(unittest.TestCase):
                 timeout=120, background=None))
         self.assertEqual(generate.call_args.kwargs['size'], '1080x1440')
         self.assertIn('竖版3:4', generate.call_args.kwargs['prompt'])
-        self.assertIn('严禁出现任何文字', generate.call_args.kwargs['prompt'])
+        self.assertIn('严禁出现营销短字', generate.call_args.kwargs['prompt'])
+        self.assertIn('允许保留平面装饰', generate.call_args.kwargs['prompt'])
         self.assertNotIn(post['image_prompt'], generate.call_args.kwargs['prompt'])
         self.assertEqual(vision.call_args.args[0], {'model':'GLM5.3', 'corpus_model':'GLM-5.3'})
         self.assertTrue(vision.call_args.args[1])
@@ -632,8 +642,83 @@ class PipelineTests(unittest.TestCase):
             with self.subTest(response=response),patch.object(gateway,'request_json',return_value=response):
                 with self.assertRaises(ValueError):prompts.reverse(data,settings)
 
+    def test_ensure_reference_reverse_reuses_cache_or_runs_fresh(self):
+        from . import prompts
+        import hashlib
+        image = self.base / 'anchor.png'
+        Image.new('RGB', (64, 96), '#445566').save(image)
+        digest = hashlib.sha256(image.read_bytes()).hexdigest()
+        settings = {'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1', 'CONTENT_OPS_API_KEY': 'fake-only',
+                    'CONTENT_OPS_VISION_MODEL': 'vision-selected'}
+        db = self.base / 'reverse-cache.sqlite'
+        fingerprint = prompts.reverse_fingerprint(digest, 'vision-selected', settings['CONTENT_OPS_BASE_URL'])
+        prompts.store_ready_reverse(fingerprint, digest, 'vision-selected', {
+            'prompt': '缓存反推：像素光标与>>>', 'negativePrompt': '无3D', 'visibleText': ['旧字'],
+            'model': 'vision-selected', 'width': 64, 'height': 96,
+        }, db_path=db)
+        with patch.object(prompts, 'reverse') as reverse_call:
+            cached = prompts.ensure_reference_reverse(image, settings, db_path=db)
+        reverse_call.assert_not_called()
+        self.assertEqual(cached['source'], 'cache')
+        self.assertIn('像素光标', cached['prompt'])
+        empty_db = self.base / 'empty-reverse.sqlite'
+        fresh_result = {'prompt': '新反推：色点微调', 'negativePrompt': '无电脑', 'visibleText': [],
+                        'model': 'vision-selected', 'usage': {}, 'imageSha256': digest, 'width': 64, 'height': 96}
+        with patch.object(prompts, 'reverse', return_value=fresh_result) as reverse_call:
+            fresh = prompts.ensure_reference_reverse(image, settings, db_path=empty_db)
+        reverse_call.assert_called_once()
+        self.assertEqual(fresh['source'], 'fresh')
+        self.assertEqual(fresh['prompt'], '新反推：色点微调')
+        reused = prompts.ensure_reference_reverse(image, settings, db_path=empty_db, reverse_fn=lambda *a, **k: (_ for _ in ()).throw(AssertionError('should use cache')))
+        self.assertEqual(reused['source'], 'cache')
+        with patch.object(prompts, 'reverse', side_effect=ValueError('网关挂了')):
+            with self.assertRaisesRegex(ValueError, '反推失败'):
+                prompts.ensure_reference_reverse(image, settings, db_path=self.base / 'fail-reverse.sqlite')
+
+    def test_vision_requires_reverse_before_contract_and_adapts_background(self):
+        from . import prompts as reverse_prompts
+        image_dir = self.base / 'data/images/xhs/seed'
+        image_dir.mkdir(parents=True)
+        image = image_dir / '0.png'
+        Image.new('RGB', (8, 8), '#112233').save(image)
+        references = [{'id': 'seed', 'collection_name': '大字报', 'cover_ocr': '旧', 'image_paths': [str(image.relative_to(self.base))]}]
+        (self.base / 'rules').mkdir(exist_ok=True)
+        for source in ['rules/content-spec.md', 'rules/banned-words-quick.yaml', 'data/model-corpus.md']:
+            shutil.copy(ROOT / source, self.base / source)
+        plan = visual_plan(model='GLM-5.3')
+        plan['background_style'] = {
+            'profile': 'charcoal_grid', 'base': '#23282C', 'ink': '#F0F2EC', 'accent': '#85E070',
+            'highlight_roles': ['model'],
+            'description': '深灰网格，右下角像素光标略上移，>>> 间距略疏，红点改薄荷绿',
+        }
+        settings = {'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1', 'CONTENT_OPS_API_KEY': 'test',
+                    'CONTENT_OPS_VISION_MODEL': 'vision-selected'}
+        response = {'model': 'vision-selected', 'usage': {},
+                    'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(plan, ensure_ascii=False)}}]}
+        with patch.object(copy, 'ROOT', self.base), \
+             patch.object(reverse_prompts, 'ensure_reference_reverse', side_effect=ValueError('选中参考图反推失败，无法继续生成：网关挂了')), \
+             patch.object(gateway, 'request_json') as request:
+            with self.assertRaisesRegex(ValueError, '反推失败'):
+                copy.visual_prompt_call({'model': 'GLM-5.3'}, references, settings, 1, self.base / 'rev-fail.txt', 'xhs')
+            request.assert_not_called()
+        reverse_fixture = {'prompt': '原反推含光标与>>>', 'negativePrompt': '无立体', 'source': 'fresh',
+                           'fingerprint': 'b' * 64, 'image_sha256': 'c' * 64, 'run_id': 'new-run'}
+        with patch.object(copy, 'ROOT', self.base), \
+             patch.object(reverse_prompts, 'ensure_reference_reverse', return_value=reverse_fixture) as ensure_reverse, \
+             patch.object(gateway, 'request_json', return_value=response):
+            result, log = copy.visual_prompt_call({'model': 'GLM-5.3'}, references, settings, 1, self.base / 'rev-ok.txt', 'xhs')
+        ensure_reverse.assert_called_once()
+        self.assertEqual(log['reference_reverse']['source'], 'fresh')
+        bg = copy.bold_typo_background_prompt(result, 'xhs', 'GLM-5.3')
+        self.assertIn('像素光标', bg)
+        self.assertIn('>>>', bg)
+        self.assertIn('允许保留平面装饰', bg)
+        for line in result['cover_texts']:
+            self.assertIn(line['text'], bg)
+
     def test_vision_sends_real_images_and_platform_context(self):
         import base64
+        from . import prompts as reverse_prompts
         image_dir = self.base / 'data/images/xhs/example'
         image_dir.mkdir(parents=True)
         references = []
@@ -650,7 +735,11 @@ class PipelineTests(unittest.TestCase):
                     'choices':[{'finish_reason':'stop','message':{'content':json.dumps(visual_plan(model='GLM-5.3'),ensure_ascii=False)}}]}
         settings = {'CONTENT_OPS_BASE_URL':'https://offline.invalid/v1', 'CONTENT_OPS_API_KEY':'test',
                     'CONTENT_OPS_VISION_MODEL':'vision-selected'}
-        with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', return_value=response) as request:
+        reverse_fixture = {'prompt':'灰白纸面，右下角像素光标与>>>点缀。','negativePrompt':'无立体主体',
+                           'visibleText':['旧型号'],'source':'cache','fingerprint':'f'*64,'image_sha256':'a'*64,'run_id':'run-1'}
+        with patch.object(copy, 'ROOT', self.base), \
+             patch.object(reverse_prompts, 'ensure_reference_reverse', return_value=reverse_fixture) as ensure_reverse, \
+             patch.object(gateway, 'request_json', return_value=response) as request:
             prompt, log = copy.visual_prompt_call(post, references, settings, 1, self.base/'visual.txt', 'xianyu')
             payload = request.call_args.args[1]
             self.assertEqual(payload['model'], 'vision-selected')
@@ -659,6 +748,8 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(len(content), 2)
             self.assertIn('方图1:1', content[0]['text'])
             self.assertIn('方图1:1，1080×1080px', content[0]['text'])
+            self.assertIn('reference_reverse_prompt', content[0]['text'])
+            self.assertIn('像素光标', content[0]['text'])
             for pollution in ['本次核心卖点。','旧副标题污染唯一标记','旧高亮污染唯一标记','避免告示牌贴纸感','明确主物件、场景、冷暖光影']:
                 self.assertNotIn(pollution, content[0]['text'])
             self.assertIn('旧型号', content[0]['text'])
@@ -670,14 +761,20 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(log['reference_images'], 1)
             self.assertEqual(log['usage']['prompt_tokens'], 123)
             self.assertTrue(all(len(x['sha256']) == 64 for x in log['sources']))
+            self.assertEqual(log['reference_reverse']['source'], 'cache')
+            self.assertEqual(prompt['reference_reverse']['prompt'], reverse_fixture['prompt'])
             self.assertEqual(json.loads((self.base/'visual.txt').read_text())['cover_texts'], prompt['cover_texts'])
+            ensure_reverse.assert_called_once()
         with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json') as request:
             with self.assertRaisesRegex(ValueError, '没有可读取'):
                 copy.visual_prompt_call(post, [{'image_paths':['../../secret.jpg']}], settings, 1, self.base/'absent.txt', 'xhs')
             request.assert_not_called()
+        def vision_with_reverse(*args, **kwargs):
+            with patch.object(reverse_prompts, 'ensure_reference_reverse', return_value=reverse_fixture):
+                return copy.visual_prompt_call(*args, **kwargs)
         with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', return_value={**response,'choices':[{'finish_reason':'length','message':{'content':'截断提示词'}}]}):
             with self.assertRaisesRegex(ValueError, '被截断'):
-                copy.visual_prompt_call(post, references, settings, 1, self.base/'truncated.txt', 'xhs')
+                vision_with_reverse(post, references, settings, 1, self.base/'truncated.txt', 'xhs')
             self.assertEqual((self.base/'truncated.txt').read_text(),'截断提示词')
         for error, expected in [
             (gateway.ImageGenerationError('Gateway connection failed: timed out'), '网络超时'),
@@ -685,13 +782,13 @@ class PipelineTests(unittest.TestCase):
         ]:
             with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', side_effect=error):
                 with self.subTest(error=error), self.assertRaisesRegex(ValueError, expected):
-                    copy.visual_prompt_call(post, references, settings, 1, self.base/'failed.txt', 'xhs')
+                    vision_with_reverse(post, references, settings, 1, self.base/'failed.txt', 'xhs')
         with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', return_value={'choices':[{'finish_reason':'stop','message':{'content':''}}]}):
             with self.assertRaisesRegex(ValueError, '可能不支持图像输入'):
-                copy.visual_prompt_call(post, references, settings, 1, self.base/'empty.txt', 'xhs')
+                vision_with_reverse(post, references, settings, 1, self.base/'empty.txt', 'xhs')
         with patch.object(copy, 'ROOT', self.base), patch.object(gateway, 'request_json', return_value={'choices':[]}):
             with self.assertRaisesRegex(ValueError, '可能不支持图像输入'):
-                copy.visual_prompt_call(post, references, settings, 1, self.base/'no-choice.txt', 'xhs')
+                vision_with_reverse(post, references, settings, 1, self.base/'no-choice.txt', 'xhs')
 
     def test_collection_selection_uses_platform_layouts_and_manual_aliases(self):
         rows, collections = [], []
