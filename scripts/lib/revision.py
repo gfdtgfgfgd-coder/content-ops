@@ -34,6 +34,8 @@ def regenerate_image(data, settings, output):
         texts = data.get('cover_texts')
         plan = {'collection_name':'大字报','structure':{},'cover_texts':texts,'visual_prompt':'满幅平面背景'}
         copy.validate_visual_plan(plan,data['model'],data['platform'])
+        for item in texts:
+            copy.normalize_line_scale(item.get('scale', 1) if isinstance(item, dict) else 1)
         style = backgrounds.normalize_style(data.get('background_style'))
         font = copy.resolve_cover_font(typography, settings)
     size = copy.poster_size(data['platform'])
@@ -59,6 +61,8 @@ def typeset_image(data, settings, output):
         raise ValueError('修改结果文件已存在，拒绝覆盖')
     texts = data.get('cover_texts')
     copy.validate_visual_plan({'collection_name':'大字报','structure':{},'cover_texts':texts,'visual_prompt':'满幅平面背景'},data['model'],data['platform'])
+    for item in texts:
+        copy.normalize_line_scale(item.get('scale', 1) if isinstance(item, dict) else 1)
     style = backgrounds.normalize_style(data.get('background_style'))
     typography = copy.normalize_typography(data.get('typography'))
     font = copy.resolve_cover_font(typography, settings)

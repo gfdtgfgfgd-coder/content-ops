@@ -23,6 +23,15 @@ const normalizeTypography = value => {
   }
   return { scale: typography.scale, align: typography.align, font };
 };
+const normalizeCoverTexts = texts => {
+  if (!Array.isArray(texts) || texts.length < 3 || texts.length > 4) throw fail('请填写3～4行封面文字及文字/高亮颜色。');
+  return texts.map(text => {
+    if (!text || !['hook', 'benefit', 'model', 'payoff'].includes(text.role) || !validText(text.text, 80)) throw fail('封面文字须为3～4行有效短句。');
+    const scale = text.scale ?? 1;
+    if (!Number.isFinite(scale) || scale < .6 || scale > 1.5) throw fail('每行字号比例须为60%～150%。');
+    return { ...text, scale };
+  });
+};
 
 export class ContentOpsRevisions {
   constructor({ db, production, root, uploadDir, spawnProcess = spawn, timeout = 330000 }) {
@@ -132,8 +141,10 @@ export class ContentOpsRevisions {
     if(['regenerate','typeset'].includes(body.action)){
       body.typography=normalizeTypography(body.typography);
       if(body.kind!=='image'||!validText(body.prompt,16000)||!['layered_poster','direct_poster'].includes(body.renderMode))throw fail('请输入完整生图提示词，最多16000字。');
-      if(body.renderMode==='layered_poster'&&(!Array.isArray(body.coverTexts)||body.coverTexts.length<3||body.coverTexts.length>4||!body.backgroundStyle||typeof body.backgroundStyle!=='object'))throw fail('请填写3～4行封面文字及文字/高亮颜色。');
-      if(body.renderMode==='layered_poster'&&body.coverTexts.some(t=>!t||!['hook','benefit','model','payoff'].includes(t.role)||!validText(t.text,80)))throw fail('封面文字须为3～4行有效短句。');
+      if(body.renderMode==='layered_poster'){
+        if(!body.backgroundStyle||typeof body.backgroundStyle!=='object')throw fail('请填写3～4行封面文字及文字/高亮颜色。');
+        body.coverTexts=normalizeCoverTexts(body.coverTexts);
+      }
     }
     if(body.action==='typeset'&&(body.renderMode!=='layered_poster'||body.prompt!==this.imageContext(target,source).prompt))throw fail('背景词已修改或当前图不是分层海报，请先重新生图或恢复背景词。');
     if(body.kind==='image'&&['ai','upload','typeset'].includes(body.action)&&!source.image)throw fail('这张图片尚未生成，请先编辑提示词重新生成。');
@@ -224,13 +235,13 @@ export class ContentOpsRevisions {
     else if(body.sourceRevision&&body.sourceRevision!==target.revisionId){const row=this.get(body.sourceRevision);if(row.batch_id!==batchId||row.job_id!==jobId||row.kind!=='image'||row.status!=='ready')throw fail('预览底稿无效。');source=parse(row.result);}
     const context=this.imageContext(target,source);
     if(context.renderMode!=='layered_poster'||!source.image)throw fail('此图片不支持本机文字排版，请使用完整海报提示词或原图修改。');
-    if(!Array.isArray(body.coverTexts)||body.coverTexts.length<3||body.coverTexts.length>4||body.coverTexts.some(t=>!t||!validText(t.text,80)))throw fail('请填写3～4行有效封面字。');
+    const coverTexts=normalizeCoverTexts(body.coverTexts);
     const typography=normalizeTypography(body.typography);
     const id=randomUUID(),dir=join(this.root,'scratch/hanabi-runtime/previews',id),output=join(dir,'result.json'),image=join(dir,'image.png');
     this.previewChildren.set(id,null);
     try{
       const data={kind:'image',action:'typeset',platform:target.row.platform,model:target.row.model,source_image:await this.sourcePath(source.image),source_rows:context.sourceRows,
-        background_recovered:source.backgroundRecovered,prompt:context.prompt,cover_texts:body.coverTexts,background_style:body.backgroundStyle,typography};
+        background_recovered:source.backgroundRecovered,prompt:context.prompt,cover_texts:coverTexts,background_style:body.backgroundStyle,typography};
       await mkdir(dir,{recursive:true,mode:0o700});await writeFile(join(dir,'request.json'),JSON.stringify(data),{flag:'wx',mode:0o600});
       const python=[join(this.root,'scratch/.venv/bin/python'),join(this.root,'.venv/bin/python')].find(p=>existsSync(p))||'python3';
       await this.invoke(python,[join(this.root,'scripts/generate.py'),'revise','--input',join(dir,'request.json'),'--output',output,'--image-output',image,'--config',join(this.root,'scratch/gateway.env')],child=>this.previewChildren.set(id,child),20000);

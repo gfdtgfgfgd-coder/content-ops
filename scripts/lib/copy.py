@@ -718,6 +718,13 @@ def resolve_cover_font(typography=None, settings=None):
     raise ValueError(f'未找到字体「{entry["label"]}」，请安装对应字体或配置 CONTENT_OPS_FONT')
 
 
+def normalize_line_scale(value=1):
+    scale = 1 if value is None else value
+    if type(scale) not in (int, float) or not .6 <= scale <= 1.5:
+        raise ValueError('每行字号比例须为60%～150%')
+    return scale
+
+
 def render_bold_typo(background, output, texts, font_path, size, background_style=None, *, preserve_background=False, typography=None):
     from PIL import Image, ImageDraw, ImageOps, ImageStat
     style = backgrounds.normalize_style(background_style)
@@ -738,13 +745,14 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
     text_width = int(width * .60) - 44
     rows = []
     for item in texts:
+        line_scale = normalize_line_scale(item.get('scale', 1) if isinstance(item, dict) else 1)
         font = fit_font(font_path, item['text'], 104, text_width)
-        font = font.font_variant(size=max(1, round(font.size * typography['scale'])))
+        font = font.font_variant(size=max(1, round(font.size * typography['scale'] * line_scale)))
         stroke = max(1, round(font.size / 70))
         bounds = draw.textbbox((0, 0), item['text'], font=font, stroke_width=stroke)
         rows.append({'text': item['text'], 'font': font, 'bounds': bounds,
                      'height': bounds[3] - bounds[1], 'width': bounds[2] - bounds[0],
-                     'stroke': stroke, 'role': item['role']})
+                     'stroke': stroke, 'role': item['role'], 'scale': line_scale})
     gap = max(28, round(min(row['font'].size for row in rows) * .5))
     total_height = sum(row['height'] for row in rows) + gap * (len(rows) - 1)
     if total_height + 24 > height * .9:
@@ -771,7 +779,8 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
                   font=row['font'], fill=backgrounds.readable_ink(style['accent'],ink) if highlighted else ink,
                   stroke_width=row['stroke'], stroke_fill=backgrounds.readable_ink(style['accent'],ink) if highlighted else ink)
         rendered.append({'role': row['role'], 'text': row['text'], 'bbox': box, 'highlighted':highlighted,
-                         'fill':backgrounds.readable_ink(style['accent'],ink) if highlighted else ink, 'font_size':row['font'].size})
+                         'fill':backgrounds.readable_ink(style['accent'],ink) if highlighted else ink,
+                         'font_size':row['font'].size, 'scale': row['scale']})
         y += row['height'] + gap
     image.convert('RGB').save(output, format='PNG',pnginfo=layers)
     return {'width': width, 'height': height, 'bytes': output.stat().st_size,

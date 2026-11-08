@@ -1320,10 +1320,16 @@ class RevisionTests(unittest.TestCase):
         sans=copy.render_bold_typo(source,self.base/'sans.png',texts,copy.resolve_cover_font({'font':'source_han_sans'}), (1080,1440),preserve_background=True,typography={'scale':1,'align':'center','font':'source_han_sans'})
         serif=copy.render_bold_typo(source,self.base/'serif.png',texts,copy.resolve_cover_font({'font':'songti'}), (1080,1440),preserve_background=True,typography={'scale':1,'align':'center','font':'songti'})
         self.assertNotEqual(sans['sha256'],serif['sha256'])
+        varied=[{**row,'scale':1.4 if row['role']=='model' else .7} for row in texts]
+        mixed=copy.render_bold_typo(source,self.base/'mixed.png',varied,font,(1080,1440),preserve_background=True,typography={'scale':1,'align':'center'})
+        self.assertGreater(next(row['font_size'] for row in mixed['rendered_text'] if row['role']=='model'),
+                           next(row['font_size'] for row in mixed['rendered_text'] if row['role']=='hook'))
         with patch.object(gateway,'generate_image') as call:
             for invalid in [[],{'scale':True,'align':'left'},{'scale':1.6,'align':'left'},{'scale':.5,'align':'left'},{'scale':1,'align':'invalid'},{'scale':1,'align':'left','font':'missing_font'}]:
                 with self.subTest(invalid=invalid),self.assertRaises(ValueError):
                     self.revision.run({**data,'typography':invalid},self.settings,self.base/'invalid.png')
+            with self.assertRaises(ValueError):
+                self.revision.run({**data,'cover_texts':[{**texts[0],'scale':1.8},*texts[1:]]},self.settings,self.base/'bad-line.png')
             call.assert_not_called()
 
     def test_live_typesetting_preserves_background_layer_and_matches_saved_pixels_without_models(self):
