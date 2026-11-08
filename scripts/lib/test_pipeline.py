@@ -437,6 +437,7 @@ class PipelineTests(unittest.TestCase):
         output=self.base/'raw-resume';argv=['--model','GLM5.3','--platform','xhs','--count','1','--output',str(output)]
         drafts=[structured_post('format_1',1),structured_post('format_2',2),structured_post('format_3',3)]
         plan=visual_plan();plan['background_style']={'profile':backgrounds.recipe()['profiles'][0]['label']}
+        plan['visual_prompt']+='第一、第三行字后分别叠加青绿色高亮条。'
         def rejected_visual(post,refs,settings,timeout,raw_output,platform,**kwargs):
             raw_output.write_text(json.dumps(plan,ensure_ascii=False))
             raise ValueError('local background validation failed')
@@ -460,6 +461,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(manifest['status'],'completed')
         self.assertTrue(manifest['vision_calls'][-1]['reused_raw_response'])
         self.assertEqual(manifest['posts'][0]['visual_plan']['background_style']['profile'],'paper_shadow')
+        self.assertEqual(manifest['posts'][0]['visual_plan']['visual_prompt'],plan['visual_prompt'])
 
     def test_background_surfaces_are_reproducible_and_flat_ai_has_visible_material(self):
         from PIL import ImageStat
@@ -781,6 +783,41 @@ class PipelineTests(unittest.TestCase):
         copy.validate_visual_plan(visual_plan(prompt='纯纸张便签，禁止3D物件、电脑和代码屏。'),'GLM5.3','xhs')
         hyphen_plan = visual_plan('GLM-5.3', prompt='纯纸张便签，第一行大字，禁止出现API或水印。')
         copy.validate_visual_plan(hyphen_plan, 'GLM5.3', 'xhs', '大字报')
+
+    def test_visual_plan_layout_ordinals_do_not_trigger_advertising_risks(self):
+        instructions=(
+            '第一、第三行字后分别叠加青绿色高亮条。',
+            '第一、二、三行居中。', '第一及第三行居中。', '第一与第三行居中。',
+            '第一和第三行居中。', '第一以及第三行居中。', '第一/第三行居中。',
+            '第一，第三行居中。', '第 一 、 第 三 行居中。',
+            '第一至第四行依次排字。', '第一到四行依次排字。',
+            '第一—第四行加粗。', '第一～第三行居中。', '第1-4行依次排字。',
+            '第一列、第三列对齐。', '第一及第三个卡片对齐。',
+            '第一层级放型号，第二层级放福利。', '第一、第三部分对齐。',
+        )
+        for layout in copy.LAYOUTS:
+            for platform in ('xhs','xianyu'):
+                for instruction in instructions:
+                    with self.subTest(layout=layout,platform=platform,instruction=instruction):
+                        plan=visual_plan(layout=layout);prompt=plan['visual_prompt']+instruction
+                        plan['visual_prompt']=prompt
+                        copy.validate_visual_plan(plan,'GLM5.3',platform)
+                        self.assertEqual(plan['visual_prompt'],prompt)
+
+    def test_visual_plan_ordinals_never_exempt_visible_copy_or_rank_claims(self):
+        for platform in ('xhs','xianyu'):
+            for text in ('行业第一','第一名','第一梯队','第一行','第一、第三行','API','5折','Token'):
+                with self.subTest(platform=platform,visible=text):
+                    plan=visual_plan();plan['cover_texts'][0]['text']=text
+                    with self.assertRaisesRegex(ValueError,'封面短字第1项含风险词'):
+                        copy.validate_visual_plan(plan,'GLM5.3',platform)
+            for claim in ('标注行业第一。','第一行印上行业第一。','第一、第三行加入API字样。',
+                          '写上「第一、第三行」。','显示“第一行”。','显示"第一行"。','显示"第一行”。',
+                          '加上「第一梯队」。','第一及第三行写5折。'):
+                with self.subTest(platform=platform,claim=claim):
+                    plan=visual_plan();plan['visual_prompt']+=claim
+                    with self.assertRaisesRegex(ValueError,'视觉提示词含风险词'):
+                        copy.validate_visual_plan(plan,'GLM5.3',platform)
 
     def test_cover_corpus_is_model_scoped_and_all_combinations_pass_risk_check(self):
         models=('GLM-5.3','Kimi K3.1 Pro','DeepSeek V4.1')

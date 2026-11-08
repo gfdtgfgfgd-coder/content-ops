@@ -416,16 +416,25 @@ def extract_cover_corpus(model, root=None):
     return section[match.start():].strip() + ('\n\n' + common.group(0).strip() if common else '')
 
 
-def check_cover_words(text, platform, model, rules=None):
+def check_cover_words(text, platform, model, rules=None, *, context='封面'):
     # Covers have the stricter common baseline even on Xianyu (Token/discounts included).
     hits = [h for scope in set(('xhs', platform)) for h in word_check.check(str(text or ''), scope, model, rules=rules)]
     if hits:
-        raise ValueError('封面含风险词：' + '、'.join(sorted({h['word'] for h in hits})))
+        raise ValueError(context + '含风险词：' + '、'.join(sorted({h['word'] for h in hits})))
 
 
 def visual_position_text(text):
-    """Drop layout ordinals from the prompt copy before user-visible risk checks."""
-    return re.sub(r'第([一二三四五六七八九十\d]+)(行|层级?|栏|列|张|个|部分|区块?|段|步|排|组|页|屏|卡|格|句|位)', r'首\2', text)
+    """Project instructions for risk checks, without rewriting the saved prompt.
+
+    Only layout ordinals outside quoted copy are metadata. Shared suffixes such
+    as 第一、第三行 and ranges such as 第一至第四行 refer to positions, not ranks.
+    cover_texts are checked separately, verbatim, before this projection.
+    """
+    number = r'[一二三四五六七八九十百\d]+'
+    sequence = rf'第\s*{number}(?:\s*(?:以及|[、，,/及与和或到至—–~～-])\s*(?:第\s*)?{number})*'
+    quoted = r'[“"][^”"\n]*[”"]|「[^」]*」|『[^』]*』|‘[^’]*’|\'[^\'\n]*\''
+    pattern = rf'(?P<quoted>{quoted})|{sequence}\s*(?P<unit>层级|区块|部分|行|层|栏|列|张|个|区|段|步|排|组|页|屏|卡|格|句|位)'
+    return re.sub(pattern, lambda match: match.group('quoted') or match.group('unit'), text)
 
 
 def truncate_cover_units(text, maximum):
@@ -540,9 +549,9 @@ def validate_visual_plan(plan, product_model, platform, expected_layout='', rule
         raise ValueError('缺少视觉模型生成的海报提示词')
     positive = re.sub(r'(?:严禁|禁止|不得|不添加|不出现|不要|避免|无)[^。；;\n]*', '', prompt)
     positive = visual_position_text(positive)
-    for t in texts:
-        check_cover_words(t['text'], platform, product_model, rules)
-    check_cover_words(positive, platform, product_model, rules)
+    for index, t in enumerate(texts, 1):
+        check_cover_words(t['text'], platform, product_model, rules, context=f'封面短字第{index}项')
+    check_cover_words(positive, platform, product_model, rules, context='视觉提示词')
     if layout == '大字报':
         # Reject positive subject instructions; negative prohibitions themselves are allowed.
         if re.search(r'3\s*D|立体(?:物件|主体|机器人)|代码(?:屏|树)|电脑|人物插画|机器人|复杂背景|computer|robot|code\s*screen', positive, re.I):

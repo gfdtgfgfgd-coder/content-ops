@@ -4,6 +4,8 @@ data/images/**/.DS_Store
 data/wecom/raw/
 outputs/**/*.png
 outputs/**/*.jpg
+# 自动批次的文案、原始模型响应与manifest同图片一起保留本机，不纳入源码预算。
+outputs/*/hanabi/
 node_modules/
 __pycache__/
 .DS_Store
