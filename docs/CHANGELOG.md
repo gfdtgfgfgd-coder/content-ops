@@ -2,6 +2,13 @@
 
 每条仅保留任务卡完成记录原文；任务全文见 Git 历史。旧命令仅为历史，不是当前入口。
 
+## 精选素材库本地参考图入库与体量预算扩容 · 2026-11-08
+
+- 诊断并修复从 GitHub 下载/克隆仓库后 Hanabi 界面卡片报“本机图片缺失或无法读取”的问题：因小红书等第三方 CDN 链接带签名已过期（HTTP 403 Forbidden），`fetch.py images` 无法拉取，本地 `data/images/`（共 45 张精选参考图）是唯一事实；原 `.gitignore` 忽略了 `data/images/` 导致远端无图。
+- 移除 `.gitignore` 对 `data/images/` 的忽略，保留清理中间目录和系统垃圾过滤；将 45 张精选参考图及 `.gitkeep` 纳入 Git 跟踪。
+- 同步调整 `config/repo-budget.json`，将跟踪文件数上限从 131 调整至 180（当前 149）、总跟踪体量上限从 2600 KB 调整至 12000 KB（当前约 8.7 MB，最大单图 521 KB，严格控制在单文件 1000 KB 内）；决策同步记录于 `docs/GUIDE.md` 决策表（D26）。
+- 回归验证 `doctor.py --staged` 通过（149/180 文件、8698.5KB/12000KB），`test_pipeline.py` 50 项通过，`hanabi` Node 测试 48 项通过。未改动 `data/posts.jsonl` 和 `data/collections.json` 生产数据。
+
 ## 素材引用生命周期与大字报排版提示词 · 2026-11-08
 
 - 生成草稿引用统一从 `sessionStorage['content-ops-reference-selection']` 读取；素材库选区变化立即刷新生成页，表单移除/清空反向清理素材库按钮状态。

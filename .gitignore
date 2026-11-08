@@ -1,4 +1,6 @@
-data/images/
+# data/images/ 精选素材库本地参考图进入 Git 跟踪，解决跨电脑下载缺失问题
+data/images/.prune-*/
+data/images/**/.DS_Store
 data/wecom/raw/
 outputs/**/*.png
 outputs/**/*.jpg
