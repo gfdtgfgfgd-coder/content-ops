@@ -27,6 +27,7 @@ def regenerate_image(data, settings, output):
     if mode not in ('direct_poster','layered_poster'):
         raise ValueError('重新生成方式无效')
     copy.check_cover_words(copy.positive_visual_text(prompt),data['platform'],data['model'],context='生图提示词')
+    typography = copy.normalize_typography(data.get('typography'))
     style, texts = None, []
     if mode == 'layered_poster':
         copy.check_bold_typo_subject(copy.positive_visual_text(prompt))
@@ -48,8 +49,8 @@ def regenerate_image(data, settings, output):
             size=f'{size[0]}x{size[1]}',timeout=240)
         if (result['width'],result['height']) != size:
             raise ValueError('图像模型返回画幅不符；未采用，不自动重试')
-        rendered = copy.render_bold_typo(background,output,texts,font,size,style,preserve_background=True) if mode=='layered_poster' else {}
-        return {**result,**rendered,'prompt':prompt,'renderMode':mode,'coverTexts':texts,'backgroundStyle':style,
+        rendered = copy.render_bold_typo(background,output,texts,font,size,style,preserve_background=True,typography=typography) if mode=='layered_poster' else {}
+        return {**result,**rendered,'prompt':prompt,'renderMode':mode,'coverTexts':texts,'backgroundStyle':style,'typography':typography,
                 'imageRequest':{'prompt':prompt,'model':result['model'],'size':f'{size[0]}x{size[1]}','mode':mode,'status':'completed'}}
     finally:
         background.unlink(missing_ok=True)

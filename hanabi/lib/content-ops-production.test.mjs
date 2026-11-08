@@ -1428,3 +1428,17 @@ test('failed prompt regeneration retains editable input and missing images can b
   const restored=fixture.revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:ready.id,revisionId:'original'}).batch;
   assert.equal(restored.status,'failed');assert.equal(restored.posts[0].image,null);
 });
+
+test('image typography reaches renderer and restores with versions; invalid settings fail before spawn',async t=>{
+  const {revisions,calls}=await revisionFixture(t);
+  const input={kind:'image',copyIndex:0,action:'regenerate',renderMode:'layered_poster',prompt:'浅蓝纸张',requestId:'typography-request-123',baseRevision:'original',
+    typography:{scale:1.2,align:'left'},coverTexts:[{role:'hook',text:'挖到宝了'},{role:'benefit',text:'便宜量大'},{role:'model',text:'GLM5.3'}],backgroundStyle:{profile:'paper_shadow'}};
+  for(const typography of [[],{scale:true,align:'left'},{scale:1.6,align:'left'},{scale:.5,align:'left'},{scale:1,align:'bad'}])await assert.rejects(()=>revisions.create('batch-123','job-12345',{...input,typography}),{statusCode:400});
+  assert.equal(calls.length,0);
+  const pending=await revisions.create('batch-123','job-12345',input);assert.deepEqual(pending.result.typography,input.typography);
+  const ready=await revisionDone(revisions,pending.id);assert.equal(ready.status,'ready',ready.error);assert.deepEqual(calls[0].input.typography,input.typography);
+  revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:'original',revisionId:ready.id});
+  assert.deepEqual(revisions.history('batch-123','job-12345','image',0).current.typography,input.typography);
+  revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:ready.id,revisionId:'original'});
+  assert.deepEqual(revisions.history('batch-123','job-12345','image',0).current.typography,{scale:1,align:'center'});
+});

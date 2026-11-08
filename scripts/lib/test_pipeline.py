@@ -1295,6 +1295,34 @@ class RevisionTests(unittest.TestCase):
                     self.revision.run({**data,**change},self.settings,self.base/'invalid.png')
             call.assert_not_called()
 
+    def test_typography_enlarges_and_left_aligns_actual_glyphs_and_highlights(self):
+        source=self.base/'background.png';Image.new('RGB',(1080,1440),'#c4dded').save(source)
+        texts=visual_plan()['cover_texts'];font=Path('/System/Library/Fonts/Hiragino Sans GB.ttc')
+        for size in [(1080,1440),(1080,1080)]:
+            baseline=copy.render_bold_typo(source,self.base/'center.png',texts,font,size,preserve_background=True)
+            enlarged=copy.render_bold_typo(source,self.base/'left.png',texts,font,size,preserve_background=True,typography={'scale':1.5,'align':'left'})
+            self.assertEqual(len({row['bbox'][0] for row in enlarged['rendered_text']}),1)
+            self.assertGreater(enlarged['text_area_ratio'],baseline['text_area_ratio']*1.4)
+            self.assertGreaterEqual(enlarged['minimum_side_margin_ratio'],.05)
+            for before,after in zip(baseline['rendered_text'],enlarged['rendered_text']):
+                self.assertGreater(after['font_size'],before['font_size'])
+                self.assertEqual(before['highlighted'],after['highlighted'])
+                self.assertGreater(after['bbox'][1],12);self.assertLess(after['bbox'][3],size[1]-12)
+        data={'kind':'image','action':'regenerate','platform':'xhs','model':'GLM5.3','prompt':'蓝色纸面',
+              'render_mode':'layered_poster','cover_texts':texts,'typography':{'scale':1.2,'align':'left'}}
+        def generate(**kwargs):
+            Image.new('RGB',(1080,1440),'#c4dded').save(kwargs['output'])
+            return {'model':'selected-image','width':1080,'height':1440}
+        with patch.object(gateway,'generate_image',side_effect=generate):
+            result=self.revision.run(data,self.settings,self.base/'regenerated.png')
+        self.assertEqual(result['typography'],data['typography'])
+        self.assertEqual(len({row['bbox'][0] for row in result['rendered_text']}),1)
+        with patch.object(gateway,'generate_image') as call:
+            for invalid in [[],{'scale':True,'align':'left'},{'scale':1.6,'align':'left'},{'scale':.5,'align':'left'},{'scale':1,'align':'invalid'}]:
+                with self.subTest(invalid=invalid),self.assertRaises(ValueError):
+                    self.revision.run({**data,'typography':invalid},self.settings,self.base/'invalid.png')
+            call.assert_not_called()
+
     def test_image_edit_sends_original_mask_and_preserves_outside_region(self):
         source=self.base/'source.png';output=self.base/'new.png'
         Image.new('RGB',(100,120),'red').save(source)

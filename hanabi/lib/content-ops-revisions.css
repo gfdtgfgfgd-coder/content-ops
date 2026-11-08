@@ -17,7 +17,7 @@
 .revision-preview-note,.revision-help{font-size:12px;line-height:1.7;color:var(--text-soft);margin:10px 0 0}
 .revision-controls{padding:24px;min-width:0;overflow:auto}
 .revision-controls h3{margin:0 0 12px;font-size:15px}.revision-controls label{display:grid;gap:7px;font-size:13px;font-weight:550}
-.revision-controls input:not([type=file]),.revision-controls textarea{display:block;box-sizing:border-box;min-width:0;width:100%;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:var(--text);font:inherit;font-weight:400;padding:10px 12px;line-height:1.65}
+.revision-controls input:not([type=file]),.revision-controls textarea,.revision-controls select{display:block;box-sizing:border-box;min-width:0;width:100%;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);color:var(--text);font:inherit;font-weight:400;padding:10px 12px;line-height:1.65}
 .revision-controls textarea{resize:vertical}.revision-controls input:focus,.revision-controls textarea:focus{outline:2px solid var(--accent-wash);border-color:var(--accent)}
 .revision-copy-fields{display:grid;gap:16px}.revision-copy-fields label:first-child{grid-template-columns:1fr auto}.revision-copy-fields label:first-child input{grid-column:1/-1}.revision-copy-fields [data-title-count]{font-size:12px;color:var(--text-muted)}
 .revision-ai{margin-top:24px;padding-top:22px;border-top:1px solid var(--line)}.revision-ai>button{margin-top:12px;width:100%}

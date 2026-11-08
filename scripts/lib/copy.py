@@ -683,9 +683,20 @@ def cover(background, output, post, palette, font_path, variant, size):
     image.save(output,format='PNG')
     return {'width':size[0],'height':size[1],'bytes':output.stat().st_size,'sha256':hashlib.sha256(output.read_bytes()).hexdigest()}
 
-def render_bold_typo(background, output, texts, font_path, size, background_style=None, *, preserve_background=False):
+def normalize_typography(value=None):
+    value = {} if value is None else value
+    if not isinstance(value, dict):
+        raise ValueError('文字排版参数无效')
+    scale, align = value.get('scale', 1), value.get('align', 'center')
+    if type(scale) not in (int, float) or not .6 <= scale <= 1.5 or align not in ('center', 'left'):
+        raise ValueError('字号比例须为60%～150%，对齐方式须为居中或左对齐')
+    return {'scale': scale, 'align': align}
+
+
+def render_bold_typo(background, output, texts, font_path, size, background_style=None, *, preserve_background=False, typography=None):
     from PIL import Image, ImageDraw, ImageOps, ImageStat
     style = backgrounds.normalize_style(background_style)
+    typography = normalize_typography(typography)
     with Image.open(background) as source:
         if preserve_background:
             image = ImageOps.fit(source.convert('RGB'),size)
@@ -703,6 +714,7 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
     rows = []
     for item in texts:
         font = fit_font(font_path, item['text'], 104, text_width)
+        font = font.font_variant(size=max(1, round(font.size * typography['scale'])))
         stroke = max(1, round(font.size / 70))
         bounds = draw.textbbox((0, 0), item['text'], font=font, stroke_width=stroke)
         rows.append({'text': item['text'], 'font': font, 'bounds': bounds,
@@ -710,10 +722,13 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
                      'stroke': stroke, 'role': item['role']})
     gap = max(28, round(min(row['font'].size for row in rows) * .5))
     total_height = sum(row['height'] for row in rows) + gap * (len(rows) - 1)
+    if total_height + 24 > height * .9:
+        raise ValueError('放大后的文字超出画布，请调小字号或缩短封面字')
     y = round((height - total_height) / 2)
+    block_left = round((width - max(row['width'] for row in rows)) / 2)
     rendered = []
     for row in rows:
-        x = round((width - row['width']) / 2)
+        x = block_left if typography['align'] == 'left' else round((width - row['width']) / 2)
         box = (x, y, x + row['width'], y + row['height'])
         highlighted = row['role'] in style['highlight_roles']
         if highlighted:
@@ -724,14 +739,14 @@ def render_bold_typo(background, output, texts, font_path, size, background_styl
                   font=row['font'], fill=backgrounds.readable_ink(style['accent'],ink) if highlighted else ink,
                   stroke_width=row['stroke'], stroke_fill=backgrounds.readable_ink(style['accent'],ink) if highlighted else ink)
         rendered.append({'role': row['role'], 'text': row['text'], 'bbox': box, 'highlighted':highlighted,
-                         'fill':backgrounds.readable_ink(style['accent'],ink) if highlighted else ink})
+                         'fill':backgrounds.readable_ink(style['accent'],ink) if highlighted else ink, 'font_size':row['font'].size})
         y += row['height'] + gap
     image.convert('RGB').save(output, format='PNG')
     return {'width': width, 'height': height, 'bytes': output.stat().st_size,
             'sha256': hashlib.sha256(output.read_bytes()).hexdigest(),
             'text_area_ratio': max((row['width'] / width for row in rows), default=0),
             'minimum_side_margin_ratio': min((min(box[0], width - box[2]) / width for box in (r['bbox'] for r in rendered)), default=0),
-            'line_gap_px': gap, 'rendered_text': rendered, 'background_surface': material_metadata}
+            'line_gap_px': gap, 'rendered_text': rendered, 'background_surface': material_metadata, 'typography':typography}
 
 def poster_size(platform):
     return (1080, 1440) if platform == 'xhs' else (1080, 1080)
