@@ -140,7 +140,11 @@ def structured_body(post, expected_format, platform):
         sections[0]['text'] = intro
         print(f'WARN: 开头引入超出34字，已自动修剪至{len(intro)}字。')
     if len(intro.splitlines()) > 2:
-        raise ValueError('开头引入须在两行、34字以内')
+        lines = [line.strip() for line in intro.splitlines() if line.strip()]
+        intro = '\n'.join(lines[:2]) if lines else intro.replace('\n', '')
+        content['intro'] = intro
+        sections[0]['text'] = intro
+        print(f'WARN: 开头引入超过两行，已保留前两行（{len(intro.replace(chr(10), ""))}字）。')
     if platform == 'xhs':
         intro = mobile_body(intro, maximum=20)
         content['intro'] = intro
@@ -153,13 +157,22 @@ def structured_body(post, expected_format, platform):
             section['text'] = price_text
             break
     title = post.get('title')
-    if not isinstance(title, str) or not title.strip() or re.search(r'[\x00-\x1f\x7f]', title):
+    if not isinstance(title, str) or not title.strip():
         raise ValueError('笔记标题须为非空单行文本，小红书不超过20字')
-    if platform == 'xhs' and 20 < len(title) <= 25:
+    # Soft-repair control chars / newlines so a slightly messy model title still publishes.
+    cleaned = re.sub(r'[\x00-\x1f\x7f]', '', title).strip()
+    if not cleaned:
+        raise ValueError('笔记标题须为非空单行文本，小红书不超过20字')
+    if cleaned != title:
+        print('WARN: 笔记标题含换行或控制字符，已清理为单行。')
+        title = cleaned
+        post['title'] = title
+    if platform == 'xhs' and len(title) > 20:
         post['title'] = title[:20]
         print(f'WARN: 小红书标题超出20字，已自动修剪至20字。')
-    elif platform == 'xhs' and len(title) > 25:
-        raise ValueError('笔记标题须为非空单行文本，小红书不超过20字')
+    elif platform != 'xhs' and len(title) > 80:
+        post['title'] = title[:80]
+        print('WARN: 标题超出80字，已自动修剪至80字。')
     return '\n\n'.join(section['text'] for section in sections)
 
 def validate_style(style_mode='auto', style_preset='', style_prompt='', platform='xhs', model='', rules=None):

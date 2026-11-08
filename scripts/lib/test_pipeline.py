@@ -1064,21 +1064,29 @@ class PipelineTests(unittest.TestCase):
         mutations = [
             lambda p:p.update(copy_format='format_2'),
             lambda p:p['sections'].reverse(),
-            lambda p:p.update(title='长'*26),
-            lambda p:p.update(title='标题\t控制符'),
-            lambda p:p['sections'][0].update(text='第一行\n第二行\n第三行'),
+            lambda p:p.update(title=''),
             lambda p:p['sections'][1].update(text='缺少加粗的核心卖点'),
         ]
         for mutate in mutations:
             post=structured_post();mutate(post)
             with self.subTest(mutate=mutate), self.assertRaises(ValueError):
                 copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_1')
-        # Soft repairs: overlong price merges to 3 lines; missing CC is appended.
+        # Soft repairs: overlong price/title/intro and missing CC no longer kill the batch.
         price_post=structured_post()
         price_post['sections'][2]['text']='活动重磅来袭：\n💥好价来了调用更省\n💥高频调试不心疼\n💥长任务随便跑'
         with redirect_stdout(io.StringIO()):
             copy.validate_posts({'posts':[price_post]},1,'GLM5.3',copy_format='format_1')
         self.assertLessEqual(len(price_post['sections'][2]['text'].splitlines()),3)
+        title_post=structured_post();title_post['title']='绝了！Kimi K3.1 Pro搞定空间建模与研报🔥'
+        intro_post=structured_post();intro_post['sections'][0]['text']='开头引入内容足够短\n继续说明这次需求\n多余一行本应被裁掉'
+        control_post=structured_post();control_post['title']='好价来了\t冲一波'
+        with redirect_stdout(io.StringIO()):
+            copy.validate_posts({'posts':[title_post]},1,'GLM5.3',copy_format='format_1')
+            copy.validate_posts({'posts':[intro_post]},1,'GLM5.3',copy_format='format_1')
+            copy.validate_posts({'posts':[control_post]},1,'GLM5.3',copy_format='format_1')
+        self.assertEqual(len(title_post['title']),20)
+        self.assertLessEqual(len(intro_post['sections'][0]['text'].splitlines()),2)
+        self.assertEqual(control_post['title'],'好价来了冲一波')
         post=structured_post('format_2');post['sections'][3]['text']='工具兼容情况待确认'
         with redirect_stdout(io.StringIO()):
             fixed=copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_2')
