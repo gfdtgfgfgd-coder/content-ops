@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import base64
 import hashlib
+import http.client
 import io
 import json
 import os
@@ -17,10 +18,17 @@ from pathlib import Path
 import re
 import struct
 import sys
+import time
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 import zlib
+
+TRANSIENT_GATEWAY_MARKERS = (
+    'remote end closed', 'connection reset', 'broken pipe', 'timed out', 'timeout',
+    'temporarily unavailable', 'connection aborted', 'incomplete read', 'errno 54',
+    'errno 104', 'connection refused', 'network is unreachable',
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -70,23 +78,61 @@ def safe_error(text: str, key: str) -> str:
     return text[:1000]
 
 
-def request_json(url: str, payload: dict, key: str, timeout: float) -> dict:
-    request = Request(
-        url,
-        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
-        method="POST",
-    )
-    try:
-        with urlopen(request, timeout=timeout) as response:
-            result = json.load(response)
-    except HTTPError as error:
-        body = error.read().decode("utf-8", errors="replace")
-        raise ImageGenerationError(f"Gateway HTTP {error.code}: {safe_error(body, key)}") from None
-    except (URLError, TimeoutError) as error:
-        raise ImageGenerationError(f"Gateway connection failed: {safe_error(str(error), key)}") from None
-    except (ValueError, UnicodeError):
-        raise ImageGenerationError("Gateway returned invalid JSON") from None
+def transient_gateway_error(error: BaseException) -> bool:
+    if isinstance(error, (TimeoutError, ConnectionError, BrokenPipeError, http.client.IncompleteRead, http.client.RemoteDisconnected)):
+        return True
+    if isinstance(error, URLError):
+        reason = error.reason
+        if isinstance(reason, BaseException) and transient_gateway_error(reason):
+            return True
+        text = str(reason or error).lower()
+    else:
+        text = str(error).lower()
+    return any(marker in text for marker in TRANSIENT_GATEWAY_MARKERS)
+
+
+def friendly_connection_error(error: BaseException, key: str) -> str:
+    text = safe_error(str(error), key)
+    lowered = text.lower()
+    if any(marker in lowered for marker in ('timed out', 'timeout', '超时')):
+        return '网关连接超时，请稍后重试'
+    if any(marker in lowered for marker in (
+        'remote end closed', 'connection reset', 'broken pipe', 'connection aborted',
+        'incomplete read', '连接中断', 'connection refused',
+    )):
+        return '网关连接中断，请稍后重试'
+    return '网关连接失败：' + text
+
+
+def request_json(url: str, payload: dict, key: str, timeout: float, *, retries: int = 2) -> dict:
+    """POST JSON to the company gateway; retry brief disconnects a few times."""
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    attempts = max(1, int(retries) + 1)
+    last_error: BaseException | None = None
+    for attempt in range(attempts):
+        request = Request(
+            url,
+            data=body,
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {key}"},
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                result = json.load(response)
+            break
+        except HTTPError as error:
+            detail = error.read().decode("utf-8", errors="replace")
+            raise ImageGenerationError(f"Gateway HTTP {error.code}: {safe_error(detail, key)}") from None
+        except (URLError, TimeoutError, ConnectionError, BrokenPipeError, http.client.HTTPException) as error:
+            last_error = error
+            if attempt + 1 < attempts and transient_gateway_error(error):
+                time.sleep(min(1.5 * (attempt + 1), 4.0))
+                continue
+            raise ImageGenerationError(friendly_connection_error(error, key)) from None
+        except (ValueError, UnicodeError):
+            raise ImageGenerationError("Gateway returned invalid JSON") from None
+    else:
+        raise ImageGenerationError(friendly_connection_error(last_error or RuntimeError('网关无响应'), key))
     if not isinstance(result, dict):
         raise ImageGenerationError("Gateway response must be a JSON object")
     if result.get("error"):

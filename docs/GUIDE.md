@@ -160,7 +160,7 @@ AI改写使用当前文案模型；AI改图使用当前图像模型，携带原�
 | 文生图模型 | `CONTENT_OPS_IMAGE_MODEL` | 生成完整海报 |
 | 规则提炼分析模型 | `CONTENT_OPS_ANALYSIS_MODEL` | 原料库到内容生产规范的草案分析 |
 
-`CONTENT_OPS_BASE_URL` 为 HTTPS 网关地址，`CONTENT_OPS_API_KEY` 为本机密钥。四项模型的初始默认值统一维护在 `config/gateway.env.example`，Hanabi 与生成 CLI 直接读取其中的模型字段；前端通过配置接口展示。已保存的本机配置优先于默认值。模型 ID 按网关实际权限填写。分析模型只由 `/api/content-ops/spec-sync/*` 专用业务模块调用；通用 `/v1/*` 透传保持原样。连接测试不测试生图权限。
+`CONTENT_OPS_BASE_URL` 为 HTTPS 网关地址，`CONTENT_OPS_API_KEY` 为本机密钥。四项模型的初始默认值统一维护在 `config/gateway.env.example`，Hanabi 与生成 CLI 直接读取其中的模型字段；前端通过配置接口展示。已保存的本机配置优先于默认值。模型 ID 按网关实际权限填写。分析模型只由 `/api/content-ops/spec-sync/*` 专用业务模块调用；通用 `/v1/*` 透传保持原样。连接测试不测试生图权限。生成脚本经 `scripts/lib/gateway.py` 调用网关时，对 `RemoteDisconnected`、连接重置、超时等短暂断连会自动重试有限次数，仍失败则返回「网关连接中断/超时」类中文错误，不把原始英文断连栈直接抛给界面。
 
 ## CLI 与数据构建
 

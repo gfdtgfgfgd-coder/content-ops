@@ -2,6 +2,10 @@
 
 每条仅保留任务卡完成记录原文；任务全文见 Git 历史。旧命令仅为历史，不是当前入口。
 
+## 网关连接中断可重试 · 2026-11-09
+
+- 修复文案阶段 `Remote end closed connection without response` 未捕获：`request_json` 现捕获 `RemoteDisconnected` 等断连，短暂重试后给出「网关连接中断，请稍后重试」；文案/视觉层映射为可读中文错误。
+
 ## 反推提示词落实到生成背景 · 2026-11-09
 
 - 选中/自动锚图生成前必须有反推提示词：本机 `content_ops_prompt_runs` 命中则复用，否则当场 `reverse` 并落库；失败则整批明确失败。

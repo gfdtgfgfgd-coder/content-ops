@@ -426,9 +426,19 @@ def validate_posts(value, count, model, rules=None, platform="xhs", copy_format=
 
 def claude_call(system, user, settings, timeout, raw_output):
     model = settings.get('CONTENT_OPS_TEXT_MODEL', image_api.MODEL_DEFAULTS['CONTENT_OPS_TEXT_MODEL'])
-    response = image_api.request_json(settings['CONTENT_OPS_BASE_URL'].rstrip('/') + '/chat/completions',
-        {'model': model, 'messages': [{'role':'system','content':system}, {'role':'user','content':user}],
-         'temperature':0.4, 'max_tokens':8000,'response_format':{'type':'json_object'}}, settings['CONTENT_OPS_API_KEY'], timeout)
+    try:
+        response = image_api.request_json(settings['CONTENT_OPS_BASE_URL'].rstrip('/') + '/chat/completions',
+            {'model': model, 'messages': [{'role':'system','content':system}, {'role':'user','content':user}],
+             'temperature':0.4, 'max_tokens':8000,'response_format':{'type':'json_object'}}, settings['CONTENT_OPS_API_KEY'], timeout)
+    except image_api.ImageGenerationError as error:
+        reason = str(error)
+        lowered = reason.lower()
+        if any(marker in lowered for marker in ('timed out', 'timeout', '超时')) or '超时' in reason:
+            raise ValueError('文案模型请求网络超时，请检查网络或网关后重试。') from None
+        if any(marker in reason for marker in ('连接中断', '连接失败')) or any(
+                marker in lowered for marker in ('remote end closed', 'connection reset', 'broken pipe')):
+            raise ValueError('文案模型网关连接中断，请稍后点「重新生成」。') from None
+        raise ValueError(f'文案模型请求失败：{reason}。请检查模型配置和网关响应。') from None
     choice = response.get('choices', [{}])[0]
     raw_output.write_text(choice.get('message', {}).get('content', ''),encoding='utf-8')
     if choice.get('finish_reason') == 'length':
@@ -892,8 +902,11 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
     except image_api.ImageGenerationError as error:
         reason = str(error)
         lowered = reason.lower()
-        if any(marker in lowered for marker in ('timed out', 'timeout', '超时')):
+        if any(marker in lowered for marker in ('timed out', 'timeout', '超时')) or '超时' in reason:
             raise ValueError('视觉模型请求网络超时，请检查网络或网关后重试。') from None
+        if any(marker in reason for marker in ('连接中断', '连接失败')) or any(
+                marker in lowered for marker in ('remote end closed', 'connection reset', 'broken pipe')):
+            raise ValueError('视觉模型网关连接中断，请稍后点「重新生成」。') from None
         if any(marker in lowered for marker in ('image input', 'image_url', 'vision', 'multimodal', 'multi-modal', '图像输入', '多模态')) and any(marker in lowered for marker in ('unsupported', 'not support', 'not_supported', '不支持', 'invalid')):
             raise ValueError('当前视觉模型或网关不支持图像输入，请改用支持多模态图片的视觉模型。') from None
         raise ValueError(f'视觉模型请求失败：{reason}。请检查模型配置和网关响应。') from None

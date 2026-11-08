@@ -253,6 +253,27 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(gateway.main(['--prompt', '测试', '--output', str(image), '--config', str(self.base / 'missing.env')]), 0)
         generate.assert_called_once()
 
+    def test_request_json_retries_remote_disconnect_then_succeeds(self):
+        import http.client
+        from unittest.mock import MagicMock
+        good = MagicMock()
+        good.__enter__.return_value = io.BytesIO(json.dumps({'ok': True}).encode())
+        good.__exit__.return_value = False
+        with patch.object(gateway, 'urlopen', side_effect=[http.client.RemoteDisconnected('Remote end closed connection without response'), good]) as opener, \
+             patch.object(gateway.time, 'sleep') as sleeper:
+            result = gateway.request_json('https://offline.invalid/v1/chat', {'a': 1}, 'fake-key', 1, retries=2)
+        self.assertEqual(result, {'ok': True})
+        self.assertEqual(opener.call_count, 2)
+        sleeper.assert_called_once()
+        with patch.object(gateway, 'urlopen', side_effect=http.client.RemoteDisconnected('Remote end closed connection without response')), \
+             patch.object(gateway.time, 'sleep'):
+            with self.assertRaisesRegex(gateway.ImageGenerationError, '网关连接中断'):
+                gateway.request_json('https://offline.invalid/v1/chat', {'a': 1}, 'fake-key', 1, retries=1)
+        with patch.object(gateway, 'request_json', side_effect=gateway.ImageGenerationError('网关连接中断，请稍后重试')):
+            with self.assertRaisesRegex(ValueError, '连接中断'):
+                copy.claude_call('sys', '{}', {'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1', 'CONTENT_OPS_API_KEY': 'k',
+                                               'CONTENT_OPS_TEXT_MODEL': 't'}, 1, self.base / 'copy-fail.txt')
+
     def test_copy_pipeline_offline_and_resume(self):
         background = self.base / 'background.png'
         Image.new('RGB', (64, 64), '#eeeeee').save(background)
