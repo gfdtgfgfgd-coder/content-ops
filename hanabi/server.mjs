@@ -6,6 +6,7 @@ import { readFile, stat, mkdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ContentOpsRevisions } from './lib/content-ops-revisions.mjs';
 import { ContentOpsProduction } from './lib/content-ops-production.mjs';
 import { ContentOpsReferenceStore, referenceImageRequestPath } from './lib/content-ops-reference-store.mjs';
 import { ContentOpsEditor } from './lib/content-ops-editor.mjs';
@@ -39,6 +40,7 @@ db.exec(`PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS content_ops_batches
 ); CREATE INDEX IF NOT EXISTS jobs_batch ON analysis_jobs(batch_id,position);`);
 const connections = new ContentOpsConnections({ root: REPO_ROOT });
 const production = new ContentOpsProduction({ db, root: REPO_ROOT, uploadDir: UPLOAD_DIR });
+const revisions = new ContentOpsRevisions({ db, production, root: REPO_ROOT, uploadDir: UPLOAD_DIR });
 const references = new ContentOpsReferenceStore({ root: REPO_ROOT });
 const editor = new ContentOpsEditor({ root: REPO_ROOT, runtimeRoot: existsSync(runtimeRoot) ? runtimeRoot : null });
 
@@ -89,6 +91,23 @@ async function route(req, res) {
     }
     if (req.method === 'POST' && pathname === '/api/content-ops/generate') return send(res, 200, await production.create(await body(req)));
     if (req.method === 'GET' && pathname === '/api/content-ops/batches') return send(res, 200, { batches: production.list() });
+    const revisionTarget = pathname.match(/^\/api\/content-ops\/batches\/([\w-]+)\/posts\/([\w-]+)\/(revisions|apply)$/u);
+    if (revisionTarget) {
+      const [,batchId,jobId,action]=revisionTarget;
+      const headers={'Cache-Control':'no-store'};
+      if(req.method==='GET'&&action==='revisions')return send(res,200,revisions.history(batchId,jobId,parsed.searchParams.get('kind'),Number(parsed.searchParams.get('copyIndex'))),headers);
+      if(req.method!=='POST')return send(res,405,{error:'方法不支持。'},headers);
+      if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机Hanabi页面提交修改。'},headers);
+      const input=await body(req,22*1024*1024);
+      return send(res,200,action==='apply'?revisions.apply(batchId,jobId,input):{revision:await revisions.create(batchId,jobId,input)},headers);
+    }
+    const cancelRevision=pathname.match(/^\/api\/content-ops\/revisions\/([\w-]+)\/cancel$/u);
+    if(req.method==='POST'&&cancelRevision){
+      if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机Hanabi页面取消修改。'});
+      return send(res,200,{revision:revisions.cancel(cancelRevision[1])});
+    }
+    const revisionMatch=pathname.match(/^\/api\/content-ops\/revisions\/([\w-]+)$/u);
+    if(req.method==='GET'&&revisionMatch)return send(res,200,{revision:revisions.public(revisions.get(revisionMatch[1]))},{'Cache-Control':'no-store'});
     const batchMatch = pathname.match(/^\/api\/content-ops\/batches\/([^/]+)(?:\/(stop))?$/u);
     if (batchMatch) { const id = decodeURIComponent(batchMatch[1]); if (req.method === 'GET' && !batchMatch[2]) return send(res, 200, { batch: production.public(production.get(id)) }); if (req.method === 'POST' && batchMatch[2] === 'stop') return send(res, 200, { batch: production.stop(id) }); }
     if (req.method === 'GET' && pathname === '/api/content-ops/collections') return send(res, 200, { collections: await references.readCollections() }, { 'Cache-Control': 'no-store' });
@@ -148,6 +167,7 @@ async function staticFile(req, res, pathname) {
 const server = createServer((req, res) => void route(req, res));
 server.on('error', err => { console.error(err); process.exitCode = 1; });
 await production.recover();
+revisions.recover();
 server.listen(PORT, HOST, () => console.log(`Hanabi content-ops listening on http://${HOST}:${server.address().port}`));
-const shutdown = async () => { await production.shutdown(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500).unref(); };
+const shutdown = async () => { revisions.shutdown(); await production.shutdown(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500).unref(); };
 process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);

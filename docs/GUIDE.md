@@ -38,6 +38,12 @@
 
 ---
 
+### 图文修改模块
+
+- `hanabi/lib/content-ops-revisions.mjs`：修改版本存储、并发校验与单篇修改任务；追加记录并保留原始批次。
+- `hanabi/lib/content-ops-revision-ui.mjs`、`hanabi/lib/content-ops-revisions.css`：图文编辑、预览采用、区域框选及版本切换。
+- `scripts/lib/revision.py`：`scripts/generate.py revise` 子命令实现，文件式输入输出，承载文案改写、原图编辑与替换校验。
+
 ## 角色与系统边界
 
 系统按四元角色协作：Lilith 是最终业务拍板人；规划 agent 负责需求拆解、规则维护和风格终审；执行 agent 负责代码、脚本、抓取和单任务自验，不绑定单一模型；批量 agent（Hanabi）是批量图文、素材管理与可视化中枢。模型是可替换的工具，不等同于角色。
@@ -61,6 +67,20 @@
 原料库包含运营偏好和风险词库。两者只增不删：运营偏好基于 persona 标准、反例和已去敏反馈摘录；风险词直接追加到 YAML。新增条目会保存源数据并调用规则提炼分析模型，打开操作规范确认面板。也可在原料库或操作规范点击「同步原料库」进行全量比对。确认后写入 `rules/content-spec.md`、重建偏好包并提交；取消只放弃规范草案，不回滚已成功保存的原料。修改建议可多轮重新分析。
 
 操作规范下提供《内容生产规范》《系统操作手册》和只读《模型语料库》。内容生产规范是业务规则唯一文档；系统手册只说明操作和工程治理；语料库供创作参考，不覆盖事实或规范。
+
+## 图文修改工作台
+
+在生成结果或历史批次的卡片上点击「修改图片」或「修改文案」。文案先选择 A/B/C，再修改标题、正文、标签，左侧即时预览；「保存文案并采用」进行本地校验后保存。AI 改写只处理当前文案，遵循原始简报、事实与现行规则，结果需点击「采用此版」。卡片上的复制与 Markdown 下载使用当前采用文案。
+
+图片编辑器以当前预览图为底稿：填写修改要求可整图修改；开启框选后拖出矩形，仅修改区域内像素，区域外由本机合成保留。可上传 PNG/JPEG/WebP 替换，最多15MB、2000万像素，按原图尺寸等比适配并补白。改图与上传都先生成预览，再采用；下载预览图可保存尚未采用的候选图。选择历史版本后可继续修改或重新采用，最初原稿始终可恢复。
+
+修改的唯一事实源是本机历史数据库中追加的 `content_ops_revisions`，`content_ops_revision_heads` 仅记录当前采用版本指针。新增修改图片按唯一 ID 写入既有上传缓存，原始 `analysis_jobs`、生成 manifest、已导出 `outputs/` 均不覆盖。工作台响应在原始结果上应用当前指针；重新打开历史批次仍读取已采用版本。AI结果未采用前不影响当前成稿，文案各版本与图片彼此独立。
+
+业务入口为 `python3 scripts/generate.py revise --input request.json --output result.json [--image-output new.png] --config scratch/gateway.env`；参数文件由专用修改API构造。`kind=copy|image`，`action=manual|ai|upload`；文案带 `source_text`/`text`，图片带可信 `source_image`，AI带 `instructions`，选区为归一化 `region={x,y,width,height}`，上传带 `image_data`。中间文件只在 `scratch/hanabi-runtime/revisions/<id>/`，完成后删除；可由同一输入重建，不作为第二份版本源。
+
+AI改写使用当前文案模型；AI改图使用当前图像模型，携带原图和可选透明蒙版请求网关 `/images/edits`（multipart），不会降级到无图重生成。默认 `size=auto`，网关有特殊要求时可在本机配置 `CONTENT_OPS_EDIT_IMAGE_SIZE`。不支持接口、权限错误或超时明确失败并保留原稿；不自动重试。人工修改和上传无需模型调用。图片文字和改写事实仍须人工核对。
+
+同一目标同时只允许一个修改任务；请求ID去重防止重复提交，采用操作用版本号与SQLite事务检测并发，拒绝覆盖其他窗口的新改动。关闭编辑器后可在版本记录继续查看任务；可取消正在进行的修改。取消只停止本机等待，已经发出的网关请求不保证撤销计费。服务重启将未完成修改标为失败，原稿保留。隔离验收使用 `scratch/revision-qa/`，可删，不访问真实密钥；自动回归仍在既有 Node/Python 测试入口内。
 
 ## 封面同构链路与排障
 

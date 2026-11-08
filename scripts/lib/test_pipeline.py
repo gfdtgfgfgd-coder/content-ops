@@ -1022,5 +1022,97 @@ class PruneReferencesTests(unittest.TestCase):
             self.assertEqual((root/'data/posts.jsonl').read_bytes(),raw)
 
 
+class RevisionTests(unittest.TestCase):
+    def setUp(self):
+        from . import revision
+        self.revision = revision
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.base = Path(self.temp.name)
+        self.settings = {'CONTENT_OPS_BASE_URL':'https://offline.invalid/v1', 'CONTENT_OPS_API_KEY':'fake-test-key',
+                         'CONTENT_OPS_TEXT_MODEL':'selected-writer', 'CONTENT_OPS_IMAGE_MODEL':'selected-image'}
+
+    def test_manual_copy_checks_risk_title_and_does_not_call_model(self):
+        data = {'kind':'copy','action':'manual','platform':'xhs','model':'GLM5.3','text':'# 标题\n\n这是修改后的正文。'}
+        with patch.object(gateway,'request_json') as call:
+            self.assertEqual(self.revision.run(data,self.settings)['text'],data['text'])
+            call.assert_not_called()
+        with self.assertRaisesRegex(ValueError,'标题过长'):
+            self.revision.run({**data,'text':'# '+'字'*21},self.settings)
+        with self.assertRaisesRegex(ValueError,'风险词'):
+            self.revision.run({**data,'text':'# 标题\n\nAPI'},self.settings)
+
+    def test_ai_copy_uses_current_text_facts_rules_and_configured_writer(self):
+        data = {'kind':'copy','action':'ai','platform':'xhs','model':'GLM5.3','source_text':'# 原标题\n\n原始卖点',
+                'instructions':'标题换个说法，保留卖点', 'brief':'用户简报', 'facts':{'verified_claims':[]}}
+        with patch.object(gateway,'request_json',return_value={'choices':[{'message':{'content':json.dumps({'text':'# 改写标题\n\n原始卖点'},ensure_ascii=False)}}]}) as call:
+            result=self.revision.run(data,self.settings)
+        payload=call.call_args.args[1]
+        self.assertEqual(payload['model'],'selected-writer')
+        self.assertIn('原始卖点',payload['messages'][1]['content'])
+        self.assertIn('用户简报',payload['messages'][1]['content'])
+        self.assertIn('内容',payload['messages'][0]['content'])
+        self.assertEqual(result['text'],'# 改写标题\n\n原始卖点')
+
+    def test_image_edit_sends_original_mask_and_preserves_outside_region(self):
+        source=self.base/'source.png';output=self.base/'new.png'
+        Image.new('RGB',(100,120),'red').save(source)
+        changed=io.BytesIO();Image.new('RGB',(100,120),'blue').save(changed,format='PNG')
+        import base64
+        response={'data':[{'b64_json':base64.b64encode(changed.getvalue()).decode()}]}
+        data={'kind':'image','action':'ai','platform':'xhs','model':'GLM5.3','instructions':'选区改为蓝色',
+              'source_image':str(source),'region':{'x':.2,'y':.25,'width':.4,'height':.5}}
+        with patch.object(self.revision,'multipart_request',return_value=response) as call, patch.object(gateway,'generate_image') as generate:
+            result=self.revision.run(data,self.settings,output)
+            generate.assert_not_called()
+        url,fields,files,key=call.call_args.args
+        self.assertTrue(url.endswith('/images/edits'))
+        self.assertEqual(fields['model'],'selected-image')
+        with Image.open(io.BytesIO(files[0][3])) as sent:
+            self.assertEqual(sent.size,(100,120));self.assertEqual(sent.getpixel((0,0)),(255,0,0,255))
+        self.assertEqual([f[0] for f in files],['image','mask'])
+        with Image.open(io.BytesIO(files[1][3])) as mask:
+            self.assertEqual(mask.size,(100,120));self.assertEqual(mask.getpixel((40,50))[3],0)
+            self.assertEqual(mask.getpixel((0,0))[3],255)
+        with Image.open(output) as image:
+            self.assertEqual(image.getpixel((0,0)),(255,0,0))
+            self.assertEqual(image.getpixel((40,50)),(0,0,255))
+            self.assertEqual(image.getpixel((60,90)),(255,0,0))
+        self.assertEqual(result['width'],100)
+        with self.assertRaisesRegex(ValueError,'拒绝覆盖'):
+            self.revision.run(data,self.settings,output)
+
+    def test_image_upload_is_offline_and_invalid_edit_keeps_original(self):
+        import base64
+        source=self.base/'source.png';output=self.base/'new.png'
+        Image.new('RGB',(100,120),'red').save(source)
+        original=source.read_bytes()
+        upload=io.BytesIO();Image.new('RGB',(60,60),'green').save(upload,format='PNG')
+        data={'kind':'image','action':'upload','platform':'xianyu','model':'GLM5.3','source_image':str(source),
+              'image_data':'data:image/png;base64,'+base64.b64encode(upload.getvalue()).decode()}
+        with patch.object(self.revision,'multipart_request') as call:
+            self.revision.run(data,{},output);call.assert_not_called()
+        with Image.open(output) as image:self.assertEqual(image.size,(100,120))
+        self.assertEqual(source.read_bytes(),original)
+        with patch.object(self.revision,'multipart_request',side_effect=ValueError('接口不支持')):
+            with self.assertRaisesRegex(ValueError,'不支持'):
+                self.revision.run({**data,'action':'ai','instructions':'改背景'},self.settings,self.base/'failed.png')
+        self.assertFalse((self.base/'failed.png').exists())
+        self.assertEqual(source.read_bytes(),original)
+
+    def test_multipart_has_binary_image_and_never_leaks_provider_error_body(self):
+        from urllib.error import HTTPError
+        error=HTTPError('https://offline.invalid/v1/images/edits',404,'not supported',{},io.BytesIO(b'fake-test-key secret body'))
+        with patch.object(self.revision,'urlopen',side_effect=error) as call:
+            with self.assertRaisesRegex(ValueError,'支持 /images/edits') as caught:
+                self.revision.multipart_request('https://offline.invalid/v1/images/edits',{'model':'image-model'},
+                    [('image','source.png','image/png',b'original-image')],'fake-test-key')
+        request=call.call_args.args[0]
+        self.assertIn(b'original-image',request.data)
+        self.assertIn(b'name="image"; filename="source.png"',request.data)
+        self.assertNotIn('fake-test-key',str(caught.exception))
+        self.assertNotIn('secret body',str(caught.exception))
+
+
 if __name__ == '__main__':
     unittest.main()

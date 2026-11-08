@@ -1132,3 +1132,140 @@ test('multi-image editor submits retained and appended queues and guards empty/r
   assert.match(source,/name="cover_ocr" rows="6"/u);assert.match(source,/name="upload"[^>]+multiple/u);
   assert.match(css,/resize:vertical/u);assert.match(css,/min-height:120px/u);
 });
+
+// Revision tests use isolated batches, original artifacts and fake upstreams.
+import { ContentOpsRevisions } from './content-ops-revisions.mjs';
+async function revisionFixture(t, mode='fake') {
+  const dir=await mkdtemp(join(root,'scratch/revision-test-')), db=new DatabaseSync(':memory:');
+  const server=await readFile(join(root,'hanabi/server.mjs'),'utf8');db.exec(server.match(/db\.exec\(`([\s\S]*?)`\);/)[1]);
+  await mkdir(join(dir,'uploads'));await mkdir(join(dir,'scratch'));await mkdir(join(dir,'original'));
+  await writeFile(join(dir,'original/manifest.json'),JSON.stringify({facts:{model:'GLM5.3',verified_claims:[]},posts:[]}));
+  await writeFile(join(dir,'original/post-1.md'),'unchanged export');
+  const sourceName='11111111-1111-4111-8111-111111111111.png';await writeFile(join(dir,'uploads',sourceName),png);
+  const production=new ContentOpsProduction({db,root:dir,uploadDir:join(dir,'uploads')});
+  db.prepare("INSERT INTO content_ops_batches(id,request_id,model,platform,count,background_mode,reference_ids,status,job_ids,output_dir,created_at,updated_at,copy_multiplier) VALUES('batch-123','request-123','GLM5.3','xhs',1,'fresh','[]','completed','[\"job-12345\"]',?,'now','now',2)").run(join(dir,'original'));
+  db.prepare("INSERT INTO analysis_jobs(id,batch_id,position,status,result,copies,attachments,created_at,updated_at) VALUES('job-12345','batch-123',1,'completed',?,?,?,'now','now')").run('# 原稿A\n\n正文A',JSON.stringify([{index:1,text:'# 原稿A\n\n正文A'},{index:2,text:'# 原稿B\n\n正文B'}]),JSON.stringify([{mimeType:'image/png',url:'/api/uploads/'+sourceName}]));
+  const calls=[];
+  const spawnProcess=(command,args,options)=>{
+    const child=new EventEmitter();child.kill=()=>queueMicrotask(()=>child.emit('close',1));calls.push({command,args,options});
+    if(mode==='hold')return child;
+    void (async()=>{
+      const data=JSON.parse(await readFile(args[args.indexOf('--input')+1],'utf8'));
+      const output=args[args.indexOf('--output')+1];
+      if(mode==='error')await writeFile(output,JSON.stringify({error:'offline failure'}));
+      else if(data.kind==='image'){
+        await writeFile(args[args.indexOf('--image-output')+1],png);
+        await writeFile(output,JSON.stringify({model:'offline-image'}));
+      }else await writeFile(output,JSON.stringify({text:data.text||'# AI改写\n\n改写正文',model:'offline-writer'}));
+      child.emit('close',0);
+    })().catch(error=>child.emit('error',error));
+    return child;
+  };
+  if(mode==='real'){
+    await symlink(join(root,'scripts'),join(dir,'scripts'));
+    await writeFile(join(dir,'scratch/gateway.env'),'CONTENT_OPS_BASE_URL=https://offline.invalid/v1\nCONTENT_OPS_API_KEY=fake-only\n');
+  }
+  const revisions=new ContentOpsRevisions({db,production,root:dir,uploadDir:join(dir,'uploads'),...(mode==='real'?{}:{spawnProcess})});
+  t.after(async()=>{revisions.shutdown();db.close();await rm(dir,{recursive:true,force:true});});
+  return {dir,db,production,revisions,calls,sourceName};
+}
+async function revisionDone(revisions,id){
+  for(let attempt=0;attempt<400;attempt++){
+    const result=revisions.public(revisions.get(id));if(result.status!=='running')return result;
+    await new Promise(resolve=>setTimeout(resolve,10));
+  }
+  throw new Error('revision did not complete');
+}
+const revisionInput={kind:'copy',copyIndex:1,action:'manual',baseRevision:'original',text:'# 新标题\n\n新的正文',requestId:'revision-request-123'};
+
+test('revisions preserve original artifacts, isolate copy variants, require adoption and restore across restart',async t=>{
+  const {revisions,production,db,dir,calls}=await revisionFixture(t);
+  const original=production.original(production.get('batch-123'));
+  const row=await revisions.create('batch-123','job-12345',revisionInput);
+  const ready=await revisionDone(revisions,row.id);assert.equal(ready.status,'ready');
+  assert.equal(production.public(production.get('batch-123')).posts[0].copies[0].text,original.posts[0].copies[0].text);
+  const adopted=revisions.apply('batch-123','job-12345',{kind:'copy',copyIndex:1,baseRevision:'original',revisionId:ready.id}).batch;
+  assert.equal(adopted.posts[0].text,revisionInput.text);assert.equal(adopted.posts[0].copies[1].text,'# 原稿B\n\n正文B');
+  assert.equal(adopted.posts[0].image,original.posts[0].image);
+  assert.deepEqual(production.original(production.get('batch-123')),original);
+  assert.equal(await readFile(join(dir,'original/post-1.md'),'utf8'),'unchanged export');
+  assert.equal(calls[0].options.shell,false);
+  const restored=new ContentOpsRevisions({db,production,root:dir,uploadDir:join(dir,'uploads')});
+  assert.equal(restored.history('batch-123','job-12345','copy',1).current.text,revisionInput.text);
+  const reverted=restored.apply('batch-123','job-12345',{kind:'copy',copyIndex:1,baseRevision:ready.id,revisionId:'original'}).batch;
+  assert.equal(reverted.posts[0].copies[0].text,original.posts[0].copies[0].text);
+  assert.equal(restored.history('batch-123','job-12345','copy',1).versions.length,1);
+});
+
+test('revision request retries are idempotent, stale edits and cross-target adoption are rejected',async t=>{
+  const {revisions,calls}=await revisionFixture(t);
+  const first=await revisions.create('batch-123','job-12345',revisionInput);
+  assert.equal((await revisions.create('batch-123','job-12345',revisionInput)).id,first.id);
+  await assert.rejects(()=>revisions.create('batch-123','job-12345',{...revisionInput,text:'changed'}),{statusCode:409});
+  await assert.rejects(()=>revisions.create('batch-123','job-12345',{...revisionInput,requestId:'second-request-123'}),{statusCode:409});
+  await revisionDone(revisions,first.id);assert.equal(calls.length,1);
+  revisions.apply('batch-123','job-12345',{kind:'copy',copyIndex:1,baseRevision:'original',revisionId:first.id});
+  await assert.rejects(()=>revisions.create('batch-123','job-12345',{...revisionInput,requestId:'stale-request-123'}),{statusCode:409});
+  assert.throws(()=>revisions.apply('batch-123','job-12345',{kind:'copy',copyIndex:2,baseRevision:'original',revisionId:first.id}),{statusCode:400});
+  assert.equal(revisions.head('job-12345','copy',2),'original');
+});
+
+test('image revision uses current upload as input, never alters original and adoption updates download URLs',async t=>{
+  const {revisions,production,dir,sourceName,calls}=await revisionFixture(t);
+  const before=await readFile(join(dir,'uploads',sourceName));
+  const first=await revisions.create('batch-123','job-12345',{kind:'image',copyIndex:0,action:'ai',baseRevision:'original',instructions:'只修改背景颜色',region:{x:.1,y:.1,width:.3,height:.3},requestId:'image-request-123'});
+  const ready=await revisionDone(revisions,first.id);assert.equal(ready.status,'ready');
+  assert.notEqual(ready.result.image,'/api/uploads/'+sourceName);
+  const adopted=revisions.apply('batch-123','job-12345',{kind:'image',copyIndex:0,baseRevision:'original',revisionId:ready.id}).batch;
+  assert.equal(adopted.posts[0].image,ready.result.image);
+  assert.equal(adopted.posts[0].copies[0].text,'# 原稿A\n\n正文A');
+  assert.deepEqual(await readFile(join(dir,'uploads',sourceName)),before);
+  assert.equal(calls[0].args[calls[0].args.indexOf('--image-output')+1],join(dir,'uploads',first.id+'.png'));
+  await assert.rejects(()=>revisions.create('batch-123','job-12345',{kind:'image',copyIndex:0,action:'ai',baseRevision:first.id,region:{x:.8,y:.1,width:.5,height:.1},instructions:'修改',requestId:'invalid-region-123'}),{statusCode:400});
+});
+
+test('failed, cancelled and interrupted revisions retain current content and do not auto-retry',async t=>{
+  const {revisions,production}=await revisionFixture(t,'error');
+  const first=await revisions.create('batch-123','job-12345',revisionInput);
+  const result=await revisionDone(revisions,first.id);assert.equal(result.status,'failed');assert.equal(result.error,'offline failure');
+  assert.equal(production.public(production.get('batch-123')).posts[0].text,'# 原稿A\n\n正文A');
+  const held=await revisionFixture(t,'hold');
+  const pending=await held.revisions.create('batch-123','job-12345',revisionInput);
+  assert.equal(held.revisions.cancel(pending.id).status,'cancelled');
+  for(let i=0;i<100&&held.revisions.children.size;i++)await new Promise(resolve=>setTimeout(resolve,5));
+  const another=await held.revisions.create('batch-123','job-12345',{...revisionInput,requestId:'other-request-123'});
+  held.revisions.recover();assert.equal(held.revisions.get(another.id).status,'failed');
+  for(let i=0;i<100&&held.revisions.children.size;i++)await new Promise(resolve=>setTimeout(resolve,5));
+  assert.equal(held.revisions.head('job-12345','copy',1),'original');
+});
+
+test('manual copy and uploaded image revisions complete through the real file CLI without upstream access',async t=>{
+  const {revisions,dir}=await revisionFixture(t,'real');
+  const manual=await revisions.create('batch-123','job-12345',revisionInput);
+  const ready=await revisionDone(revisions,manual.id);assert.equal(ready.status,'ready',ready.error);assert.equal(ready.result.text,revisionInput.text);
+  const upload=await revisions.create('batch-123','job-12345',{kind:'image',copyIndex:0,action:'upload',baseRevision:'original',imageData:'data:image/png;base64,'+png.toString('base64'),requestId:'upload-request-123'});
+  const image=await revisionDone(revisions,upload.id);assert.equal(image.status,'ready',image.error);
+  assert.equal(image.result.model,'manual-upload');assert.deepEqual(await readFile(join(dir,'uploads',upload.id+'.png')),png);
+});
+
+test('revision HTTP routes enforce local mutations and preserve adopted copy on refresh', {timeout:15000}, async t=>{
+  const {dir,db}=await revisionFixture(t,'real');
+  db.exec(`VACUUM INTO '${join(dir,'http.sqlite').replace(/'/gu,"''")}'`);
+  await mkdir(join(dir,'hanabi'));await copyFile(join(root,'hanabi/server.mjs'),join(dir,'hanabi/server.mjs'));await symlink(join(root,'hanabi/lib'),join(dir,'hanabi/lib'));
+  const child=spawn(process.execPath,[join(dir,'hanabi/server.mjs')],{env:{...process.env,CONTENT_ALCHEMY_PORT:'0',CONTENT_OPS_DB_PATH:join(dir,'http.sqlite'),CONTENT_ALCHEMY_DATA_DIR:dir},stdio:['ignore','pipe','pipe']});
+  const url=await new Promise((resolvePromise,reject)=>{let log='';const timeout=setTimeout(()=>reject(new Error('revision HTTP did not start')),5000);child.once('error',reject);child.stdout.on('data',chunk=>{log+=chunk;const match=log.match(/listening on (http:\/\/127\.0\.0\.1:\d+)/u);if(match){clearTimeout(timeout);resolvePromise(match[1]);}});});
+  t.after(async()=>{const done=once(child,'exit');child.kill('SIGTERM');await done;});
+  const path='/api/content-ops/batches/batch-123/posts/job-12345/revisions';
+  const send=(path,input,extra={})=>fetch(url+path,{method:'POST',headers:{'Content-Type':'application/json',...extra},body:JSON.stringify(input)});
+  let response=await send(path,revisionInput,{Origin:'https://unrelated.invalid'});assert.equal(response.status,403);
+  response=await send(path,{...revisionInput,copyIndex:9});assert.equal(response.status,400);
+  response=await send(path,revisionInput);assert.equal(response.status,200);const first=(await response.json()).revision;
+  let ready;
+  for(let i=0;i<200;i++){ready=(await (await fetch(url+'/api/content-ops/revisions/'+first.id)).json()).revision;if(ready.status!=='running')break;await new Promise(r=>setTimeout(r,10));}
+  assert.equal(ready.status,'ready',ready.error);
+  response=await send(path.replace('/revisions','/apply'),{kind:'copy',copyIndex:1,baseRevision:'original',revisionId:first.id});assert.equal(response.status,200);
+  assert.equal((await response.json()).batch.posts[0].copies[0].text,revisionInput.text);
+  const saved=await (await fetch(url+'/api/content-ops/batches/batch-123')).json();assert.equal(saved.batch.posts[0].text,revisionInput.text);
+  response=await send(path.replace('/revisions','/apply'),{kind:'copy',copyIndex:1,baseRevision:'original',revisionId:'original'});assert.equal(response.status,409);
+  response=await fetch(url+path+'?kind=copy&copyIndex=1');const history=await response.json();assert.equal(history.currentRevision,first.id);assert.equal(history.original.text,'# 原稿A\n\n正文A');
+});
