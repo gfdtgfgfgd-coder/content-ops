@@ -4,6 +4,7 @@ import { existsSync, readFileSync, constants } from 'node:fs';
 import { readFile, mkdir, copyFile, rm, writeFile, readdir, lstat } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { loadGatewaySettings } from './content-ops-connections.mjs';
+import { listProductModels, resolveProductModel } from './content-ops-models.mjs';
 
 const parse = (value, fallback = {}) => { try { return JSON.parse(value); } catch { return fallback; } };
 const fail = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
@@ -41,7 +42,17 @@ export function validateContentOpsInput(body, defaults = {}) {
   if (!Array.isArray(refs) || refs.length > 8 || refs.some(ref => !ref || !['xhs', 'xianyu'].includes(ref.platform) || typeof ref.id !== 'string' || !/^[0-9a-f]{1,64}$/iu.test(ref.id))) throw fail('参考帖无效；最多选择 8 条不同的本地帖子。');
   const references = refs.map(({ platform, id }) => ({ platform, id: id.toLowerCase() }));
   if (new Set(references.map(ref => `${ref.platform}:${ref.id}`)).size !== references.length) throw fail('参考帖无效；最多选择 8 条不同的本地帖子。');
-  return { model: body.model.trim(), platform: body.platform, count: body.count, copyFormat, copyMultiplier, backgroundMode: body.backgroundMode, styleMode, stylePreset, stylePrompt, requestId: body.requestId, references, brief };
+  const rawModel = body.model.trim();
+  let model = rawModel;
+  if (Array.isArray(defaults.productModels) && defaults.productModels.length) {
+    try {
+      model = resolveProductModel(rawModel, defaults.productModels, { requireCover: body.backgroundMode === 'fresh' });
+    } catch (error) {
+      if (body.backgroundMode === 'fresh' || !/未匹配语料库/u.test(error.message)) throw error;
+      model = rawModel;
+    }
+  }
+  return { model, platform: body.platform, count: body.count, copyFormat, copyMultiplier, backgroundMode: body.backgroundMode, styleMode, stylePreset, stylePrompt, requestId: body.requestId, references, brief };
 }
 
 export class ContentOpsProduction {
@@ -65,7 +76,8 @@ export class ContentOpsProduction {
     const ready = Boolean(preferences?.version && preferences?.persona && preferences?.platform_rules);
     const distilledAt = preferences?.distilled_at;
     const { copyFormat, copyMultiplier } = validateCopyOptions(setting('CONTENT_OPS_COPY_FORMAT') || 'all_variations', Number(setting('CONTENT_OPS_COPY_MULTIPLIER') || 3));
-    return { copyFormat, copyMultiplier, available: existsSync(join(this.root, 'scripts/generate.py')), configured: Boolean(setting('CONTENT_OPS_API_KEY') && setting('CONTENT_OPS_BASE_URL')), cachedAvailable: existsSync(this.backgroundPath()), textModel: setting('CONTENT_OPS_TEXT_MODEL'), visionModel: setting('CONTENT_OPS_VISION_MODEL'), imageModel: setting('CONTENT_OPS_IMAGE_MODEL'), preferencesReady: ready, preferencesVersion: ready ? { version: preferences.version, distilledAt } : null };
+    const productModels = listProductModels(this.root);
+    return { copyFormat, copyMultiplier, available: existsSync(join(this.root, 'scripts/generate.py')), configured: Boolean(setting('CONTENT_OPS_API_KEY') && setting('CONTENT_OPS_BASE_URL')), cachedAvailable: existsSync(this.backgroundPath()), textModel: setting('CONTENT_OPS_TEXT_MODEL'), visionModel: setting('CONTENT_OPS_VISION_MODEL'), imageModel: setting('CONTENT_OPS_IMAGE_MODEL'), preferencesReady: ready, preferencesVersion: ready ? { version: preferences.version, distilledAt } : null, productModels };
   }
   backgroundPath() { return join(this.root, 'data/images/backgrounds/company-qwen-2026-11-01.png'); }
   get(id) { const row = this.db.prepare('SELECT * FROM content_ops_batches WHERE id=?').get(id); if (!row) throw fail('生成批次不存在。', 404); return row; }

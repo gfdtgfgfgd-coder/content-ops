@@ -579,7 +579,7 @@ class PipelineTests(unittest.TestCase):
         self.assertIn('竖版3:4', generate.call_args.kwargs['prompt'])
         self.assertIn('严禁出现任何文字', generate.call_args.kwargs['prompt'])
         self.assertNotIn(post['image_prompt'], generate.call_args.kwargs['prompt'])
-        self.assertEqual(vision.call_args.args[0], {'model':'GLM5.3'})
+        self.assertEqual(vision.call_args.args[0], {'model':'GLM-5.3'})
         self.assertTrue(vision.call_args.args[1])
         self.assertEqual(result['posts'][0]['image_metadata']['mode'], 'layered_poster')
         self.assertLessEqual(result['posts'][0]['image_metadata']['text_area_ratio'], .72)
@@ -896,6 +896,8 @@ class PipelineTests(unittest.TestCase):
 
     def test_cover_corpus_is_model_scoped_and_all_combinations_pass_risk_check(self):
         models=('GLM-5.3','Kimi K3.1 Pro','DeepSeek V4.1')
+        catalog={item['id'] for item in copy.list_product_models()}
+        self.assertEqual(catalog,set(models))
         for model in models:
             corpus=copy.extract_cover_corpus(model)
             combinations=corpus.split('### 【大字报】4行爽点组合库',1)[1].split('### 【上中下',1)[0]
@@ -911,8 +913,14 @@ class PipelineTests(unittest.TestCase):
                 for part,text in zip(plan['cover_texts'],group):part['text']=text
                 copy.validate_visual_plan(plan,model,'xhs')
             copy.check_cover_words(corpus,'xianyu',model)
+        for informal,canonical in (('GLM5.3','GLM-5.3'),('glm-5.3','GLM-5.3'),('kimi k3.1','Kimi K3.1 Pro'),
+                                   ('Kimi K3.1','Kimi K3.1 Pro'),('Kimi K3.1 Pro Highspeed','Kimi K3.1 Pro'),
+                                   ('deepseek v4.1','DeepSeek V4.1')):
+            with self.subTest(informal=informal):
+                self.assertEqual(copy.resolve_product_model(informal,require_cover=True),canonical)
+                self.assertIn('封面吸睛大字',copy.extract_cover_corpus(informal))
         for absent in ('Unknown','GLM-5','GLM-5.3 Pro','GLM-5.30','Kimi K3.2 Pro','DeepSeek V4.10'):
-            with self.subTest(absent=absent),self.assertRaisesRegex(ValueError,'缺少封面'):
+            with self.subTest(absent=absent),self.assertRaisesRegex(ValueError,'未匹配语料库|缺少封面'):
                 copy.extract_cover_corpus(absent)
 
     def test_manual_layout_conflict_fails_before_vision_request(self):
@@ -948,7 +956,7 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(manifest['generation_pipeline'],copy.PIPELINE_VERSION)
             self.assertEqual(manifest['posts'][0]['image_requests'][0]['status'],'failed')
             self.assertEqual(manifest['posts'][0]['image_requests'][0]['prompt'],images.call_args.kwargs['prompt'])
-            self.assertEqual(vision.call_args.args[0],{'model':'GLM5.3'})
+            self.assertEqual(vision.call_args.args[0],{'model':'GLM-5.3'})
             images.side_effect=generate
             self.assertEqual(copy.main([*argv,'--resume']),0)
             self.assertEqual((text.call_count,vision.call_count,images.call_count),(1,1,2))

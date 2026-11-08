@@ -145,6 +145,7 @@ export class ContentOpsUI {
     if(!this.formEdited){document.querySelector('#content-ops-copy-format').value=config.copyFormat||'all_variations';document.querySelector('#content-ops-copy-multiplier').value=config.copyMultiplier??3;}
     document.querySelector('#content-ops-background option[value="cached"]').disabled=!config.cachedAvailable;
     if(!config.cachedAvailable)document.querySelector('#content-ops-background').value='fresh';
+    this.renderProductModels(config.productModels||[]);
     this.renderHistory(data.batches||[]);
     const request=storedRequest();
     const requested=request&&(data.batches||[]).find(batch=>batch.id===request.batchId);
@@ -158,7 +159,14 @@ export class ContentOpsUI {
     this.config=config;renderProvider(config);
     document.querySelector('#content-ops-background option[value="cached"]').disabled=!config.cachedAvailable;
     if(!config.cachedAvailable)document.querySelector('#content-ops-background').value='fresh';
+    this.renderProductModels(config.productModels||[]);
     if(!this.busy&&!this.batch)this.notice.textContent=config.configured?'接口配置已更新。':'请通过左下角接口接入完成配置。';
+  }
+  renderProductModels(models){
+    const list=document.querySelector('#content-ops-model-list');
+    const hint=document.querySelector('#content-ops-model-hint');
+    if(list)list.innerHTML=models.map(model=>`<option value="${esc(model.id)}"></option>`).join('');
+    if(hint)hint.textContent=models.length?`语料已接入：${models.map(model=>model.id).join('、')}。可输入正式名或别名（如 kimi k3.1）。`:'尚未读到 model-corpus 专节；新模型请先补语料与封面短词库。';
   }
   renderHistory(batches){const history=document.querySelector('#content-ops-history');history.innerHTML='<option value="">查看已保存批次</option>'+batches.map(batch=>`<option value="${esc(batch.id)}">${esc(batch.model)} · ${batch.count} 张图 / ${batch.copyCount??batch.count} 篇 · ${esc(({running:'生成中',completed:'已完成',partial:'部分完成',failed:'失败'})[batch.status]||batch.status)}</option>`).join('');history.value=this.batch?.id||'';}
   async submit(){

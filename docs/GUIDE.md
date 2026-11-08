@@ -36,6 +36,7 @@
 | `scratch/reference-gallery-qa/` | 临时隔离验收仓库 | 从现有 Hanabi 页面/服务与测试图重建，用于多图编辑浏览器验收；独立 JSONL、Git 与 SQLite，不访问生产数据、密钥或历史；验收后删除。 |
 | `scratch/` | 本机临时工作区 | **本地敏感配置与临时缓存（Git 忽略）**。存放本机 API Key 密钥文件（`gateway.env`）、Python 虚拟运行环境（`.venv/`）、测试产物、中间调试日志。除 `.venv` 和 `gateway.env` 外，其余内容均可随时清理。本轮局部备份 `scratch/deleted-reference-repair-20261105.json` 保存截图清理与缺图清理的恢复信息，核查后可删。 |
 | `hanabi/` | 可视化表现层 | **Hanabi 批量图文与素材管理工作台**。包含本机 Node.js Web 服务端（`server.mjs`）、前端交互页面（`index.html`）、素材库/原料库/生成组件与相关样式资产。 |
+| `hanabi/lib/content-ops-models.mjs` | 产品型号目录 | 从 `data/model-corpus.md` 解析正式型号、别名与封面短词库是否齐全；与 `scripts/lib/copy.py` 共用匹配规则，供配置接口与生成前校验。 |
 
 ---
 
@@ -181,6 +182,16 @@ python3 scripts/check.py --help
 清洗只补充风险检查信号和明确的人群字段，不覆盖帖子原文。配置见 `config/data-cleaning.json`。`data/distilled-preferences.json` 是可删除、可重建的偏好缓存；源路径见 `config/preference-build.json`，使用 `python3 scripts/build.py distill` 重建，第二次应显示 `changed=false`。生成脚本优先读取该包，损坏时在收费调用前失败；缺失时才按代码中的显式回退源加载。
 
 当前帖子唯一源为 `data/posts.jsonl`；风险规则唯一源为 `rules/banned-words-quick.yaml`；运营偏好事实源为 `skills/simin-persona/SKILL.md` 和 `data/wecom/simin-feedback.jsonl`。模型语料库唯一源为 `data/model-corpus.md`。不要编辑派生包代替源文件。
+
+### 接入新产品型号（避免「缺少封面短词库」）
+
+生成链路按 `data/model-corpus.md` 的型号专节取封面短词；Hanabi 表单自由输入会先解析为正式型号。适配新模型时只改这一份语料，不要改脚本硬编码名单：
+
+1. 新增专节标题，格式 `# 一、正式型号名 语料库`；多版本用 `/` 连接，如 `Kimi K3.1 Pro / Highspeed`。
+2. 专节下第一行可写 `> 型号别名：kimi k3.1、别名2`，供界面简称命中。
+3. 必须包含 `## N. 封面吸睛大字与四大版式专属短词库`（含大字报四行组合，型号列写正式名）。
+4. 解析规则：去标点大小写对齐；去掉 Pro/Highspeed 等版本后缀后若仍唯一命中则采用；歧义或未命中时直接报可用型号列表，不进入收费阶段。
+5. `/api/content-ops/config` 的 `productModels` 与生成页 datalist 均从该文件即时读取；补完语料后刷新页面即可，无需改前端名单。
 
 素材库写入：素材增删改、全局排序和合集 CRUD 均在仓库根目录持有 `.posts.lock`，写入临时文件、fsync、原子替换后自动 Git 提交；提交路径仅限本次受影响的 `data/posts.jsonl`、`data/collections.json`，使用 `commit --only`、禁用 hooks/签名，并为缺失的身份提供命令级兜底。提交失败会撤回本次数据和图片变更并向界面报错，不混入其他暂存代码。图片备份待提交成功才删除。素材库要求这两个数据文件已受本仓库 Git 跟踪。
 

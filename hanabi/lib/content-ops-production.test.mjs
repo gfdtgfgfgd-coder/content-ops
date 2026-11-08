@@ -8,9 +8,20 @@ import { cp, copyFile, readFile, readdir, writeFile, mkdir, mkdtemp, rm, symlink
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ContentOpsProduction, validateContentOpsInput } from './content-ops-production.mjs';
+import { listProductModels, resolveProductModel } from './content-ops-models.mjs';
 import { parsePostText, renderPostContent } from './content-ops-ui.mjs';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const input = {model:'Kimi K3.1 Pro',platform:'xhs',count:1,backgroundMode:'fresh',requestId:'offline-test-123'};
+
+test('product models resolve informal aliases and reject unknown families before generation', () => {
+  const models = listProductModels(root);
+  assert.deepEqual(models.map(item => item.id).sort(), ['DeepSeek V4.1', 'GLM-5.3', 'Kimi K3.1 Pro']);
+  assert.equal(resolveProductModel('kimi k3.1', models, { requireCover: true }), 'Kimi K3.1 Pro');
+  assert.equal(resolveProductModel('GLM5.3', models, { requireCover: true }), 'GLM-5.3');
+  assert.equal(validateContentOpsInput({ ...input, model: 'kimi k3.1' }, { productModels: models }).model, 'Kimi K3.1 Pro');
+  assert.throws(() => resolveProductModel('Kimi K3.2 Pro', models, { requireCover: true }), /未匹配语料库/);
+  assert.throws(() => validateContentOpsInput({ ...input, model: 'Unknown Model' }, { productModels: models }), /未匹配语料库/);
+});
 
 test('brief and cover style validate type, length, controls; old input stays compatible', () => {
   const defaulted = validateContentOpsInput(input);

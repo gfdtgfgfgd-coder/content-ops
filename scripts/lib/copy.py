@@ -324,8 +324,9 @@ def validate_posts(value, count, model, rules=None, platform="xhs", copy_format=
             lines = post['title_lines'] = ['封面由视觉模型独立规划', model, '独立封面短字']
         if not isinstance(lines, list) or len(lines) != 3 or not all(isinstance(s, str) and s.strip() for s in lines):
             raise ValueError('封面标题必须为三个非空文本行')
-        if lines[1] != model or any('\n' in s or len(s) > 80 for s in lines):
+        if any('\n' in s or len(s) > 80 for s in lines) or not same_product_model(lines[1], model):
             raise ValueError('标题须保留完整模型名，单行不能换行或超过 80 字')
+        lines[1] = model
         if copy_format is not None:
             raw_sections = post.get('sections', [])
             if isinstance(raw_sections, list):
@@ -339,8 +340,10 @@ def validate_posts(value, count, model, rules=None, platform="xhs", copy_format=
         if not isinstance(tags, list) or not 3 <= len(tags) <= 5 or not all(isinstance(s, str) and re.fullmatch(r'#[\w\u4e00-\u9fff.-]+', s) for s in tags):
             raise ValueError('需要 3–5 个无空格标签')
         model_tag = '#' + re.sub(r'\s+', '', model)
-        if model_tag not in tags:
+        matched = next((index for index, tag in enumerate(tags) if same_product_model(tag.lstrip('#'), model)), None)
+        if matched is None:
             raise ValueError('标签中需要包含与模型名一致的型号标签：' + model_tag)
+        tags[matched] = model_tag
         if not isinstance(post.get('angle'), str) or not post['angle'].strip():
             raise ValueError('缺少文案结构说明')
         if not isinstance(post.get('audience'), str) or not post['audience'].strip() or len(post['audience']) > 80:
@@ -407,11 +410,120 @@ def cover_units(text):
     return len(re.findall(r'[A-Za-z]+|[0-9]+|[^\sA-Za-z0-9]', text))
 
 
+# Edition suffixes users often omit when typing a product model into Hanabi.
+MODEL_EDITION_SUFFIXES = ('highspeed', 'preview', 'turbo', 'lite', 'plus', 'pro', 'max', 'mini')
+
+
+def model_key(text):
+    return re.sub(r'[^a-z0-9]', '', str(text or '').lower())
+
+
+def strip_model_editions(key):
+    value = str(key or '')
+    changed = True
+    while changed and value:
+        changed = False
+        for suffix in MODEL_EDITION_SUFFIXES:
+            if value.endswith(suffix) and len(value) > len(suffix):
+                value = value[:-len(suffix)]
+                changed = True
+    return value
+
+
+def same_product_model(left, right, root=None):
+    if str(left or '').strip() == str(right or '').strip():
+        return True
+    if model_key(left) and model_key(left) == model_key(right):
+        return True
+    left_base, right_base = strip_model_editions(model_key(left)), strip_model_editions(model_key(right))
+    if left_base and left_base == right_base:
+        return True
+    try:
+        return resolve_product_model(left, root) == resolve_product_model(right, root)
+    except ValueError:
+        return False
+
+
+def iter_model_sections(root=None):
+    corpus_file = (root or ROOT) / 'data/model-corpus.md'
+    if not corpus_file.exists():
+        return
+    try:
+        content = corpus_file.read_text(encoding='utf-8')
+    except Exception:
+        return
+    for part in re.split(r'\n(?=#\s+[一二三四五六七八九十0-9]+、)', content):
+        lines = part.splitlines()
+        if not lines or not re.match(r'^#\s+[一二三四五六七八九十0-9]+、', lines[0]):
+            continue
+        heading = re.sub(r'^#\s+[一二三四五六七八九十0-9]+、|\s*语料库\s*$', '', lines[0]).strip()
+        if not heading or heading.startswith('全平台'):
+            continue
+        names = [name.strip() for name in heading.split('/') if name.strip()]
+        if not names:
+            continue
+        aliases = {names[0], *names, *(f'{names[0]} {suffix}' for suffix in names[1:])}
+        for line in lines[1:12]:
+            match = re.match(r'^>\s*型号别名[:：]\s*(.+)$', line.strip())
+            if not match:
+                continue
+            for alias in re.split(r'[,，、;/|]+', match.group(1)):
+                if alias.strip():
+                    aliases.add(alias.strip())
+        yield {
+            'id': names[0],
+            'aliases': sorted(aliases),
+            'has_cover_corpus': bool(re.search(r'^## \d+\. 封面吸睛大字与四大版式专属短词库\s*$', part, re.M)),
+            'body': part.strip(),
+        }
+
+
+def list_product_models(root=None):
+    return [{'id': item['id'], 'aliases': item['aliases'], 'has_cover_corpus': item['has_cover_corpus']}
+            for item in iter_model_sections(root)]
+
+
+def resolve_product_model(model, root=None, *, require_cover=False):
+    raw = str(model or '').strip()
+    if not raw:
+        raise ValueError('模型名不能为空')
+    sections = list(iter_model_sections(root))
+    if not sections:
+        raise ValueError('data/model-corpus.md 中没有可识别的产品型号专节')
+    available = '、'.join(item['id'] for item in sections)
+    key = model_key(raw)
+    exact = [item for item in sections if key in {model_key(alias) for alias in item['aliases']}]
+    if len(exact) == 1:
+        chosen = exact[0]
+    elif len(exact) > 1:
+        raise ValueError(f'型号「{raw}」同时命中多个语料专节：{"、".join(item["id"] for item in exact)}。请填写完整正式名。')
+    else:
+        # Only strip editions from catalog aliases so "kimi k3.1" hits "Kimi K3.1 Pro",
+        # while invented editions like "GLM-5.3 Pro" still miss.
+        base_hits = [item for item in sections
+                     if key and key in {strip_model_editions(model_key(alias)) for alias in item['aliases']}]
+        if len(base_hits) == 1:
+            chosen = base_hits[0]
+        elif len(base_hits) > 1:
+            raise ValueError(f'型号「{raw}」对应多个语料专节：{"、".join(item["id"] for item in base_hits)}。请填写完整正式名。')
+        else:
+            raise ValueError(
+                f'型号「{raw}」未匹配语料库。可用型号：{available}。'
+                '请在 data/model-corpus.md 新增专节（含封面短词库与可选「型号别名」行），或改用上列正式名。'
+            )
+    if require_cover and not chosen['has_cover_corpus']:
+        raise ValueError(
+            f'型号「{chosen["id"]}」缺少封面专属短词库；专节内须有「## N. 封面吸睛大字与四大版式专属短词库」。'
+        )
+    return chosen['id']
+
+
 def extract_cover_corpus(model, root=None):
-    section = extract_model_corpus(model, root)
+    canonical = resolve_product_model(model, root, require_cover=True)
+    section = extract_model_corpus(canonical, root)
     match = re.search(r'^## \d+\. 封面吸睛大字与四大版式专属短词库\s*$', section, re.M)
     if not match:
-        raise ValueError('模型缺少封面专属短词库：' + model)
+        raise ValueError('模型缺少封面专属短词库：' + canonical)
     content = ((root or ROOT) / 'data/model-corpus.md').read_text(encoding='utf-8')
     common = re.search(r'^## 封面通用组件短词库\s*$(.*)', content, re.M | re.S)
     return section[match.start():].strip() + ('\n\n' + common.group(0).strip() if common else '')
@@ -888,36 +1000,36 @@ def bold_typo_background_prompt(visual_prompt, platform, model):
             '不要绘制荧光笔条、圈线、箭头、加号或角标，全部短字与高亮由本机后期排版。')
 
 def extract_model_corpus(model, root=None):
-    corpus_file = (root or ROOT) / 'data/model-corpus.md'
-    if not corpus_file.exists():
-        return ''
     try:
-        content = corpus_file.read_text(encoding='utf-8')
-    except Exception:
+        canonical = resolve_product_model(model, root)
+    except ValueError:
         return ''
-    norm = re.sub(r'[^a-z0-9]', '', model.lower())
-    parts = re.split(r'\n(?=#\s+[一二三四五六七八九十0-9]+、)', content)
-    for part in parts:
-        first_line = part.splitlines()[0] if part.splitlines() else ''
-        heading = re.sub(r'^#\s+[一二三四五六七八九十0-9]+、|\s*语料库\s*$', '', first_line).strip()
-        names = [name.strip() for name in heading.split('/')]
-        aliases = [names[0], *(names[0] + ' ' + suffix for suffix in names[1:])]
-        if norm and norm in {re.sub(r'[^a-z0-9]', '', name.lower()) for name in aliases}:
-            return part.strip()
+    for item in iter_model_sections(root):
+        if item['id'] == canonical:
+            return item['body']
     return ''
 
 def run(args):
-    model = args.model.strip()
+    raw_model = args.model.strip()
     brief = getattr(args, 'brief', '')
     if not isinstance(brief, str) or len(brief) > 1000 or re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', brief):
         raise ValueError('需求须为不超过1000字的文本，不能含控制字符')
+    preference_block, preference_version, snapshots, palettes, active_rules = load_preferences(args.preferences, args.platform, args.preference_max_chars)
+    validate_input(raw_model,args.count,args.platform,active_rules)
+    # Canonicalize informal UI names (e.g. kimi k3.1 → Kimi K3.1 Pro) before billing stages.
+    # Cached-background mode may keep freeform names when no corpus section exists yet.
+    try:
+        model = resolve_product_model(raw_model, getattr(args, 'root', ROOT), require_cover=not bool(args.background))
+    except ValueError:
+        if args.background:
+            model = raw_model
+        else:
+            raise
     brief_source = 'user_provided' if brief else 'model_corpus'
     if not brief:
         corpus_snippet = extract_model_corpus(model, getattr(args, 'root', ROOT))
         if corpus_snippet:
             brief = f"参考模型营销语料库中关于 {model} 的主能力与卖点：" + corpus_snippet[:700]
-    preference_block, preference_version, snapshots, palettes, active_rules = load_preferences(args.preferences, args.platform, args.preference_max_chars)
-    validate_input(model,args.count,args.platform,active_rules)
     style_mode, style_preset, style_prompt = validate_style(
         getattr(args, 'style_mode', 'auto'),
         getattr(args, 'style_preset', ''),
@@ -935,8 +1047,9 @@ def run(args):
     if args.background and not font_path.exists():
         raise ValueError('未找到中文字体；请设置 CONTENT_OPS_FONT')
     facts = json.loads(args.facts.read_text()) if args.facts else {'model':model,'verified_claims':[], 'note':'未提供独立核验事实；本次卖点可来自用户简报，来源分别记录'}
-    if not isinstance(facts,dict) or facts.get('model') != model:
+    if not isinstance(facts,dict) or not same_product_model(facts.get('model'), model):
         raise ValueError('事实文件的 model 必须与输入模型名一致')
+    facts = {**facts, 'model': model}
     claims = facts.get('verified_claims',[])
     if not isinstance(claims,list) or any(not isinstance(c,dict) or not c.get('claim') or not c.get('source') for c in claims):
         raise ValueError('每条产品事实必须有 claim 和 source')
