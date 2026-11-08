@@ -1268,6 +1268,14 @@ test('revision HTTP routes enforce local mutations and preserve adopted copy on 
   const saved=await (await fetch(url+'/api/content-ops/batches/batch-123')).json();assert.equal(saved.batch.posts[0].text,revisionInput.text);
   response=await send(path.replace('/revisions','/apply'),{kind:'copy',copyIndex:1,baseRevision:'original',revisionId:'original'});assert.equal(response.status,409);
   response=await fetch(url+path+'?kind=copy&copyIndex=1');const history=await response.json();assert.equal(history.currentRevision,first.id);assert.equal(history.original.text,'# 原稿A\n\n正文A');
+  const promptPath='/api/content-ops/image-prompts/xhs/abc123/1.png';
+  response=await send(promptPath,{requestId:'reverse-http-test'},{Origin:'https://unrelated.invalid'});assert.equal(response.status,403);
+  await mkdir(join(dir,'data/images/xhs/abc123'),{recursive:true});await writeFile(join(dir,'data/images/xhs/abc123/1.png'),png);
+  await writeFile(join(dir,'data/posts.jsonl'),JSON.stringify({id:'abc123',platform:'xhs',images:['data/images/xhs/abc123/1.png']})+'\n');
+  response=await fetch(url+promptPath);assert.equal(response.status,200);const inspected=await response.json();assert.equal(inspected.run,null);assert.equal(response.headers.get('cache-control'),'no-store');
+  response=await send(promptPath,{requestId:'reverse-http-stale',imageSha256:'stale'});assert.equal(response.status,409);
+  response=await fetch(url+promptPath.replace('1.png','2.png'));assert.equal(response.status,404);
+  response=await fetch(url+'/api/content-ops/batches/batch-123/posts/job-12345/prompts');assert.equal(response.status,200);assert.deepEqual((await response.json()).requests,[]);
 });
 
 test('batch resume creates a non-destructive snapshot and starts only one continuation',async t=>{
@@ -1300,4 +1308,91 @@ test('batch resume refuses missing copy checkpoints and abnormal snapshot files 
   await symlink(join(dir,'original/post-1.md'),join(dir,'original/post-1-copy-2.md'));
   await assert.rejects(()=>production.resume('batch-123'),/异常文件/u);
   assert.equal(production.get('batch-123').status,'failed');assert.equal(production.get('batch-123').output_dir,join(dir,'original'));assert.equal(calls.length,0);
+});
+
+// Prompt tools use immutable reference snapshots and an isolated history DB.
+import { ContentOpsPrompts } from './content-ops-prompts.mjs';
+import { promptBlock } from './content-ops-prompt-ui.mjs';
+async function promptFixture(t,mode='ready'){
+  const base=await revisionFixture(t);const {dir,db,production}=base;
+  await mkdir(join(dir,'data/images/xhs/abc123'),{recursive:true});
+  await writeFile(join(dir,'data/images/xhs/abc123/1.png'),png);
+  await writeFile(join(dir,'data/images/xhs/abc123/2.png'),Buffer.concat([png,Buffer.from('second image')]));
+  const records=[{id:'abc123',platform:'xhs',title:'单图观察',images:['data/images/xhs/abc123/1.png','data/images/xhs/abc123/2.png']}];
+  await writeFile(join(dir,'data/posts.jsonl'),JSON.stringify(records[0])+'\n');
+  await writeFile(join(dir,'scratch/gateway.env'),'CONTENT_OPS_BASE_URL=https://offline.invalid/v1\nCONTENT_OPS_API_KEY=fake-only\nCONTENT_OPS_VISION_MODEL=vision-test\n');
+  const calls=[];
+  const spawnProcess=(command,args,options)=>{
+    const child=new EventEmitter();child.kill=()=>queueMicrotask(()=>child.emit('close',1));
+    const entry={command,args,options};calls.push(entry);
+    if(mode==='hold')return child;
+    void(async()=>{const input=JSON.parse(await readFile(args[args.indexOf('--input')+1],'utf8'));entry.input=input;entry.image=await readFile(input.image_path);
+      const result=mode==='error'?{error:'offline failure'}:{prompt:'灰白背景，原图准确文案 <script>不能执行</script>',negativePrompt:'无内框',imageSha256:input.image_sha256,model:input.vision_model,width:1,height:1};
+      await writeFile(args[args.indexOf('--output')+1],JSON.stringify(result));child.emit('close',0);
+    })().catch(e=>child.emit('error',e));return child;
+  };
+  const prompts=new ContentOpsPrompts({db,root:dir,production,references:new ContentOpsReferenceStore({root:dir}),spawnProcess});
+  return {...base,prompts,promptCalls:calls,target:{platform:'xhs',id:'abc123',filename:'1.png'}};
+}
+async function promptDone(prompts,id){for(let i=0;i<300;i++){const row=prompts.public(prompts.get(id));if(row.status!=='running'&&!prompts.children.has(id))return row;await new Promise(r=>setTimeout(r,10));}throw new Error('prompt did not finish');}
+
+test('single-image reverse caches across reopen, deduplicates concurrent requests and never changes references',async t=>{
+  const {dir,prompts,promptCalls,target}=await promptFixture(t);const before=await readFile(join(dir,'data/posts.jsonl'));
+  const state=await prompts.inspect(target);assert.equal(state.run,null);assert.equal(state.model,'vision-test');
+  const input={requestId:'reverse-request-123',imageSha256:state.imageSha256};
+  const [first,second]=await Promise.all([prompts.create(target,input),prompts.create(target,{...input,requestId:'another-request-123'})]);
+  assert.equal(first.id,second.id);const ready=await promptDone(prompts,first.id);assert.equal(ready.status,'ready',ready.error);
+  assert.equal(promptCalls.length,1);assert.equal(promptCalls[0].args[1],'reverse');assert.deepEqual(promptCalls[0].image,png);
+  assert.equal((await prompts.inspect(target)).run.id,first.id);
+  assert.equal((await prompts.create(target,{...input,requestId:'reopen-request-123'})).id,first.id);assert.equal(promptCalls.length,1);
+  assert.deepEqual(await readFile(join(dir,'data/posts.jsonl')),before);assert.deepEqual(await readFile(join(dir,'data/images/xhs/abc123/1.png')),png);
+  assert.deepEqual(await readdir(join(dir,'scratch/hanabi-runtime/prompts')),[]);
+  assert.ok(!promptBlock('标题',ready.result.prompt).includes('<script>'));assert.ok(promptBlock('标题',ready.result.prompt).includes('&lt;script&gt;'));
+});
+
+test('reverse handles carousel images and invalidates cached results after image or model replacement',async t=>{
+  const {dir,prompts,promptCalls,target}=await promptFixture(t);
+  const a=await prompts.inspect(target),one=await prompts.create(target,{requestId:'first-request-123',imageSha256:a.imageSha256});await promptDone(prompts,one.id);
+  const other={...target,filename:'2.png'},b=await prompts.inspect(other);assert.notEqual(b.imageSha256,a.imageSha256);
+  const two=await prompts.create(other,{requestId:'second-request-123',imageSha256:b.imageSha256});await promptDone(prompts,two.id);assert.equal(promptCalls.length,2);
+  await writeFile(join(dir,'data/images/xhs/abc123/1.png'),Buffer.concat([png,Buffer.from('replacement')]));
+  assert.equal((await prompts.inspect(target)).run,null);
+  await assert.rejects(()=>prompts.create(target,{requestId:'stale-request-123',imageSha256:a.imageSha256}),{statusCode:409});
+  await assert.rejects(()=>prompts.create(other,{requestId:'first-request-123',imageSha256:b.imageSha256}),{statusCode:409});
+  await writeFile(join(dir,'scratch/gateway.env'),'CONTENT_OPS_VISION_MODEL=other-model\n');assert.equal((await prompts.inspect(other)).run,null);
+});
+
+test('reverse rejects unowned/missing/symlink images before invocation and retries failures only on explicit request',async t=>{
+  const {dir,prompts,promptCalls,target}=await promptFixture(t,'error');
+  await assert.rejects(()=>prompts.inspect({...target,filename:'not-listed.png'}),{statusCode:404});
+  await rm(join(dir,'data/images/xhs/abc123/1.png'));await symlink(join(dir,'original/post-1.md'),join(dir,'data/images/xhs/abc123/1.png'));
+  await assert.rejects(()=>prompts.inspect(target));assert.equal(promptCalls.length,0);
+  const second={...target,filename:'2.png'},state=await prompts.inspect(second);const first=await prompts.create(second,{requestId:'failed-request-123',imageSha256:state.imageSha256});
+  assert.equal((await promptDone(prompts,first.id)).status,'failed');assert.equal((await prompts.inspect(second)).run.id,first.id);assert.equal(promptCalls.length,1);
+  const retry=await prompts.create(second,{requestId:'retry-request-123',imageSha256:state.imageSha256});assert.notEqual(retry.id,first.id);await promptDone(prompts,retry.id);assert.equal(promptCalls.length,2);
+});
+
+test('generation prompt inspection preserves exact attempts and legacy records without inventing missing prompts',async t=>{
+  const {dir,prompts}=await promptFixture(t);const path=join(dir,'original/manifest.json');
+  await writeFile(path,JSON.stringify({vision_model:'vision-old',posts:[{index:1,visual_plan:{visual_prompt:'视觉原文',cover_texts:[{text:'GLM5.3'}]},image_generation:{prompt:'实际提交\n不是重建词',model:'image-old',mode:'layered_poster'}}]}));
+  const before=await readFile(path),old=await prompts.generation('batch-123','job-12345');assert.equal(old.requests[0].prompt,'实际提交\n不是重建词');assert.equal(old.visionPrompt,'视觉原文');assert.equal(old.mode,'layered_poster');assert.deepEqual(await readFile(path),before);
+  await writeFile(path,JSON.stringify({posts:[{index:1,image_requests:[{prompt:'第一次失败',status:'failed'},{prompt:'第二次成功',status:'completed'}]}]}));
+  const modern=await prompts.generation('batch-123','job-12345');assert.deepEqual(modern.requests.map(r=>r.prompt),['第一次失败','第二次成功']);
+  await writeFile(path,'{}');assert.deepEqual((await prompts.generation('batch-123','job-12345')).requests,[]);
+  await assert.rejects(()=>prompts.generation('batch-123','other-job'),{statusCode:404});
+});
+
+test('reverse limits concurrent images and preserves interrupted history without automatic retry',async t=>{
+  const {dir,prompts,promptCalls,target}=await promptFixture(t,'hold');
+  const a=await prompts.inspect(target),first=await prompts.create(target,{requestId:'held-first-123',imageSha256:a.imageSha256});
+  const secondTarget={...target,filename:'2.png'},b=await prompts.inspect(secondTarget);
+  const second=await prompts.create(secondTarget,{requestId:'held-second-123',imageSha256:b.imageSha256});
+  await writeFile(join(dir,'data/images/xhs/abc123/3.png'),Buffer.concat([png,Buffer.from('third')]));
+  await writeFile(join(dir,'data/posts.jsonl'),JSON.stringify({id:'abc123',platform:'xhs',images:[1,2,3].map(i=>`data/images/xhs/abc123/${i}.png`)})+'\n');
+  const third={...target,filename:'3.png'},c=await prompts.inspect(third);
+  await assert.rejects(()=>prompts.create(third,{requestId:'held-third-123',imageSha256:c.imageSha256}),{statusCode:409});
+  for(let i=0;i<100&&promptCalls.length<2;i++)await new Promise(r=>setTimeout(r,5));
+  assert.equal(promptCalls.length,2);prompts.recover();prompts.shutdown();
+  assert.equal((await promptDone(prompts,first.id)).status,'failed');assert.equal((await promptDone(prompts,second.id)).status,'failed');
+  assert.equal((await prompts.inspect(target)).run.id,first.id);assert.equal(promptCalls.length,2);
 });

@@ -938,7 +938,15 @@ def run(args):
                 entries.append({'index':copy_index, **post, 'markdown':filename})
             post = group[0]
             posts.append(post)
-            manifest['posts'].append({'index':index, **post, 'copies':entries, 'markdown':entries[0]['markdown'], 'image':None, 'status':'copy_ready'})
+            record = {'index':index, **post, 'copies':entries, 'markdown':entries[0]['markdown'], 'image':None, 'status':'copy_ready'}
+            saved_post = previous_posts.get(index,{})
+            if isinstance(saved_post.get('image_requests'),list):
+                record['image_requests'] = [dict(item) for item in saved_post['image_requests']]
+            elif saved_post.get('image_generation',{}).get('prompt'):
+                old = saved_post['image_generation']
+                record['image_requests'] = [{'prompt':old['prompt'],'model':old.get('model',manifest['image_model']),
+                    'mode':old.get('mode',''),'size':old.get('requested_size',''),'status':'completed'}]
+            manifest['posts'].append(record)
         save_json(out/'manifest.json',manifest)
         for index,post in enumerate(posts,1):
             previous=previous_posts.get(index,{})
@@ -996,7 +1004,12 @@ def run(args):
                 prompt = (bold_typo_background_prompt(visual_plan, args.platform, model) if layered
                           else direct_image_prompt({'model':model}, args.platform, visual_plan, rules=active_rules))
                 generated_path = out/f'post-{index}-background.png' if layered else image_path
+                image_request = {'prompt':prompt, 'model':manifest['image_model'], 'mode':'layered_poster' if layered else 'direct_poster',
+                                 'size':f'{size[0]}x{size[1]}', 'status':'prepared', 'created_at':datetime.now(ZoneInfo('Asia/Shanghai')).isoformat()}
+                manifest['posts'][index-1].setdefault('image_requests',[]).append(image_request)
+                save_json(out/'manifest.json',manifest)
                 image_result = image_api.generate_image(prompt=prompt,output=generated_path,model=manifest['image_model'],base_url=settings['CONTENT_OPS_BASE_URL'],api_key=settings['CONTENT_OPS_API_KEY'],size=f'{size[0]}x{size[1]}',timeout=args.timeout)
+                image_request['status'] = 'completed'
                 if (image_result['width'], image_result['height']) != size:
                     raise ValueError(f"生图尺寸不符：要求 {size[0]}x{size[1]}，实际 {image_result['width']}x{image_result['height']}")
                 if layered:
@@ -1020,6 +1033,10 @@ def run(args):
         save_json(out/'manifest.json',manifest)
         return manifest
     except Exception as error:
+        for saved_post in manifest['posts']:
+            for request in saved_post.get('image_requests',[]):
+                if request.get('status') == 'prepared':
+                    request['status'] = 'failed'
         manifest.update({'status':'failed','error':image_api.safe_error(str(error),settings.get('CONTENT_OPS_API_KEY',''))})
         save_json(out/'manifest.json',manifest)
         raise

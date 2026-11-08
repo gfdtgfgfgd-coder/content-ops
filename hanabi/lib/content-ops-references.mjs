@@ -1,3 +1,4 @@
+import { promptUI } from './content-ops-prompt-ui.mjs';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
 const keyOf = reference => `${reference.platform}:${reference.id}`;
 const metric = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) ? Number(value).toLocaleString('zh-CN') : '—';
@@ -119,6 +120,7 @@ export class ContentOpsReferences {
       if (!figure) return;
       event.target.hidden = true;
       figure.classList.add('ref-image--missing');
+      const open=figure.querySelector('[data-ref-prompt]');if(open)open.disabled=true;
       figure.querySelector('.ref-image-error').hidden = false;
     }, true);
     // Capture also receives non-bubbling events dispatched on document.
@@ -604,7 +606,7 @@ export class ContentOpsReferences {
   }
 
   image(source, title, index = 0) {
-    return `<figure class="ref-image"><img src="${esc(source)}" loading="lazy" decoding="async" width="360" height="480" alt="${esc(title || '素材')} · 第 ${index + 1} 张"><figcaption class="ref-image-error" hidden>本机图片缺失或无法读取</figcaption></figure>`;
+    return `<figure class="ref-image"><button type="button" class="ref-image-prompt" data-ref-prompt="${esc(source)}" aria-label="反推 ${esc(title||'素材')} 第 ${index+1} 张图片的提示词"><img src="${esc(source)}" loading="lazy" decoding="async" width="360" height="480" alt="${esc(title || '素材')} · 第 ${index + 1} 张"><span>点击反推提示词</span></button><figcaption class="ref-image-error" hidden>本机图片缺失或无法读取</figcaption></figure>`;
   }
 
   badges(post) {
@@ -779,6 +781,8 @@ export class ContentOpsReferences {
   }
 
   handleClick(event) {
+    const image=event.target.closest('[data-ref-prompt]');
+    if(image){const post=this.findPost(image.closest('.ref-card'));void promptUI().reference(image.dataset.refPrompt,post?.title);return;}
     const move = event.target.closest('[data-ref-move-up],[data-ref-move-down]');
     if (move) {
       const post = this.findPost(move.closest('.ref-card'));

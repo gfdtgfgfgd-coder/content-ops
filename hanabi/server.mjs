@@ -7,6 +7,7 @@ import { homedir } from 'node:os';
 import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ContentOpsRevisions } from './lib/content-ops-revisions.mjs';
+import { ContentOpsPrompts } from './lib/content-ops-prompts.mjs';
 import { ContentOpsProduction } from './lib/content-ops-production.mjs';
 import { ContentOpsReferenceStore, referenceImageRequestPath } from './lib/content-ops-reference-store.mjs';
 import { ContentOpsEditor } from './lib/content-ops-editor.mjs';
@@ -42,6 +43,7 @@ const connections = new ContentOpsConnections({ root: REPO_ROOT });
 const production = new ContentOpsProduction({ db, root: REPO_ROOT, uploadDir: UPLOAD_DIR });
 const revisions = new ContentOpsRevisions({ db, production, root: REPO_ROOT, uploadDir: UPLOAD_DIR });
 const references = new ContentOpsReferenceStore({ root: REPO_ROOT });
+const prompts = new ContentOpsPrompts({db,root:REPO_ROOT,references,production});
 const editor = new ContentOpsEditor({ root: REPO_ROOT, runtimeRoot: existsSync(runtimeRoot) ? runtimeRoot : null });
 
 const json = value => JSON.stringify(value, null, 2);
@@ -91,6 +93,18 @@ async function route(req, res) {
     }
     if (req.method === 'POST' && pathname === '/api/content-ops/generate') return send(res, 200, await production.create(await body(req)));
     if (req.method === 'GET' && pathname === '/api/content-ops/batches') return send(res, 200, { batches: production.list() });
+    const promptBatch=pathname.match(/^\/api\/content-ops\/batches\/([\w-]+)\/posts\/([\w-]+)\/prompts$/u);
+    if(promptBatch&&req.method==='GET')return send(res,200,await prompts.generation(promptBatch[1],promptBatch[2]),{'Cache-Control':'no-store'});
+    const promptImage=pathname.match(/^\/api\/content-ops\/image-prompts\/(xhs|xianyu)\/([^/]+)\/([^/]+)$/u);
+    if(promptImage){
+      const target={platform:promptImage[1],id:decodeURIComponent(promptImage[2]),filename:decodeURIComponent(promptImage[3])};
+      if(req.method==='GET')return send(res,200,await prompts.inspect(target),{'Cache-Control':'no-store'});
+      if(req.method!=='POST')return send(res,405,{error:'方法不支持。'});
+      if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机Hanabi页面提交反推请求。'});
+      return send(res,200,{run:await prompts.create(target,await body(req))},{'Cache-Control':'no-store'});
+    }
+    const promptRun=pathname.match(/^\/api\/content-ops\/prompt-runs\/([\w-]+)$/u);
+    if(promptRun&&req.method==='GET')return send(res,200,{run:prompts.public(prompts.get(promptRun[1]))},{'Cache-Control':'no-store'});
     const revisionTarget = pathname.match(/^\/api\/content-ops\/batches\/([\w-]+)\/posts\/([\w-]+)\/(revisions|apply)$/u);
     if (revisionTarget) {
       const [,batchId,jobId,action]=revisionTarget;
@@ -169,6 +183,7 @@ const server = createServer((req, res) => void route(req, res));
 server.on('error', err => { console.error(err); process.exitCode = 1; });
 await production.recover();
 revisions.recover();
+prompts.recover();
 server.listen(PORT, HOST, () => console.log(`Hanabi content-ops listening on http://${HOST}:${server.address().port}`));
-const shutdown = async () => { revisions.shutdown(); await production.shutdown(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500).unref(); };
+const shutdown = async () => { prompts.shutdown(); revisions.shutdown(); await production.shutdown(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500).unref(); };
 process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
