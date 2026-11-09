@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+DeepSeek 短预告索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 12 节保存《DeepSeek，新模型即将发布》的预计窗口、过渡安排、与正式稿的时点差异及两条去重留言的证据边界；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“短预告与正式公告：窗口、条件与版本差异”。仅改既有文件，不新增全文、评论或规则副本。
+
 DeepSeek 发布稿吸收索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 11 节唯一维护非对称架构、缓存基线、历史定价与别名迁移主张，并标明缺图、未核链接和重复留言边界；第 1 节与历史营销候选按该账本约束。通用核验方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“非对称架构发布：阶段、缓存层级与别名迁移”。本轮仅修改既有文件，不新增全文、评论或价格副本。
 
 本轮 Kimi K3.1 Pro 推理服务栈实测索引：`data/model-corpus.md` Kimi 第 15 节保存 DSA、`8K/128K × C1/C8/C32` 性能矩阵、CUDA Graph 条件、草稿接受率、能耗与证据缺口；“少 60%”仅指作者报告的 `8K/C8` 每卡每小时产出。通用横测方法唯一维护在 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 对应章节。本轮只修改既有文件，不新增全文副本、数字账本或测试数据文件。
