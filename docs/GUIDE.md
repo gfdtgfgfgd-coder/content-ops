@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+科技狐 Flash 发布速览索引（2026-11-09）：`data/model-corpus.md` DeepSeek“科技狐发布速览吸收”保存独立来源、参数对比缺口、去重留言与读者卡点，历史绝对报价补入第 11 节唯一价格行。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 的“三层账本”和“小版本发布”章节；只修改既有文件，不新增全文、评论或规则副本。
+
 Qoder 免费入口供稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek“《突发！DeepSeek-Flash模型免费用》入口型文章吸收”保存来源指纹、平台权益／后端版本缺口、作者限时推测和场景建议边界；通用方法唯一在外部炼丹炉 `references/model-launch-playbook.md`“免费入口文章：权益归属与可校验任务分流”。仅改既有文件，未保存全文或页面附属元素。
 
 字母AI 内测与扩招解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第19节“字母AI同事件补充”保存来源、测速／视觉案例、招聘与组织因果的证据边界及去重留言；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“模型发布与招聘：工程需求和组织因果”。仅修改既有文件，不新增全文、留言或规则副本。
