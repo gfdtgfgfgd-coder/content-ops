@@ -4,6 +4,10 @@
 
 ## 仓库目录与核心文件全景说明
 
+本轮 InfoQ 样本索引：`data/model-corpus.md` GLM 第 11 节“十三、InfoQ”合并同篇五项工程测试与证据订正；通用执行契约及计时、验收分层唯一维护在外部炼丹炉 `references/workflow-archive.md`“交付声明与独立验收”。本轮仅改既有文件，不新增正文或评论副本。
+
+JavaGuide 复杂项目样本索引：`data/model-corpus.md` GLM 第 11 节“十四、JavaGuide”保存来源指纹、两项目证据和未完成项；通用方法唯一维护在外部炼丹炉 `references/model-launch-playbook.md`“跨层素材与知识游戏的验收补充”。本轮只修改既有文件，不另存全文或评论。
+
 本轮 GLM 测评索引：`data/model-corpus.md` 的 GLM 第 11 节“十二、大模型观测员实测复盘”维护同篇来源、结果与订正；通用复测方法唯一位于外部炼丹炉 `references/model-launch-playbook.md`“同分、少步骤与领域迁移的复测”。本轮仅修订既有文件，不新增全文或留言副本。
 
 本轮开源路线评论索引：`data/model-corpus.md` Kimi 第 11 节“开源路线演进与选择权评论”保存来源指纹、原文主张边界与补测线索；通用方法唯一维护在仓库外 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“开源路线评论：权益、生态与能力分轴”，`style-profiles.md` 仅保存低置信结构选项。本轮只更新既有文件，不新增全文或评论副本。
