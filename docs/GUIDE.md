@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+机器之心内测文章补充索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 19 节“机器之心同事件补充”保存独立来源、马里奥／FDE 两项 HTML 案例、测速方向争议及去重留言；与既有快讯共用事件边界，不合并来源和人数。通用方法仅维护在外部炼丹炉 `references/model-launch-playbook.md` 既有“限时内测快讯”节；未新增文件、原文或规则副本。
+
 DeepSeek 论文解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek“论文解读吸收：缓存生命周期、条件记忆与任务生产”保存本篇来源、相对既有发布稿的新增主张、近似恢复边界、基准条件与去重留言；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 既有“非对称架构发布”及“后训练解释与同题双路径”章节。仅改既有文件，不新增全文、评论或规则副本。
 
 夕小瑶十四组对照索引（2026-11-09）：`data/model-corpus.md` DeepSeek“夕小瑶十四组对照吸收：视觉链路、交付时间与协作账单”保存来源、视觉／工具链路、计时和费用口径、交接反例及去重留言；通用方法唯一维护在外部炼丹炉 `references/model-launch-playbook.md`“多 Agent 对照：关键路径、交接状态与统计包含关系”。仅修改既有文件，无原文、评论或规则副本。
