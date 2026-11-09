@@ -184,7 +184,7 @@ python3 scripts/check.py --help
 
 清洗只补充风险检查信号和明确的人群字段，不覆盖帖子原文。配置见 `config/data-cleaning.json`。`data/distilled-preferences.json` 是可删除、可重建的偏好缓存；源路径见 `config/preference-build.json`，使用 `python3 scripts/build.py distill` 重建，第二次应显示 `changed=false`。生成脚本优先读取该包，损坏时在收费调用前失败；缺失时才按代码中的显式回退源加载。
 
-当前帖子唯一源为 `data/posts.jsonl`；风险规则唯一源为 `rules/banned-words-quick.yaml`；运营偏好事实源为 `skills/simin-persona/SKILL.md` 和 `data/wecom/simin-feedback.jsonl`。模型语料库唯一源为 `data/model-corpus.md`。用户提供的模型文章合并到对应型号专节，保留来源、入库日期、证据状态与数据口径；供稿不等于独立核验，不另存全文/评论副本。Kimi 本次吸收记录见该文件第 11 节。不要编辑派生包代替源文件。
+当前帖子唯一源为 `data/posts.jsonl`；风险规则唯一源为 `rules/banned-words-quick.yaml`；运营偏好事实源为 `skills/simin-persona/SKILL.md` 和 `data/wecom/simin-feedback.jsonl`。模型语料库唯一源为 `data/model-corpus.md`。用户提供的模型文章合并到对应型号专节，保留来源、入库日期、证据状态与数据口径；供稿不等于独立核验，不另存全文/评论副本。Kimi 本次吸收记录见该文件第 11 节。不要编辑派生包代替源文件。本轮新闻综述的来源与定点核验继续维护在 Kimi 第 11 节；可复用方法唯一维护在本机炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 的“模型发布新闻综述”节，仓库只引用。
 
 Datawhale 近一周实测稿已合并到 `data/model-corpus.md` 的 Kimi 同名吸收节，补充验收对象、工具/人工贡献、总量与吞吐核对及订阅窗口口径；与其他样本分开归因，不另建全文或评论副本。
 
