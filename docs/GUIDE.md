@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+DeepSeek 官方1017更新索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第14节唯一保存官方公告、四项演示、Search/Fetch历史生效与当前指南的证据账本及去重评论主题；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“模型与服务端工具：成功调用计费和证据时点”。本轮仅改既有文件，不新增全文或计费规则副本。
+
 Datawhale 接入稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 15 节保存 V4 Flash 0731 历史样本、来源指纹、API 公测范围、基准归因、配置主张与去重留言，与 V4.1 分开。通用教程验收方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“API 后训练更新与接入教程：范围、配置与成功证据”。本轮只更新既有文件，不新增全文或评论副本。
 
 本轮 DeepSeek 发布解读索引：`data/model-corpus.md` DeepSeek 第 13 节保存好机友供稿的来源指纹、价格/基准主张、三项演示与去重评论；图片占位和历史权益均保留待核验。成本前沿、低提示交互与入口摩擦的通用方法唯一维护在仓库外炼丹炉 `references/model-launch-playbook.md` 同名节。本轮只更新既有文件，不新增全文或评论副本。
