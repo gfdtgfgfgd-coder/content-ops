@@ -6,6 +6,8 @@
 
 Flash 与团队协作解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 20 节保存供稿来源、协作实验主张、历史接入和去重留言，共同发布事实回指第 11 节；通用对照方法维护在外部炼丹炉 `references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。仅修改既有文件，不保存原文或留言副本。
 
+cxuan 限时内测快讯索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 19 节保存来源定位、临时路由／计费／并发主张及去重留言，保留原生多模态与图片调用反例、速度和到期时点缺口。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“限时内测快讯：到期标识与最小操作”。本轮只改既有文件，不新增原文、评论或规则副本。
+
 机器之心 Flash 发布解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第18节保存来源指纹、模型卡基准核验、推断和评论边界；共同发布事实回指第11节，通用方法引用外部炼丹炉 `references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。未新增原文、评论或规则副本。
 
 DeepSeek 新版解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 16 节保存《DeepSeek V4.1 Flash 新版发布： api 自带搜索能力》的来源指纹、官方成绩／成本图／模型卡补证和去重评论；同事件公告与工具计费仍引用第 14 节。通用对数轴／比较条件方法唯一维护在外部炼丹炉 `references/model-launch-playbook.md` 既有“小版本发布”节，排版反馈分流与动效验证方法唯一维护在 `references/multimodal-playbook.md`“代码图解与动效长文”。本轮仅改既有文件，不新建原文、留言或规则副本。
