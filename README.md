@@ -15,6 +15,7 @@
 
 | 项 | 值 |
 |---|---|
+| 主分支统一 | 2026-11-09：当前工作分支完整合入 main，保留原分支与全部提交；换机统一克隆 main。私有仓分支保护受套餐限制，未启用。 |
 | 错仓迁移 | 2026-11-09：ai-content-alchemy 今日53次提交的4份方法文档与4份阅读依赖迁入 `skills/content-methods/`；今后方法只在 content-ops 维护。 |
 | AI野史⑧ 观点文章吸收 | 2026-11-09：“DeepSeek 1017 实质国模第一”归为作者市场判断，不当成同题横测；收录 Kimi/DeepSeek 反向体验及 Harness、任务、套餐、账户变量，争议评论拆分证据方法同步炼丹炉。 |
 | DeepSeek V4.1 Flash 1017 短讯吸收 | 2026-11-09：同一 10 月 17 日更新另有短讯来源入库；强化学习与完整项目能力仍归因官方，重复留言去重，留言 AI 解释不作实现证据。 |
@@ -123,9 +124,9 @@ config/                清洗与偏好构建配置（网关模板见 config/gate
 在新电脑克隆仓库后，或日常启动服务：
 
 ```bash
-cd ~/Desktop && git clone --branch codex/reference-collections-outline https://github.com/gfdtgfgfgd-coder/content-ops.git
+cd ~/Desktop && git clone --branch main https://github.com/gfdtgfgfgd-coder/content-ops.git
 cd content-ops && ./start.command
 ```
 （或者直接在访达中双击 `start.command`）
 
-私有仓，需 `gh auth login` 登录 gfdtgfgfgd-coder 账号。所有电脑克隆到 `~/Desktop/content-ops`，路径统一任务卡才不断。换电脑前 `git push`，到新电脑先 `git pull`。精选参考图已进 Git，随 `codex/reference-collections-outline` 分支同步；该分支尚未合入 `main`。
+私有仓，需 `gh auth login` 登录 gfdtgfgfgd-coder 账号。所有电脑克隆到 `~/Desktop/content-ops`，路径统一任务卡才不断。换电脑前 `git push`，到新电脑先 `git pull`。精选参考图、最新代码和内容方法统一随 `main` 同步；原 `codex/reference-collections-outline` 分支保留，不删除。
