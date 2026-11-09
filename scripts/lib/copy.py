@@ -635,7 +635,7 @@ def resolve_product_model(model, root=None, *, require_cover=False):
         raise ValueError('data/model-corpus.md 中没有可识别的产品型号专节')
     available = '、'.join(item['id'] for item in sections)
     key = model_key(raw)
-    exact = [item for item in sections if key in {model_key(alias) for alias in item['aliases']}]
+    exact = [item for item in sections if (key and key in {model_key(alias) for alias in item['aliases'] if model_key(alias)}) or raw in item['aliases']]
     if len(exact) == 1:
         chosen = exact[0]
     elif len(exact) > 1:
