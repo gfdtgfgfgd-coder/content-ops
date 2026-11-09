@@ -4,9 +4,11 @@
 
 ## 仓库目录与核心文件全景说明
 
-程序员鱼皮双项目横评索引（2026-11-09）：`data/model-corpus.md` DeepSeek“程序员鱼皮 V4.1 Flash 双项目横评吸收”保存来源指纹、城市与绘图案例、分阶段计时／费用、迁移计费争议及去重留言；共同发布主张引用第 11 节。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“日常工具链横评：场景语义、编辑往返与业务回归”。仅修改既有文件，不新增全文、评论或规则副本。
+欧巴聊AI 五例实测索引（2026-11-09）：`data/model-corpus.md` DeepSeek“欧巴聊AI 五例实测吸收：保留节目、互补演示与复现缺口”保存独立来源、环境、五例边界及去重留言；共同发布与工具计费回指既有账本。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“小版本发布：成本前沿、低提示演示与入口摩擦”。只改既有文件，不新增全文、评论或规则副本。
 
 机器之心内测文章补充索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 19 节“机器之心同事件补充”保存独立来源、马里奥／FDE 两项 HTML 案例、测速方向争议及去重留言；与既有快讯共用事件边界，不合并来源和人数。通用方法仅维护在外部炼丹炉 `references/model-launch-playbook.md` 既有“限时内测快讯”节；未新增文件、原文或规则副本。
+
+程序员鱼皮双项目横评索引（2026-11-09）：`data/model-corpus.md` DeepSeek“程序员鱼皮 V4.1 Flash 双项目横评吸收”保存来源指纹、城市与绘图案例、分阶段计时／费用、迁移计费争议及去重留言；共同发布主张引用第 11 节。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“日常工具链横评：场景语义、编辑往返与业务回归”。仅修改既有文件，不新增全文、评论或规则副本。
 
 DeepSeek 论文解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek“论文解读吸收：缓存生命周期、条件记忆与任务生产”保存本篇来源、相对既有发布稿的新增主张、近似恢复边界、基准条件与去重留言；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 既有“非对称架构发布”及“后训练解释与同题双路径”章节。仅改既有文件，不新增全文、评论或规则副本。
 
