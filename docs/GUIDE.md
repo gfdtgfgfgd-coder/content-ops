@@ -4,6 +4,10 @@
 
 ## 仓库目录与核心文件全景说明
 
+字母AI 内测与扩招解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第19节“字母AI同事件补充”保存来源、测速／视觉案例、招聘与组织因果的证据边界及去重留言；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“模型发布与招聘：工程需求和组织因果”。仅修改既有文件，不新增全文、留言或规则副本。
+
+腾讯科技内测稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第19节“腾讯科技同事件补充”保存晓静／徐青阳供稿来源、历史发布状态、架构推断边界、旧版基准、替代问卷及报价口径；通用方法唯一维护在外部炼丹炉 `references/model-launch-playbook.md`“限时内测快讯”节。仅改既有文件，不新增全文或留言副本。
+
 IT之家 V4.1 Flash 更新报道索引（2026-11-09）：`data/model-corpus.md` DeepSeek“IT之家《DeepSeek V4.1 Flash模型超级进化！‘许愿’就能写代码》媒体报道吸收”保存 11 项基准转述、HLE 括号口径缺口、官方性能／成本主张与去重留言主题；缺刊期年份、原文链接和复测材料均不补造。共同发布事实回指既有记录，通用方法唯一引用外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“小版本发布：成本前沿、低提示演示与入口摩擦”。仅修改既有文件，不另存全文或评论副本。
 
 欧巴聊AI 五例实测索引（2026-11-09）：`data/model-corpus.md` DeepSeek“欧巴聊AI 五例实测吸收：保留节目、互补演示与复现缺口”保存独立来源、环境、五例边界及去重留言；共同发布与工具计费回指既有账本。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“小版本发布：成本前沿、低提示演示与入口摩擦”。只改既有文件，不新增全文、评论或规则副本。
