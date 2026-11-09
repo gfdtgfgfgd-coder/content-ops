@@ -3567,6 +3567,52 @@ Kimi K3.1 Pro｜3T级参数后训练大模型
 - 文本先展示成品与经营动作，再倒叙需求到验收，末尾同时保留能力认可和额度阻力；只是单篇结构观察，不升级全局风格硬规则，不复制口癖、绝对排名或个人经历。重复粘贴的留言按同一段处理，不保存评论者身份，不推算群体意见。
 - 通用方法唯一维护于本机炼丹炉 `references/model-launch-playbook.md`「完整项目的阶段交付与实测对账」；本节保留来源、案例及证据状态，不另存全文或事实副本。
 
+## CANN 推理适配样本：架构、量化与性能口径（2026-11-09 入库）
+
+### 来源、核验范围与日期
+
+- **供稿指纹**：用户粘贴《Kimi K3.1 Pro来了：基于CANN的Day0推理支持与性能优化》全文；原刊链接、作者身份、发布时间和年份未给出，图示仅有“图片／image.png”占位，末尾重复留言区没有实际评论。不另存全文，不判断未提供图示的视觉效果。
+- **一手补证**：2026-11-09 直接读取 CANN 社区 `cann-recipes-infer` 仓库首页、模型部署 README 与 K3.1 推理指南；以下结论是“官方文档载明”，未安装部署、运行模型或独立复现性能。首页 2026/11 公告列出 K3.1 Pro 的昇腾 950PR/DT Day0 适配；本次未验证适配相对模型发布的实际时间差。
+- **可追溯位置**：部署 README 为 `https://gitcode.com/cann/cann-recipes-infer/blob/master/models/kimi_k3_1/README.md`；技术指南为 `https://gitcode.com/cann/cann-recipes-infer/blob/master/docs/models/kimi_k3/kimi_k31_inference_guide.md`。两页当时展示的最近文件提交均为 `4a09b2a095bd9f2d9120cffb7ddffd2065ab0d55`（`feat(kimi-k3): kimi-k3.1-pro 推理支持及性能优化`）；master 会变化，后续引用须核对版本。
+- **事件日期与开放状态**：供稿称“10 月 24 日发布、11 月 4 日正式开源”，缺少年份与原始公告，本次不确认为精确发布日期或首次权重公开日；权重、许可证的既有核验仍引用本专节第 11 节，不用适配公告代替许可核验，也不将两次说法当成独立证据。
+
+### 技术知识：先区分计算对象，再解释优化
+
+| 对象／阶段 | 本次文档支持的机制 | 使用边界 |
+|---|---|---|
+| 混合注意力主干 | KDA 递推维护序列状态；DSA 在 MLA 基础上由 LI（Lightning Indexer）选 Top-K 历史位置，再由 SFA（Sparse Flash Attention）读取对应压缩 KV；AttnRes 聚合跨层表示 | 稀疏选择发生在注意力历史位置，不等于整个模型不处理长上下文；KDA 状态与 DSA KV 不能混称一种缓存 |
+| K3 优化复用 | FlashKDA／MegaKDA、AttnRes 两阶段融合、MegaMoE／MC2，以及混合并行、通信与调度、图模式、编译缓存、NZ 布局、DSpark 与 ReplaySSM 等构成工程积累 | 表示复用路径，不能给每项分配未经消融验证的加速比例，也不能据此推断模型训练变化 |
+| DSA 融合计算 | LI 融合打分、ReLU、头权重加权规约与 Top-K；SFA 按索引在 latent KV 空间计算注意力；Decode MLAProlog 融合投影、归一化和主 KV 原位写入，并返回 q_norm 供 Indexer 复用 | 目标是减少中间搬运、启动和等待；没有对应独立对照时不写确定提速倍数 |
+| Indexer 输入准备 | 主流、Q 流、头权重流以事件同步；Q 投影与 K 归一化、Q 量化与头权重投影具备并行机会 | 一手指南将此编排限定为 NPU Decode 的 npugraph_ex 路径，由 enable_multi_streams 开启；不能泛化成所有 Prefill／后端都采用三流 |
+| DSA Prefill CP | CP × TP 沿序列和头等维度分工，配合 TP 组内序列并行；K／KV AllGather 与 Q Zigzag 交换配合，首尾段配对平衡因果历史长度差，计算后恢复顺序 | Zigzag 处理跨卡负载差异；不能解释为消除注意力因果约束或不再通信 |
+| FlashKDA Prefill CP | CANNBot-DSL 实现并行预计算，AllGather 交换状态摘要，按序合成前序分片贡献，得到分片起始状态，再完成本段计算；指南另列卷积边界交换 | 处理递推状态依赖，与 DSA 的 KV 聚合和 Zigzag 负载均衡分别理解；降低长 Prefill 开销的目标不等于已提供 TTFT 数值 |
+
+### 量化分层：不能缩写成“全模型 FP8”
+
+- DSA 投影保留 **BF16**；LI 的索引 Q／K 用 **MXFP8 动态 per-group 量化，group size 32**，每 32 个元素共享缩放因子。
+- SFA 的 **latent KV** 用 **FP8 per-token-head-tile 量化，tile size 128**，每个 token、每个 head 内按 128 个元素分块；**auxiliary Key 仍保留 BF16**。这是一手指南对供稿“KVCache FP8”概括的重要补充。
+- 这些机制针对索引数据、缓存容量与访存；没有原始精度对照、显存测量或消融报告，不承诺无损精度、固定节省比例或每项单独收益。
+
+### 性能账本：等效 Decode 时延的分子、分母与环境
+
+| 项 | 已读取的证据与边界 |
+|---|---|
+| 硬件与负载 | 供稿写昇腾 **950DT、32 卡、100K 输入、Global Batch 32**；技术指南性能节写“昇腾 950”与相同卡数／输入／批量，未在该表进一步写 PR／DT 子型号；不能仅靠表格独立确认 DT |
+| 并行与测量对象 | 技术指南使用 **CP1**；仅统计主模型与 DSpark 耗时，**DSpark 接受长度统一按 4 折算**，不等于每轮实际接受长度均测得为 4 |
+| 报告数值 | 主模型 **36.44 ms** ＋ DSpark **3.44 ms** ＝ 单轮 **39.88 ms**；39.88 ÷ 4 ＝ **9.97 ms/token 等效 Decode 时延**，因此低于 10 ms/token |
+| 尚未覆盖 | 非端到端响应，非单轮耗时低于 10 ms；未提供该负载下的 TTFT、服务排队／网络开销、并发请求体验、时延分位数、任务总耗时、成本／功耗或独立复测 |
+| 比较限制 | 不从该数字换算单用户输出速度或整机吞吐，不推出其他硬件、上下文、批量、接受长度或部署模式下的保证；缺同口径基线，不写提升倍数 |
+
+### 当前实践入口与复现缺口
+
+- **入口要选对版本**：`models/kimi_k3_1` 共用入口默认跑 K3；文档要求用 `YAML_FILE_NAME=kimi_k31_rank_32P_100k_1batch.yaml bash infer.sh` 选择 K3.1。该示例同为 32 卡、全局批量 32、输入上限 102400 token，但为 **TP16 × CP2、非分块 Prefill**；性能报告用 **CP1**。配置与报告有差异，不能宣称直接运行当前 YAML 就复现 9.97 ms/token。
+- **依赖快照**：读取时 README 限定昇腾 950PR/DT，列出 CANN 9.2.0 weekly、匹配的 Ascend 950 算子、torch 2.10.0／torch_npu 2.10.0.post4，以及 CANNBot-DSL 和自定义算子；它们是该文档版本的条件，未来部署须重新核对兼容性。编译缓存与预热同样影响测量，不能把冷启动和稳态计算混算。
+- **运行与服务能力分开**：该实现为固定 batch，静态 mini-batch Prefill，不支持在线请求增删／动态调度，文档还说明不支持 MTP 或 PD 分离；投机路径为显式配置的 DSpark。`enable_online_split_weight` 指启动时拆分权重，不代表在线调度；不能把推理样例写成完整生产服务。
+- **相关仓库用途**：`https://gitcode.com/cann/cann-recipes-infer` 是推理实践入口；`https://gitcode.com/cann/cannbot-dsl` 是融合算子开发工具；`https://gitcode.com/cann/ops-transformer` 是 Transformer 算子库。三站可访问不代表依赖、权重及许可证已全量核验。
+- **后续补证**：保留原刊完整日期／链接、与报告同提交的 CP1 配置和硬件子型号、实测接受长度与原始日志、端到端／TTFT／精度／基线等缺口；不因材料不足编造测试。通用工程文章的组织与取证方法只维护在炼丹炉 `references/model-launch-playbook.md`“推理适配文章：瓶颈、机制与复现条件”，本节保留模型事实与来源。
+
+---
+
 # 三、DeepSeek V4.1 语料库
 
 > 型号别名：deepseek v4.1、DeepSeekV4.1、DS V4.1
