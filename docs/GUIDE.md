@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+DeepSeek V4.1 Flash 1017 短讯索引（2026-11-09）：`data/model-corpus.md`“DeepSeek V4.1 Flash 1017 新版本短讯与留言吸收”保存此短讯的来源缺口、与第 14 节同事件关系、训练／完整项目主张边界及去重留言主题。训练因果和低提示演示方法引用外部炼丹炉既有章节，不重复建账或复制规则。
+
 科创板日报 Flash 短讯复核索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第14节合并同篇来源、补黄心怡署名，保存多端同步／框架优化的归因边界与无实际留言状态；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“模型与服务端工具”节的短讯补充。仅修改既有文件，无全文、留言或规则副本。
 
 科技狐 Flash 发布速览索引（2026-11-09）：`data/model-corpus.md` DeepSeek“科技狐发布速览吸收”保存独立来源、参数对比缺口、去重留言与读者卡点，历史绝对报价补入第 11 节唯一价格行。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 的“三层账本”和“小版本发布”章节；只修改既有文件，不新增全文、评论或规则副本。
