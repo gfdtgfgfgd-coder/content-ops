@@ -170,3 +170,11 @@
   replace: 开销更低
   reason: 聚光投流广告法极限词（Q54，2026-11-09）
   added_at: "2026-11-09"
+
+- word: '(?:终身|永久)\s*免费'
+  regex: true
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 官方福利
+  reason: 虚假宣传与违规营销高危词，第三方平台无公开SLA随时变动，易引发用户举报虚假宣传被平台封禁（2026-11-09实测舆情反馈）
+  added_at: "2026-11-09"
