@@ -73,6 +73,9 @@ if [[ ! -d "hanabi/node_modules" ]]; then
 fi
 
 # 6. 启动 Hanabi 前端服务
+# 说明：不要用 LaunchAgent 直接盯桌面上的源码目录——macOS 会拦截后台读 Desktop，表现为刷新后服务被掐断。
+# 这里用 nohup 在用户会话里常驻；PID 写入 scratch/hanabi.pid，便于自检。
+PID_FILE="scratch/hanabi.pid"
 echo "→ 检查 Hanabi 服务状态..."
 if curl --fail --silent "http://127.0.0.1:6187/healthz" >/dev/null 2>&1; then
   echo "✓ Hanabi 服务已在运行：http://127.0.0.1:6187"
@@ -80,9 +83,23 @@ if curl --fail --silent "http://127.0.0.1:6187/healthz" >/dev/null 2>&1; then
   exit 0
 fi
 
+if [[ -f "$PID_FILE" ]]; then
+  old_pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+  if [[ -n "${old_pid:-}" ]] && kill -0 "$old_pid" 2>/dev/null; then
+    echo "→ 发现残留进程 $old_pid 但健康检查失败，正在结束并重启…"
+    kill "$old_pid" 2>/dev/null || true
+    sleep 1
+  fi
+  rm -f "$PID_FILE"
+fi
+
 echo "→ 正在后台启动 Hanabi..."
-nohup npm --prefix hanabi start >"scratch/hanabi.log" 2>"scratch/hanabi-error.log" &
+# 直接跑 node，避免 npm 包装进程被终端/信号带走后子进程一起没。
+NODE_BIN="$(command -v node)"
+nohup "$NODE_BIN" hanabi/server.mjs >"scratch/hanabi.log" 2>"scratch/hanabi-error.log" </dev/null &
 server_pid=$!
+disown "$server_pid" 2>/dev/null || true
+echo "$server_pid" >"$PID_FILE"
 
 for i in {1..30}; do
   if curl --fail --silent "http://127.0.0.1:6187/healthz" >/dev/null 2>&1; then

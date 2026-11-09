@@ -181,10 +181,18 @@ async function staticFile(req, res, pathname) {
 }
 
 const server = createServer((req, res) => void route(req, res));
-server.on('error', err => { console.error(err); process.exitCode = 1; });
+server.on('error', err => {
+  console.error(err);
+  // EADDRINUSE means another healthy Hanabi is already serving; exit quietly.
+  if (err && err.code === 'EADDRINUSE') process.exit(0);
+  process.exitCode = 1;
+});
 await production.recover();
 revisions.recover();
 prompts.recover();
 server.listen(PORT, HOST, () => console.log(`Hanabi content-ops listening on http://${HOST}:${server.address().port}`));
 const shutdown = async () => { prompts.shutdown(); revisions.shutdown(); await production.shutdown(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500).unref(); };
 process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
+// Terminal/nohup parent exit must not take the workbench down with SIGHUP.
+process.on('SIGHUP', () => {});
+try { process.stdin.unref?.(); } catch { /* non-interactive launch has no stdin */ }

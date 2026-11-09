@@ -1172,6 +1172,84 @@ class PipelineTests(unittest.TestCase):
                 self.assertEqual(copy.main(['--model','GLM5.3',*argv]),1)
                 calls.assert_not_called()
 
+    def test_parse_json_accepts_unclosed_markdown_fence(self):
+        payload = {'posts': [structured_post()]}
+        body = json.dumps(payload, ensure_ascii=False)
+        self.assertEqual(copy.parse_json(body), payload)
+        self.assertEqual(copy.parse_json('```json\n' + body + '\n```'), payload)
+        self.assertEqual(copy.parse_json('```json\n' + body), payload)
+        with self.assertRaisesRegex(ValueError, '返回为空'):
+            copy.parse_json('   ')
+        with self.assertRaisesRegex(ValueError, '不是合法 JSON'):
+            copy.parse_json('```json\nnot-json')
+
+    def test_copy_risk_word_failures_rewrite_then_succeed_or_exhaust(self):
+        clean = structured_post()
+        dirty = deepcopy(clean)
+        dirty['tags'] = ['#GLM5.3', '#效率神器替换', '#开发效率']
+        settings = {'CONTENT_OPS_API_KEY': 'test', 'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1'}
+        raw = self.base / 'copy-response-1.txt'
+        calls = {'n': 0}
+
+        def recover(system, user, settings, timeout, path):
+            calls['n'] += 1
+            path.write_text('ok', encoding='utf-8')
+            payload = json.loads(user)
+            if calls['n'] == 1:
+                self.assertNotIn('risk_rewrite', payload)
+                return {'posts': [dirty]}, {'model': 'offline', 'usage': {}}
+            self.assertIn('risk_rewrite', payload)
+            self.assertIn('神器', payload['risk_rewrite']['rejected_reason'])
+            self.assertEqual(payload['risk_rewrite']['banned_hits'], ['神器'])
+            return {'posts': [clean]}, {'model': 'offline', 'usage': {}}
+
+        with patch.object(copy, 'claude_call', side_effect=recover), redirect_stdout(io.StringIO()) as stdout:
+            posts, usages = copy.generate_validated_copy_chunk(
+                'sys', {'copy_plan': []}, settings, 1, raw, 1, 'GLM5.3', None, 'xhs', 'format_1', 0)
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(calls['n'], 2)
+        self.assertEqual([u['attempt'] for u in usages], [1, 2])
+        self.assertEqual([u['risk_rewrite'] for u in usages], [False, True])
+        self.assertIn('重出第 1/2 次', stdout.getvalue())
+        self.assertTrue((self.base / 'copy-response-1-retry1.txt').exists())
+
+        stuck = {'n': 0}
+        def always_dirty(system, user, settings, timeout, path):
+            stuck['n'] += 1
+            path.write_text('bad', encoding='utf-8')
+            return {'posts': [dirty]}, {'model': 'offline', 'usage': {}}
+        with patch.object(copy, 'claude_call', side_effect=always_dirty), redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(ValueError, '风险词：神器'):
+                copy.generate_validated_copy_chunk(
+                    'sys', {'copy_plan': []}, settings, 1, self.base / 'copy-stuck.txt',
+                    1, 'GLM5.3', None, 'xhs', 'format_1', 0, retries=2)
+        self.assertEqual(stuck['n'], 3)
+
+        structure_bad = deepcopy(clean)
+        structure_bad['title'] = ''
+        with patch.object(copy, 'claude_call', return_value=({'posts': [structure_bad]}, {'model': 'offline'})) as once:
+            with self.assertRaises(ValueError):
+                copy.generate_validated_copy_chunk(
+                    'sys', {'copy_plan': []}, settings, 1, self.base / 'copy-structure.txt',
+                    1, 'GLM5.3', None, 'xhs', 'format_1', 0)
+            self.assertEqual(once.call_count, 1)
+
+        parse_calls = {'n': 0}
+        def empty_then_ok(system, user, settings, timeout, path):
+            parse_calls['n'] += 1
+            path.write_text('', encoding='utf-8')
+            if parse_calls['n'] == 1:
+                raise ValueError('文案模型返回为空，请重试')
+            return {'posts': [clean]}, {'model': 'offline', 'usage': {}}
+        with patch.object(copy, 'claude_call', side_effect=empty_then_ok), redirect_stdout(io.StringIO()):
+            posts, usages = copy.generate_validated_copy_chunk(
+                'sys', {'copy_plan': []}, settings, 1, self.base / 'copy-empty.txt',
+                1, 'GLM5.3', None, 'xhs', 'format_1', 0)
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(parse_calls['n'], 2)
+        self.assertEqual(usages[0]['attempt'], 2)
+        self.assertTrue(usages[0]['risk_rewrite'])
+
     def test_copy_structure_validation_and_risk_checks_cover_every_version(self):
         posts = [structured_post(copy.format_for('all_variations',i),i+1) for i in range(5)]
         result = copy.validate_posts({'posts':deepcopy(posts)},5,'GLM5.3',copy_format='all_variations')

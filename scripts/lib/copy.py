@@ -42,6 +42,8 @@ for alias, canonical in STYLE_ALIASES.items():
 LAYOUTS = ('大字报', '上中下', '左右下', '环绕')
 PLATFORM_LAYOUTS = {'xhs': ('大字报', '上中下'), 'xianyu': ('左右下', '环绕')}
 PIPELINE_VERSION = 'copy_vision_image_v3'
+# Risk-word failures get limited paid rewrites; other validation errors still fail fast.
+COPY_RISK_WORD_RETRIES = 2
 
 # Machine contract for the three body structures in rules/content-spec.md.
 COPY_FORMATS = {
@@ -297,7 +299,9 @@ def save_json(path, value):
     temporary.replace(path)
 
 def parse_json(text):
-    text = text.strip()
+    text = (text or '').strip()
+    if not text:
+        raise ValueError('文案模型返回为空，请重试')
     fences = list(re.finditer(r'```(?:json)?\s*([\s\S]*?)\s*```', text, flags=re.IGNORECASE))
     if len(fences) > 1:
         raise ValueError('文案返回多个 JSON 代码块')
@@ -306,7 +310,14 @@ def parse_json(text):
         if re.search(r'[\{\[]', outside):
             raise ValueError('文案返回多个 JSON 数据块')
         text = fences[0].group(1).strip()
-    value, end = json.JSONDecoder().raw_decode(text)
+    elif text.startswith('```'):
+        # Models sometimes open a ```json fence but omit the closing fence.
+        text = re.sub(r'^```(?:json)?\s*', '', text, count=1, flags=re.IGNORECASE)
+        text = re.sub(r'\s*```\s*$', '', text).strip()
+    try:
+        value, end = json.JSONDecoder().raw_decode(text)
+    except json.JSONDecodeError as error:
+        raise ValueError(f'文案返回不是合法 JSON：{error.msg}') from None
     if text[end:].strip():
         raise ValueError('文案 JSON 后包含多余内容')
     if not isinstance(value, dict):
@@ -444,6 +455,70 @@ def claude_call(system, user, settings, timeout, raw_output):
     if choice.get('finish_reason') == 'length':
         raise ValueError('文案模型返回被截断，请减少数量；不自动重复收费请求')
     return parse_json(choice.get('message', {}).get('content', '')), {'model':response.get('model', model), 'usage':response.get('usage', {})}
+
+def is_copy_rewrite_error(error):
+    if not isinstance(error, ValueError):
+        return False
+    reason = str(error)
+    return '风险词' in reason or '合法 JSON' in reason or '返回为空' in reason or '多个 JSON' in reason
+
+def copy_rewrite_payload(request, error, attempt):
+    reason = str(error)
+    banned = []
+    match = re.search(r'风险词[:：]\s*(.+)$', reason)
+    if match:
+        banned = [part.strip() for part in match.group(1).split('、') if part.strip()]
+    if banned:
+        instruction = (
+            '上一稿因风险词校验失败，请整组重新写本图全部文案版本。'
+            '避开 rejected_reason / banned_hits 中的词，以及当前风险词库全部禁词；'
+            '不要保留原词，也不要写成「原词+替换」或「效率神器替换」这类痕迹；'
+            '标题、正文、标签、人群全部重写，角度仍按 copy_plan 区分。'
+            '只返回一个合法 JSON 对象，不要使用 Markdown 代码围栏。'
+        )
+    else:
+        instruction = (
+            '上一稿返回无法解析或为空，请整组重新写本图全部文案版本。'
+            '只返回一个合法 JSON 对象，不要使用 Markdown 代码围栏或前后说明文字；'
+            '标题、正文、标签、人群按 copy_plan 区分角度，并遵守当前风险词库。'
+        )
+    return {
+        **request,
+        'risk_rewrite': {
+            'attempt': attempt,
+            'rejected_reason': reason,
+            'banned_hits': banned,
+            'instruction': instruction,
+        },
+    }
+
+def generate_validated_copy_chunk(system, request, settings, timeout, raw_path, count, model, rules,
+                                  platform, copy_format, format_offset, corpus_model='',
+                                  retries=COPY_RISK_WORD_RETRIES):
+    """Call the copy model and validate; rewrite on risk-word or JSON parse failures."""
+    payload, last_error, usages = request, None, []
+    for attempt in range(retries + 1):
+        path = raw_path if attempt == 0 else raw_path.with_name(f'{raw_path.stem}-retry{attempt}{raw_path.suffix}')
+        try:
+            chunk, usage = claude_call(system, json.dumps(payload, ensure_ascii=False), settings, timeout, path)
+        except ValueError as error:
+            last_error = error
+            if not is_copy_rewrite_error(error) or attempt >= retries:
+                raise
+            print(f'WARN: 文案返回异常（{error}），正在重出第 {attempt + 1}/{retries} 次…')
+            payload = copy_rewrite_payload(request, error, attempt + 1)
+            continue
+        usages.append({**usage, 'attempt': attempt + 1, 'risk_rewrite': attempt > 0})
+        try:
+            return validate_posts(chunk, count, model, rules, platform, copy_format, format_offset, corpus_model), usages
+        except ValueError as error:
+            last_error = error
+            if not is_copy_rewrite_error(error) or attempt >= retries:
+                raise
+            banned = '、'.join(copy_rewrite_payload(request, error, attempt + 1)['risk_rewrite']['banned_hits']) or str(error)
+            print(f'WARN: 文案校验失败（{banned}），正在重出第 {attempt + 1}/{retries} 次…')
+            payload = copy_rewrite_payload(request, error, attempt + 1)
+    raise last_error
 
 def reference_image_parts(references, max_images=3):
     parts, sources, seen = [], [], set()
@@ -1362,9 +1437,11 @@ def run(args):
                 request['image_index'] = image_index
                 request['copy_plan'] = [{'image_index':image_index, 'copy_index':i+1, 'copy_format':format_for(copy_format, offset+i)} for i in range(copy_multiplier)]
                 request['previous_angles'] = [post['angle'] for post in final['posts']]
-                chunk, usage = claude_call(system, json.dumps(request,ensure_ascii=False), settings,args.timeout,out/f'copy-response-{image_index}.txt')
-                final['posts'].extend(validate_posts(chunk,copy_multiplier,model,active_rules,args.platform,copy_format,offset,corpus_model))
-                manifest['copy_calls'].append(usage)
+                posts, usages = generate_validated_copy_chunk(
+                    system, request, settings, args.timeout, out / f'copy-response-{image_index}.txt',
+                    copy_multiplier, model, active_rules, args.platform, copy_format, offset, corpus_model)
+                final['posts'].extend(posts)
+                manifest['copy_calls'].extend(usages)
             save_json(out/'copy.json',final)
         copies = validate_posts(final,copy_count,model,active_rules,args.platform,None if legacy else copy_format,0,corpus_model)
         save_json(out/'copy.json',final)

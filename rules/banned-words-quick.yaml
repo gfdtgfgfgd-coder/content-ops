@@ -156,3 +156,17 @@
   replace: 低延迟
   reason: 运营反馈明确禁用「毫秒级」（Q51，2026-11-06）
   added_at: "2026-11-06"
+
+- word: 地板价
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 价格亲民
+  reason: 聚光投流广告法极限词（Q54，2026-11-09）
+  added_at: "2026-11-09"
+
+- word: 降到底
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 开销更低
+  reason: 聚光投流广告法极限词（Q54，2026-11-09）
+  added_at: "2026-11-09"

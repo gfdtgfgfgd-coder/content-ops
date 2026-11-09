@@ -2,6 +2,16 @@
 
 每条仅保留任务卡完成记录原文；任务全文见 Git 历史。旧命令仅为历史，不是当前入口。
 
+## 刷新掐断：停用桌面 LaunchAgent · 2026-11-09
+
+- 复现：页面刷新后接口变「Failed to fetch」/像被掐断。根因是 `com.lilith.hanabi.server` 盯着 Desktop 源码目录，macOS 拦截后台读桌面（launchd `EX_CONFIG`），KeepAlive 反复拉起失败；临时 `node` 再被 SIGHUP 带走。
+- 处理：LaunchAgent 改为 Disabled（勿盯 Desktop）；`start.command` 改为 `nohup node hanabi/server.mjs`（不再经 npm 包装）并写 pid；`server.mjs` 忽略 SIGHUP、EADDRINUSE 安静退出。浏览器刷新后 `/healthz` 仍 200。
+
+## 文案 JSON 围栏与风险词自动重出 · 2026-11-09
+
+- 失败批次 ec71710e：模型返回以 ` ```json ` 开头但未闭合围栏，`parse_json` 把整段当 JSON 解析报 `Expecting value`；正文本身完整可用。现兼容未闭合围栏，并把非法/空 JSON 转成可读中文错误。
+- 失败批次 f3588bf6：标签 `#效率神器替换` 仍含禁词「神器」。文案阶段对风险词或 JSON 解析失败自动重出最多 2 次（合计 3 次）；结构错误不重试。原始响应按 retry 序号保留审计。
+
 ## 网关连接中断可重试 · 2026-11-09
 
 - 修复文案阶段 `Remote end closed connection without response` 未捕获：`request_json` 现捕获 `RemoteDisconnected` 等断连，短暂重试后给出「网关连接中断，请稍后重试」；文案/视觉层映射为可读中文错误。
