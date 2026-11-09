@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+本轮 GLM 测评索引：`data/model-corpus.md` 的 GLM 第 11 节“十二、大模型观测员实测复盘”维护同篇来源、结果与订正；通用复测方法唯一位于外部炼丹炉 `references/model-launch-playbook.md`“同分、少步骤与领域迁移的复测”。本轮仅修订既有文件，不新增全文或留言副本。
+
 本轮开源路线评论索引：`data/model-corpus.md` Kimi 第 11 节“开源路线演进与选择权评论”保存来源指纹、原文主张边界与补测线索；通用方法唯一维护在仓库外 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“开源路线评论：权益、生态与能力分轴”，`style-profiles.md` 仅保存低置信结构选项。本轮只更新既有文件，不新增全文或评论副本。
 
 > [!IMPORTANT]
