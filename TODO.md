@@ -4,7 +4,7 @@
 - [x] 完整迁移4份方法文档与4份引用依赖，修正现行外部路径；模型事实仍在原语料库。
 - [x] 8份迁入文档字节与源仓一致，本地 Markdown 引用完整；doctor通过，Python77项通过（1项跳过）。
 - [x] Hanabi68项通过；迁移按中文提交推送到 codex/reference-collections-outline。
-- [ ] 删除原 GitHub 仓库（当前凭据尚无 delete_repo 权限）。
+- [x] 原 GitHub 仓库已通过已登录网页删除，GitHub显示 successfully deleted；CLI因缺delete_repo权限未执行成功。完整Git历史备份保留桌面。
 
 # TODO · 待办与演进清单
 
