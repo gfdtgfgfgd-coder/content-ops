@@ -79,14 +79,19 @@ def duplicate_groups(files, min_bytes):
 
 def dir_bytes(path, ignore_hidden=True):
     total = 0
-    for p in Path(path).rglob("*"):
-        if ignore_hidden and any(part.startswith(".") for part in p.relative_to(path).parts):
-            continue
-        try:
-            if p.is_file():
-                total += p.stat().st_size
-        except OSError:
-            continue
+    import os
+    for root, dirs, files in os.walk(path, onerror=lambda e: None):
+        if ignore_hidden:
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for f in files:
+            if ignore_hidden and f.startswith("."):
+                continue
+            fp = Path(root) / f
+            try:
+                if fp.is_file():
+                    total += fp.stat().st_size
+            except OSError:
+                continue
     return total
 
 

@@ -50,20 +50,7 @@
   reason: 小红书禁止具体价格与金额，含 ¥/￥ 符号、数字及货币单位后缀（D10）
   added_at: "2026-11-02"
   regex: true
-- word: 宝子们
-  level: ban
-  platform: [xhs]
-  replace: 大家
-  reason: 小红书调性：避免油腻称呼（platform-rules.md）
-  added_at: "2026-11-02"
-- word: 姐妹们
-  level: ban
-  platform: [xhs]
-  replace: 大家
-  reason: 小红书调性：避免油腻称呼（platform-rules.md）
-  added_at: "2026-11-02"
 
-# T04 企微提炼，2026-11-01。具体时间与冲突见 data/wecom/risk-words.md。
 - word: API
   level: ban
   platform: [xhs, xianyu]
@@ -135,13 +122,15 @@
   reason: 小红书违禁词，易触发代币风控，统一替换为额度/算力/开销（Q40，2026-11-04）
   added_at: "2026-11-04"
 
-- word: '(?:神器|神奇)'
-  regex: true
+- word: 神器
+  regex: false
   level: ban
-  platform: [xhs]
+  platform:
+  - xhs
   replace: 挖到宝了
   reason: 容易卡小红书夸大宣传审核，统一替换为挖到宝了/新搭子（Q41，2026-11-04）
-  added_at: "2026-11-04"
+  added_at: '2026-11-04'
+  updated_at: '2026-11-06'
 
 - word: '(?<![A-Za-z])(?:Cursor|Hermes\s*Agent)(?![A-Za-z])'
   regex: true
@@ -150,3 +139,42 @@
   replace: 主流编程工具
   reason: 第三方海外工具名易卡小红书聚光投流审核，替换为CC或国内合规工具/主流编程工具（Q35，2026-11-04）
   added_at: "2026-11-04"
+
+- word: 源头便宜出
+  regex: true
+  level: ban
+  platform:
+  - xhs
+  replace: ''
+  reason: 违规内容： •源头便宜出 违规解读： •非法产品销售：第一步：识别广告主推广的内容。广告明确推广的产品名称为“GLM-5.3” ’，品牌为“GLM”。 •第二步：判断是否属于违规场景。笔记图片中包含“源头便宜出”字样，正文提及“成本打⑤折”、“特惠上线”。GLM-5.3 属于付费软件/AI工具服务。该广告暗示售卖非官方版本或破解版/共享账号（通过“源头”、“便宜”、“折扣”暗示绕过官方正规渠道获取低价），符合【盗版软件（非游戏类）】中“未经授权售卖破解版/非官方版本的软件•.售卖付费软件激活码、共享账号”的违规特征。
+    修改建议： •根据平台关于盗版软件及商业秩序的审核要求：1.需删除'源头便宜出'等易引发盗版联想的表述；2.建议将'成本打⑤折”调整为'官方特惠限时 5折'；3.补充仅限官方授权渠道购买'等说明；4.删除'特惠上线'中’特惠'表述。需确保所有促销信息与官方活动备案一致，并上传软件销售授权证明及活动规则资质。
+  added_at: '2026-11-05'
+
+- word: 毫秒级
+  level: ban
+  platform: [xhs]
+  replace: 低延迟
+  reason: 运营反馈明确禁用「毫秒级」（Q51，2026-11-06）
+  added_at: "2026-11-06"
+
+- word: 地板价
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 价格亲民
+  reason: 聚光投流广告法极限词（Q54，2026-11-09）
+  added_at: "2026-11-09"
+
+- word: 降到底
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 开销更低
+  reason: 聚光投流广告法极限词（Q54，2026-11-09）
+  added_at: "2026-11-09"
+
+- word: '(?:终身|永久)\s*免费'
+  regex: true
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 官方福利
+  reason: 虚假宣传与违规营销高危词，第三方平台无公开SLA随时变动，易引发用户举报虚假宣传被平台封禁（2026-11-09实测舆情反馈）
+  added_at: "2026-11-09"

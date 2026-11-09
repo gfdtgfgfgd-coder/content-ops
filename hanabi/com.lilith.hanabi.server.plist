@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  不要对桌面上的 content-ops 启用此 LaunchAgent。
+  macOS 会拦截后台进程读取 Desktop，表现为服务反复退出（EX_CONFIG）或刷新页面后被掐断。
+  日常请双击 / 运行仓库根目录的 start.command（nohup 常驻）。
+  若确需 launchd，须把可执行文件与工作目录放到非 Desktop 路径，并授予完整磁盘访问权限。
+-->
 <plist version="1.0"><dict>
 <key>Label</key><string>com.lilith.hanabi.server</string>
+<key>Disabled</key><true/>
 <key>ProgramArguments</key><array>
   <string>/Users/mac/.local/bin/node</string>
   <string>/Users/mac/Desktop/content-ops/hanabi/server.mjs</string>
 </array>
 <key>WorkingDirectory</key><string>/Users/mac/Desktop/content-ops</string>
-<key>RunAtLoad</key><true/>
-<key>KeepAlive</key><true/>
-<key>ThrottleInterval</key><integer>3</integer>
+<key>RunAtLoad</key><false/>
+<key>KeepAlive</key><false/>
 <key>EnvironmentVariables</key><dict>
   <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
   <key>CONTENT_ALCHEMY_PORT</key><string>6187</string>

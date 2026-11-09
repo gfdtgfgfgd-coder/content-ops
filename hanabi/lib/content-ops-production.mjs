@@ -1,16 +1,17 @@
 import { randomUUID, createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { readFile, mkdir, copyFile, rm, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { existsSync, readFileSync, constants } from 'node:fs';
+import { readFile, mkdir, copyFile, rm, writeFile, readdir, lstat } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
 import { loadGatewaySettings } from './content-ops-connections.mjs';
+import { listProductModels, resolveProductModel } from './content-ops-models.mjs';
 
 const parse = (value, fallback = {}) => { try { return JSON.parse(value); } catch { return fallback; } };
 const fail = (message, statusCode = 400) => Object.assign(new Error(message), { statusCode });
 const now = () => new Date().toISOString();
 const sameRefs = (a = [], b = []) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => x?.platform === b[i]?.platform && String(x?.id).toLowerCase() === String(b[i]?.id).toLowerCase());
 const gatewayEnvPath = root => [join(root, 'scratch/gateway.env')].find(path => existsSync(path)) || join(root, 'scratch/gateway.env');
-const STYLE_PRESETS = new Set(['', 'bold_typo', 'code_ide', 'card_3d', 'comparison', 'promo']);
+const STYLE_PRESETS = new Set(['', 'bold_typo', 'code_ide', 'card_3d', 'comparison', 'promo', 'top_middle_bottom', 'left_right_bottom', 'surround', '大字报', '上中下', '左右下', '环绕']);
 
 function validateCopyOptions(copyFormat, copyMultiplier) {
   if (!['all_variations', 'format_1', 'format_2', 'format_3'].includes(copyFormat)) throw fail('文案结构无效。');
@@ -41,11 +42,18 @@ export function validateContentOpsInput(body, defaults = {}) {
   if (!Array.isArray(refs) || refs.length > 8 || refs.some(ref => !ref || !['xhs', 'xianyu'].includes(ref.platform) || typeof ref.id !== 'string' || !/^[0-9a-f]{1,64}$/iu.test(ref.id))) throw fail('参考帖无效；最多选择 8 条不同的本地帖子。');
   const references = refs.map(({ platform, id }) => ({ platform, id: id.toLowerCase() }));
   if (new Set(references.map(ref => `${ref.platform}:${ref.id}`)).size !== references.length) throw fail('参考帖无效；最多选择 8 条不同的本地帖子。');
-  return { model: body.model.trim(), platform: body.platform, count: body.count, copyFormat, copyMultiplier, backgroundMode: body.backgroundMode, styleMode, stylePreset, stylePrompt, requestId: body.requestId, references, brief };
+  // Keep the typed product name for covers/copy; resolve a separate corpus id only for short-word lookup.
+  const model = body.model.trim();
+  let corpusModel = model;
+  if (Array.isArray(defaults.productModels) && defaults.productModels.length) {
+    try { corpusModel = resolveProductModel(model, defaults.productModels, { requireCover: false }); }
+    catch { corpusModel = model; }
+  }
+  return { model, corpusModel, platform: body.platform, count: body.count, copyFormat, copyMultiplier, backgroundMode: body.backgroundMode, styleMode, stylePreset, stylePrompt, requestId: body.requestId, references, brief };
 }
 
 export class ContentOpsProduction {
-  constructor({ db, root, uploadDir, spawnProcess = spawn }) { Object.assign(this, { db, root: resolve(root), uploadDir, spawnProcess }); this.active = null;
+  constructor({ db, root, uploadDir, spawnProcess = spawn }) { Object.assign(this, { db, root: resolve(root), uploadDir, spawnProcess }); this.active = null; this.resumeTasks = new Map();
     // Existing installations retain batches; add optional columns in place.
     const columns = new Set(db.prepare('PRAGMA table_info(content_ops_batches)').all().map(column => column.name));
     if (!columns.has('brief')) db.exec("ALTER TABLE content_ops_batches ADD COLUMN brief TEXT NOT NULL DEFAULT ''");
@@ -55,6 +63,7 @@ export class ContentOpsProduction {
     if (!columns.has('copy_format')) db.exec("ALTER TABLE content_ops_batches ADD COLUMN copy_format TEXT NOT NULL DEFAULT 'all_variations'");
     // Old batches have one copy per image; new creates always write the chosen multiplier.
     if (!columns.has('copy_multiplier')) db.exec('ALTER TABLE content_ops_batches ADD COLUMN copy_multiplier INTEGER NOT NULL DEFAULT 1');
+    if (!columns.has('corpus_model')) db.exec("ALTER TABLE content_ops_batches ADD COLUMN corpus_model TEXT NOT NULL DEFAULT ''");
     const jobColumns = new Set(db.prepare('PRAGMA table_info(analysis_jobs)').all().map(column => column.name));
     if (!jobColumns.has('copies')) db.exec("ALTER TABLE analysis_jobs ADD COLUMN copies TEXT NOT NULL DEFAULT '[]'");
   }
@@ -65,26 +74,66 @@ export class ContentOpsProduction {
     const ready = Boolean(preferences?.version && preferences?.persona && preferences?.platform_rules);
     const distilledAt = preferences?.distilled_at;
     const { copyFormat, copyMultiplier } = validateCopyOptions(setting('CONTENT_OPS_COPY_FORMAT') || 'all_variations', Number(setting('CONTENT_OPS_COPY_MULTIPLIER') || 3));
-    return { copyFormat, copyMultiplier, available: existsSync(join(this.root, 'scripts/generate.py')), configured: Boolean(setting('CONTENT_OPS_API_KEY') && setting('CONTENT_OPS_BASE_URL')), cachedAvailable: existsSync(this.backgroundPath()), textModel: setting('CONTENT_OPS_TEXT_MODEL'), visionModel: setting('CONTENT_OPS_VISION_MODEL'), imageModel: setting('CONTENT_OPS_IMAGE_MODEL'), preferencesReady: ready, preferencesVersion: ready ? { version: preferences.version, distilledAt } : null };
+    const productModels = listProductModels(this.root);
+    return { copyFormat, copyMultiplier, available: existsSync(join(this.root, 'scripts/generate.py')), configured: Boolean(setting('CONTENT_OPS_API_KEY') && setting('CONTENT_OPS_BASE_URL')), cachedAvailable: existsSync(this.backgroundPath()), textModel: setting('CONTENT_OPS_TEXT_MODEL'), visionModel: setting('CONTENT_OPS_VISION_MODEL'), imageModel: setting('CONTENT_OPS_IMAGE_MODEL'), preferencesReady: ready, preferencesVersion: ready ? { version: preferences.version, distilledAt } : null, productModels };
   }
   backgroundPath() { return join(this.root, 'data/images/backgrounds/company-qwen-2026-11-01.png'); }
   get(id) { const row = this.db.prepare('SELECT * FROM content_ops_batches WHERE id=?').get(id); if (!row) throw fail('生成批次不存在。', 404); return row; }
   jobs(row) { return parse(row.job_ids, []).map(id => this.db.prepare('SELECT * FROM analysis_jobs WHERE id=?').get(id)).filter(Boolean); }
-  public(row) { const jobs = this.jobs(row); let manifest = {}; try { manifest = parse(readFileSync(join(row.output_dir, 'manifest.json'), 'utf8'), {}); } catch {} const references = Array.isArray(manifest.references) ? manifest.references.filter(ref => ref?.platform && ref?.id).map(ref => ({ platform: ref.platform, id: String(ref.id), title: String(ref.title || ref.id) })) : []; return { id: row.id, model: row.model, brief: row.brief || '', platform: row.platform, count: row.count, imageCount: row.count, copyFormat: row.copy_format || 'all_variations', copyMultiplier: row.copy_multiplier ?? 1, copyCount: row.count * (row.copy_multiplier ?? 1), backgroundMode: row.background_mode, styleMode: row.style_mode || 'auto', stylePreset: row.style_preset || '', stylePrompt: row.style_prompt || '', status: row.status, error: row.error || '', createdAt: row.created_at, references, posts: jobs.map(job => ({ index: job.position, jobId: job.id, status: job.status, text: job.result || '', copies: parse(job.copies, []).length ? parse(job.copies, []) : (job.result ? [{index:1, text:job.result, copyFormat:null}] : []), error: job.error || '', progressMessage: job.progress_message || '', image: parse(job.attachments, []).find(item => item.mimeType === 'image/png')?.url || null })) }; }
+  public(row) { const batch=this.original(row); batch.resumable=['failed','partial'].includes(row.status)&&existsSync(join(row.output_dir,'copy.json'))&&existsSync(join(row.output_dir,'manifest.json')); return this.revisions ? this.revisions.decorate(batch) : batch; }
+  original(row) { const jobs = this.jobs(row); let manifest = {}; try { manifest = parse(readFileSync(join(row.output_dir, 'manifest.json'), 'utf8'), {}); } catch {} const references = Array.isArray(manifest.references) ? manifest.references.filter(ref => ref?.platform && ref?.id).map(ref => ({ platform: ref.platform, id: String(ref.id), title: String(ref.title || ref.id), collection_name: String(ref.collection_name || '') })) : []; return { id: row.id, model: row.model, corpusModel: row.corpus_model || row.model, brief: row.brief || '', platform: row.platform, count: row.count, imageCount: row.count, copyFormat: row.copy_format || 'all_variations', copyMultiplier: row.copy_multiplier ?? 1, copyCount: row.count * (row.copy_multiplier ?? 1), backgroundMode: row.background_mode, styleMode: row.style_mode || 'auto', stylePreset: row.style_preset || '', stylePrompt: row.style_prompt || '', status: row.status, error: row.error || '', createdAt: row.created_at, references, posts: jobs.map(job => ({ index: job.position, jobId: job.id, status: job.status, text: job.result || '', copies: parse(job.copies, []).length ? parse(job.copies, []) : (job.result ? [{index:1, text:job.result, copyFormat:null}] : []), error: job.error || '', progressMessage: job.progress_message || '', image: parse(job.attachments, []).find(item => item.mimeType === 'image/png')?.url || null })) }; }
   list() { return this.db.prepare('SELECT * FROM content_ops_batches ORDER BY created_at DESC LIMIT 30').all().map(row => this.public(row)); }
   async create(body) {
     const config = await this.config();
     const input = validateContentOpsInput(body, config), prior = this.db.prepare('SELECT * FROM content_ops_batches WHERE request_id=?').get(input.requestId);
-    if (prior) { if ((prior.brief || '') !== input.brief || prior.model !== input.model || prior.platform !== input.platform || (prior.copy_format || 'all_variations') !== input.copyFormat || (prior.copy_multiplier ?? 1) !== input.copyMultiplier || prior.count !== input.count || prior.background_mode !== input.backgroundMode || (prior.style_mode || 'auto') !== input.styleMode || (prior.style_preset || '') !== input.stylePreset || (prior.style_prompt || '') !== input.stylePrompt || !sameRefs(parse(prior.reference_ids, []), input.references)) throw fail('同一请求标识的内容已改变，请另起一批。', 409); return { batch: this.public(prior), reused: true }; }
+    if (prior) { if ((prior.brief || '') !== input.brief || prior.model !== input.model || (prior.corpus_model || prior.model) !== input.corpusModel || prior.platform !== input.platform || (prior.copy_format || 'all_variations') !== input.copyFormat || (prior.copy_multiplier ?? 1) !== input.copyMultiplier || prior.count !== input.count || prior.background_mode !== input.backgroundMode || (prior.style_mode || 'auto') !== input.styleMode || (prior.style_preset || '') !== input.stylePreset || (prior.style_prompt || '') !== input.stylePrompt || !sameRefs(parse(prior.reference_ids, []), input.references)) throw fail('同一请求标识的内容已改变，请另起一批。', 409); return { batch: this.public(prior), reused: true }; }
     if (this.db.prepare("SELECT 1 FROM content_ops_batches WHERE status='running'").get()) throw fail('已有一批图文正在生成，请完成或停止后再开始。', 409);
     if (!config.available || !config.configured) throw fail('本机生成脚本或公司网关尚未配置。', 503); if (input.backgroundMode === 'cached' && !config.cachedAvailable) throw fail('本机缓存背景不存在，请恢复背景文件或选择生成新背景。', 409);
     const id = randomUUID(), time = now(), date = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai' }).format(new Date()), outputDir = join(this.root, 'outputs', date, 'hanabi', id), jobIds = [];
-    this.db.exec('BEGIN IMMEDIATE'); try { for (let position = 1; position <= input.count; position++) { const jobId = randomUUID(); jobIds.push(jobId); this.db.prepare("INSERT INTO analysis_jobs(id,batch_id,position,status,result,error,progress,progress_message,attachments,created_at,updated_at) VALUES(?,?,?,'analyzing','','',1,'正在生成文案','[]',?,?)").run(jobId, id, position, time, time); } this.db.prepare("INSERT INTO content_ops_batches(id,request_id,model,platform,count,background_mode,style_mode,style_preset,style_prompt,copy_format,copy_multiplier,reference_ids,brief,status,job_ids,output_dir,error,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,'running',?,?,?, ?,?)").run(id, input.requestId, input.model, input.platform, input.count, input.backgroundMode, input.styleMode, input.stylePreset, input.stylePrompt, input.copyFormat, input.copyMultiplier, JSON.stringify(input.references), input.brief, JSON.stringify(jobIds), outputDir, '', time, time); this.db.exec('COMMIT'); } catch (error) { try { this.db.exec('ROLLBACK'); } catch {} throw error; }
+    this.db.exec('BEGIN IMMEDIATE'); try { for (let position = 1; position <= input.count; position++) { const jobId = randomUUID(); jobIds.push(jobId); this.db.prepare("INSERT INTO analysis_jobs(id,batch_id,position,status,result,error,progress,progress_message,attachments,created_at,updated_at) VALUES(?,?,?,'analyzing','','',1,'正在生成文案','[]',?,?)").run(jobId, id, position, time, time); } this.db.prepare("INSERT INTO content_ops_batches(id,request_id,model,corpus_model,platform,count,background_mode,style_mode,style_preset,style_prompt,copy_format,copy_multiplier,reference_ids,brief,status,job_ids,output_dir,error,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,'running',?,?,?, ?,?)").run(id, input.requestId, input.model, input.corpusModel, input.platform, input.count, input.backgroundMode, input.styleMode, input.stylePreset, input.stylePrompt, input.copyFormat, input.copyMultiplier, JSON.stringify(input.references), input.brief, JSON.stringify(jobIds), outputDir, '', time, time); this.db.exec('COMMIT'); } catch (error) { try { this.db.exec('ROLLBACK'); } catch {} throw error; }
     void this.run(id); return { batch: this.public(this.get(id)), reused: false };
   }
   referencePath(id) { return join(this.root, 'scratch', 'hanabi-runtime', `references-${id}.json`); }
-  async run(id) {
-    const row = this.get(id), python = [join(this.root, 'scratch/.venv/bin/python'), join(this.root, '.venv/bin/python')].find(path => existsSync(path)) || 'python3', args = [join(this.root, 'scripts/generate.py'), 'copy', '--model', row.model, '--platform', row.platform, '--count', String(row.count), '--copy-format', row.copy_format || 'all_variations', '--copy-multiplier', String(row.copy_multiplier ?? 1), '--output', row.output_dir, '--config', gatewayEnvPath(this.root), '--brief', row.brief || '', '--style-mode', row.style_mode || 'auto'], refs = parse(row.reference_ids, []), referenceFile = this.referencePath(id), current = { id, child: null, stopped: false, message: '', stderr: '' }; this.active = current;
+  resume(id) {
+    if (this.resumeTasks.has(id)) return this.resumeTasks.get(id);
+    const task = this.prepareResume(id).finally(() => this.resumeTasks.delete(id));
+    this.resumeTasks.set(id, task);
+    return task;
+  }
+  async prepareResume(id) {
+    const row = this.get(id);
+    if (row.status === 'running' || row.status === 'completed') return { batch:this.public(row), reused:true };
+    if (!['failed','partial'].includes(row.status) || !this.public(row).resumable) throw fail('这批尚无完整可复用文案，请另做一批。');
+    if (this.db.prepare("SELECT 1 FROM content_ops_batches WHERE status='running'").get()) throw fail('已有一批图文正在生成，请稍后继续。',409);
+    const manifest = JSON.parse(await readFile(join(row.output_dir,'manifest.json'),'utf8'));
+    if (manifest.product_model !== row.model || manifest.platform !== row.platform) throw fail('原始生成记录与批次不一致，未发起模型调用。');
+    // Append a recovery snapshot beside the local history, preserving every exported original.
+    const parent = join(dirname(this.uploadDir),'recovered-batches');
+    await mkdir(parent,{recursive:true,mode:0o700});
+    const outputDir = join(parent,randomUUID());
+    await mkdir(outputDir,{mode:0o700});
+    const allowed = /^(?:manifest\.json|copy\.json|post-\d+(?:-copy-\d+)?\.md|post-\d+(?:-background)?\.png|(?:vision-prompt|copy-response)-\d+\.txt)$/u;
+    for (const name of await readdir(row.output_dir)) {
+      if (!allowed.test(name)) continue;
+      const source = join(row.output_dir,name), info = await lstat(source);
+      if (!info.isFile() || info.isSymbolicLink()) throw fail('恢复快照包含异常文件，原始结果保留。');
+      await copyFile(source,join(outputDir,name),constants.COPYFILE_EXCL);
+    }
+    manifest.recovery = { source_output_dir:row.output_dir, original_output_dir:manifest.recovery?.original_output_dir||row.output_dir, created_at:now() };
+    await writeFile(join(outputDir,'manifest.json'),JSON.stringify(manifest,null,2));
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      if (this.db.prepare("SELECT 1 FROM content_ops_batches WHERE status='running'").get() || this.get(id).output_dir !== row.output_dir) throw fail('批次状态已改变，请重新读取后继续。',409);
+      this.db.prepare("UPDATE content_ops_batches SET output_dir=?,status='running',error='',updated_at=? WHERE id=?").run(outputDir,now(),id);
+      this.db.prepare("UPDATE analysis_jobs SET status='analyzing',error='',progress_message='复用已有结果，仅继续未完成阶段',updated_at=? WHERE batch_id=? AND status!='completed'").run(now(),id);
+      this.db.exec('COMMIT');
+    } catch(error) { this.db.exec('ROLLBACK'); throw error; }
+    void this.run(id,{resume:true});
+    return { batch:this.public(this.get(id)), reused:false };
+  }
+  async run(id, { resume = false } = {}) {
+    const row = this.get(id), python = [join(this.root, 'scratch/.venv/bin/python'), join(this.root, '.venv/bin/python')].find(path => existsSync(path)) || 'python3', args = [join(this.root, 'scripts/generate.py'), 'copy', '--model', row.model, '--corpus-model', row.corpus_model || row.model, '--platform', row.platform, '--count', String(row.count), '--copy-format', row.copy_format || 'all_variations', '--copy-multiplier', String(row.copy_multiplier ?? 1), '--output', row.output_dir, '--config', gatewayEnvPath(this.root), '--brief', row.brief || '', '--style-mode', row.style_mode || 'auto'], refs = parse(row.reference_ids, []), referenceFile = this.referencePath(id), current = { id, child: null, stopped: false, message: '', stderr: '' }; this.active = current;
+    if (resume) args.push('--resume');
     if ((row.style_mode || 'auto') === 'manual') { if (row.style_preset) args.push('--style-preset', row.style_preset); if (row.style_prompt) args.push('--style-prompt', row.style_prompt); }
     try { if (refs.length) { await mkdir(join(this.root, 'scratch', 'hanabi-runtime'), { recursive: true }); await writeFile(referenceFile, JSON.stringify(refs)); args.push('--references', referenceFile); } if (row.background_mode === 'cached') args.push('--background', this.backgroundPath()); const child = this.spawnProcess(python, args, { cwd: this.root, env: process.env, stdio: ['ignore', 'pipe', 'pipe'], shell: false }); current.child = child; child.stderr.on('data', chunk => { current.stderr = (current.stderr + chunk.toString()).slice(-4000); }); child.stdout.on('data', () => this.db.prepare("UPDATE analysis_jobs SET progress=40,progress_message='文案已保存，正在完成图片',updated_at=? WHERE batch_id=? AND status='analyzing'").run(now(), id)); child.once('error', error => void this.finish(id, 1, error.message)); child.once('close', code => void this.finish(id, code ?? 1, current.stopped ? current.message : current.stderr)); } catch (error) { await this.finish(id, 1, error.message); }
   }
