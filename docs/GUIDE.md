@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+本轮 DeepSeek 发布解读索引：`data/model-corpus.md` DeepSeek 第 13 节保存好机友供稿的来源指纹、价格/基准主张、三项演示与去重评论；图片占位和历史权益均保留待核验。成本前沿、低提示交互与入口摩擦的通用方法唯一维护在仓库外炼丹炉 `references/model-launch-playbook.md` 同名节。本轮只更新既有文件，不新增全文或评论副本。
+
 DeepSeek 短预告索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 12 节保存《DeepSeek，新模型即将发布》的预计窗口、过渡安排、与正式稿的时点差异及两条去重留言的证据边界；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“短预告与正式公告：窗口、条件与版本差异”。仅改既有文件，不新增全文、评论或规则副本。
 
 DeepSeek 发布稿吸收索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 11 节唯一维护非对称架构、缓存基线、历史定价与别名迁移主张，并标明缺图、未核链接和重复留言边界；第 1 节与历史营销候选按该账本约束。通用核验方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“非对称架构发布：阶段、缓存层级与别名迁移”。本轮仅修改既有文件，不新增全文、评论或价格副本。
