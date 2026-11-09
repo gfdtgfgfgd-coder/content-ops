@@ -703,3 +703,8 @@ Claude 校核已补齐：T06 打通公司通用网关后，以本机 `work/gatew
 （Codex 填）
 
 ## T07 · Model Price Watch 接成技能 · 日期未记录
+
+
+## 2026-11-09 · 纠正内容方法错仓更新
+
+核对 ai-content-alchemy 唯一分支 main 今日53次提交；四份最终方法源逐字迁入 skills/content-methods/references/，并迁入四份直接阅读依赖。修正现行手册与语料库的外部路径，保持模型事实单源，不改生产素材、合集或生成历史。原仓完整历史已保存本机 Git bundle；迁移后停止向旧仓写入。

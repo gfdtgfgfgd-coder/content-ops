@@ -1,3 +1,11 @@
+# 本轮执行：纠正 ai-content-alchemy 错仓更新（2026-11-09）
+
+- [x] 核对全部分支与北京时间今日53次提交，确认4份改动文件。
+- [x] 完整迁移4份方法文档与4份引用依赖，修正现行外部路径；模型事实仍在原语料库。
+- [x] 8份迁入文档字节与源仓一致，本地 Markdown 引用完整；doctor通过，Python77项通过（1项跳过）。
+- [x] Hanabi68项通过；迁移按中文提交推送到 codex/reference-collections-outline。
+- [ ] 删除原 GitHub 仓库（当前凭据尚无 delete_repo 权限）。
+
 # TODO · 待办与演进清单
 
 ## 本轮执行：AI野史⑧ DeepSeek 1017 排名观点吸收（2026-11-09）

@@ -4,67 +4,74 @@
 
 ## 仓库目录与核心文件全景说明
 
-AI野史⑧观点文索引（2026-11-09）：`data/model-corpus.md` DeepSeek“AI野史⑧《K3.1 Pro拉完了，DeepSeek V4.1 Flash 1017应该就是目前实质上的国模一哥了》观点与留言吸收”保存作者排名判断、证据缺口及评论反例；不将“国模第一”当作同题实测结论。争议评论通用核验方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`。仅更新既有文件，不存全文或完整留言副本。
+### 2026-11-09 错仓迁移：内容方法唯一源
 
-DeepSeek V4.1 Flash 1017 短讯索引（2026-11-09）：`data/model-corpus.md`“DeepSeek V4.1 Flash 1017 新版本短讯与留言吸收”保存此短讯的来源缺口、与第 14 节同事件关系、训练／完整项目主张边界及去重留言主题。训练因果和低提示演示方法引用外部炼丹炉既有章节，不重复建账或复制规则。
+`skills/content-methods/SKILL.md` 是迁入方法的阅读入口；`skills/content-methods/references/` 下四份今日更新文件（`model-launch-playbook.md` 模型发布核验、`multimodal-playbook.md` 多模态制作、`style-profiles.md` 样本结构观察、`workflow-archive.md` 工作流验收）逐字迁自原 ai-content-alchemy 的 `9208963b8af060c5994daaa5e38f0f58ae3051be`。另迁入其四份直接引用依赖：`model-launch-window-retrospective.md` 协作复盘、`xhs-product-carousel.md` 图文方法、`xhs-community-promo-video.md` 视频方法、`brewreel-integration.md` 视频工具接入说明。上述均为可编辑方法源，不是派生缓存；不新增模型事实账本，也不自动修改已确认业务规范。BrewReel 工具程序不属今日改动，未导入；使用时依说明另行安装。
 
-科创板日报 Flash 短讯复核索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第14节合并同篇来源、补黄心怡署名，保存多端同步／框架优化的归因边界与无实际留言状态；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“模型与服务端工具”节的短讯补充。仅修改既有文件，无全文、留言或规则副本。
+2026-11-09（北京时间）共53次提交，只修改上述四份今日文件；本次保留最终有效状态，已合并删除的重复段落不复活。旧仓完整 Git 历史另备份为本机 `/Users/lilith/Desktop/ai-content-alchemy-backup-20261109.bundle`（离线恢复用，非可编辑事实源，不进 Git；`git clone <bundle路径> <恢复目录>` 可恢复）。后续 content-ops 方法仅在本仓维护，停止向已撤销的 ai-content-alchemy GitHub 仓库写入。
 
-科技狐 Flash 发布速览索引（2026-11-09）：`data/model-corpus.md` DeepSeek“科技狐发布速览吸收”保存独立来源、参数对比缺口、去重留言与读者卡点，历史绝对报价补入第 11 节唯一价格行。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 的“三层账本”和“小版本发布”章节；只修改既有文件，不新增全文、评论或规则副本。
 
-Qoder 免费入口供稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek“《突发！DeepSeek-Flash模型免费用》入口型文章吸收”保存来源指纹、平台权益／后端版本缺口、作者限时推测和场景建议边界；通用方法唯一在外部炼丹炉 `references/model-launch-playbook.md`“免费入口文章：权益归属与可校验任务分流”。仅改既有文件，未保存全文或页面附属元素。
+AI野史⑧观点文索引（2026-11-09）：`data/model-corpus.md` DeepSeek“AI野史⑧《K3.1 Pro拉完了，DeepSeek V4.1 Flash 1017应该就是目前实质上的国模一哥了》观点与留言吸收”保存作者排名判断、证据缺口及评论反例；不将“国模第一”当作同题实测结论。争议评论通用核验方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`。仅更新既有文件，不存全文或完整留言副本。
 
-字母AI 内测与扩招解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第19节“字母AI同事件补充”保存来源、测速／视觉案例、招聘与组织因果的证据边界及去重留言；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“模型发布与招聘：工程需求和组织因果”。仅修改既有文件，不新增全文、留言或规则副本。
+DeepSeek V4.1 Flash 1017 短讯索引（2026-11-09）：`data/model-corpus.md`“DeepSeek V4.1 Flash 1017 新版本短讯与留言吸收”保存此短讯的来源缺口、与第 14 节同事件关系、训练／完整项目主张边界及去重留言主题。训练因果和低提示演示方法引用本仓内容方法既有章节，不重复建账或复制规则。
 
-腾讯科技内测稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第19节“腾讯科技同事件补充”保存晓静／徐青阳供稿来源、历史发布状态、架构推断边界、旧版基准、替代问卷及报价口径；通用方法唯一维护在外部炼丹炉 `references/model-launch-playbook.md`“限时内测快讯”节。仅改既有文件，不新增全文或留言副本。
+科创板日报 Flash 短讯复核索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第14节合并同篇来源、补黄心怡署名，保存多端同步／框架优化的归因边界与无实际留言状态；通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“模型与服务端工具”节的短讯补充。仅修改既有文件，无全文、留言或规则副本。
 
-IT之家 V4.1 Flash 更新报道索引（2026-11-09）：`data/model-corpus.md` DeepSeek“IT之家《DeepSeek V4.1 Flash模型超级进化！‘许愿’就能写代码》媒体报道吸收”保存 11 项基准转述、HLE 括号口径缺口、官方性能／成本主张与去重留言主题；缺刊期年份、原文链接和复测材料均不补造。共同发布事实回指既有记录，通用方法唯一引用外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“小版本发布：成本前沿、低提示演示与入口摩擦”。仅修改既有文件，不另存全文或评论副本。
+科技狐 Flash 发布速览索引（2026-11-09）：`data/model-corpus.md` DeepSeek“科技狐发布速览吸收”保存独立来源、参数对比缺口、去重留言与读者卡点，历史绝对报价补入第 11 节唯一价格行。通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md` 的“三层账本”和“小版本发布”章节；只修改既有文件，不新增全文、评论或规则副本。
 
-欧巴聊AI 五例实测索引（2026-11-09）：`data/model-corpus.md` DeepSeek“欧巴聊AI 五例实测吸收：保留节目、互补演示与复现缺口”保存独立来源、环境、五例边界及去重留言；共同发布与工具计费回指既有账本。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“小版本发布：成本前沿、低提示演示与入口摩擦”。只改既有文件，不新增全文、评论或规则副本。
+Qoder 免费入口供稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek“《突发！DeepSeek-Flash模型免费用》入口型文章吸收”保存来源指纹、平台权益／后端版本缺口、作者限时推测和场景建议边界；通用方法唯一在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“免费入口文章：权益归属与可校验任务分流”。仅改既有文件，未保存全文或页面附属元素。
 
-机器之心内测文章补充索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 19 节“机器之心同事件补充”保存独立来源、马里奥／FDE 两项 HTML 案例、测速方向争议及去重留言；与既有快讯共用事件边界，不合并来源和人数。通用方法仅维护在外部炼丹炉 `references/model-launch-playbook.md` 既有“限时内测快讯”节；未新增文件、原文或规则副本。
+字母AI 内测与扩招解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第19节“字母AI同事件补充”保存来源、测速／视觉案例、招聘与组织因果的证据边界及去重留言；通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“模型发布与招聘：工程需求和组织因果”。仅修改既有文件，不新增全文、留言或规则副本。
 
-程序员鱼皮双项目横评索引（2026-11-09）：`data/model-corpus.md` DeepSeek“程序员鱼皮 V4.1 Flash 双项目横评吸收”保存来源指纹、城市与绘图案例、分阶段计时／费用、迁移计费争议及去重留言；共同发布主张引用第 11 节。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“日常工具链横评：场景语义、编辑往返与业务回归”。仅修改既有文件，不新增全文、评论或规则副本。
+腾讯科技内测稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第19节“腾讯科技同事件补充”保存晓静／徐青阳供稿来源、历史发布状态、架构推断边界、旧版基准、替代问卷及报价口径；通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“限时内测快讯”节。仅改既有文件，不新增全文或留言副本。
 
-DeepSeek 论文解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek“论文解读吸收：缓存生命周期、条件记忆与任务生产”保存本篇来源、相对既有发布稿的新增主张、近似恢复边界、基准条件与去重留言；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 既有“非对称架构发布”及“后训练解释与同题双路径”章节。仅改既有文件，不新增全文、评论或规则副本。
+IT之家 V4.1 Flash 更新报道索引（2026-11-09）：`data/model-corpus.md` DeepSeek“IT之家《DeepSeek V4.1 Flash模型超级进化！‘许愿’就能写代码》媒体报道吸收”保存 11 项基准转述、HLE 括号口径缺口、官方性能／成本主张与去重留言主题；缺刊期年份、原文链接和复测材料均不补造。共同发布事实回指既有记录，通用方法唯一引用本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“小版本发布：成本前沿、低提示演示与入口摩擦”。仅修改既有文件，不另存全文或评论副本。
 
-夕小瑶十四组对照索引（2026-11-09）：`data/model-corpus.md` DeepSeek“夕小瑶十四组对照吸收：视觉链路、交付时间与协作账单”保存来源、视觉／工具链路、计时和费用口径、交接反例及去重留言；通用方法唯一维护在外部炼丹炉 `references/model-launch-playbook.md`“多 Agent 对照：关键路径、交接状态与统计包含关系”。仅修改既有文件，无原文、评论或规则副本。
+欧巴聊AI 五例实测索引（2026-11-09）：`data/model-corpus.md` DeepSeek“欧巴聊AI 五例实测吸收：保留节目、互补演示与复现缺口”保存独立来源、环境、五例边界及去重留言；共同发布与工具计费回指既有账本。通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“小版本发布：成本前沿、低提示演示与入口摩擦”。只改既有文件，不新增全文、评论或规则副本。
 
-大模型观测员 1017 测评索引（2026-11-09）：`data/model-corpus.md` DeepSeek 专节“大模型观测员 V4.1 Flash 1017 测评吸收”保存来源指纹、环境变更、分任务效率、缺图边界与去重反例，独立于九月测评；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“同分、少步骤与领域迁移的复测”。仅修改既有文件，不另存原文、留言或规则副本。
+机器之心内测文章补充索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 19 节“机器之心同事件补充”保存独立来源、马里奥／FDE 两项 HTML 案例、测速方向争议及去重留言；与既有快讯共用事件边界，不合并来源和人数。通用方法仅维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md` 既有“限时内测快讯”节；未新增文件、原文或规则副本。
 
-Flash 与团队协作解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 20 节保存供稿来源、协作实验主张、历史接入和去重留言，共同发布事实回指第 11 节；通用对照方法维护在外部炼丹炉 `references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。仅修改既有文件，不保存原文或留言副本。
+程序员鱼皮双项目横评索引（2026-11-09）：`data/model-corpus.md` DeepSeek“程序员鱼皮 V4.1 Flash 双项目横评吸收”保存来源指纹、城市与绘图案例、分阶段计时／费用、迁移计费争议及去重留言；共同发布主张引用第 11 节。通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“日常工具链横评：场景语义、编辑往返与业务回归”。仅修改既有文件，不新增全文、评论或规则副本。
 
-DeepSeek V4.1 Flash 限时内测快讯索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 19 节保存临时模型名、原生多模态／速度／计费／并发主张及 112 条留言的去重信号，分开记录速度自报、价格争议、开放范围、可靠性和到期线索。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“限时内测快讯：到期标识与最小操作”。本轮只改既有文件，不新增原文、评论或规则副本。
+DeepSeek 论文解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek“论文解读吸收：缓存生命周期、条件记忆与任务生产”保存本篇来源、相对既有发布稿的新增主张、近似恢复边界、基准条件与去重留言；通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md` 既有“非对称架构发布”及“后训练解释与同题双路径”章节。仅改既有文件，不新增全文、评论或规则副本。
 
-机器之心 Flash 发布解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第18节保存来源指纹、模型卡基准核验、推断和评论边界；共同发布事实回指第11节，通用方法引用外部炼丹炉 `references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。未新增原文、评论或规则副本。
+夕小瑶十四组对照索引（2026-11-09）：`data/model-corpus.md` DeepSeek“夕小瑶十四组对照吸收：视觉链路、交付时间与协作账单”保存来源、视觉／工具链路、计时和费用口径、交接反例及去重留言；通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“多 Agent 对照：关键路径、交接状态与统计包含关系”。仅修改既有文件，无原文、评论或规则副本。
 
-DeepSeek 新版解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 16 节保存《DeepSeek V4.1 Flash 新版发布： api 自带搜索能力》的来源指纹、官方成绩／成本图／模型卡补证和去重评论；同事件公告与工具计费仍引用第 14 节。通用对数轴／比较条件方法唯一维护在外部炼丹炉 `references/model-launch-playbook.md` 既有“小版本发布”节，排版反馈分流与动效验证方法唯一维护在 `references/multimodal-playbook.md`“代码图解与动效长文”。本轮仅改既有文件，不新建原文、留言或规则副本。
+大模型观测员 1017 测评索引（2026-11-09）：`data/model-corpus.md` DeepSeek 专节“大模型观测员 V4.1 Flash 1017 测评吸收”保存来源指纹、环境变更、分任务效率、缺图边界与去重反例，独立于九月测评；通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“同分、少步骤与领域迁移的复测”。仅修改既有文件，不另存原文、留言或规则副本。
 
-大模型观测员 V4.1 Flash 测评索引（2026-11-09）：`data/model-corpus.md` DeepSeek 专节“大模型观测员 V4.1 Flash 测评吸收”保存来源指纹、档位／自测／可靠性账本、去重留言和缺图边界；通用复测方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“同分、少步骤与领域迁移的复测”。本轮仅修订既有文件，不新增全文或评论副本。
+Flash 与团队协作解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 20 节保存供稿来源、协作实验主张、历史接入和去重留言，共同发布事实回指第 11 节；通用对照方法维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。仅修改既有文件，不保存原文或留言副本。
 
-APPSO 发布解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 17 节保存本篇来源指纹、CSA2／DSpark、Harness v0.1.5 与实验团队的供稿主张及去重反馈；共同参数、价格和路由回指第 11 节。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。本轮仅改既有文件，不新增全文、评论或规则副本。
+DeepSeek V4.1 Flash 限时内测快讯索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 19 节保存临时模型名、原生多模态／速度／计费／并发主张及 112 条留言的去重信号，分开记录速度自报、价格争议、开放范围、可靠性和到期线索。通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“限时内测快讯：到期标识与最小操作”。本轮只改既有文件，不新增原文、评论或规则副本。
 
-Datawhale 接入稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 15 节保存 V4 Flash 0731 历史样本、来源指纹、API 公测范围、基准归因、配置主张与去重留言，与 V4.1 分开。通用教程验收方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“API 后训练更新与接入教程：范围、配置与成功证据”。本轮只更新既有文件，不新增全文或评论副本。
+机器之心 Flash 发布解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第18节保存来源指纹、模型卡基准核验、推断和评论边界；共同发布事实回指第11节，通用方法引用本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。未新增原文、评论或规则副本。
 
-DeepSeek 官方1017更新索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第14节唯一保存官方公告、四项演示、Search/Fetch历史生效与当前指南的证据账本及去重评论主题；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“模型与服务端工具：成功调用计费和证据时点”。本轮仅改既有文件，不新增全文或计费规则副本。
+DeepSeek 新版解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 16 节保存《DeepSeek V4.1 Flash 新版发布： api 自带搜索能力》的来源指纹、官方成绩／成本图／模型卡补证和去重评论；同事件公告与工具计费仍引用第 14 节。通用对数轴／比较条件方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md` 既有“小版本发布”节，排版反馈分流与动效验证方法唯一维护在 `references/multimodal-playbook.md`“代码图解与动效长文”。本轮仅改既有文件，不新建原文、留言或规则副本。
 
-DeepSeek 短预告索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 12 节保存《DeepSeek，新模型即将发布》的预计窗口、过渡安排、与正式稿的时点差异及两条去重留言的证据边界；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“短预告与正式公告：窗口、条件与版本差异”。仅改既有文件，不新增全文、评论或规则副本。
+大模型观测员 V4.1 Flash 测评索引（2026-11-09）：`data/model-corpus.md` DeepSeek 专节“大模型观测员 V4.1 Flash 测评吸收”保存来源指纹、档位／自测／可靠性账本、去重留言和缺图边界；通用复测方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“同分、少步骤与领域迁移的复测”。本轮仅修订既有文件，不新增全文或评论副本。
+
+APPSO 发布解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 17 节保存本篇来源指纹、CSA2／DSpark、Harness v0.1.5 与实验团队的供稿主张及去重反馈；共同参数、价格和路由回指第 11 节。通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。本轮仅改既有文件，不新增全文、评论或规则副本。
+
+Datawhale 接入稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 15 节保存 V4 Flash 0731 历史样本、来源指纹、API 公测范围、基准归因、配置主张与去重留言，与 V4.1 分开。通用教程验收方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“API 后训练更新与接入教程：范围、配置与成功证据”。本轮只更新既有文件，不新增全文或评论副本。
+
+DeepSeek 官方1017更新索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第14节唯一保存官方公告、四项演示、Search/Fetch历史生效与当前指南的证据账本及去重评论主题；通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“模型与服务端工具：成功调用计费和证据时点”。本轮仅改既有文件，不新增全文或计费规则副本。
+
+DeepSeek 短预告索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 12 节保存《DeepSeek，新模型即将发布》的预计窗口、过渡安排、与正式稿的时点差异及两条去重留言的证据边界；通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“短预告与正式公告：窗口、条件与版本差异”。仅改既有文件，不新增全文、评论或规则副本。
 
 本轮 DeepSeek 发布解读索引：`data/model-corpus.md` DeepSeek 第 13 节保存好机友供稿的来源指纹、价格/基准主张、三项演示与去重评论；图片占位和历史权益均保留待核验。成本前沿、低提示交互与入口摩擦的通用方法唯一维护在仓库外炼丹炉 `references/model-launch-playbook.md` 同名节。本轮只更新既有文件，不新增全文或评论副本。
 
-DeepSeek 发布稿吸收索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 11 节唯一维护非对称架构、缓存基线、历史定价与别名迁移主张，并标明缺图、未核链接和重复留言边界；第 1 节与历史营销候选按该账本约束。通用核验方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“非对称架构发布：阶段、缓存层级与别名迁移”。本轮仅修改既有文件，不新增全文、评论或价格副本。
+DeepSeek 发布稿吸收索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 11 节唯一维护非对称架构、缓存基线、历史定价与别名迁移主张，并标明缺图、未核链接和重复留言边界；第 1 节与历史营销候选按该账本约束。通用核验方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“非对称架构发布：阶段、缓存层级与别名迁移”。本轮仅修改既有文件，不新增全文、评论或价格副本。
 
-本轮 Kimi K3.1 Pro 推理服务栈实测索引：`data/model-corpus.md` Kimi 第 15 节保存 DSA、`8K/128K × C1/C8/C32` 性能矩阵、CUDA Graph 条件、草稿接受率、能耗与证据缺口；“少 60%”仅指作者报告的 `8K/C8` 每卡每小时产出。通用横测方法唯一维护在 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 对应章节。本轮只修改既有文件，不新增全文副本、数字账本或测试数据文件。
+本轮 Kimi K3.1 Pro 推理服务栈实测索引：`data/model-corpus.md` Kimi 第 15 节保存 DSA、`8K/128K × C1/C8/C32` 性能矩阵、CUDA Graph 条件、草稿接受率、能耗与证据缺口；“少 60%”仅指作者报告的 `8K/C8` 每卡每小时产出。通用横测方法唯一维护在 `skills/content-methods/references/model-launch-playbook.md` 对应章节。本轮只修改既有文件，不新增全文副本、数字账本或测试数据文件。
 
-本轮 Kimi 3D 实测索引：`data/model-corpus.md` Kimi 第 14 节“《风雨中的Kimi，和它的K3.1 Pro模型》3D 创作实测与成本争议”保存六个案例、来源指纹、作者报告及证据边界；模型、产品 Skill 与外部工具链分开归因。通用分层验收与成本记录唯一引用本机炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`，本轮不新增文件、不复制全文或评论。
+本轮 Kimi 3D 实测索引：`data/model-corpus.md` Kimi 第 14 节“《风雨中的Kimi，和它的K3.1 Pro模型》3D 创作实测与成本争议”保存六个案例、来源指纹、作者报告及证据边界；模型、产品 Skill 与外部工具链分开归因。通用分层验收与成本记录唯一引用本机炼丹炉 `skills/content-methods/references/model-launch-playbook.md`，本轮不新增文件、不复制全文或评论。
 
-本轮 InfoQ 样本索引：`data/model-corpus.md` GLM 第 11 节“十三、InfoQ”合并同篇五项工程测试与证据订正；通用执行契约及计时、验收分层唯一维护在外部炼丹炉 `references/workflow-archive.md`“交付声明与独立验收”。本轮仅改既有文件，不新增正文或评论副本。
+本轮 InfoQ 样本索引：`data/model-corpus.md` GLM 第 11 节“十三、InfoQ”合并同篇五项工程测试与证据订正；通用执行契约及计时、验收分层唯一维护在本仓内容方法 `skills/content-methods/references/workflow-archive.md`“交付声明与独立验收”。本轮仅改既有文件，不新增正文或评论副本。
 
-JavaGuide 复杂项目样本索引：`data/model-corpus.md` GLM 第 11 节“十四、JavaGuide”保存来源指纹、两项目证据和未完成项；通用方法唯一维护在外部炼丹炉 `references/model-launch-playbook.md`“跨层素材与知识游戏的验收补充”。本轮只修改既有文件，不另存全文或评论。
+JavaGuide 复杂项目样本索引：`data/model-corpus.md` GLM 第 11 节“十四、JavaGuide”保存来源指纹、两项目证据和未完成项；通用方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“跨层素材与知识游戏的验收补充”。本轮只修改既有文件，不另存全文或评论。
 
-本轮 GLM 测评索引：`data/model-corpus.md` 的 GLM 第 11 节“十二、大模型观测员实测复盘”维护同篇来源、结果与订正；通用复测方法唯一位于外部炼丹炉 `references/model-launch-playbook.md`“同分、少步骤与领域迁移的复测”。本轮仅修订既有文件，不新增全文或留言副本。
+本轮 GLM 测评索引：`data/model-corpus.md` 的 GLM 第 11 节“十二、大模型观测员实测复盘”维护同篇来源、结果与订正；通用复测方法唯一位于本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“同分、少步骤与领域迁移的复测”。本轮仅修订既有文件，不新增全文或留言副本。
 
-本轮开源路线评论索引：`data/model-corpus.md` Kimi 第 11 节“开源路线演进与选择权评论”保存来源指纹、原文主张边界与补测线索；通用方法唯一维护在仓库外 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“开源路线评论：权益、生态与能力分轴”，`style-profiles.md` 仅保存低置信结构选项。本轮只更新既有文件，不新增全文或评论副本。
+本轮开源路线评论索引：`data/model-corpus.md` Kimi 第 11 节“开源路线演进与选择权评论”保存来源指纹、原文主张边界与补测线索；通用方法唯一维护在仓库外 `skills/content-methods/references/model-launch-playbook.md`“开源路线评论：权益、生态与能力分轴”，`style-profiles.md` 仅保存低置信结构选项。本轮只更新既有文件，不新增全文或评论副本。
 
 > [!IMPORTANT]
 > **新增文件同步规范（Agent 执行铁律）**：
@@ -89,7 +96,7 @@ JavaGuide 复杂项目样本索引：`data/model-corpus.md` GLM 第 11 节“十
 | `data/posts.jsonl.bak.<时间戳>` | 本机恢复快照 | 合集清理前的原始 JSONL 字节备份，Git 忽略；仅供人工核查恢复，不作为可编辑数据源，不自动回灌。 |
 | `data/images/.prune-<token>/`、`data/.posts-prune-*.tmp` | 临时事务文件 | 清理时暂存待删图片及原子写入数据；成功提交后删除，异常时撤回，Git 忽略。 |
 | `data/` | 业务数据层 | **业务数据与事实源**。存放全量素材唯一源（`posts.jsonl`）、素材自定义合集（`collections.json`）、模型语料库（`model-corpus.md`）、去敏的企微运营反馈以及派生偏好包。 |
-| `data/model-corpus.md` | 模型语料唯一源 | 卡尔与yc星辰样本见 DeepSeek 同名节，含任务错配、底座复用、游戏反例与桌面故障；方法仅引用外部炼丹炉。 2026-11-09 增补 CANN 推理适配样本及一手文档核验，工程知识与性能条件见 Kimi 同名专节；通用方法见外部炼丹炉模型手册。 2026-11-09 董道力五题对照记录首屏与工程接手反例、来源指纹及未复测边界；通用差分验收只在炼丹炉既有模型手册维护。 2026-11-09 倪叔样本补充金融严谨性、首版错误与工具归因；专项指标不换算金融任务错误率，通用方法仍只在炼丹炉维护。 型号资料、文案候选与带来源的参考样本；2026-11-09 增补视觉编程及机器之心发布解读样本，作者陈述保留待复测状态。通用方法只引用 ai-content-alchemy 模型上新手册，不维护第二份规则。 老章两天实测的交付、消耗与订正记录亦在本文件对应吸收节，方法归入同一手册的重度测评节；本轮新增 Kimi 第 14 节六个创意 3D 案例，分开模型、产品 Skill 与外部工具链，保留作者报告和未复测边界。 |
+| `data/model-corpus.md` | 模型语料唯一源 | 卡尔与yc星辰样本见 DeepSeek 同名节，含任务错配、底座复用、游戏反例与桌面故障；方法仅引用本仓内容方法。 2026-11-09 增补 CANN 推理适配样本及一手文档核验，工程知识与性能条件见 Kimi 同名专节；通用方法见本仓内容方法模型手册。 2026-11-09 董道力五题对照记录首屏与工程接手反例、来源指纹及未复测边界；通用差分验收只在炼丹炉既有模型手册维护。 2026-11-09 倪叔样本补充金融严谨性、首版错误与工具归因；专项指标不换算金融任务错误率，通用方法仍只在炼丹炉维护。 型号资料、文案候选与带来源的参考样本；2026-11-09 增补视觉编程及机器之心发布解读样本，作者陈述保留待复测状态。通用方法只引用 ai-content-alchemy 模型上新手册，不维护第二份规则。 老章两天实测的交付、消耗与订正记录亦在本文件对应吸收节，方法归入同一手册的重度测评节；本轮新增 Kimi 第 14 节六个创意 3D 案例，分开模型、产品 Skill 与外部工具链，保留作者报告和未复测边界。 |
 | `docs/` | 文档与治理层 | **系统手册与历史记录**。存放工程治理说明与操作指南（本《系统操作手册》`GUIDE.md`）以及重大版本演进记录（`CHANGELOG.md`）。 |
 | `rules/` | 业务规则层 | **核心业务规范与风控源**。存放业务写稿与做图的唯一文档《内容生产规范》（`content-spec.md`）、风险词机器源（`banned-words-quick.yaml`）和受众标签规则（`audience-tags.yaml`）。 |
 | `scripts/` | 服务与 CLI 层 | **后端脚本与流水线服务**。提供 fetch（数据抓取）、build（清洗/偏好包提炼/精简）、generate（文案/视觉/生图流水线）、doctor（体量与规范门禁闸门）等核心脚本与测试套件。 |
@@ -162,13 +169,13 @@ AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，
 
 操作规范下提供《内容生产规范》《系统操作手册》和只读《模型语料库》。内容生产规范是业务规则唯一文档；系统手册只说明操作和工程治理；语料库供创作参考，不覆盖事实或规范。
 
-模型文章合并到 `data/model-corpus.md` 对应型号专节，分别记录发布稿、媒体转述及发布前线索的来源指纹、版本/时间边界与证据缺口，不复制原文。Kimi 本轮发布前 3D 样本见第 12 节。创作分析方法统一维护于本机 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`，仓库不复制该手册。
+模型文章合并到 `data/model-corpus.md` 对应型号专节，分别记录发布稿、媒体转述及发布前线索的来源指纹、版本/时间边界与证据缺口，不复制原文。Kimi 本轮发布前 3D 样本见第 12 节。创作分析方法统一维护于本机 `skills/content-methods/references/model-launch-playbook.md`，仓库不复制该手册。
 
 BubbleBrain 发布速览与个人小测记录位于 `data/model-corpus.md` Kimi 第 11 节同名补充样本，保留四项任务、作者判断、数字差异和重复评论边界；通用取证方法只引用仓库外炼丹炉 `references/model-launch-playbook.md` 的“发布速览附个人小测”节。未新增文件或事实副本。
 
 2026-11-09 新增的“榜单、海外作品与测评导流”样本仍保存在同一 Kimi 专节；其通用方法引用炼丹炉模型上新手册，不建立原文或规则副本。
 
-简单实测与景区漫游样本保存在 `data/model-corpus.md` 的 Kimi 同名吸收节，含来源指纹、案例入口和待核验范围；照片外细节不直接视为忠实还原。通用检查方法仅维护于外部炼丹炉模型上新手册的同名方法节，不另建全文、评论或规则副本。
+简单实测与景区漫游样本保存在 `data/model-corpus.md` 的 Kimi 同名吸收节，含来源指纹、案例入口和待核验范围；照片外细节不直接视为忠实还原。通用检查方法仅维护于本仓内容方法模型上新手册的同名方法节，不另建全文、评论或规则副本。
 
 ## 提示词查看与素材单图反推
 
@@ -253,9 +260,9 @@ python3 scripts/check.py --help
 
 清洗只补充风险检查信号和明确的人群字段，不覆盖帖子原文。配置见 `config/data-cleaning.json`。`data/distilled-preferences.json` 是可删除、可重建的偏好缓存；源路径见 `config/preference-build.json`，使用 `python3 scripts/build.py distill` 重建，第二次应显示 `changed=false`。生成脚本优先读取该包，损坏时在收费调用前失败；缺失时才按代码中的显式回退源加载。
 
-当前帖子唯一源为 `data/posts.jsonl`；风险规则唯一源为 `rules/banned-words-quick.yaml`；运营偏好事实源为 `skills/simin-persona/SKILL.md` 和 `data/wecom/simin-feedback.jsonl`。模型语料库唯一源为 `data/model-corpus.md`。用户提供的模型文章合并到对应型号专节，保留来源、入库日期、证据状态与数据口径；供稿不等于独立核验，不另存全文/评论副本。Kimi 发布供稿、媒体样本、阿颖作者评测及评论调查线索见该文件第 11 节；同一数据被多次转述不视为独立验证。不要编辑派生包代替源文件。本轮新闻综述的来源与定点核验继续维护在 Kimi 第 11 节；可复用方法唯一维护在本机炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 的“模型发布新闻综述”节，仓库只引用。
+当前帖子唯一源为 `data/posts.jsonl`；风险规则唯一源为 `rules/banned-words-quick.yaml`；运营偏好事实源为 `skills/simin-persona/SKILL.md` 和 `data/wecom/simin-feedback.jsonl`。模型语料库唯一源为 `data/model-corpus.md`。用户提供的模型文章合并到对应型号专节，保留来源、入库日期、证据状态与数据口径；供稿不等于独立核验，不另存全文/评论副本。Kimi 发布供稿、媒体样本、阿颖作者评测及评论调查线索见该文件第 11 节；同一数据被多次转述不视为独立验证。不要编辑派生包代替源文件。本轮新闻综述的来源与定点核验继续维护在 Kimi 第 11 节；可复用方法唯一维护在本机炼丹炉 `skills/content-methods/references/model-launch-playbook.md` 的“模型发布新闻综述”节，仓库只引用。
 
-刘小排三组作品供稿索引：`data/model-corpus.md`“刘小排三组实测吸收”记录来源、任务与作者报告；通用验收只维护在外部炼丹炉 `references/model-launch-playbook.md`“改稿不变量与工具自用验收”，叙事选项见其 `references/style-profiles.md`“作品采用决策型”。无新增全文或评论档案。
+刘小排三组作品供稿索引：`data/model-corpus.md`“刘小排三组实测吸收”记录来源、任务与作者报告；通用验收只维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“改稿不变量与工具自用验收”，叙事选项见其 `references/style-profiles.md`“作品采用决策型”。无新增全文或评论档案。
 
 Rhea 深度实测的来源、逐项结果、完成声明差异与未测条件，维护在 `data/model-corpus.md` 的“深度实测吸收记录：执行结果与自我验收盲区”节。可复用的独立验收方法维护在本机炼丹炉 `ai-content-alchemy/references/workflow-archive.md` 的“交付声明与独立验收”节，模型文章手册提供调用入口；案例数字不在技能内重复保存。
 
@@ -265,7 +272,7 @@ Datawhale 近一周实测稿已合并到 `data/model-corpus.md` 的 Kimi 同名�
 
 本次 Kimi K3.1 Pro 六项目创意 3D 记录见 `data/model-corpus.md` 第 14 节；六个案例均为供稿作者报告，未取得工程、截图、日志或账单。验收需分开视觉、交互、工程、参数化、物理和生产可用性，不能把 `model3d_generation` Skill 或 Blender/Three.js/GLSL 工具链表现归为模型本体。
 
-小林coding经营游戏供稿索引：`data/model-corpus.md`「小林coding《驿站大亨》实测吸收」保留案例及证据状态；通用方法见外部炼丹炉 `references/model-launch-playbook.md`「完整项目的阶段交付与实测对账」。不据作者推演代替实际运行验收，不复制费用与榜单为第二份事实源。
+小林coding经营游戏供稿索引：`data/model-corpus.md`「小林coding《驿站大亨》实测吸收」保留案例及证据状态；通用方法见本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`「完整项目的阶段交付与实测对账」。不据作者推演代替实际运行验收，不复制费用与榜单为第二份事实源。
 
 ### 接入新产品型号（避免「缺少封面短词库」）
 
