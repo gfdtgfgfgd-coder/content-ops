@@ -335,7 +335,7 @@ Datawhale 近一周实测稿已合并到 `data/model-corpus.md` 的 Kimi 同名�
 
 账号来源唯一读取 `data/sources/bookmarks-raw.json` 的小红书入口；当前为深度deepAI，ID `69df2b9f0000000032019e07`。策略唯一源 `config/data-cleaning.json` 的 `monitoring`：最近7天从北京时间当天减7天的00:00起算，未知日期不拿抓取时间替代。`published_at` 存带时区的原始平台日期，`published_at_source=xhs_note.time`；人工改日期为 `manual_date`。编辑器原日期不变时不提交日期字段，避免把平台精确时间降为日期。`fetched_at` 仍只代表入库时间。
 
-浏览器使用 agent-reach 路由下的 ego lite，先读 ego-browser skill。一个 TaskSpace 内读取账号时间线，以带签名的原链接逐篇导航；不读Cookie、不自动登录，不调用未观察到的私有接口。滚动到非置顶帖子早于窗口后继续核对边界，不能因顶部旧置顶帖而停止。已有素材按ID对照，补齐其日期并刷新互动；缺页、看不到日期、视频和未完整加载均记录缺口。每分钟最多10个动作，每50篇休息5分钟；验证码/登录失效立即停。
+浏览器使用 agent-reach 路由下的 ego lite，先读 ego-browser skill。一个 TaskSpace 内读取账号时间线，以带签名的原链接逐篇导航；不读Cookie、不自动登录，不调用未观察到的私有接口。滚动到非置顶帖子早于窗口后继续核对边界，不能因顶部旧置顶帖而停止。已有素材按ID对照，补齐其日期并刷新互动；缺页、看不到日期、视频和未完整加载均记录缺口。每分钟最多10个动作，每50篇休息5分钟；验证码/登录失效立即停。 导航优先 `page.goto(url, {waitUntil:"domcontentloaded", timeout:30000})`，随后等对应 note 的 time、desc、图片列表和互动字段齐全；不把第三方资源迟迟不触发 load 当成笔记缺失。若超时已提交新页面，先核对当前URL、作者、noteId与风控状态，只在同一Page继续提取，不反复重开页面。
 
 采集 JSON 数组写系统临时目录，单条契约为 `{note:<页面已渲染的 window.__INITIAL_STATE__.note.noteDetailMap[id].note>, date_text:<笔记日期DOM原文>, url:<已访问签名链接>, observed_at:<ISO采样时间>}`。必须等 note.time、note.desc 和图片列表加载完；只复制该条 note，不能把评论、Cookie或整页状态进库。note 中的 noteId、user.userId、time（毫秒）、title、desc、tagList、imageList[].urlDefault 和 interactInfo 的 likedCount/collectedCount/commentCount 分别提供ID、作者、日期、图文及互动。空字符串是平台明确零计数，字段缺失表示未知；不能把总获赞与收藏、粉丝数、评论点赞当笔记指标。
 
