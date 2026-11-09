@@ -708,7 +708,11 @@ def extract_cover_corpus(model, root=None, *, allow_fallback=True, display_model
         return fallback_cover_corpus(display, root)
     content = ((root or ROOT) / 'data/model-corpus.md').read_text(encoding='utf-8')
     common = re.search(r'^## 封面通用组件短词库\s*$(.*)', content, re.M | re.S)
-    corpus = section[match.start():].strip() + ('\n\n' + common.group(0).strip() if common else '')
+    sub = section[match.start():]
+    next_heading = re.search(r'\n(?=## \d+\.)', sub[len(match.group(0)):])
+    if next_heading:
+        sub = sub[:len(match.group(0)) + next_heading.start()]
+    corpus = sub.strip() + ('\n\n' + common.group(0).strip() if common else '')
     return rewrite_corpus_display_name(corpus, canonical, display)
 
 
