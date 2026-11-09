@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+本轮 Kimi K3.1 Pro 推理服务栈实测索引：`data/model-corpus.md` Kimi 第 15 节保存 DSA、`8K/128K × C1/C8/C32` 性能矩阵、CUDA Graph 条件、草稿接受率、能耗与证据缺口；“少 60%”仅指作者报告的 `8K/C8` 每卡每小时产出。通用横测方法唯一维护在 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 对应章节。本轮只修改既有文件，不新增全文副本、数字账本或测试数据文件。
+
 本轮 Kimi 3D 实测索引：`data/model-corpus.md` Kimi 第 14 节“《风雨中的Kimi，和它的K3.1 Pro模型》3D 创作实测与成本争议”保存六个案例、来源指纹、作者报告及证据边界；模型、产品 Skill 与外部工具链分开归因。通用分层验收与成本记录唯一引用本机炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`，本轮不新增文件、不复制全文或评论。
 
 本轮 InfoQ 样本索引：`data/model-corpus.md` GLM 第 11 节“十三、InfoQ”合并同篇五项工程测试与证据订正；通用执行契约及计时、验收分层唯一维护在外部炼丹炉 `references/workflow-archive.md`“交付声明与独立验收”。本轮仅改既有文件，不新增正文或评论副本。
