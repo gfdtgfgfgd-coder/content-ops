@@ -8,7 +8,7 @@
 
 `skills/content-methods/SKILL.md` 是迁入方法的阅读入口；`skills/content-methods/references/` 下四份今日更新文件（`model-launch-playbook.md` 模型发布核验、`multimodal-playbook.md` 多模态制作、`style-profiles.md` 样本结构观察、`workflow-archive.md` 工作流验收）逐字迁自原 ai-content-alchemy 的 `9208963b8af060c5994daaa5e38f0f58ae3051be`。另迁入其四份直接引用依赖：`model-launch-window-retrospective.md` 协作复盘、`xhs-product-carousel.md` 图文方法、`xhs-community-promo-video.md` 视频方法、`brewreel-integration.md` 视频工具接入说明。上述均为可编辑方法源，不是派生缓存；不新增模型事实账本，也不自动修改已确认业务规范。BrewReel 工具程序不属今日改动，未导入；使用时依说明另行安装。
 
-2026-11-09（北京时间）共53次提交，只修改上述四份今日文件；本次保留最终有效状态，已合并删除的重复段落不复活。旧仓完整 Git 历史另备份为本机 `/Users/lilith/Desktop/ai-content-alchemy-backup-20261109.bundle`（离线恢复用，非可编辑事实源，不进 Git；`git clone <bundle路径> <恢复目录>` 可恢复）。后续 content-ops 方法仅在本仓维护，停止向已撤销的 ai-content-alchemy GitHub 仓库写入。
+2026-11-09（北京时间）共53次提交，只修改上述四份今日文件；本次保留最终有效状态，已合并删除的重复段落不复活。旧仓完整 Git 历史曾备份为桌面 `ai-content-alchemy-backup-20261109.bundle`；2026-11-09 按用户要求移入废纸篓，桌面不再保留。此备份不是程序或运行依赖；废纸篓清空前仍可恢复，清空后不保证可找回旧仓完整历史。后续 content-ops 方法仅在本仓维护，停止向已撤销的 ai-content-alchemy GitHub 仓库写入。
 
 
 AI野史⑧观点文索引（2026-11-09）：`data/model-corpus.md` DeepSeek“AI野史⑧《K3.1 Pro拉完了，DeepSeek V4.1 Flash 1017应该就是目前实质上的国模一哥了》观点与留言吸收”保存作者排名判断、证据缺口及评论反例；不将“国模第一”当作同题实测结论。争议评论通用核验方法唯一维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`。仅更新既有文件，不存全文或完整留言副本。
