@@ -101,6 +101,8 @@ AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，
 
 模型文章合并到 `data/model-corpus.md` 对应型号专节，分别记录发布稿、媒体转述及发布前线索的来源指纹、版本/时间边界与证据缺口，不复制原文。Kimi 本轮发布前 3D 样本见第 12 节。创作分析方法统一维护于本机 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`，仓库不复制该手册。
 
+BubbleBrain 发布速览与个人小测记录位于 `data/model-corpus.md` Kimi 第 11 节同名补充样本，保留四项任务、作者判断、数字差异和重复评论边界；通用取证方法只引用仓库外炼丹炉 `references/model-launch-playbook.md` 的“发布速览附个人小测”节。未新增文件或事实副本。
+
 2026-11-09 新增的“榜单、海外作品与测评导流”样本仍保存在同一 Kimi 专节；其通用方法引用炼丹炉模型上新手册，不建立原文或规则副本。
 
 ## 提示词查看与素材单图反推
