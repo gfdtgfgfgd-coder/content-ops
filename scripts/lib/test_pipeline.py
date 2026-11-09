@@ -1714,6 +1714,18 @@ class MonitoringTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'近期内容雷同'):m.check_novelty([{'title':'全新角度','body':old['body']+'完成'}],[old],cfg)
         m.check_novelty([{'title':'先做文档索引再查线索','body':'与原场景无关的独立写法'}],[old],cfg)
 
+    def test_recent_duplicate_enters_existing_bounded_rewrite_loop(self):
+        from . import monitoring as m
+        old={'id':'recent','title':'复杂代码任务先拆成小步','body':'先核对依赖和验收再逐项推进。'*8}
+        fresh={'title':'从团队交接开始整理文档','body':'先整理业务边界和负责人的交接材料。'*6}
+        request={'novelty_policy':m.policy(),'recent_materials':[old]}
+        with tempfile.TemporaryDirectory() as tmp, patch.object(copy,'claude_call',return_value=({'posts':[]},{})) as call, patch.object(copy,'validate_posts',side_effect=[[dict(old)],[fresh]]):
+            result,usage=copy.generate_validated_copy_chunk('system',request,{},1,Path(tmp)/'raw.txt',1,'GLM5.3',[],'xhs','format_1',0,retries=1)
+            self.assertEqual(result,[fresh]);self.assertEqual(call.call_count,2)
+            retry=json.loads(call.call_args_list[1].args[1])
+            self.assertIn('更换主题切口',retry['risk_rewrite']['instruction'])
+            self.assertEqual(retry['recent_materials'],[old])
+
     def test_sync_preserves_manual_fields_and_is_idempotent_in_isolated_git(self):
         from . import monitoring as m
         from datetime import datetime, timedelta

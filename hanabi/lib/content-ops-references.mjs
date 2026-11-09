@@ -1,5 +1,6 @@
 import { promptUI } from './content-ops-prompt-ui.mjs';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+const dateLabel = value => !value ? '未知' : /^\d{4}-\d{2}-\d{2}$/u.test(value) ? value : Number.isFinite(Date.parse(value)) ? new Date(value).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',hour12:false}) : '未知';
 const keyOf = reference => `${reference.platform}:${reference.id}`;
 const metric = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) ? Number(value).toLocaleString('zh-CN') : '—';
 const platforms = new Set(['xhs', 'xianyu']);
@@ -645,7 +646,7 @@ export class ContentOpsReferences {
       <div class="ref-media">${images.length ? this.image(images[0], post.title) : '<div class="ref-image ref-image--missing"><p>本机暂无图片</p></div>'}${images.length > 1 ? `<details class="ref-images" data-ref-images><summary>查看其余 ${images.length - 1} 张图片</summary><div class="ref-extra-images"></div></details>` : ''}</div>
       <div class="ref-body">
         <div class="ref-collection-actions"><label>素材归属<select data-ref-collection aria-label="调整素材合集">${this.collectionOptions(post)}</select></label></div>
-        <p class="ref-text">发布：${esc(post.published_at || '未知')} · ${post.published_at_source === 'xhs_note.time' ? '平台发布时间' : post.published_at ? '手动日期' : '待采集'}<br>点赞 ${esc(post.metrics?.likes ?? '未知')} · 收藏 ${esc(post.metrics?.collects ?? '未知')} · 评论 ${esc(post.metrics?.comments ?? '未知')}<br>互动采样：${esc(post.metrics_observed_at || '未记录')}${post.heat ? `<br>同账号样本 ${esc(post.heat.peer_count)} 篇 · 相对分位 ${esc(Math.round(post.heat.relative_percentile*100))}% · 参考权重 ${esc(post.heat.weight)}×${post.heat.growth_per_hour == null ? ' · 暂无跨日增长数据' : ` · 加权互动增长 ${esc(post.heat.growth_per_hour.toFixed(2))}/小时`}` : ''}</p>
+        <p class="ref-text">发布：${esc(dateLabel(post.published_at))} · ${post.published_at_source === 'xhs_note.time' ? '平台发布时间' : post.published_at ? '手动日期' : '待采集'}<br>点赞 ${esc(post.metrics?.likes ?? '未知')} · 收藏 ${esc(post.metrics?.collects ?? '未知')} · 评论 ${esc(post.metrics?.comments ?? '未知')}<br>互动采样（北京时间）：${esc(post.metrics_observed_at ? dateLabel(post.metrics_observed_at) : '未记录')}${post.heat ? `<br>同账号样本 ${esc(post.heat.peer_count)} 篇 · 相对分位 ${esc(Math.round(post.heat.relative_percentile*100))}% · 参考权重 ${esc(post.heat.weight)}×${post.heat.growth_per_hour == null ? ' · 暂无跨日增长数据' : ` · 加权互动增长 ${esc(post.heat.growth_per_hour.toFixed(2))}/小时`}` : ''}</p>
         <section class="ref-copy-section"><h3>正文</h3><p class="ref-text">${esc(body || '—')}</p></section>
       </div>
     </article>`;

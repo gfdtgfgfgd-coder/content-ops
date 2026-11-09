@@ -194,7 +194,7 @@ def sync_main(argv=None):
         try:
             raw=source.read_bytes();current=read_posts(source);latest={p['id']:p for p in current}
             paths=['data/posts.jsonl']
-            for row,new in ready:
+            for row,new in sorted(ready, key=lambda item: (item[1], item[0]['published_at'])):
                 previous=by_id.get(row['id'])
                 if latest.get(row['id'])!=previous:raise ValueError('采集期间素材已被编辑，请重试；不覆盖新改动')
                 if new:

@@ -247,7 +247,7 @@ def load_references(path, max_chars=32000, platform='xhs', model='', style_prese
         elif memberships or (ROOT / 'data/collections.json').exists():
             raise ValueError('对应平台/合集缺少参考图素材，请手选参考或补充合集')
         tokens = re.findall(r'[a-z0-9]+', model.casefold())
-        heat = monitoring.heat_scores(candidates, monitoring.policy())
+        heat = monitoring.heat_scores(load_posts(), monitoring.policy())
         def rank(post):
             label, signal, metrics = post.get('label') or {}, post.get('signal') or {}, post.get('metrics') or {}
             good = label.get('good') is True or signal.get('engagement_tier') == 'good'
