@@ -10,7 +10,7 @@
 
 Flash 与团队协作解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 20 节保存供稿来源、协作实验主张、历史接入和去重留言，共同发布事实回指第 11 节；通用对照方法维护在外部炼丹炉 `references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。仅修改既有文件，不保存原文或留言副本。
 
-cxuan 限时内测快讯索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 19 节保存来源定位、临时路由／计费／并发主张及去重留言，保留原生多模态与图片调用反例、速度和到期时点缺口。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“限时内测快讯：到期标识与最小操作”。本轮只改既有文件，不新增原文、评论或规则副本。
+DeepSeek V4.1 Flash 限时内测快讯索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 19 节保存临时模型名、原生多模态／速度／计费／并发主张及 112 条留言的去重信号，分开记录速度自报、价格争议、开放范围、可靠性和到期线索。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“限时内测快讯：到期标识与最小操作”。本轮只改既有文件，不新增原文、评论或规则副本。
 
 机器之心 Flash 发布解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第18节保存来源指纹、模型卡基准核验、推断和评论边界；共同发布事实回指第11节，通用方法引用外部炼丹炉 `references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。未新增原文、评论或规则副本。
 
@@ -20,13 +20,13 @@ DeepSeek 新版解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek �
 
 APPSO 发布解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 17 节保存本篇来源指纹、CSA2／DSpark、Harness v0.1.5 与实验团队的供稿主张及去重反馈；共同参数、价格和路由回指第 11 节。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。本轮仅改既有文件，不新增全文、评论或规则副本。
 
-DeepSeek 官方1017更新索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第14节唯一保存官方公告、四项演示、Search/Fetch历史生效与当前指南的证据账本及去重评论主题；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“模型与服务端工具：成功调用计费和证据时点”。本轮仅改既有文件，不新增全文或计费规则副本。
-
 Datawhale 接入稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 15 节保存 V4 Flash 0731 历史样本、来源指纹、API 公测范围、基准归因、配置主张与去重留言，与 V4.1 分开。通用教程验收方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“API 后训练更新与接入教程：范围、配置与成功证据”。本轮只更新既有文件，不新增全文或评论副本。
 
-本轮 DeepSeek 发布解读索引：`data/model-corpus.md` DeepSeek 第 13 节保存好机友供稿的来源指纹、价格/基准主张、三项演示与去重评论；图片占位和历史权益均保留待核验。成本前沿、低提示交互与入口摩擦的通用方法唯一维护在仓库外炼丹炉 `references/model-launch-playbook.md` 同名节。本轮只更新既有文件，不新增全文或评论副本。
+DeepSeek 官方1017更新索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第14节唯一保存官方公告、四项演示、Search/Fetch历史生效与当前指南的证据账本及去重评论主题；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“模型与服务端工具：成功调用计费和证据时点”。本轮仅改既有文件，不新增全文或计费规则副本。
 
 DeepSeek 短预告索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 12 节保存《DeepSeek，新模型即将发布》的预计窗口、过渡安排、与正式稿的时点差异及两条去重留言的证据边界；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“短预告与正式公告：窗口、条件与版本差异”。仅改既有文件，不新增全文、评论或规则副本。
+
+本轮 DeepSeek 发布解读索引：`data/model-corpus.md` DeepSeek 第 13 节保存好机友供稿的来源指纹、价格/基准主张、三项演示与去重评论；图片占位和历史权益均保留待核验。成本前沿、低提示交互与入口摩擦的通用方法唯一维护在仓库外炼丹炉 `references/model-launch-playbook.md` 同名节。本轮只更新既有文件，不新增全文或评论副本。
 
 DeepSeek 发布稿吸收索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 11 节唯一维护非对称架构、缓存基线、历史定价与别名迁移主张，并标明缺图、未核链接和重复留言边界；第 1 节与历史营销候选按该账本约束。通用核验方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“非对称架构发布：阶段、缓存层级与别名迁移”。本轮仅修改既有文件，不新增全文、评论或价格副本。
 
