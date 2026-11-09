@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+DeepSeek 新版解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 16 节保存《DeepSeek V4.1 Flash 新版发布： api 自带搜索能力》的来源指纹、官方成绩／成本图／模型卡补证和去重评论；同事件公告与工具计费仍引用第 14 节。通用对数轴／比较条件方法唯一维护在外部炼丹炉 `references/model-launch-playbook.md` 既有“小版本发布”节，排版反馈分流与动效验证方法唯一维护在 `references/multimodal-playbook.md`“代码图解与动效长文”。本轮仅改既有文件，不新建原文、留言或规则副本。
+
 大模型观测员 V4.1 Flash 测评索引（2026-11-09）：`data/model-corpus.md` DeepSeek 专节“大模型观测员 V4.1 Flash 测评吸收”保存来源指纹、档位／自测／可靠性账本、去重留言和缺图边界；通用复测方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“同分、少步骤与领域迁移的复测”。本轮仅修订既有文件，不新增全文或评论副本。
 
 APPSO 发布解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 17 节保存本篇来源指纹、CSA2／DSpark、Harness v0.1.5 与实验团队的供稿主张及去重反馈；共同参数、价格和路由回指第 11 节。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。本轮仅改既有文件，不新增全文、评论或规则副本。
