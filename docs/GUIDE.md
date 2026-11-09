@@ -186,6 +186,8 @@ python3 scripts/check.py --help
 
 当前帖子唯一源为 `data/posts.jsonl`；风险规则唯一源为 `rules/banned-words-quick.yaml`；运营偏好事实源为 `skills/simin-persona/SKILL.md` 和 `data/wecom/simin-feedback.jsonl`。模型语料库唯一源为 `data/model-corpus.md`。用户提供的模型文章合并到对应型号专节，保留来源、入库日期、证据状态与数据口径；供稿不等于独立核验，不另存全文/评论副本。Kimi 本次吸收记录见该文件第 11 节。不要编辑派生包代替源文件。本轮新闻综述的来源与定点核验继续维护在 Kimi 第 11 节；可复用方法唯一维护在本机炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md` 的“模型发布新闻综述”节，仓库只引用。
 
+Rhea 深度实测的来源、逐项结果、完成声明差异与未测条件，维护在 `data/model-corpus.md` 的“深度实测吸收记录：执行结果与自我验收盲区”节。可复用的独立验收方法维护在本机炼丹炉 `ai-content-alchemy/references/workflow-archive.md` 的“交付声明与独立验收”节，模型文章手册提供调用入口；案例数字不在技能内重复保存。
+
 Datawhale 近一周实测稿已合并到 `data/model-corpus.md` 的 Kimi 同名吸收节，补充验收对象、工具/人工贡献、总量与吞吐核对及订阅窗口口径；与其他样本分开归因，不另建全文或评论副本。
 
 本次摸鱼小李六组 3D 参考记录见 `data/model-corpus.md` 同名专节；提示词要求、作者结果描述与实际验收证据分开记录，逆向操作及离线交付方法见仓库外炼丹炉既有模型手册。
