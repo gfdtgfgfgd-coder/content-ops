@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+- `scripts/lib/monitoring.py`：账号采集文件安全合并、发布日期与互动快照归一化、近期内容避重及热度权重的内部实现；入口复用 `scripts/fetch.py sync`。唯一帖子源仍为 `data/posts.jsonl`；策略参数在既有 `config/data-cleaning.json` 的 monitoring 节，账号入口在既有 `data/sources/bookmarks-raw.json`；浏览器原始中间态放系统临时目录，不作为第二事实源。
+
 ### 2026-11-09 错仓迁移：内容方法唯一源
 
 `skills/content-methods/SKILL.md` 是迁入方法的阅读入口；`skills/content-methods/references/` 下四份今日更新文件（`model-launch-playbook.md` 模型发布核验、`multimodal-playbook.md` 多模态制作、`style-profiles.md` 样本结构观察、`workflow-archive.md` 工作流验收）逐字迁自原 ai-content-alchemy 的 `9208963b8af060c5994daaa5e38f0f58ae3051be`。另迁入其四份直接引用依赖：`model-launch-window-retrospective.md` 协作复盘、`xhs-product-carousel.md` 图文方法、`xhs-community-promo-video.md` 视频方法、`brewreel-integration.md` 视频工具接入说明。上述均为可编辑方法源，不是派生缓存；不新增模型事实账本，也不自动修改已确认业务规范。BrewReel 工具程序不属今日改动，未导入；使用时依说明另行安装。
@@ -311,6 +313,7 @@ Datawhale 近一周实测稿已合并到 `data/model-corpus.md` 的 Kimi 同名�
 | D16–D19：工作台与对外红线 | Hanabi 是 content-ops 专用工作台；Model Price Watch 只用于调研、不进入当日生成链路；小红书与闲鱼禁 API 字样，所有对外内容禁境外模型品牌与型号。 |
 | D20–D25：单源、分层与生产链路 | D20 由 `doctor.py` 和 repo budget 落门禁；跟踪文件预算曾落后实际仓库数量，2026-11-07 按当前131个有效工作区文件同步门槛（含需保留的输出 sidecar），字节及单文件上限不变；D21 采用 Lilith、规划 agent、执行 agent、批量 agent 四元分工；D22 文案/视觉/图像分阶段、分类即时派生、文档白名单直读；D23 素材 CRUD 直接维护 `data/posts.jsonl`；D24 模型语料唯一源为 `data/model-corpus.md`，由 Hanabi 只读展示并按配置供生成使用；D25 大字报改为 AI 无字底图加 Pillow 排字，其他版式继续完整海报直出。 |
 | D26：素材库本地参考图纳入 Git 跟踪与体量预算扩容 | 外部图床/CDN URL（小红书等）具有时效签名，过期后报 403 无法重新下载，本机 `data/images/`（共 45 张精选参考图）为唯一生产事实。为确保其他电脑 clone 或下载仓库后完整可用、不出现“本机图片缺失或无法读取”，移除 `.gitignore` 中对 `data/images/` 的忽略，将 45 张精选参考图纳入 Git 跟踪，并将 `config/repo-budget.json` 跟踪文件上限调整为 180 个、体量上限调整为 12000 KB。 |
+| D27：定向账号监测与新增原图预算 | 用户授权采集近7天图文与每日增量，已确认新增32篇且保留原素材；文件上限180→260、总体12000→32000KB，为真实原图及少量后续增量留余量。单文件、scratch限制不变，不清理生产数据来过闸；未来达到预算时停止入库并报告，不自动无限扩容。 |
 | 角色术语 | 旧记录中的 Codex/Gemini 等名称仅是历史实现，不是固定角色要求；按四元分工理解，模型供应商可替换。 |
 | X1–X4：否决项 | 不以外部大模型重写底层、不全站抓取、不训练思敏偏好模型、不把界面永久排除；偏好以可审的 SKILL.md 管理，当前 Hanabi 工作台按 D16 承担可视化入口。 |
 
@@ -326,3 +329,25 @@ Datawhale 近一周实测稿已合并到 `data/model-corpus.md` 的 Kimi 同名�
 ### 2026-11-09 主分支同步与保护提示
 
 用户授权将当前工作分支完整合入 main，保留全部提交历史及既有分支，不清理任何素材或交付文件。GitHub 返回当前私有仓库启用分支保护需升级套餐（HTTP403）；保持私有，不自动付费，不将关闭提示描述为已启用保护。
+
+
+## 小红书账号每日监测
+
+账号来源唯一读取 `data/sources/bookmarks-raw.json` 的小红书入口；当前为深度deepAI，ID `69df2b9f0000000032019e07`。策略唯一源 `config/data-cleaning.json` 的 `monitoring`：最近7天从北京时间当天减7天的00:00起算，未知日期不拿抓取时间替代。`published_at` 存带时区的原始平台日期，`published_at_source=xhs_note.time`；人工改日期为 `manual_date`。编辑器原日期不变时不提交日期字段，避免把平台精确时间降为日期。`fetched_at` 仍只代表入库时间。
+
+浏览器使用 agent-reach 路由下的 ego lite，先读 ego-browser skill。一个 TaskSpace 内读取账号时间线，以带签名的原链接逐篇导航；不读Cookie、不自动登录，不调用未观察到的私有接口。滚动到非置顶帖子早于窗口后继续核对边界，不能因顶部旧置顶帖而停止。已有素材按ID对照，补齐其日期并刷新互动；缺页、看不到日期、视频和未完整加载均记录缺口。每分钟最多10个动作，每50篇休息5分钟；验证码/登录失效立即停。
+
+采集 JSON 数组写系统临时目录，单条契约为 `{note:<页面已渲染的 window.__INITIAL_STATE__.note.noteDetailMap[id].note>, date_text:<笔记日期DOM原文>, url:<已访问签名链接>, observed_at:<ISO采样时间>}`。必须等 note.time、note.desc 和图片列表加载完；只复制该条 note，不能把评论、Cookie或整页状态进库。note 中的 noteId、user.userId、time（毫秒）、title、desc、tagList、imageList[].urlDefault 和 interactInfo 的 likedCount/collectedCount/commentCount 分别提供ID、作者、日期、图文及互动。空字符串是平台明确零计数，字段缺失表示未知；不能把总获赞与收藏、粉丝数、评论点赞当笔记指标。
+
+```bash
+python3 scripts/fetch.py sync --records /tmp/采集文件.json --author-id 69df2b9f0000000032019e07
+python3 scripts/fetch.py sync --records /tmp/采集文件.json --author-id 69df2b9f0000000032019e07 --apply
+```
+
+先预览再 apply：旧帖只补日期、作者ID与互动，不改用户标题/正文/图片/精选/合集；新帖必须为窗口内、原文完整的图文帖，并验证全套原图后才整批落库。持有与界面相同的 `data/.posts.lock`，重读确认采集期间未并发修改；保留所有其他帖子和顺序。图片只写新增路径，不覆盖旧图；新增封面调用现有 `scripts/ocr-covers.swift --images-json <临时图片路径数组>` 的只读批量OCR，不重写已有封面字。OCR不可用保留未知并报告，不把笔记标题冒充识别结果。失败仅撤回本次事务。唯一事实源仍为 posts.jsonl，不生成第二份索引/清单。新增图片遵循第一节已有 `data/images/<platform>/<id>/` 生命周期，原始采集JSON验收后可删。
+
+`metrics` 保存最近已知指标，`metrics_observed_at` 与最多30次 `metrics_history` 保存真实采样；重复或过时采样不追加。热度是即时派生值，不另建文件：同账号至少5篇可比样本、至少10加权互动才有额外权重；点赞1、收藏2、评论1.5；最少按24小时比较年龄，3天未刷新的指标不加权。年龄校正对数互动与可用的小时增长率组成相对分；80%分位及以上标“同账号相对热帖”，权重默认1–3倍。权重只影响同平台/合集/人工精选与型号相关性约束下的自动候选；手选不被覆盖，未分类新帖不擅自进人工合集。参数可在上述唯一配置调整；这不证明爆款、曝光或成交，暂无多时点快照时不编增长。
+
+生成文案读取最近日期素材作为避重对照；标题标点归一后相似度≥0.85或正文≥0.78触发既有有限重写，仍失败就报错。最近素材与策略快照写本次生成 manifest，续跑复用原避重窗口；封面视觉模型另读近期标题与OCR作为短字避重提示，不向封面模型传正文。词法检查不保证语义全异，仍须人工终审。没有运行收费模型作为本轮验收。
+
+每天北京时间0点的任务由 Codex 本聊天定时任务管理（automation ID `automation`），不是另装系统cron。任务通过上述浏览器流程和 sync CLI 写桌面唯一生产库，完成后doctor、自验、中文提交并推送；不静默扩预算或清素材。电脑需开机、Codex与ego lite可运行且小红书登录有效；失败在聊天报告。定时任务本身不承诺无人值守登录或绕过平台限制。

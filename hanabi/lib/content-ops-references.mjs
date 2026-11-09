@@ -320,6 +320,7 @@ export class ContentOpsReferences {
       <label>平台<select name="platform">${options([['xhs','小红书'],['xianyu','闲鱼']])}</select></label>
       <div class="ref-upload" tabindex="0" role="button" aria-label="添加图片，点击选择或拖拽多张图片" data-ref-drop><strong>➕ 添加图片（选填）</strong><span>可继续追加或拖拽多张 PNG / JPEG / WebP；每张不超过 15MB，单次新增共 45MB</span><input type="file" name="upload" accept="image/png,image/jpeg,image/webp" multiple hidden></div>
       <div class="ref-editor-preview" role="list" aria-label="素材图片编辑队列" hidden></div>
+      <label>发布日期（选填，留空表示未知）<input type="date" name="published_at"></label>
       <label>标题（选填）<input name="title" maxlength="200000"></label>
       <label>正文内容（选填）<textarea name="body" rows="6" maxlength="200000"></textarea></label>
       <label>封面字样 / OCR（选填）<textarea name="cover_ocr" rows="6" maxlength="200000"></textarea></label>
@@ -360,6 +361,7 @@ export class ContentOpsReferences {
     this.form.elements.platform.value = post?.platform || this.platform.value;
     for (const name of ['title','cover_ocr','model']) this.form.elements[name].value = post?.[name] || '';
     this.form.elements.body.value = post?.body_full || '';
+    this.form.elements.published_at.value = (post?.published_at || '').slice(0,10);
     this.form.elements.good.checked = post?.label_good === true;
     this.editorImages = post ? imageList(post).map(source => ({source, path:decodeURIComponent(source.replace('/api/content-ops/image/', 'data/images/'))})) : [];
     this.imageVersion = (this.imageVersion || 0) + 1; this.readingImage = false;
@@ -477,6 +479,7 @@ export class ContentOpsReferences {
     if (this.mutating || this.readingImage) { this.editorStatus.textContent = '请等待当前操作完成。'; return; }
     const payload = {};
     for (const name of ['platform','title','body','cover_ocr','model']) payload[name] = this.form.elements[name].value;
+    if(this.form.elements.published_at.value !== (this.editing?.published_at || '').slice(0,10))payload.published_at=this.form.elements.published_at.value;
     payload.label = {good:this.form.elements.good.checked};
     if (!this.hasImage && !payload.title.trim() && !payload.body.trim()) { this.editorStatus.textContent = '请至少保留一张图片或填写标题/正文。'; return; }
     payload.retained_images = this.editorImages.filter(image => image.path).map(image => image.path);
@@ -613,7 +616,7 @@ export class ContentOpsReferences {
     const hits = (Array.isArray(post.banned_word_hits) ? post.banned_word_hits : []).map(hit => typeof hit === 'string' ? hit : hit?.word || hit?.term || hit?.pattern || hit?.id || '').filter(Boolean);
     const selected = this.selectedKeys.has(keyOf(post));
     const collections = Array.isArray(post.collection_names) ? post.collection_names : [];
-    return `<span class="ref-badge-platform">${post.platform === 'xhs' ? '小红书' : '闲鱼'}</span>${collections.length ? collections.map(name => `<span class="ref-badge-collection">合集：${esc(name)}</span>`).join('') : '<span class="ref-badge-uncategorized">未分类</span>'}${post.label_good === true ? '<span class="ref-badge-good">✅ 精选</span>' : ''}${hits.length ? `<span class="ref-badge-warn">⚠️ 含禁词：${esc([...new Set(hits)].join('、'))}</span>` : ''}${selected ? '<span class="ref-badge-selected">下批待引用</span>' : ''}`;
+    return `<span class="ref-badge-platform">${post.platform === 'xhs' ? '小红书' : '闲鱼'}</span>${collections.length ? collections.map(name => `<span class="ref-badge-collection">合集：${esc(name)}</span>`).join('') : '<span class="ref-badge-uncategorized">未分类</span>'}${post.label_good === true ? '<span class="ref-badge-good">✅ 精选</span>' : ''}${hits.length ? `<span class="ref-badge-warn">⚠️ 含禁词：${esc([...new Set(hits)].join('、'))}</span>` : ''}${post.heat?.status === 'relative_hot' ? `<span class="ref-badge-good">同账号相对热帖 · 参考权重 ${esc(post.heat.weight)}×</span>` : post.heat ? '<span>互动观察中</span>' : ''}<span class="ref-badge-date">发布：${esc((post.published_at || '').slice(0,10) || '日期未知')}</span>${selected ? '<span class="ref-badge-selected">下批待引用</span>' : ''}`;
   }
 
   collectionOptions(post) {
@@ -642,6 +645,7 @@ export class ContentOpsReferences {
       <div class="ref-media">${images.length ? this.image(images[0], post.title) : '<div class="ref-image ref-image--missing"><p>本机暂无图片</p></div>'}${images.length > 1 ? `<details class="ref-images" data-ref-images><summary>查看其余 ${images.length - 1} 张图片</summary><div class="ref-extra-images"></div></details>` : ''}</div>
       <div class="ref-body">
         <div class="ref-collection-actions"><label>素材归属<select data-ref-collection aria-label="调整素材合集">${this.collectionOptions(post)}</select></label></div>
+        <p class="ref-text">发布：${esc(post.published_at || '未知')} · ${post.published_at_source === 'xhs_note.time' ? '平台发布时间' : post.published_at ? '手动日期' : '待采集'}<br>点赞 ${esc(post.metrics?.likes ?? '未知')} · 收藏 ${esc(post.metrics?.collects ?? '未知')} · 评论 ${esc(post.metrics?.comments ?? '未知')}<br>互动采样：${esc(post.metrics_observed_at || '未记录')}${post.heat ? `<br>同账号样本 ${esc(post.heat.peer_count)} 篇 · 相对分位 ${esc(Math.round(post.heat.relative_percentile*100))}% · 参考权重 ${esc(post.heat.weight)}×${post.heat.growth_per_hour == null ? ' · 暂无跨日增长数据' : ` · 加权互动增长 ${esc(post.heat.growth_per_hour.toFixed(2))}/小时`}` : ''}</p>
         <section class="ref-copy-section"><h3>正文</h3><p class="ref-text">${esc(body || '—')}</p></section>
       </div>
     </article>`;

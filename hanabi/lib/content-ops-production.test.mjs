@@ -526,7 +526,7 @@ test('editor saving preserves modal scroll, reports refresh failures, and ignore
   const viewport={scrollX:0,scrollY:1800,scrollTo({top}){this.scrollY=top;}};
   globalThis.window=viewport;
   const browser=Object.create(ContentOpsReferences.prototype),old={platform:'xhs',id:'aa'},next={...old,title:'新标题'};
-  const elements=Object.fromEntries(['platform','title','body','cover_ocr','model'].map(name=>[name,{value:name==='platform'?'xhs':name==='title'?'新标题':''}]));
+  const elements=Object.fromEntries(['platform','title','body','cover_ocr','model','published_at'].map(name=>[name,{value:name==='platform'?'xhs':name==='title'?'新标题':''}]));
   elements.good={checked:false};let updated=0,fail=false;
   Object.assign(browser,{form:{elements,querySelectorAll:()=>[]},editing:old,hasImage:false,editorImages:[],editorStatus:{},status:{},requestVersion:0,
     dialog:{close(){viewport.scrollY=0;}},reconcileSelection(){},mutationRequest:async()=>({reference:next}),
@@ -785,7 +785,9 @@ test('reference mutations refuse an inherited parent Git repository', async t =>
 
 test('references CRUD accepts image+text, image-only, text-only and preserves manual labels', async t => {
   const {dir,store}=await referenceFixture(t);
-  const post=await store.addReference({title:'GLM 标题',body:'正文',cover_ocr:'OCR',model:'用户型号',image:`data:image/png;base64,${png.toString('base64')}`,model_category:'Kimi',layout_style:'comparison',label:{good:true}});
+  const post=await store.addReference({title:'GLM 标题',body:'正文',cover_ocr:'OCR',model:'用户型号',published_at:'2026-11-02',image:`data:image/png;base64,${png.toString('base64')}`,model_category:'Kimi',layout_style:'comparison',label:{good:true}});
+  assert.equal(post.published_at,'2026-11-02');assert.equal(post.published_at_source,'manual_date');
+  await assert.rejects(()=>store.updateReference(post.id,{published_at:'2026-02-30'}));
   assert.match(post.id,/^[0-9a-f]{24}$/u);assert.equal(post.source,'user_added');assert.ok(Date.parse(post.fetched_at));
   assert.deepEqual(post.images,[`data/images/xhs/${post.id}/1.png`]);assert.deepEqual(await readFile(join(dir,post.images[0])),png);
   await assert.rejects(()=>store.addReference({image:png.subarray(0,-12)}),{statusCode:415});
@@ -794,7 +796,7 @@ test('references CRUD accepts image+text, image-only, text-only and preserves ma
   assert.equal(pureImage.title,'');assert.match(pureImage.images[0],/xianyu\/[0-9a-f]{24}\/1.webp$/u);
   const pureText=await store.addReference({body:'只有正文'});
   const selected=await store.list(new URLSearchParams({platform:'xhs'}));
-  assert.deepEqual(selected.posts.map(item=>item.id),[pureText.id,post.id]);assert.equal(selected.posts[1].classification_method,'manual');
+  assert.deepEqual(selected.posts.map(item=>item.id),[pureText.id,post.id]);assert.equal(selected.posts[1].classification_method,'manual');assert.equal(selected.posts[1].published_at,'2026-11-02');assert.equal(selected.posts[1].heat,null);
   const noCover=await store.list(new URLSearchParams({ids:pureText.id}));assert.equal(noCover.posts[0].image,null);assert.deepEqual(noCover.posts[0].images,[]);
   await store.updateReference(post.id,{body:'修改正文',cover_ocr:'新 OCR',model:'新型号',label:{good:false},image:{data:webp.toString('base64'),mimeType:'image/webp'}});
   await assert.rejects(()=>readFile(join(dir,post.images[0])),{code:'ENOENT'});
@@ -804,7 +806,7 @@ test('references CRUD accepts image+text, image-only, text-only and preserves ma
   await assert.rejects(()=>stat(join(dir,`data/images/xhs/${post.id}`)),{code:'ENOENT'});
   changed=await store.updateReference(post.id,{image:null});assert.deepEqual(changed.images,[]);
   await assert.rejects(()=>stat(join(dir,`data/images/xianyu/${post.id}`)),{code:'ENOENT'});
-  const readback=(await store.records()).find(item=>item.id===post.id);assert.equal(readback.body,'修改正文');assert.equal(readback.cover_ocr,'新 OCR');assert.equal(readback.model,'新型号');assert.equal(readback.label.good,false);
+  const readback=(await store.records()).find(item=>item.id===post.id);assert.equal(readback.body,'修改正文');assert.equal(readback.cover_ocr,'新 OCR');assert.equal(readback.model,'新型号');assert.equal(readback.label.good,false);assert.equal(readback.published_at,'2026-11-02');
   await store.deleteReference(pureImage.id);await assert.rejects(()=>stat(join(dir,`data/images/xianyu/${pureImage.id}`)),{code:'ENOENT'});
   assert.equal((await store.records()).length,2);
 });
@@ -1159,7 +1161,7 @@ test('multi-image editor submits retained and appended queues and guards empty/r
   t.after(() => { if(previousWindow===undefined)delete globalThis.window;else globalThis.window=previousWindow; });
   globalThis.window={scrollX:0,scrollY:800,scrollTo:options=>assert.equal(options.top,800)};
   const editor=Object.create(ContentOpsReferences.prototype),requests=[];
-  const elements=Object.fromEntries(['platform','title','body','cover_ocr','model'].map(name=>[name,{value:name==='platform'?'xhs':name==='cover_ocr'?'一\n二':''}]));
+  const elements=Object.fromEntries(['platform','title','body','cover_ocr','model','published_at'].map(name=>[name,{value:name==='platform'?'xhs':name==='cover_ocr'?'一\n二':''}]));
   elements.good={checked:false};
   Object.assign(editor,{form:{elements,querySelectorAll:()=>[]},editorStatus:{textContent:''},editing:{id:'aa',platform:'xhs'},editorImages:[],hasImage:false,
     dialog:{close(){}},reconcileSelection(){},async refreshAfterMutation(){},async mutationRequest(path,payload){requests.push({path,payload});return {reference:{id:'aa',platform:'xhs'}};}});

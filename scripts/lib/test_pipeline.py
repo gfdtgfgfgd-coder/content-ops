@@ -1681,5 +1681,77 @@ class RevisionTests(unittest.TestCase):
         self.assertNotIn('secret body',str(caught.exception))
 
 
+class MonitoringTests(unittest.TestCase):
+    def test_recent_uses_published_time_not_fetch_time_and_preserves_boundary(self):
+        from . import monitoring as m
+        from datetime import datetime
+        now=datetime.fromisoformat('2026-11-09T22:00:00+08:00');cfg=m.policy()
+        rows=[{'id':'a','platform':'xhs','published_at':'2026-11-02T00:00:00+08:00'},
+              {'id':'b','platform':'xhs','published_at':'2026-11-01T23:59:59+08:00'},
+              {'id':'c','platform':'xhs','fetched_at':now.isoformat()},
+              {'id':'d','platform':'xhs','published_at':'2026-11-10'}]
+        self.assertEqual([p['id'] for p in m.recent_posts(rows,cfg,now)],['a'])
+
+    def test_heat_needs_fresh_known_metrics_and_compares_same_account(self):
+        from . import monitoring as m
+        from datetime import datetime
+        now=datetime.fromisoformat('2026-11-09T22:00:00+08:00');cfg=m.policy()
+        rows=[{'id':str(i),'platform':'xhs','author_id':'one','published_at':'2026-11-08T22:00:00+08:00',
+               'metrics_observed_at':now.isoformat(),'metrics':{'likes':i*10,'collects':None}} for i in range(6)]
+        rows += [{'id':'missing','platform':'xhs','author_id':'one','metrics':{'likes':999}},
+                 {**rows[0],'id':'other','author_id':'two','metrics':{'likes':9999}}]
+        scores=m.heat_scores(rows,cfg,now)
+        self.assertNotIn('missing',scores);self.assertEqual(scores['other']['weight'],1)
+        self.assertGreater(scores['5']['weight'],scores['0']['weight'])
+        self.assertEqual(scores['5']['status'],'relative_hot')
+        stale=[{**rows[5],'metrics_observed_at':'2026-11-01T22:00:00+08:00'}]
+        self.assertEqual(m.heat_scores(stale,cfg,now),{})
+
+    def test_novelty_rejects_punctuation_changes_and_near_copies(self):
+        from . import monitoring as m
+        cfg=m.policy();old={'id':'known','title':'复杂项目开发这样拆才好用','body':'先梳理项目依赖和验收要求，再逐项检查异常和测试结果。'*5}
+        with self.assertRaisesRegex(ValueError,'近期内容雷同'):m.check_novelty([{'title':old['title']+'！'}],[old],cfg)
+        with self.assertRaisesRegex(ValueError,'近期内容雷同'):m.check_novelty([{'title':'全新角度','body':old['body']+'完成'}],[old],cfg)
+        m.check_novelty([{'title':'先做文档索引再查线索','body':'与原场景无关的独立写法'}],[old],cfg)
+
+    def test_sync_preserves_manual_fields_and_is_idempotent_in_isolated_git(self):
+        from . import monitoring as m
+        from datetime import datetime, timedelta
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'data/sources').mkdir(parents=True);(root/'config').mkdir()
+            shutil.copy(ROOT/'config/data-cleaning.json',root/'config/data-cleaning.json')
+            (root/'data/sources/bookmarks-raw.json').write_text(json.dumps({'items':[{'url':'https://www.xiaohongshu.com/user/profile/account'}]}))
+            identifier='a'*24
+            old={'id':identifier,'platform':'xhs','title':'用户改的标题','body':'用户维护','images':['keep.jpg'],'label':{'good':True},'metrics':{'likes':1},'unknown_field':'keep'}
+            source=root/'data/posts.jsonl';source.write_text(json.dumps(old)+'\n')
+            subprocess.run(['git','init','-q'],cwd=root,check=True)
+            for k,v in [('user.name','test'),('user.email','test@localhost')]:subprocess.run(['git','config',k,v],cwd=root,check=True)
+            subprocess.run(['git','add','.'],cwd=root,check=True);subprocess.run(['git','commit','-qm','fixture'],cwd=root,check=True)
+            now=datetime.now(m.TZ)-timedelta(seconds=5)
+            rec=[{'url':'https://www.xiaohongshu.com/explore/'+identifier,'observed_at':now.isoformat(),'date_text':'昨天','note':{
+                'noteId':identifier,'user':{'userId':'account'},'time':int((now-timedelta(days=1)).timestamp()*1000),
+                'title':'平台原文','desc':'不可覆盖','interactInfo':{'likedCount':'12','collectedCount':'','commentCount':'3'}}}]
+            rec.append({'url':'https://www.xiaohongshu.com/explore/'+'b'*24,'observed_at':now.isoformat(),'date_text':'昨天','note':{
+                'noteId':'b'*24,'user':{'userId':'account','nickname':'作者'},'time':int((now-timedelta(days=1)).timestamp()*1000),
+                'type':'normal','title':'新图文','desc':'完整原文','imageList':[{'urlDefault':'https://test.xhscdn.com/image'}],
+                'interactInfo':{'likedCount':'2','collectedCount':'','commentCount':''}}})
+            records=root/'records.json';records.write_text(json.dumps(rec))
+            image=io.BytesIO();Image.new('RGB',(3,4),'red').save(image,format='PNG');image_data=image.getvalue()
+            with patch('urllib.request.urlopen',side_effect=lambda *a,**kw:io.BytesIO(image_data)), patch.object(m.subprocess,'run',wraps=subprocess.run) as run:
+                # The real repository doctor is unrelated to this tiny isolated fixture.
+                original=run._mock_wraps
+                run.side_effect=lambda a,**kw: subprocess.CompletedProcess(a,0) if any(str(x).endswith('/scripts/doctor.py') for x in a) else original(a,**kw)
+                args=['--root',tmp,'--records',str(records),'--author-id','account','--apply']
+                self.assertEqual(m.sync_main(args),0)
+                first=source.read_bytes();self.assertEqual(m.sync_main(args),0);self.assertEqual(source.read_bytes(),first)
+            all_saved=[json.loads(line) for line in source.read_text().splitlines()]
+            self.assertEqual(len(all_saved),2);saved=all_saved[0];self.assertEqual(all_saved[1]['body'],'完整原文')
+            self.assertEqual((root/all_saved[1]['images'][0]).read_bytes(),image_data)
+            for key in ['title','body','images','label','unknown_field']:self.assertEqual(saved[key],old[key])
+            self.assertEqual(saved['metrics']['likes'],12);self.assertEqual(saved['metrics']['collects'],0)
+            self.assertEqual(len(saved['metrics_history']),1)
+            self.assertFalse((root/'data/.posts.lock').exists())
+
+
 if __name__ == '__main__':
     unittest.main()

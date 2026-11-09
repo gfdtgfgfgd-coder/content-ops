@@ -59,5 +59,24 @@
       "index": "data/xhs/_notes-index.json",
       "urls": "data/xhs/_urls.txt"
     }
-  ]
+  ],
+  "monitoring": {
+    "recent_days": 7,
+    "metrics_max_age_days": 3,
+    "minimum_age_hours": 24,
+    "metric_weights": {
+      "likes": 1,
+      "collects": 2,
+      "comments": 1.5
+    },
+    "age_decay": 0.5,
+    "growth_weight": 0.2,
+    "minimum_peer_count": 5,
+    "minimum_interactions": 10,
+    "heat_weight": 2,
+    "hot_percentile": 0.8,
+    "history_limit": 30,
+    "title_similarity": 0.85,
+    "body_similarity": 0.78
+  }
 }

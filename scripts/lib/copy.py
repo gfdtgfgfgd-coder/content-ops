@@ -25,6 +25,7 @@ except ImportError:
 from . import gateway as image_api, words as word_check, backgrounds
 from .preferences import load_preferences
 from .store import load_posts
+from . import monitoring
 # 偏好加载路径：data/distilled-preferences.json（T13 产出）；回退：simin-persona 等分散文件。
 
 # Canonical layout names mirror user-maintained collections; legacy IDs stay accepted.
@@ -246,13 +247,14 @@ def load_references(path, max_chars=32000, platform='xhs', model='', style_prese
         elif memberships or (ROOT / 'data/collections.json').exists():
             raise ValueError('对应平台/合集缺少参考图素材，请手选参考或补充合集')
         tokens = re.findall(r'[a-z0-9]+', model.casefold())
+        heat = monitoring.heat_scores(candidates, monitoring.policy())
         def rank(post):
             label, signal, metrics = post.get('label') or {}, post.get('signal') or {}, post.get('metrics') or {}
             good = label.get('good') is True or signal.get('engagement_tier') == 'good'
             text = (post.get('title', '') + ' ' + post.get('body', '')).casefold()
             relevance = sum(token in text for token in tokens)
             engagement = metrics.get('wants' if platform == 'xianyu' else 'likes') or 0
-            return (-int(good), -relevance, -engagement, post['id'])
+            return (-int(good), -relevance, -(engagement * heat.get(post['id'], {}).get('weight', 1)), post['id'])
         ranked = sorted(candidates, key=rank)
         selected = [{'id': ranked[0]['id'], 'platform': ranked[0]['platform']}] if ranked else []
     else:
@@ -262,6 +264,7 @@ def load_references(path, max_chars=32000, platform='xhs', model='', style_prese
         if not selected:
             return load_references(None, max_chars, platform, model, style_preset)
     references, contexts, hashes, seen = [], [], {}, set()
+    selected_heat = monitoring.heat_scores(load_posts(), monitoring.policy())
     posts_by_key = {(p['platform'], p['id']): p for p in load_posts()}
     for selection in selected:
         if not isinstance(selection, dict):
@@ -285,6 +288,8 @@ def load_references(path, max_chars=32000, platform='xhs', model='', style_prese
         collection_name = next((n for n in wanted if n in collection_names), next((n for n in collection_names if n in LAYOUTS), ''))
         reference = {'id': identifier, 'platform': platform, 'title': text['title'], 'image_paths': image_paths,
                      'collection_name': collection_name, 'collection_names': collection_names}
+        if identifier in selected_heat:
+            reference['heat'] = selected_heat[identifier]
         references.append(reference)
         contexts.append({**reference, 'body': text['body'], 'cover_ocr': text['cover_ocr']})
         hashes[key] = hashlib.sha256(raw).hexdigest()
@@ -460,7 +465,7 @@ def is_copy_rewrite_error(error):
     if not isinstance(error, ValueError):
         return False
     reason = str(error)
-    return '风险词' in reason or '合法 JSON' in reason or '返回为空' in reason or '多个 JSON' in reason
+    return '风险词' in reason or '合法 JSON' in reason or '返回为空' in reason or '多个 JSON' in reason or '近期内容雷同' in reason
 
 def copy_rewrite_payload(request, error, attempt):
     reason = str(error)
@@ -468,7 +473,9 @@ def copy_rewrite_payload(request, error, attempt):
     match = re.search(r'风险词[:：]\s*(.+)$', reason)
     if match:
         banned = [part.strip() for part in match.group(1).split('、') if part.strip()]
-    if banned:
+    if '近期内容雷同' in reason:
+        instruction = '上一稿与近期素材或同批成稿雷同。更换主题切口、开头、卖点组合与使用场景；不得仅换同义词。只返回合法JSON。'
+    elif banned:
         instruction = (
             '上一稿因风险词校验失败，请整组重新写本图全部文案版本。'
             '避开 rejected_reason / banned_hits 中的词，以及当前风险词库全部禁词；'
@@ -510,7 +517,10 @@ def generate_validated_copy_chunk(system, request, settings, timeout, raw_path, 
             continue
         usages.append({**usage, 'attempt': attempt + 1, 'risk_rewrite': attempt > 0})
         try:
-            return validate_posts(chunk, count, model, rules, platform, copy_format, format_offset, corpus_model), usages
+            validated = validate_posts(chunk, count, model, rules, platform, copy_format, format_offset, corpus_model)
+            if request.get('novelty_policy'):
+                monitoring.check_novelty(validated, request.get('recent_materials', []), request['novelty_policy'])
+            return validated, usages
         except ValueError as error:
             last_error = error
             if not is_copy_rewrite_error(error) or attempt >= retries:
@@ -949,6 +959,8 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
         'model': product_model, 'corpus_model': corpus_model, 'reference': source, 'collection_name': expected_layout or '看图识别四大版式',
         'reference_reverse_prompt': reverse_record['prompt'],
         'reference_negative_prompt': reverse_record.get('negativePrompt', ''),
+        'recent_cover_materials': [{'id':p['id'],'cover_ocr':p.get('cover_ocr',''),'title':p.get('title','')} for p in monitoring.recent_posts(load_posts(), monitoring.policy(), platform=platform)],
+        'novelty_requirement':'避开近期封面的原短字组合、钩子及卖点组合；只借版式结构，不仅更换型号或同义词。',
         'cover_corpus': extract_cover_corpus(corpus_model, display_model=product_model), 'risk_rules': applicable_rules,
         'canvas': ratio, 'style': style_instruction, 'background_profiles': backgrounds.style_options(),
         'schema': {'collection_name': '四大版式之一，与参考合集一致',
@@ -1001,6 +1013,9 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
     if not isinstance(text,str) or not text.strip() or len(text)>16000:
         raise ValueError('视觉模型未返回有效文本，可能不支持图像输入，也可能是响应格式异常；请确认所选模型支持多模态图片输入。')
     plan = validate_visual_plan(parse_json(text), product_model, platform, expected_layout, rules)
+    cover_line = monitoring.normalized(''.join(t['text'] for t in plan['cover_texts']))
+    if len(cover_line) >= 12 and any(cover_line in monitoring.normalized(p.get('cover_ocr','')) for p in monitoring.recent_posts(load_posts(), monitoring.policy(), platform=platform)):
+        raise ValueError('近期封面雷同：短字组合与近期素材重复，请更换封面切口后新建批次')
     plan['reference_id'] = source['id']
     plan['reference_reverse'] = {
         'prompt': reverse_record['prompt'],
@@ -1426,6 +1441,16 @@ def run(args):
        'schema':{'posts':[{'title':'简短笔记标题', 'copy_format':'按copy_plan', 'sections':[{'kind':'按format_sections', 'text':'区块正文'}],
                  'tags':['#'+re.sub(r'\s+', '', model),'#相关场景','#目标人群'],
                  'audience':'结合产品和简报动态判断', 'angle':'本篇组织方式'}]}}
+    novelty_policy = monitoring.policy()
+    recent = (previous or {}).get('recent_materials')
+    if recent is None:
+        recent = [{k:p.get(k,'') for k in ('id','published_at','title','body','cover_ocr')}
+                  for p in monitoring.recent_posts(load_posts(), novelty_policy, platform=args.platform)]
+    request['novelty_policy'] = novelty_policy
+    request['recent_materials'] = recent
+    request['requirements'].append('近期素材只用于避重：不能复用标题、开头、卖点组合与场景，不得只换型号或同义词。高互动参考只借结构与节奏，不照搬原文、封面短字或承诺；热度不证明事实。日期未知的素材不能认定为旧帖。')
+    manifest['recent_materials'] = recent
+    manifest['novelty_policy'] = novelty_policy
     request['requirements'] = [item for item in request['requirements'] if item]
     if reference_context:
         request['few_shot_examples'] = reference_context
@@ -1441,6 +1466,7 @@ def run(args):
                 request['image_index'] = image_index
                 request['copy_plan'] = [{'image_index':image_index, 'copy_index':i+1, 'copy_format':format_for(copy_format, offset+i)} for i in range(copy_multiplier)]
                 request['previous_angles'] = [post['angle'] for post in final['posts']]
+                request['previous_copies'] = final['posts']
                 posts, usages = generate_validated_copy_chunk(
                     system, request, settings, args.timeout, out / f'copy-response-{image_index}.txt',
                     copy_multiplier, model, active_rules, args.platform, copy_format, offset, corpus_model)

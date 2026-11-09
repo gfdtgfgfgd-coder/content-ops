@@ -169,12 +169,17 @@ function uploadedImage(value){
 
 function referenceFields(payload){
   if(!payload||typeof payload!=='object'||Array.isArray(payload))throw fail('素材字段无效。');
-  const allowed=new Set(['platform','title','body','cover_ocr','model','model_category','layout_style','label','image','retained_images','new_images']);
+  const allowed=new Set(['platform','title','body','cover_ocr','model','model_category','layout_style','label','image','retained_images','new_images','published_at']);
   if(Object.keys(payload).some(key=>!allowed.has(key)))throw fail('包含不支持的素材字段。');
   const fields={};
   for(const key of ['title','body','cover_ocr','model'])if(Object.hasOwn(payload,key)){
     if(typeof payload[key]!=='string'||payload[key].length>200000||payload[key].includes('\0'))throw fail('素材文字字段无效或过长。');
     fields[key]=payload[key];
+  }
+  if(Object.hasOwn(payload,'published_at')){
+    const date=payload.published_at;
+    if(typeof date!=='string'||date&&!/^\d{4}-\d{2}-\d{2}$/u.test(date)||date&&(!Number.isFinite(Date.parse(date))||new Date(date).toISOString().slice(0,10)!==date))throw fail('发布日期须为有效的年月日。');
+    fields.published_at=date;fields.published_at_source=date?'manual_date':'';
   }
   for(const [key,values] of [['platform',platforms],['model_category',modelCategories],['layout_style',layoutStyles]])if(Object.hasOwn(payload,key)){
     if(!values.has(payload[key]))throw fail('素材平台或分类无效。');fields[key]=payload[key];
@@ -508,6 +513,14 @@ export class ContentOpsReferenceStore {
     const rules=bundle?.platform_rules?.[platform]?.banned_word_rules;
     return Array.isArray(rules)&&rules.length?bundledRisk(posts,platform,config,rules):checkerRisk(this.root,posts,platform,config);
   }
+  async heatScores(posts){
+    if(!posts.some(post=>post.platform==='xhs'&&post.author_id&&post.published_at&&post.metrics_observed_at))return {};
+    const python=[join(this.root,'scratch/.venv/bin/python'),join(this.root,'scratch/.venv/bin/python3')].find(path=>existsSync(path))||'python3';
+    const program="import json,sys;sys.path.insert(0,sys.argv[1]);from scripts.lib.monitoring import heat_scores,policy;print(json.dumps(heat_scores(json.load(sys.stdin),policy(sys.argv[1]))))";
+    const result=await editorCommand(python,['-c',program,this.root],{cwd:this.root,input:JSON.stringify(posts)});
+    if(result.code!==0)throw fail('互动热度计算失败，请检查本机采集配置。',503);
+    return JSON.parse(result.stdout);
+  }
   async list(params){
     const query=parseReferenceQuery(params),source=await this.records(query.platform),config=await this.configuration(),collections=await this.readCollections();
     const risks=new Map();
@@ -517,6 +530,7 @@ export class ContentOpsReferenceStore {
       const riskValues=await this.risks(pending,platform,config);
       pending.forEach((post,index)=>risks.set(referenceKey(post),riskValues[index]));
     }
+    const heat=await this.heatScores(source);
     const ranks=new Map();
     for(const platform of platforms){
       const profile=config.profiles[platform];
@@ -541,9 +555,9 @@ export class ContentOpsReferenceStore {
         clean=typeof signal.clean_for_style_reference==='boolean'?signal.clean_for_style_reference:Boolean(rank&&rank<=profile.reference_count&&!hits.length);
       }
       const images=imageUrls(post),body=text(post.body),postCollections=collectionByReference.get(referenceId)||[];
-      return {id:String(post.id),platform:post.platform,title:text(post.title),body_preview:[...body].slice(0,300).join(''),body_full:body,cover_ocr:text(post.cover_ocr),image:images[0]||null,images,...classifyReference(post),
+      return {id:String(post.id),platform:post.platform,heat:heat[post.id]||null,title:text(post.title),body_preview:[...body].slice(0,300).join(''),body_full:body,cover_ocr:text(post.cover_ocr),image:images[0]||null,images,...classifyReference(post),
         metrics:{likes:metric(metrics.likes),collects:metric(metrics.collects),comments:metric(metrics.comments),wants:metric(metrics.wants)},label_good:good,
-        clean_for_style_reference:clean,banned_word_hits:hits,engagement_tier:tier,model:typeof post.model==='string'?post.model:'',tags:Array.isArray(post.tags)?post.tags.filter(tag=>typeof tag==='string'):[],url:typeof post.url==='string'?post.url:'',fetched_at:typeof post.fetched_at==='string'?post.fetched_at:'',collection_ids:postCollections.map(collection=>collection.id),collection_names:postCollections.map(collection=>collection.name)};
+        clean_for_style_reference:clean,banned_word_hits:hits,engagement_tier:tier,model:typeof post.model==='string'?post.model:'',tags:Array.isArray(post.tags)?post.tags.filter(tag=>typeof tag==='string'):[],url:typeof post.url==='string'?post.url:'',fetched_at:typeof post.fetched_at==='string'?post.fetched_at:'',published_at:typeof post.published_at==='string'?post.published_at:'',published_at_source:post.published_at_source||'',metrics_observed_at:post.metrics_observed_at||'',metrics_history:Array.isArray(post.metrics_history)?post.metrics_history:[],author_id:post.author_id||'',collection_ids:postCollections.map(collection=>collection.id),collection_names:postCollections.map(collection=>collection.name)};
     });
     posts.reverse();
     const collection=collections.find(item=>item.id===query.collectionId);

@@ -37,7 +37,8 @@ def parse_num(value):
 def norm(rec, platform, url):
     note = {key: rec.get(key, default) for key, default in {
         'author': '', 'title': '', 'images': [], 'image_urls': [], 'tags': [],
-        'label': None, 'audience': [], 'audience_raw': '', 'source': 'bookmark'}.items()}
+        'label': None, 'audience': [], 'audience_raw': '', 'source': 'bookmark',
+        'published_at': '', 'published_at_source': '', 'author_id': '', 'metrics_observed_at': '', 'metrics_history': []}.items()}
     note.update(id=str(rec.get('id') or id_from_url(url, platform)), platform=platform, url=url,
                 body=rec.get('body', rec.get('desc', '')),
                 cover_ocr=rec.get('cover_ocr') or rec.get('title') or '（待补 OCR）',
