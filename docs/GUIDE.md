@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+APPSO 发布解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 17 节保存本篇来源指纹、CSA2／DSpark、Harness v0.1.5 与实验团队的供稿主张及去重反馈；共同参数、价格和路由回指第 11 节。通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。本轮仅改既有文件，不新增全文、评论或规则副本。
+
 DeepSeek 官方1017更新索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第14节唯一保存官方公告、四项演示、Search/Fetch历史生效与当前指南的证据账本及去重评论主题；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“模型与服务端工具：成功调用计费和证据时点”。本轮仅改既有文件，不新增全文或计费规则副本。
 
 Datawhale 接入稿索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 15 节保存 V4 Flash 0731 历史样本、来源指纹、API 公测范围、基准归因、配置主张与去重留言，与 V4.1 分开。通用教程验收方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“API 后训练更新与接入教程：范围、配置与成功证据”。本轮只更新既有文件，不新增全文或评论副本。
