@@ -4,6 +4,8 @@
 
 ## 仓库目录与核心文件全景说明
 
+夕小瑶十四组对照索引（2026-11-09）：`data/model-corpus.md` DeepSeek“夕小瑶十四组对照吸收：视觉链路、交付时间与协作账单”保存来源、视觉／工具链路、计时和费用口径、交接反例及去重留言；通用方法唯一维护在外部炼丹炉 `references/model-launch-playbook.md`“多 Agent 对照：关键路径、交接状态与统计包含关系”。仅修改既有文件，无原文、评论或规则副本。
+
 大模型观测员 1017 测评索引（2026-11-09）：`data/model-corpus.md` DeepSeek 专节“大模型观测员 V4.1 Flash 1017 测评吸收”保存来源指纹、环境变更、分任务效率、缺图边界与去重反例，独立于九月测评；通用方法唯一维护在外部炼丹炉 `~/.codex/skills/ai-content-alchemy/references/model-launch-playbook.md`“同分、少步骤与领域迁移的复测”。仅修改既有文件，不另存原文、留言或规则副本。
 
 Flash 与团队协作解读索引（2026-11-09）：`data/model-corpus.md` DeepSeek 第 20 节保存供稿来源、协作实验主张、历史接入和去重留言，共同发布事实回指第 11 节；通用对照方法维护在外部炼丹炉 `references/model-launch-playbook.md`“架构解读到工作环境：复用、推测与任务中干预”。仅修改既有文件，不保存原文或留言副本。
