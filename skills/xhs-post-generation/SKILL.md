@@ -13,7 +13,7 @@ description: 用公司网关文案模型与网关图像模型为给定产品名�
 4. 文案模型按每图文案计划返回独立笔记标题、copy_format、顺序区块 sections、标签、angle、动态 audience；正文由区块组装。在线文案契约不要求旧 title_lines、cover_subtitle/cover_highlight，封面专属短字由第7步独立规划，不能从正文浓缩搬运。标题不限动词枚举，正常第一人称与经验分享口吻不靠正则封杀。同批组织结构应有变化。
 5. 每图先做一轮公司文案模型调用，返回本图全部版本，再由本机做基础结构与风险词检查；解析时兼容未闭合的 Markdown JSON 围栏。若因风险词校验失败，或返回空/非法 JSON，带着失败原因自动重出最多 2 次（合计最多 3 次收费调用），每次保留原始响应；结构错误等其他校验仍立即失败。写稿、价格与移动端正文规范唯一源为 `rules/content-spec.md`，更新后用 `python3 scripts/build.py distill` 重建偏好包。`copy.mobile_body` 仅处理换行及说明书尾巴，不改写事实；校验后的正文同步写入 copy.json、manifest 和 Markdown。不再进行风格/事实两轮模型删改。风格终审交规划 agent；生图与视觉方案仍不自动收费重试。
 6. 手选参考优先；自动选图读取 `data/collections.json`，按平台结构选择与缺口处理见 `docs/GUIDE.md`「封面同构链路与排障」。合集、素材仍是唯一源，不另建索引；参考帖仅供文案节奏与构图，不是产品事实。记录引用、源哈希与实际读取的原图。
-7. 文案与封面独立：视觉模型只看单张结构锚图、合集/OCR、完整型号、封面专属语料和现行风险规则，不读取正文及旧封面五段字。视觉先拆结构，再返回结构化方案与独立短字；图像模型按校验后的方案生成。四类设计约束引用 `rules/content-spec.md`，工程契约与旧流派兼容见 GUIDE，不在本技能复制词表。大字报的背景材质、墨色与高亮传递按 `rules/content-spec.md`，满幅材质配方与分层实现见 GUIDE「大字报背景实现」；其他版式继续完整海报直出，`--background` 是显式离线兜底。不把提示词约束宣称为图生图或像素级还原。
+7. 文案与封面独立：视觉模型读取单张参考原图、帖子 visual_abstraction、合集/OCR、完整型号、封面专属语料、用户明确简报与核验事实及现行风险规则，不读取正文及旧封面五段字。视觉先提炼信息关系，再返回 creative_plan、独立结构方案与短字，不锁死参考的物件或坐标；图像模型按校验后的方案生成。四类设计约束引用 `rules/content-spec.md`，工程契约与旧流派兼容见 GUIDE，不在本技能复制词表。大字报的背景材质、墨色与高亮传递按 `rules/content-spec.md`，满幅材质配方与分层实现见 GUIDE「大字报背景实现」；其他版式继续完整海报直出，`--background` 是显式离线兜底。不把提示词约束宣称为图生图或像素级还原。
 8. 保存 manifest、每图模型响应、copy.json、Markdown和PNG；结构选项、倍率、文件契约与重建流程引用 docs/GUIDE.md「文案结构与图文配比」，不复制结构规则。输出目录非空拒绝覆盖，失败保留已有结果；续跑核对 brief、facts、引用与偏好版本，不把缺图称作完成。
 
 使用：`python3 scripts/generate.py copy --model GLM5.3 --platform xhs --count 2 --copy-format all_variations --copy-multiplier 3`（2图6文案）。首次运行 `./start.command` 初始化环境（自动安装依赖到 scratch/.venv）；脚本会转到该仓库环境。凭证配置见 docs/GUIDE.md「生成脚本与网关配置」，不写到成品或日志。
@@ -67,3 +67,5 @@ description: 用公司网关文案模型与网关图像模型为给定产品名�
 生成失败排障：先读取失败电脑的批次 error、输出目录 manifest.error 与对应响应；缺文案/缺图是结果检查，不直接当作根因。跨电脑本机历史不互通，取证口径见 GUIDE「封面同构链路与排障」。
 
 批次调优：先核对参考锚图分配与 design_signature，标题使用近期真实样本，具体创作边界引用内容规范；性能排障先比较 manifest 各阶段 elapsed_seconds，不以请求数推断总耗时。合并参数及大字报误报回归见 GUIDE「封面同构链路与排障」。
+
+充分抽象流程与信息预算引用 `rules/content-spec.md`，可复用观察/归类/重组方法见 `skills/content-methods/references/multimodal-playbook.md`「抽象参考与视觉重组」。数据表现与视觉复杂度分开判断，不以主观美观代替互动证据。

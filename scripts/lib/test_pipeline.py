@@ -54,6 +54,26 @@ def structured_post(fmt='format_1', n=1):
 
 
 class PipelineTests(unittest.TestCase):
+    def test_abstract_information_layout_allows_six_modules_with_subtitles(self):
+        for layout in ('上中下','左右下','环绕'):
+            plan=visual_plan(layout=layout)
+            plan['cover_texts'][1]['text']='项目开发新搭档'
+            plan['cover_texts'] += [{'role':'feature','text':t,'position':'自适应能力区'} for t in ('文档整理','多步规划')]
+            plan['cover_texts'] += [{'role':'subtitle','text':'按任务梳理输入','position':'对应能力下'} for _ in range(6)]
+            copy.validate_visual_plan(plan,'GLM5.3','xhs',layout)
+            plan['scene_labels']=['文件','结构','界面']
+            self.assertEqual(len(plan['cover_texts']),14)
+            prompt=copy.direct_image_prompt({'model':'GLM5.3'},'xhs',plan)
+            self.assertIn('抽象后独立设计',prompt)
+            self.assertNotIn('保持参考图分区比例',prompt)
+        clean=visual_plan(layout='上中下')
+        clean['scene_labels']=['API']
+        with self.assertRaisesRegex(ValueError,'风险词'):
+            copy.validate_visual_plan(clean,'GLM5.3','xhs')
+        plan['cover_texts'].append({'role':'feature','text':'再加模块','position':'溢出区'})
+        with self.assertRaisesRegex(ValueError,'3～6'):
+            copy.validate_visual_plan(plan,'GLM5.3','xhs')
+
     def test_bold_subject_negation_and_positive_reintroduction(self):
         for text in ['没有3D、电脑或机器人；平面纸纹', '不含代码屏、人物插画。满幅纸面',
                      '不需要3D物件。浅色纸纹', '无需机器人，保留箭头', 'without 3D objects; flat paper']:
@@ -665,9 +685,9 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(generate.call_args.kwargs['size'], '1080x1440')
         self.assertIn('竖版3:4', generate.call_args.kwargs['prompt'])
         self.assertIn('严禁出现营销短字', generate.call_args.kwargs['prompt'])
-        self.assertIn('允许保留平面装饰', generate.call_args.kwargs['prompt'])
+        self.assertIn('平面装饰按本次设计', generate.call_args.kwargs['prompt'])
         self.assertNotIn(post['image_prompt'], generate.call_args.kwargs['prompt'])
-        self.assertEqual(vision.call_args.args[0], {'model':'GLM5.3', 'corpus_model':'GLM-5.3'})
+        self.assertEqual(vision.call_args.args[0], {'model':'GLM5.3', 'corpus_model':'GLM-5.3', 'brief':'', 'verified_claims':[]})
         self.assertTrue(vision.call_args.args[1])
         self.assertEqual(result['posts'][0]['image_metadata']['mode'], 'layered_poster')
         self.assertLessEqual(result['posts'][0]['image_metadata']['text_area_ratio'], .72)
@@ -790,7 +810,7 @@ class PipelineTests(unittest.TestCase):
         bg = copy.bold_typo_background_prompt(result, 'xhs', 'GLM-5.3')
         self.assertIn('像素光标', bg)
         self.assertIn('>>>', bg)
-        self.assertIn('允许保留平面装饰', bg)
+        self.assertIn('平面装饰按本次设计', bg)
         for line in result['cover_texts']:
             self.assertIn(line['text'], bg)
 
@@ -827,6 +847,13 @@ class PipelineTests(unittest.TestCase):
             self.assertIn('方图1:1', content[0]['text'])
             self.assertIn('方图1:1，1080×1080px', content[0]['text'])
             self.assertIn('reference_reverse_prompt', content[0]['text'])
+            self.assertIn('reference_abstraction', content[0]['text'])
+            self.assertIn('creative_plan', content[0]['text'])
+            self.assertIn('attention_strategy', content[0]['text'])
+            self.assertIn('creative_brief', content[0]['text'])
+            self.assertIn('model_materials', content[0]['text'])
+            self.assertIn('主视觉与辅助模块必须提供互补信息', content[0]['text'])
+            self.assertNotIn('先拆解并锁死', content[0]['text'])
             self.assertIn('像素光标', content[0]['text'])
             for pollution in ['本次核心卖点。','旧副标题污染唯一标记','旧高亮污染唯一标记','避免告示牌贴纸感','明确主物件、场景、冷暖光影']:
                 self.assertNotIn(pollution, content[0]['text'])
@@ -942,7 +969,7 @@ class PipelineTests(unittest.TestCase):
             plan = visual_plan(layout=layout)
             with self.subTest(layout=layout):
                 self.assertIs(copy.validate_visual_plan(plan,'GLM5.3','xhs',layout),plan)
-                self.assertIn('锁定版式：'+layout,copy.direct_image_prompt({'model':'GLM5.3'},'xhs',plan))
+                self.assertIn('抽象信息类别：'+layout,copy.direct_image_prompt({'model':'GLM5.3'},'xhs',plan))
                 with self.assertRaisesRegex(ValueError,'改变了参考图'):
                     copy.validate_visual_plan(plan,'GLM5.3','xhs','环绕' if layout!='环绕' else '大字报')
         mutations = [
@@ -959,7 +986,7 @@ class PipelineTests(unittest.TestCase):
         plan['cover_texts'] += [{'role':'subtitle','text':'多步任务好跑','position':f'卡{i}副标'} for i in range(4)]
         copy.validate_visual_plan(plan,'GLM5.3','xianyu')
         plan['cover_texts'].pop()
-        with self.assertRaisesRegex(ValueError,'环绕'):
+        with self.assertRaisesRegex(ValueError,'信息海报'):
             copy.validate_visual_plan(plan,'GLM5.3','xianyu')
 
     def test_visual_plan_repairs_auxiliary_structure_and_accepts_role_order(self):
@@ -995,7 +1022,7 @@ class PipelineTests(unittest.TestCase):
         for layout in ('上中下','左右下','环绕'):
             plan=visual_plan(model='GLM-5.3',layout=layout)
             feature=next(item for item in plan['cover_texts'] if item['role']=='feature')
-            feature['text']='高性价比功能组合'
+            feature['text']='高性价比功能'
             copy.validate_visual_plan(plan,'GLM5.3','xianyu' if layout!='上中下' else 'xhs')
             self.assertLessEqual(copy.cover_units(feature['text']),8)
 
@@ -1154,7 +1181,7 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(manifest['generation_pipeline'],copy.PIPELINE_VERSION)
             self.assertEqual(manifest['posts'][0]['image_requests'][0]['status'],'failed')
             self.assertEqual(manifest['posts'][0]['image_requests'][0]['prompt'],images.call_args.kwargs['prompt'])
-            self.assertEqual(vision.call_args.args[0],{'model':'GLM5.3','corpus_model':'GLM-5.3'})
+            self.assertEqual(vision.call_args.args[0],{'model':'GLM5.3','corpus_model':'GLM-5.3','brief':'开发任务，便宜量大','verified_claims':[]})
             images.side_effect=generate
             self.assertEqual(copy.main([*argv,'--resume']),0)
             self.assertEqual((text.call_count,vision.call_count,images.call_count),(1,1,2))
@@ -1210,7 +1237,7 @@ class PipelineTests(unittest.TestCase):
         post = {'image_prompt': '工作台海报', 'title_lines': ['效率提升', 'GLM5.3', '需求拆解'],
                 'cover_subtitle': '完整工作流', 'cover_highlight': '适合独立开发者'}
         direct = copy.direct_image_prompt({'model':'GLM5.3'}, 'xhs', visual_plan(layout='上中下',prompt='蓝紫霓虹光与卡片海报'), style_mode='manual', style_preset='code_ide', style_prompt='蓝紫霓虹光')
-        self.assertIn('锁定版式：上中下', direct)
+        self.assertIn('抽象信息类别：上中下', direct)
         self.assertIn('蓝紫霓虹光', direct)
 
     def test_copy_options_config_precedence_and_invalid_inputs(self):
