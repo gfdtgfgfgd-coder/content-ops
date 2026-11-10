@@ -927,7 +927,20 @@ def validate_visual_plan(plan, product_model, platform, expected_layout='', rule
     return plan
 
 
-def visual_prompt_call(post, references, settings, timeout, raw_output, platform, style_mode='auto', style_preset='', style_prompt='', rules=None, reverse_db_path=None):
+def validate_batch_cover(plan, previous_plans):
+    """Reject repeated headline or mostly repeated copy before paying for an image."""
+    def lines(value):
+        return [monitoring.normalized(t['text']) for t in value.get('cover_texts', [])
+                if t.get('role') != 'model']
+    current = lines(plan)
+    for previous in previous_plans:
+        old = lines(previous)
+        if current and old and (current[0] == old[0] or
+                len(set(current) & set(old)) >= max(2, len(set(current)) - 1)):
+            raise ValueError('同批封面雷同：主钩子重复或仅替换末行卖点，请修改图片提示词后重试；未调用本张生图')
+
+
+def visual_prompt_call(post, references, settings, timeout, raw_output, platform, style_mode='auto', style_preset='', style_prompt='', rules=None, reverse_db_path=None, batch_plans=None, batch_index=1, batch_count=1):
     from . import prompts as reverse_prompts
     model = settings.get('CONTENT_OPS_VISION_MODEL', image_api.MODEL_DEFAULTS['CONTENT_OPS_VISION_MODEL'])
     if not model:
@@ -957,6 +970,7 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
     corpus_model = post.get('corpus_model') or product_model
     contract = {
         'model': product_model, 'corpus_model': corpus_model, 'reference': source, 'collection_name': expected_layout or '看图识别四大版式',
+        'batch': {'index': batch_index, 'count': batch_count, 'previous_plans': batch_plans or []},
         'reference_reverse_prompt': reverse_record['prompt'],
         'reference_negative_prompt': reverse_record.get('negativePrompt', ''),
         'recent_cover_materials': [{'id':p['id'],'cover_ocr':p.get('cover_ocr',''),'title':p.get('title','')} for p in monitoring.recent_posts(load_posts(), monitoring.policy(), platform=platform)],
@@ -982,7 +996,8 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
         '封面独立从当前模型专属语料选词（语料中的型号位已换成输入名），不写技术说明长句。语料不是事实证明，不新增数字、评测、价格或承诺。'
         '上中下/左右下返回model+benefit+3～4个feature；环绕返回model+benefit+4个feature，可另附4个subtitle；'
         '大字报返回3～4行，依次钩子、利益、型号、爽点（三行可合并钩子与利益）。'
-        '大字报必须单独返回background_style：以reference_reverse_prompt为底稿轻微改写description，区分揉皱纸、深灰网格、蓝色笔记本、光影纸张和彩色便笺，保留并微调平面装饰；保留参考图实际底色、墨色和荧光笔色；不要无论参考图是什么都写成暖白纸。'
+        '批量时必须阅读batch.previous_plans：主钩子与利益表达重新策划，不能只换末行卖点；在参考版式内让底色/强调色组合、平面装饰或同类主体形态至少两项明显不同，差异写入background_style与visual_prompt。单张保持参考配色；批量允许协调换色，不能推翻手动要求。'
+        '大字报必须单独返回background_style：以reference_reverse_prompt为底稿轻微改写description，区分揉皱纸、深灰网格、蓝色笔记本、光影纸张和彩色便笺，保留并微调平面装饰；单张保留参考图实际底色、墨色和荧光笔色，批量按前述差异要求协调换色；不要无论参考图是什么都写成暖白纸。'
         'highlight_roles默认且必须包含model（高亮完整型号行）；可另加至多一行，不要只高亮钩子或利益而漏掉型号。'
         'visual_prompt写可执行构图与准确短字；其他三类由图像模型直接排字，大字报只生成无营销字材质底图（可含平面装饰），文字由本机叠加。\n'
         + layout_spec + '\n本次输入：' + json.dumps(contract, ensure_ascii=False))}, *images]
@@ -1013,6 +1028,7 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
     if not isinstance(text,str) or not text.strip() or len(text)>16000:
         raise ValueError('视觉模型未返回有效文本，可能不支持图像输入，也可能是响应格式异常；请确认所选模型支持多模态图片输入。')
     plan = validate_visual_plan(parse_json(text), product_model, platform, expected_layout, rules)
+    validate_batch_cover(plan, batch_plans or [])
     cover_line = monitoring.normalized(''.join(t['text'] for t in plan['cover_texts']))
     if len(cover_line) >= 12 and any(cover_line in monitoring.normalized(p.get('cover_ocr','')) for p in monitoring.recent_posts(load_posts(), monitoring.policy(), platform=platform)):
         raise ValueError('近期封面雷同：短字组合与近期素材重复，请更换封面切口后新建批次')
@@ -1523,7 +1539,7 @@ def run(args):
                     vision_usage = {'model': previous['visual_prompt_model']}
                 else:
                     # Rotate structural anchors across posters, not across the copy variants.
-                    usable = [r for r in reference_context if readable_reference({**r, 'images': r['image_paths']})][:3]
+                    usable = [r for r in reference_context if readable_reference({**r, 'images': r['image_paths']})]
                     if not usable:
                         raise ValueError('所选参考帖没有可读取的本地图片')
                     anchor = usable[(index - 1) % len(usable)]
@@ -1540,6 +1556,8 @@ def run(args):
                         visual_plan, vision_usage = visual_prompt_call(
                             {'model': model, 'corpus_model': corpus_model}, [anchor], settings, args.timeout, raw_visual, args.platform,
                             style_mode=style_mode, style_preset=style_preset, style_prompt=style_prompt, rules=active_rules,
+                            batch_plans=[p['visual_plan'] for p in manifest['posts'][:index-1] if p.get('visual_plan')],
+                            batch_index=index, batch_count=args.count,
                         )
                     reverse_meta = vision_usage.get('reference_reverse') or visual_plan.get('reference_reverse')
                     if reverse_meta:
@@ -1549,6 +1567,7 @@ def run(args):
                         })
                     manifest.setdefault('vision_calls', []).append(vision_usage)
                 validate_visual_plan(visual_plan, model, args.platform, rules=active_rules)
+                validate_batch_cover(visual_plan, [p['visual_plan'] for p in manifest['posts'][:index-1] if p.get('visual_plan')])
                 manifest['posts'][index-1].update({'visual_plan': visual_plan, 'cover_texts': visual_plan['cover_texts'],
                     'collection_name': visual_plan['collection_name'], 'visual_prompt': visual_plan['visual_prompt'],
                     'visual_prompt_model': vision_usage['model']})

@@ -54,6 +54,17 @@ def structured_post(fmt='format_1', n=1):
 
 
 class PipelineTests(unittest.TestCase):
+    def test_batch_cover_rejects_only_changed_payoff(self):
+        first = visual_plan()
+        second = deepcopy(first)
+        second['cover_texts'][-1]['text'] = '长文放开看'
+        with self.assertRaisesRegex(ValueError, '同批封面雷同'):
+            copy.validate_batch_cover(second, [first])
+        second['cover_texts'][0]['text'] = '开工新搭档'
+        second['cover_texts'][1]['text'] = '轻松接入'
+        copy.validate_batch_cover(second, [first])
+        copy.validate_batch_cover(first, [])
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -1347,10 +1358,20 @@ class PipelineTests(unittest.TestCase):
                 Image.new('RGB',copy.poster_size(platform)).save(output)
                 data=output.read_bytes()
                 return {'width':copy.poster_size(platform)[0],'height':copy.poster_size(platform)[1],'bytes':len(data),'sha256':__import__('hashlib').sha256(data).hexdigest()}
+            def vision_call(*args, **kwargs):
+                prior = kwargs['batch_plans']
+                self.assertEqual(len(prior), kwargs['batch_index'] - 1)
+                self.assertEqual(kwargs['batch_count'], 2)
+                plan = visual_plan()
+                if prior:
+                    plan['cover_texts'][0]['text'] = '开工新搭档'
+                    plan['cover_texts'][1]['text'] = '轻松接入'
+                    plan['cover_texts'][-1]['text'] = '长文放开看'
+                return plan, {'model': 'offline'}
             argv=['--model','GLM5.3','--platform',platform,'--count','2','--copy-format',fmt,'--copy-multiplier',str(multiplier),'--output',str(output)]
             with self.subTest(fmt=fmt), patch.object(gateway,'load_config',return_value=settings), \
                  patch.object(copy,'claude_call',side_effect=text_call) as calls, \
-                 patch.object(copy,'visual_prompt_call',return_value=(visual_plan(),{'model':'offline'})), \
+                 patch.object(copy,'visual_prompt_call',side_effect=vision_call), \
                  patch.object(gateway,'generate_image',side_effect=image_call) as images, redirect_stdout(io.StringIO()):
                 self.assertEqual(copy.main(argv),0)
                 self.assertEqual(calls.call_count,2)
