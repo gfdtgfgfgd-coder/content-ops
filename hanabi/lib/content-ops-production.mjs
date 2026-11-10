@@ -138,7 +138,8 @@ export class ContentOpsProduction {
     try { if (refs.length) { await mkdir(join(this.root, 'scratch', 'hanabi-runtime'), { recursive: true }); await writeFile(referenceFile, JSON.stringify(refs)); args.push('--references', referenceFile); } if (row.background_mode === 'cached') args.push('--background', this.backgroundPath()); const child = this.spawnProcess(python, args, { cwd: this.root, env: process.env, stdio: ['ignore', 'pipe', 'pipe'], shell: false }); current.child = child; child.stderr.on('data', chunk => { current.stderr = (current.stderr + chunk.toString()).slice(-4000); }); child.stdout.on('data', () => this.db.prepare("UPDATE analysis_jobs SET progress=40,progress_message='文案已保存，正在完成图片',updated_at=? WHERE batch_id=? AND status='analyzing'").run(now(), id)); child.once('error', error => void this.finish(id, 1, error.message)); child.once('close', code => void this.finish(id, code ?? 1, current.stopped ? current.message : current.stderr)); } catch (error) { await this.finish(id, 1, error.message); }
   }
   async finish(id, code, error = '') {
-    const row = this.get(id), manifest = parse(await readFile(join(row.output_dir, 'manifest.json'), 'utf8').catch(() => '{}')), jobs = this.jobs(row); let completed = 0; await mkdir(this.uploadDir, { recursive: true });
+    const row = this.get(id), manifest = parse(await readFile(join(row.output_dir, 'manifest.json'), 'utf8').catch(() => '{}')), jobs = this.jobs(row); let completed = 0, firstProblem = '';
+    const generationError = String(error || manifest.error || '').trim(); await mkdir(this.uploadDir, { recursive: true });
     for (const job of jobs) {
       if (job.status === 'completed') { completed++; continue; }
       const index = job.position, post = (manifest.posts || []).find(item => item.index === index);
@@ -164,11 +165,12 @@ export class ContentOpsProduction {
         }
       } catch (cause) { problem = cause.code === 'ENOENT' ? '文案版本或图片文件缺失。' : cause.message; }
       const text = copies[0]?.text || '', ok = Boolean(!problem && copies.length === (row.copy_multiplier ?? 1) && attachment);
-      const message = ok ? '图文已保存到燃放预览' : problem || error || manifest.error || '缺少完整文案或图片；请检查公司网关额度。';
+      if (problem && !firstProblem) firstProblem = problem;
+      const message = ok ? '图文已保存到燃放预览' : [generationError, problem && `结果检查：${problem}`].filter(Boolean).join('\n') || '缺少完整文案或图片；生成未完成。';
       if (ok) completed++;
-      this.db.prepare('UPDATE analysis_jobs SET status=?,result=?,copies=?,error=?,progress=?,progress_message=?,attachments=?,updated_at=? WHERE id=?').run(ok ? 'completed' : 'failed', text, JSON.stringify(copies), ok ? '' : message.slice(0, 1800), ok ? 100 : 0, ok ? '图文已保存到燃放预览' : '生成未完成，已保留部分结果', JSON.stringify(attachment ? [attachment] : []), now(), job.id);
+      this.db.prepare('UPDATE analysis_jobs SET status=?,result=?,copies=?,error=?,progress=?,progress_message=?,attachments=?,updated_at=? WHERE id=?').run(ok ? 'completed' : 'failed', text, JSON.stringify(copies), ok ? '' : message.slice(0, 1800), ok ? 100 : 0, ok ? '图文已保存到燃放预览' : copies.length || attachment ? '生成未完成，已保留部分结果' : '生成失败，尚无可用图文结果', JSON.stringify(attachment ? [attachment] : []), now(), job.id);
     }
-    const status = completed === row.count ? 'completed' : completed ? 'partial' : 'failed'; this.db.prepare('UPDATE content_ops_batches SET status=?,error=?,updated_at=? WHERE id=?').run(status, status === 'completed' ? '' : `${completed}/${row.count} 张封面组完成；${error || manifest.error || '生成未完成'}`.slice(0, 1800), now(), id); if (this.active?.id === id) this.active = null; await rm(this.referencePath(id), { force: true });
+    const status = completed === row.count ? 'completed' : completed ? 'partial' : 'failed'; this.db.prepare('UPDATE content_ops_batches SET status=?,error=?,updated_at=? WHERE id=?').run(status, status === 'completed' ? '' : `${completed}/${row.count} 张封面组完成；${generationError || firstProblem || '生成未完成'}`.slice(0, 1800), now(), id); if (this.active?.id === id) this.active = null; await rm(this.referencePath(id), { force: true });
   }
   async recover() { for (const row of this.db.prepare("SELECT * FROM content_ops_batches WHERE status='running'").all()) await this.finish(row.id, 1, '服务已重启，收费任务不会自动重跑。'); }
   stop(id) { const row = this.get(id); if (row.status === 'running' && this.active?.id === id) { this.active.stopped = true; this.active.message = '用户已停止；已完成文件保留。'; this.active.child?.kill('SIGTERM'); } return this.public(row); }

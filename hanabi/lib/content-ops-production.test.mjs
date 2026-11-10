@@ -1071,6 +1071,32 @@ test('missing or unsafe copy versions cannot mark a poster group completed; conf
   await assert.rejects(()=>production.create({...input,requestId:'invalid-count-123',copyMultiplier:6}),{statusCode:400});assert.equal(captured.length,1);
 });
 
+test('early generation failures retain root cause per card instead of hiding it behind missing files',async t=>{
+  const {production}=await productionFixture(t);
+  const {batch}=await production.create({...input,count:4});
+  await production.finish(batch.id,1,'生成失败：参考帖上下文超过配置上限');
+  const saved=production.public(production.get(batch.id));
+  assert.equal(saved.status,'failed');
+  for(const post of saved.posts){
+    assert.match(post.error,/^生成失败：参考帖上下文超过配置上限/);
+    assert.match(post.error,/结果检查：文案版本或图片文件缺失/);
+    assert.equal(post.progressMessage,'生成失败，尚无可用图文结果');
+    assert.equal(post.image,null);assert.equal(post.text,'');
+  }
+  assert.match(saved.error,/参考帖上下文超过配置上限/);
+});
+
+test('manifest failure survives a missing stderr',async t=>{
+  const {production}=await productionFixture(t);
+  const {batch}=await production.create(input),row=production.get(batch.id);
+  await mkdir(row.output_dir,{recursive:true});
+  await writeFile(join(row.output_dir,'manifest.json'),JSON.stringify({error:'视觉模型请求网络超时',posts:[]}));
+  await production.finish(batch.id,1);
+  const saved=production.public(production.get(batch.id));
+  assert.match(saved.posts[0].error,/^视觉模型请求网络超时/);
+  assert.match(saved.error,/视觉模型请求网络超时/);
+});
+
 test('selected copy switches body and tags, falls back for legacy posts, renders safe bold',async()=>{
   const {copiesForPost,selectedCopy}=await import('./content-ops-ui.mjs');
   const post={text:'# 兼容首篇',copies:[{text:'# A\n\n**卖点A**\n\n#标签A'},{text:'# B\n\n**卖点B**\n\n#标签B'}]};
