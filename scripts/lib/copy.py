@@ -122,6 +122,10 @@ def structured_body(post, expected_format, platform):
             text = ensure_compatibility_cc(text)
             if platform == 'xhs':
                 text = mobile_body(text, maximum=20)
+        elif kind == 'audience':
+            text = normalize_audience_section(text)
+            if platform == 'xhs':
+                text = mobile_body(text, maximum=20)
         elif platform == 'xhs' and kind != 'intro':
             text = mobile_body(text, maximum=20)
         section['text'] = text
@@ -371,10 +375,37 @@ def public_text(post):
 def markdown(post):
     return '# ' + post.get('title', ' · '.join(post['title_lines'])) + '\n\n' + post['body'].rstrip() + '\n\n' + ' '.join(post['tags']) + '\n'
 
+def normalize_audience_section(text):
+    """Drop label prefixes like「适合人群：」; keep the people list itself."""
+    cleaned = str(text or '').strip()
+    cleaned = re.sub(
+        r'^(?:[^\w\u4e00-\u9fff]{0,8})?(?:适合人群|适用人群|推荐给|目标人群)\s*[:：]\s*',
+        '', cleaned, count=1).strip()
+    if not cleaned:
+        raise ValueError('适用人群区块不能为空')
+    if re.search(r'(?:适合人群|适用人群)\s*[:：]', cleaned):
+        cleaned = re.sub(
+            r'(?m)^\s*(?:[^\w\u4e00-\u9fff]{0,8})?(?:适合人群|适用人群|推荐给|目标人群)\s*[:：]\s*',
+            '', cleaned).strip()
+    if not cleaned or re.search(r'(?:适合人群|适用人群)\s*[:：]', cleaned):
+        raise ValueError('正文不能单列适合人群，请自然融入行动号召')
+    return cleaned
+
+
 def mobile_body(body, maximum=30, allow_heading_runs=False):
     """Only reflow whitespace; do not rewrite claims or invent sentence endings."""
-    body = re.sub(r'(?m)^\s*适合人群\s*[:：][^\n]*\s*\Z', '', body).strip()
-    if re.search(r'适合人群\s*[:：]', body):
+    # Trailing audience labels (with optional emoji) are dropped; whole-block labels keep the list.
+    stripped = body.strip()
+    labeled = re.fullmatch(
+        r'(?:[^\w\u4e00-\u9fff]{0,8})?(?:适合人群|适用人群|推荐给|目标人群)\s*[:：]\s*(.+)',
+        stripped, flags=re.S)
+    if labeled and not re.search(r'(?:适合人群|适用人群)\s*[:：]', labeled.group(1)):
+        body = labeled.group(1).strip()
+    else:
+        body = re.sub(
+            r'(?m)^\s*(?:[^\w\u4e00-\u9fff]{0,8})?(?:适合人群|适用人群|推荐给|目标人群)\s*[:：][^\n]*\s*\Z',
+            '', body).strip()
+    if re.search(r'(?:适合人群|适用人群)\s*[:：]', body):
         raise ValueError('正文不能单列适合人群，请自然融入行动号召')
     if not allow_heading_runs:
         heading_run = 0
@@ -495,7 +526,7 @@ def is_copy_rewrite_error(error):
     reason = str(error)
     return ('风险词' in reason or '合法 JSON' in reason or '返回为空' in reason or '多个 JSON' in reason
             or '近期内容雷同' in reason or '标题超长' in reason or '标题句式雷同' in reason
-            or '同批文案缺少不同结构' in reason)
+            or '同批文案缺少不同结构' in reason or '不能单列适合人群' in reason)
 
 def copy_rewrite_payload(request, error, attempt):
     reason = str(error)
@@ -512,6 +543,11 @@ def copy_rewrite_payload(request, error, attempt):
             '上一稿同批角度重复。请为本组每篇重新写互不相同的angle，'
             f'{avoided}'
             '也不得与本组其它篇重复；标题、正文、标签、人群一并重写，不得只换同义词。只返回合法JSON。'
+        )
+    elif '不能单列适合人群' in reason:
+        instruction = (
+            '上一稿在正文里单列了「适合人群：」标签。人群请写进 audience 区块的自然名单，'
+            '不要加「适合人群/适用人群/推荐给」前缀；hook 只写行动号召。只返回合法JSON。'
         )
     elif '近期内容雷同' in reason:
         instruction = '上一稿与近期素材或同批成稿雷同。更换主题切口、开头、卖点组合与使用场景；不得仅换同义词。只返回合法JSON。'

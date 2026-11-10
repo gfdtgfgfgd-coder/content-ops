@@ -471,6 +471,16 @@ class PipelineTests(unittest.TestCase):
         self.assertIn('\n\n', rendered)
         self.assertEqual(copy.mobile_body(rendered), rendered)
         self.assertEqual(copy.mobile_body('正文。\n\n适合人群：开发者'), '正文。')
+        self.assertEqual(copy.mobile_body('正文。\n\n👥 适合人群：开发者、前端'), '正文。')
+        self.assertEqual(copy.mobile_body('👥 适合人群：UI开发者、前端工程师'), 'UI开发者、前端工程师')
+        self.assertEqual(copy.normalize_audience_section('👥 适合人群：全栈工程师、算法研究员'), '全栈工程师、算法研究员')
+        labeled = structured_post('format_3')
+        labeled['sections'][4]['text'] = '👥 适合人群：程序员、独立开发、全栈工程师'
+        with redirect_stdout(io.StringIO()):
+            fixed = copy.validate_posts({'posts': [labeled]}, 1, 'GLM5.3', copy_format='format_3')
+        self.assertEqual(fixed[0]['sections'][4]['text'].replace('\n', ''), '程序员、独立开发、全栈工程师')
+        self.assertNotIn('适合人群', fixed[0]['body'])
+        self.assertTrue(copy.is_copy_rewrite_error(ValueError('正文不能单列适合人群，请自然融入行动号召')))
         with self.assertRaisesRegex(ValueError, '连续标题冒号'):
             copy.mobile_body('▫️编程辅助：长句说明\n\n▫️需求整理：长句说明\n\n▫️项目协作：长句说明')
         selling_points = '\n'.join([

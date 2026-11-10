@@ -1,3 +1,7 @@
+## 本轮执行：适合人群标签软修复（2026-11-11）
+
+- [x] format_3 的 audience 写成「👥 适合人群：…」触发硬失败且不重写；剥标签保留名单，残留标签纳入可重写。
+
 ## 本轮执行：DeepSeek Flash 别名与空语料误报（2026-11-11）
 
 - [x] 「DeepSeek V4.1 Flash」未进别名导致语料为空，视觉阶段误报 CONTENT_OPS_VISUAL_MATERIAL_CHARS；补 Flash 别名，空语料返回空资料包，真超预算才报错。
