@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import sys
+from time import monotonic
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -171,11 +172,9 @@ def structured_body(post, expected_format, platform):
         title = cleaned
         post['title'] = title
     if platform == 'xhs' and len(title) > 20:
-        post['title'] = title[:20]
-        print(f'WARN: 小红书标题超出20字，已自动修剪至20字。')
+        raise ValueError('标题超长：请重新写完整的20字以内标题，不截断型号；可省略型号而突出具体场景')
     elif platform != 'xhs' and len(title) > 80:
-        post['title'] = title[:80]
-        print('WARN: 标题超出80字，已自动修剪至80字。')
+        raise ValueError('标题超长：请重新写完整的80字以内标题')
     return '\n\n'.join(section['text'] for section in sections)
 
 def validate_style(style_mode='auto', style_preset='', style_prompt='', platform='xhs', model='', rules=None):
@@ -231,7 +230,34 @@ def readable_reference(post):
     return False
 
 
-def load_references(path, max_chars=32000, platform='xhs', model='', style_preset=''):
+def diverse_references(references, count):
+    """Greedy visual spacing among actual local references; preserve the best first hit."""
+    from PIL import Image
+    if not references:
+        return []
+    signatures = {}
+    for i, ref in enumerate(references):
+        paths = ref.get('image_paths', ref.get('images', []))
+        for path in paths:
+            try:
+                with Image.open(ROOT / path) as im:
+                    signatures[i] = tuple(im.convert('RGB').resize((8, 8)).tobytes())
+                break
+            except (OSError, ValueError):
+                continue
+    chosen, remaining = [0], list(range(1, len(references)))
+    def distance(i, j):
+        if i not in signatures or j not in signatures:
+            return 0
+        return sum((a-b)**2 for a,b in zip(signatures[i], signatures[j]))
+    while remaining and len(chosen) < count:
+        best = max(remaining, key=lambda i: min(distance(i, j) for j in chosen))
+        chosen.append(best)
+        remaining.remove(best)
+    return [references[i] for i in chosen]
+
+
+def load_references(path, max_chars=32000, platform='xhs', model='', style_preset='', count=1):
     """Manual selection wins; otherwise interleave eligible same-platform collections."""
     memberships = collection_memberships()
     wanted = (STYLE_PRESETS[style_preset]['label'],) if style_preset else PLATFORM_LAYOUTS[platform]
@@ -256,13 +282,13 @@ def load_references(path, max_chars=32000, platform='xhs', model='', style_prese
             engagement = metrics.get('wants' if platform == 'xianyu' else 'likes') or 0
             return (-int(good), -relevance, -(engagement * heat.get(post['id'], {}).get('weight', 1)), post['id'])
         ranked = sorted(candidates, key=rank)
-        selected = [{'id': ranked[0]['id'], 'platform': ranked[0]['platform']}] if ranked else []
+        selected = [{'id': p['id'], 'platform': p['platform']} for p in diverse_references(ranked, count)]
     else:
         selected = json.loads(path.read_text(encoding='utf-8'))
         if not isinstance(selected, list):
             raise ValueError('参考帖文件必须为包含 id、platform 对象的 JSON 数组')
         if not selected:
-            return load_references(None, max_chars, platform, model, style_preset)
+            return load_references(None, max_chars, platform, model, style_preset, count)
     references, contexts, hashes, seen = [], [], {}, set()
     selected_heat = monitoring.heat_scores(load_posts(), monitoring.policy())
     posts_by_key = {(p['platform'], p['id']): p for p in load_posts()}
@@ -441,6 +467,7 @@ def validate_posts(value, count, model, rules=None, platform="xhs", copy_format=
     return posts
 
 def claude_call(system, user, settings, timeout, raw_output):
+    started = monotonic()
     model = settings.get('CONTENT_OPS_TEXT_MODEL', image_api.MODEL_DEFAULTS['CONTENT_OPS_TEXT_MODEL'])
     try:
         response = image_api.request_json(settings['CONTENT_OPS_BASE_URL'].rstrip('/') + '/chat/completions',
@@ -459,13 +486,13 @@ def claude_call(system, user, settings, timeout, raw_output):
     raw_output.write_text(choice.get('message', {}).get('content', ''),encoding='utf-8')
     if choice.get('finish_reason') == 'length':
         raise ValueError('文案模型返回被截断，请减少数量；不自动重复收费请求')
-    return parse_json(choice.get('message', {}).get('content', '')), {'model':response.get('model', model), 'usage':response.get('usage', {})}
+    return parse_json(choice.get('message', {}).get('content', '')), {'model':response.get('model', model), 'usage':response.get('usage', {}), 'elapsed_seconds':round(monotonic()-started, 3)}
 
 def is_copy_rewrite_error(error):
     if not isinstance(error, ValueError):
         return False
     reason = str(error)
-    return '风险词' in reason or '合法 JSON' in reason or '返回为空' in reason or '多个 JSON' in reason or '近期内容雷同' in reason
+    return '风险词' in reason or '合法 JSON' in reason or '返回为空' in reason or '多个 JSON' in reason or '近期内容雷同' in reason or '标题超长' in reason or '标题句式雷同' in reason
 
 def copy_rewrite_payload(request, error, attempt):
     reason = str(error)
@@ -473,7 +500,9 @@ def copy_rewrite_payload(request, error, attempt):
     match = re.search(r'风险词[:：]\s*(.+)$', reason)
     if match:
         banned = [part.strip() for part in match.group(1).split('、') if part.strip()]
-    if '近期内容雷同' in reason:
+    if '标题超长' in reason or '标题句式雷同' in reason:
+        instruction = '重写完整标题，严格满足字数上限；不要截断型号，可省略型号改写具体场景。学习recent_title_examples的多种自然句式，不要整批都用短促感叹开场加型号。保留已核验事实，只返回合法JSON。'
+    elif '近期内容雷同' in reason:
         instruction = '上一稿与近期素材或同批成稿雷同。更换主题切口、开头、卖点组合与使用场景；不得仅换同义词。只返回合法JSON。'
     elif banned:
         instruction = (
@@ -518,6 +547,9 @@ def generate_validated_copy_chunk(system, request, settings, timeout, raw_path, 
         usages.append({**usage, 'attempt': attempt + 1, 'risk_rewrite': attempt > 0})
         try:
             validated = validate_posts(chunk, count, model, rules, platform, copy_format, format_offset, corpus_model)
+            titles = [p.get('title','') for p in request.get('previous_copies', []) + validated]
+            if len(titles) >= 3 and all(re.match(r'^[^！!？?。\n]{1,6}[！!].+', t) for t in titles):
+                raise ValueError('标题句式雷同：全部采用短促感叹开头，请按近期标题重新分配句式')
             if request.get('novelty_policy'):
                 monitoring.check_novelty(validated, request.get('recent_materials', []), request['novelty_policy'])
             return validated, usages
@@ -775,7 +807,7 @@ def check_cover_words(text, platform, model, rules=None, *, context='封面'):
 
 def positive_visual_text(text):
     """Exclude negative instructions and positional metadata from advertising checks."""
-    return visual_position_text(re.sub(r'(?:严禁|禁止|不得|不添加|不出现|不要|避免|无)[^。；;\n]*', '', text))
+    return visual_position_text(re.sub(r'(?:严禁|禁止|不得|不添加|不出现|不包含|不使用|不需要|无需|无须|不含|没有|不要|避免|无|\bwithout\b|\bno\b)[^。；;\n]*?(?=但|而是|改为|[。；;\n]|$)', '', text))
 
 
 def visual_position_text(text):
@@ -797,10 +829,13 @@ def truncate_cover_units(text, maximum):
     return ''.join(units[:maximum])
 
 
-def check_bold_typo_subject(positive):
-    # Flat cursor / arrow / dots / corner glyphs are allowed as background decoration.
-    if re.search(r'3\s*D|立体(?:物件|主体|机器人)|代码(?:屏|树)|电脑|人物插画|机器人|复杂背景|computer|robot|code\s*screen', positive, re.I):
-        raise ValueError('大字报视觉方案不得添加3D、屏幕或复杂主体')
+def check_bold_typo_subject(positive, cover_texts=None):
+    # Validated quoted copy is lettering, not a request for a three-dimensional subject.
+    for item in cover_texts or []:
+        positive = re.sub(r'[“「\"]' + re.escape(item['text']) + r'[”」\"]', '封面文字', positive)
+    match = re.search(r'3\s*D|立体(?:物件|主体|机器人)|代码(?:屏|树)|电脑|人物插画|机器人|复杂背景|computer|robot|code\s*screen', positive, re.I)
+    if match:
+        raise ValueError(f'大字报视觉方案不得添加3D、屏幕或复杂主体（检测到：{match.group(0)}）')
 
 
 def validate_visual_plan(plan, product_model, platform, expected_layout='', rules=None):
@@ -921,7 +956,7 @@ def validate_visual_plan(plan, product_model, platform, expected_layout='', rule
     check_cover_words(positive, platform, product_model, rules, context='视觉提示词')
     if layout == '大字报':
         # Reject positive subject instructions; negative prohibitions themselves are allowed.
-        check_bold_typo_subject(positive)
+        check_bold_typo_subject(positive, texts)
         if plan.get('background_style') is not None:
             plan['background_style'] = backgrounds.normalize_style(plan['background_style'],prompt)
     return plan
@@ -933,8 +968,12 @@ def validate_batch_cover(plan, previous_plans):
         return [monitoring.normalized(t['text']) for t in value.get('cover_texts', [])
                 if t.get('role') != 'model']
     current = lines(plan)
+    signature = plan.get('design_signature')
     for previous in previous_plans:
         old = lines(previous)
+        if (isinstance(signature, dict) and all(isinstance(signature.get(k), str) and signature[k].strip() for k in ('subject_motif','background_motif'))
+                and signature == previous.get('design_signature')):
+            raise ValueError('同批封面雷同：主体与背景母题重复，换色或动作不足以区分；未调用本张生图')
         if current and old and (current[0] == old[0] or
                 len(set(current) & set(old)) >= max(2, len(set(current)) - 1)):
             raise ValueError('同批封面雷同：主钩子重复或仅替换末行卖点，请修改图片提示词后重试；未调用本张生图')
@@ -942,6 +981,7 @@ def validate_batch_cover(plan, previous_plans):
 
 def visual_prompt_call(post, references, settings, timeout, raw_output, platform, style_mode='auto', style_preset='', style_prompt='', rules=None, reverse_db_path=None, batch_plans=None, batch_index=1, batch_count=1):
     from . import prompts as reverse_prompts
+    started = monotonic()
     model = settings.get('CONTENT_OPS_VISION_MODEL', image_api.MODEL_DEFAULTS['CONTENT_OPS_VISION_MODEL'])
     if not model:
         raise ValueError('未配置多模态视觉提示词模型，请在 Hanabi「接口接入」中配置')
@@ -970,7 +1010,7 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
     corpus_model = post.get('corpus_model') or product_model
     contract = {
         'model': product_model, 'corpus_model': corpus_model, 'reference': source, 'collection_name': expected_layout or '看图识别四大版式',
-        'batch': {'index': batch_index, 'count': batch_count, 'previous_plans': batch_plans or []},
+        'batch': {'index': batch_index, 'count': batch_count, 'previous_plans': [{k:p.get(k) for k in ('collection_name','cover_texts','visual_prompt','background_style','design_signature')} for p in (batch_plans or [])]},
         'reference_reverse_prompt': reverse_record['prompt'],
         'reference_negative_prompt': reverse_record.get('negativePrompt', ''),
         'recent_cover_materials': [{'id':p['id'],'cover_ocr':p.get('cover_ocr',''),'title':p.get('title','')} for p in monitoring.recent_posts(load_posts(), monitoring.policy(), platform=platform)],
@@ -978,6 +1018,7 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
         'cover_corpus': extract_cover_corpus(corpus_model, display_model=product_model), 'risk_rules': applicable_rules,
         'canvas': ratio, 'style': style_instruction, 'background_profiles': backgrounds.style_options(),
         'schema': {'collection_name': '四大版式之一，与参考合集一致',
+                   'design_signature': {'subject_motif':'同类主体的语义类别，平面大字报写材质母题；与前序语义相同必须复用同一名称', 'background_motif':'场景/平面装饰母题，语义相同复用同一名称'},
                    'structure': {'layout': '原图结构分析', 'region_proportions': '原图各分区比例和位置关系',
                                  'text_regions': [{'position': '原图文字区位置', 'line_count': 4, 'line_lengths': [6, 5, 7, 6]}]},
                    'cover_texts': [{'role': 'model/benefit/hook/payoff/feature/subtitle', 'text': '本次独立封面短字', 'position': '对应文字区位置'}],
@@ -996,6 +1037,7 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
         '封面独立从当前模型专属语料选词（语料中的型号位已换成输入名），不写技术说明长句。语料不是事实证明，不新增数字、评测、价格或承诺。'
         '上中下/左右下返回model+benefit+3～4个feature；环绕返回model+benefit+4个feature，可另附4个subtitle；'
         '大字报返回3～4行，依次钩子、利益、型号、爽点（三行可合并钩子与利益）。'
+        '批量时必须阅读batch.previous_plans，逐一排除已用的主体与场景母题；同一种机器人+霓虹光圈+展台即使换颜色、动作、卖点仍视为重复，必须更换同类主体与背景材质/装饰母题，同时保持本张参考的分区结构；大字报只在平面材质和装饰内变化。'
         '批量时必须阅读batch.previous_plans：主钩子与利益表达重新策划，不能只换末行卖点；在参考版式内让底色/强调色组合、平面装饰或同类主体形态至少两项明显不同，差异写入background_style与visual_prompt。单张保持参考配色；批量允许协调换色，不能推翻手动要求。'
         '大字报必须单独返回background_style：以reference_reverse_prompt为底稿轻微改写description，区分揉皱纸、深灰网格、蓝色笔记本、光影纸张和彩色便笺，保留并微调平面装饰；单张保留参考图实际底色、墨色和荧光笔色，批量按前述差异要求协调换色；不要无论参考图是什么都写成暖白纸。'
         'highlight_roles默认且必须包含model（高亮完整型号行）；可另加至多一行，不要只高亮钩子或利益而漏掉型号。'
@@ -1041,7 +1083,7 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
         'image_sha256': reverse_record.get('image_sha256', source.get('sha256', '')),
         'run_id': reverse_record.get('run_id'),
     }
-    return plan, {'model':response.get('model',model),'usage':response.get('usage',{}),'reference_images':len(images),'sources':sources,
+    return plan, {'model':response.get('model',model),'usage':response.get('usage',{}),'elapsed_seconds':round(monotonic()-started, 3),'reference_images':len(images),'sources':sources,
                   'reference_reverse': plan['reference_reverse']}
 
 def fit_font(font_path, text, maximum, width):
@@ -1371,7 +1413,7 @@ def run(args):
                 image_path=out/post['image']
                 if not image_path.is_file() or hashlib.sha256(image_path.read_bytes()).hexdigest()!=post['image_metadata']['sha256']:
                     raise ValueError('已完成任务的图片丢失或已改变，请保留原结果并使用新目录')
-    references, reference_context, reference_hashes = load_references(getattr(args, 'references', None), getattr(args, 'reference_max_chars', 32000), args.platform, model, style_preset if style_mode == 'manual' else '')
+    references, reference_context, reference_hashes = load_references(getattr(args, 'references', None), getattr(args, 'reference_max_chars', 32000), args.platform, model, style_preset if style_mode == 'manual' else '', count=len(previous.get('references', [])) if args.resume else args.count)
     reference_images = reference_image_parts(reference_context)[1] if not args.background else []
     if not args.background:
         cover_corpus = extract_cover_corpus(corpus_model, allow_fallback=True, display_model=model)
@@ -1463,8 +1505,10 @@ def run(args):
         recent = [{k:p.get(k,'') for k in ('id','published_at','title','body','cover_ocr')}
                   for p in monitoring.recent_posts(load_posts(), novelty_policy, platform=args.platform)]
     request['novelty_policy'] = novelty_policy
+    request['recent_title_examples'] = [{'id':p['id'],'title':p['title']} for p in recent if p.get('title')]
+    request['requirements'].append('近期标题同时用于学习句式、语序、长短和标点节奏，只避开原句与事实照搬；近期来源不足则从few_shot_examples学习。不要整批套用短促感叹开头加型号的格式，不预设固定标题模板。型号太长放正文，标题必须完整，不截断英文单词。')
     request['recent_materials'] = recent
-    request['requirements'].append('近期素材只用于避重：不能复用标题、开头、卖点组合与场景，不得只换型号或同义词。高互动参考只借结构与节奏，不照搬原文、封面短字或承诺；热度不证明事实。日期未知的素材不能认定为旧帖。')
+    request['requirements'].append('近期素材的原句、开头、卖点组合与场景用于避重，标题句式用于学习：不能复用原句，不得只换型号或同义词。高互动参考只借结构与节奏，不照搬原文、封面短字或承诺；热度不证明事实。日期未知的素材不能认定为旧帖。')
     manifest['recent_materials'] = recent
     manifest['novelty_policy'] = novelty_policy
     request['requirements'] = [item for item in request['requirements'] if item]
@@ -1477,15 +1521,21 @@ def run(args):
         else:
             final = {'posts': []}
             manifest['copy_calls'] = []
-            for image_index in range(1, args.count + 1):
+            chunk_images = int(settings.get('CONTENT_OPS_COPY_CHUNK_IMAGES', 2))
+            if not 1 <= chunk_images <= 10:
+                raise ValueError('文案合并图片数须为1～10')
+            chunk_images = min(chunk_images, max(1, 6 // copy_multiplier))
+            for image_index in range(1, args.count + 1, chunk_images):
                 offset = len(final['posts'])
+                image_end = min(args.count + 1, image_index + chunk_images)
                 request['image_index'] = image_index
-                request['copy_plan'] = [{'image_index':image_index, 'copy_index':i+1, 'copy_format':format_for(copy_format, offset+i)} for i in range(copy_multiplier)]
+                request['count'] = (image_end - image_index) * copy_multiplier
+                request['copy_plan'] = [{'image_index':j, 'copy_index':i+1, 'copy_format':format_for(copy_format, offset+(j-image_index)*copy_multiplier+i)} for j in range(image_index, image_end) for i in range(copy_multiplier)]
                 request['previous_angles'] = [post['angle'] for post in final['posts']]
-                request['previous_copies'] = final['posts']
+                request['previous_copies'] = [{k:p.get(k) for k in ('title','angle','audience')} for p in final['posts']]
                 posts, usages = generate_validated_copy_chunk(
                     system, request, settings, args.timeout, out / f'copy-response-{image_index}.txt',
-                    copy_multiplier, model, active_rules, args.platform, copy_format, offset, corpus_model)
+                    request['count'], model, active_rules, args.platform, copy_format, offset, corpus_model)
                 final['posts'].extend(posts)
                 manifest['copy_calls'].extend(usages)
             save_json(out/'copy.json',final)
@@ -1513,6 +1563,8 @@ def run(args):
                     'mode':old.get('mode',''),'size':old.get('requested_size',''),'status':'completed'}]
             manifest['posts'].append(record)
         save_json(out/'manifest.json',manifest)
+        usable_anchors = [] if args.background else [r for r in reference_context if readable_reference({**r, 'images': r['image_paths']})]
+        visual_anchors = diverse_references(usable_anchors, len(usable_anchors))
         for index,post in enumerate(posts,1):
             previous=previous_posts.get(index,{})
             if args.resume and not args.background and previous.get('visual_plan'):
@@ -1539,10 +1591,9 @@ def run(args):
                     vision_usage = {'model': previous['visual_prompt_model']}
                 else:
                     # Rotate structural anchors across posters, not across the copy variants.
-                    usable = [r for r in reference_context if readable_reference({**r, 'images': r['image_paths']})]
-                    if not usable:
+                    if not visual_anchors:
                         raise ValueError('所选参考帖没有可读取的本地图片')
-                    anchor = usable[(index - 1) % len(usable)]
+                    anchor = visual_anchors[(index - 1) % len(visual_anchors)]
                     raw_visual = out/f'vision-prompt-{index}.txt'
                     if args.resume and raw_visual.is_file():
                         # Raw provider output is retained even when local validation rejected it.
@@ -1582,7 +1633,9 @@ def run(args):
                                  'size':f'{size[0]}x{size[1]}', 'status':'prepared', 'created_at':datetime.now(ZoneInfo('Asia/Shanghai')).isoformat()}
                 manifest['posts'][index-1].setdefault('image_requests',[]).append(image_request)
                 save_json(out/'manifest.json',manifest)
+                image_started = monotonic()
                 image_result = image_api.generate_image(prompt=prompt,output=generated_path,model=manifest['image_model'],base_url=settings['CONTENT_OPS_BASE_URL'],api_key=settings['CONTENT_OPS_API_KEY'],size=f'{size[0]}x{size[1]}',timeout=args.timeout)
+                image_request['elapsed_seconds'] = round(monotonic()-image_started, 3)
                 image_request['status'] = 'completed'
                 if (image_result['width'], image_result['height']) != size:
                     raise ValueError(f"生图尺寸不符：要求 {size[0]}x{size[1]}，实际 {image_result['width']}x{image_result['height']}")

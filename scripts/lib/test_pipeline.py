@@ -54,6 +54,52 @@ def structured_post(fmt='format_1', n=1):
 
 
 class PipelineTests(unittest.TestCase):
+    def test_bold_subject_negation_and_positive_reintroduction(self):
+        for text in ['没有3D、电脑或机器人；平面纸纹', '不含代码屏、人物插画。满幅纸面',
+                     '不需要3D物件。浅色纸纹', '无需机器人，保留箭头', 'without 3D objects; flat paper']:
+            copy.check_bold_typo_subject(copy.positive_visual_text(text))
+        for text in ['加入3D机器人', '没有电脑；加入机器人', '不要电脑但加入3D机器人', '加入代码屏']:
+            with self.assertRaisesRegex(ValueError, '大字报视觉方案'):
+                copy.check_bold_typo_subject(copy.positive_visual_text(text))
+
+    def test_quoted_3d_cover_copy_is_not_a_subject_instruction(self):
+        texts=[{'text':'脚本3D创作'}]
+        copy.check_bold_typo_subject('末行写「脚本3D创作」，满幅纸纹', texts)
+        with self.assertRaisesRegex(ValueError, '检测到：机器人'):
+            copy.check_bold_typo_subject('末行写「脚本3D创作」，右侧放机器人', texts)
+
+    def test_title_rewrite_uses_recent_examples_and_preserves_complete_words(self):
+        request={'recent_title_examples':[{'id':'recent','title':'项目变大后怎么排错'}], 'previous_copies':[]}
+        bad={'posts':[structured_post(n=i) for i in range(1,4)]}
+        for i,p in enumerate(bad['posts']):p['title']=f'速来！GLM5.3方案{i}'
+        good={'posts':[structured_post(n=i) for i in range(1,4)]}
+        with patch.object(copy,'claude_call',side_effect=[(bad,{}),(good,{})]) as call:
+            result,usage=copy.generate_validated_copy_chunk('system',request,{},1,self.base/'title-response.txt',3,'GLM5.3',[], 'xhs','format_1',0,retries=1)
+        self.assertEqual(len(result),3)
+        payload=json.loads(call.call_args.args[1])
+        self.assertEqual(payload['recent_title_examples'],request['recent_title_examples'])
+        self.assertIn('标题句式雷同', payload['risk_rewrite']['rejected_reason'])
+
+    def test_visual_anchor_selection_spaces_actual_images(self):
+        refs=[]
+        for n,color in enumerate(['#000000','#010101','#ffffff']):
+            path=self.base/f'anchor-{n}.png'
+            Image.new('RGB',(32,32),color).save(path)
+            refs.append({'id':str(n),'image_paths':[str(path)]})
+        self.assertEqual([r['id'] for r in copy.diverse_references(refs,3)],['0','2','1'])
+
+    def test_same_subject_and_background_motif_is_rejected_before_image(self):
+        first=visual_plan()
+        first['design_signature']={'subject_motif':'机器人','background_motif':'霓虹展台'}
+        second=deepcopy(first)
+        second['cover_texts'][0]['text']='开工新搭档'
+        second['cover_texts'][1]['text']='轻松接入'
+        second['cover_texts'][-1]['text']='长文放开看'
+        with self.assertRaisesRegex(ValueError,'主体与背景母题重复'):
+            copy.validate_batch_cover(second,[first])
+        second['design_signature']['background_motif']='纸张拼贴'
+        copy.validate_batch_cover(second,[first])
+
     def test_batch_cover_rejects_only_changed_payoff(self):
         first = visual_plan()
         second = deepcopy(first)
@@ -1295,10 +1341,11 @@ class PipelineTests(unittest.TestCase):
         intro_post=structured_post();intro_post['sections'][0]['text']='开头引入内容足够短\n继续说明这次需求\n多余一行本应被裁掉'
         control_post=structured_post();control_post['title']='好价来了\t冲一波'
         with redirect_stdout(io.StringIO()):
-            copy.validate_posts({'posts':[title_post]},1,'GLM5.3',copy_format='format_1')
+            with self.assertRaisesRegex(ValueError, '标题超长'):
+                copy.validate_posts({'posts':[title_post]},1,'GLM5.3',copy_format='format_1')
             copy.validate_posts({'posts':[intro_post]},1,'GLM5.3',copy_format='format_1')
             copy.validate_posts({'posts':[control_post]},1,'GLM5.3',copy_format='format_1')
-        self.assertEqual(len(title_post['title']),20)
+        self.assertEqual(title_post['title'],'绝了！Kimi K3.1 Pro搞定空间建模与研报🔥')
         self.assertLessEqual(len(intro_post['sections'][0]['text'].splitlines()),2)
         self.assertEqual(control_post['title'],'好价来了冲一波')
         post=structured_post('format_2');post['sections'][3]['text']='工具兼容情况待确认'
@@ -1317,14 +1364,14 @@ class PipelineTests(unittest.TestCase):
     def test_small_copy_length_overages_are_trimmed_with_warnings(self):
         post = structured_post()
         post['sections'][0]['text'] = '开头内容需要稍微增加几个字，达到三十四字边界以上但仍然可以自然修剪完成'
-        post['title'] = '标题长度刚刚超过二十字但没有达到严重超长范围'
+        post['title'] = '项目排查有个新帮手'
         output = io.StringIO()
         with redirect_stdout(output):
             result = copy.validate_posts({'posts':[post]},1,'GLM5.3',copy_format='format_1')
         self.assertIn('WARN', output.getvalue())
         self.assertLessEqual(len(post['sections'][0]['text'].replace('\n','')),34)
         self.assertTrue(post['sections'][0]['text'].endswith(('，', ',', '？', '！', '?', '!')))
-        self.assertEqual(len(post['title']),20)
+        self.assertEqual(post['title'],'项目排查有个新帮手')
         self.assertEqual(result[0]['body'].split('\n\n')[0], post['sections'][0]['text'])
 
         fallback = structured_post()
@@ -1374,14 +1421,14 @@ class PipelineTests(unittest.TestCase):
                  patch.object(copy,'visual_prompt_call',side_effect=vision_call), \
                  patch.object(gateway,'generate_image',side_effect=image_call) as images, redirect_stdout(io.StringIO()):
                 self.assertEqual(copy.main(argv),0)
-                self.assertEqual(calls.call_count,2)
+                self.assertEqual(calls.call_count,1 if multiplier <= 3 else 2)
                 self.assertEqual(images.call_count,2)
                 self.assertEqual(len(list(output.glob('post-*-copy-*.md'))),2*multiplier)
                 (output/'post-1-copy-1.md').unlink()
                 self.assertEqual(copy.main([*argv,'--resume']),0)
                 self.assertTrue((output/'post-1-copy-1.md').exists())
                 self.assertEqual(images.call_count,2)
-                self.assertEqual(calls.call_count,2)
+                self.assertEqual(calls.call_count,1 if multiplier <= 3 else 2)
                 self.assertEqual(copy.main([*argv,'--resume','--copy-multiplier',str(2 if multiplier==1 else 1)]),1)
                 self.assertEqual(copy.main([*argv,'--resume','--copy-format','format_1']),1)
                 self.assertEqual(images.call_count,2)

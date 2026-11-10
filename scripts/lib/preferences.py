@@ -468,7 +468,7 @@ def load_preferences(path, platform, max_chars):
             raise ValueError('偏好包六项结构不完整，请先重跑蒸馏脚本')
         context = {'persona':{'standards':persona['standards'],'anti_patterns':persona['anti_patterns']},
                    'platform_rules':{platform:target},
-                   'title_patterns':{'openers':titles['openers'],'structures':titles['structures']},
+                   'historical_title_samples':{'usage':'仅为历史样本，不是本批标题模板；优先学习请求中近期真实标题的句式与语序，不照抄原句。','openers':titles['openers'],'structures':titles['structures']},
                    'design':design,'known_conflicts':data.get('known_conflicts',{}),
                    'preference_priority':data.get('preference_priority',[])}
         block = '=== 运营偏好（当前审核标准）===\n' + json.dumps(context,ensure_ascii=False,indent=2) + '\n=== 偏好块结束 ==='
