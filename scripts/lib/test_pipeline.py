@@ -871,6 +871,8 @@ class PipelineTests(unittest.TestCase):
             self.assertIn('creative_plan', content[0]['text'])
             self.assertIn('attention_strategy', content[0]['text'])
             self.assertIn('creative_brief', content[0]['text'])
+            self.assertIn('service_offer', content[0]['text'])
+            self.assertIn('user_provided_service', content[0]['text'])
             self.assertIn('model_materials', content[0]['text'])
             self.assertIn('communication_brief', content[0]['text'])
             self.assertIn('art_direction', content[0]['text'])
@@ -1117,6 +1119,15 @@ class PipelineTests(unittest.TestCase):
                     plan=visual_plan();plan['visual_prompt']+=claim
                     with self.assertRaisesRegex(ValueError,'视觉提示词含风险词'):
                         copy.validate_visual_plan(plan,'GLM5.3',platform)
+
+    def test_current_service_offer_reads_single_editable_section_and_keeps_source_type(self):
+        spec = '# 规范\n## 当前服务卖点\n本方服务卖点甲，不保证模型效果。\n## 模型能力\n不能混入服务卖点。\n'
+        first = copy.current_service_offer(spec)
+        second = copy.current_service_offer(spec.replace('卖点甲', '卖点乙'))
+        self.assertEqual(first['text'], '本方服务卖点甲，不保证模型效果。')
+        self.assertEqual(first['evidence_type'], 'user_provided_service')
+        self.assertNotEqual(first['sha256'], second['sha256'])
+        self.assertEqual(copy.current_service_offer('# 没有当前业务输入')['text'], '')
 
     def test_visual_materials_follow_summary_evidence_without_marketing_or_other_sections(self):
         corpus = ('# 模型资料\n证据见第 11、14 节；待补第 18 节。\n'
@@ -1384,6 +1395,37 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(parse_calls['n'], 2)
         self.assertEqual(usages[0]['attempt'], 2)
         self.assertTrue(usages[0]['risk_rewrite'])
+
+    def test_copy_chunk_rewrites_when_angles_repeat_previous_chunk(self):
+        reused = structured_post(n=1)
+        reused['angle'] = '已用切入角度'
+        fresh = structured_post(n=2)
+        fresh['angle'] = '全新切入角度'
+        settings = {'CONTENT_OPS_API_KEY': 'test', 'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1'}
+        calls = {'n': 0}
+
+        def collide_then_fresh(system, user, settings, timeout, path):
+            calls['n'] += 1
+            path.write_text('ok', encoding='utf-8')
+            payload = json.loads(user)
+            if calls['n'] == 1:
+                self.assertNotIn('risk_rewrite', payload)
+                return {'posts': [reused]}, {'model': 'offline', 'usage': {}}
+            self.assertIn('risk_rewrite', payload)
+            self.assertIn('同批文案缺少不同结构', payload['risk_rewrite']['rejected_reason'])
+            self.assertIn('已用切入角度', payload['risk_rewrite']['instruction'])
+            return {'posts': [fresh]}, {'model': 'offline', 'usage': {}}
+
+        request = {'copy_plan': [], 'previous_angles': ['已用切入角度'], 'previous_copies': [{'title': '旧标题', 'angle': '已用切入角度', 'audience': '开发者'}]}
+        with patch.object(copy, 'claude_call', side_effect=collide_then_fresh), redirect_stdout(io.StringIO()) as stdout:
+            posts, usages = copy.generate_validated_copy_chunk(
+                'sys', request, settings, 1, self.base / 'copy-angle.txt',
+                1, 'GLM5.3', None, 'xhs', 'format_1', 0)
+        self.assertEqual([p['angle'] for p in posts], ['全新切入角度'])
+        self.assertEqual(calls['n'], 2)
+        self.assertEqual([u['risk_rewrite'] for u in usages], [False, True])
+        self.assertIn('重出第 1/2 次', stdout.getvalue())
+        self.assertTrue(copy.is_copy_rewrite_error(ValueError('同批文案缺少不同结构')))
 
     def test_copy_structure_validation_and_risk_checks_cover_every_version(self):
         posts = [structured_post(copy.format_for('all_variations',i),i+1) for i in range(5)]
