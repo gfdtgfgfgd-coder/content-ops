@@ -178,3 +178,28 @@
   replace: 官方福利
   reason: 虚假宣传与违规营销高危词，第三方平台无公开SLA随时变动，易引发用户举报虚假宣传被平台封禁（2026-11-09实测舆情反馈）
   added_at: "2026-11-09"
+
+# 2026-11-10 运营/思敏反馈补充：禁用促销用语与批量调用敏感词（Q58）
+- word: 限时特惠
+  regex: false
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 好价活动
+  reason: 促销用语违禁词，易触发小红书及各平台非官方活动/促销违规风控（Q58，2026-11-10）
+  added_at: "2026-11-10"
+
+- word: '超低(?:调用)?开销'
+  regex: true
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 成本更亲民
+  reason: 促销与广告法极限夸大用语违禁词，易卡小红书聚光投流及平台营销审核（Q58，2026-11-10）
+  added_at: "2026-11-10"
+
+- word: 批量调用
+  regex: false
+  level: ban
+  platform: [xhs, xianyu, gzh]
+  replace: 自动化处理
+  reason: 敏感违禁词，易引发黑产自动化与外挂批量刷量误判（Q58，2026-11-10）
+  added_at: "2026-11-10"

@@ -1,5 +1,13 @@
 # 完成记录
 
+## 违禁词与知识库规范更新（促销用语与批量调用禁用） · 2026-11-10
+
+- 协作记录补录 Q58：依据运营反馈，全面禁用「限时特惠」「超低调用开销」等夸大促销用语以及敏感行为词「批量调用」，写入知识库。
+- `rules/banned-words-quick.yaml` 新增「限时特惠」「超低(?:调用)?开销」「批量调用」违禁词规则，全平台（小红书、闲鱼、公众号）拦截并配置安全替换词。
+- `rules/content-spec.md` 清理文案模板与价格活动板块中的促销夸大用语，强化聚光投流合规红线。
+- `data/model-corpus.md`、`skills/xhs-title-patterns/quick.md`、`data/wecom/risk-words.md` 与 `skills/simin-persona/SKILL.md` 同步清理历史示例并补齐溯源。
+- 重新蒸馏偏好包 `python3 scripts/build.py distill` 更新 `data/distilled-preferences.json`，82 项 pipeline 离线回归测试与 68 项 Hanabi 测试全数通过。
+
 ## Kimi K3.1 Pro DSA 与推理服务栈实测吸收 · 2026-11-09
 
 - 新增 `data/model-corpus.md` Kimi 第 15 节，记录 DSA、`8K/128K × C1/C8/C32` 性能矩阵、CUDA Graph 条件、草稿接受率、GPU 能耗和每卡每小时产出。
