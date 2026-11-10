@@ -1553,6 +1553,12 @@ class RevisionTests(unittest.TestCase):
         self.assertEqual(call.call_args.kwargs['prompt'],data['prompt'])
         with Image.open(output) as image:self.assertEqual(image.getpixel((0,0)),(35,71,137))
         self.assertEqual(result['rendered_text'][-1]['text'],'写代码真顺手')
+        edited = deepcopy(data)
+        edited['cover_texts'][1]['text'] = 'Kimi K3.1Pro'
+        edited['cover_texts'][2]['text'] = 'Kimi K3.1Pro'
+        with patch.object(gateway,'generate_image',side_effect=generate):
+            changed = self.revision.run(edited,self.settings,self.base/'renamed.png')
+        self.assertEqual([row['text'] for row in changed['rendered_text']][1:3], ['Kimi K3.1Pro'] * 2)
         self.assertEqual(result['background_surface']['material_source'],'generated_surface_preserved')
         self.assertGreaterEqual(result['minimum_side_margin_ratio'],.2)
         self.assertFalse((self.base/'layered-background.png').exists())
@@ -1611,6 +1617,9 @@ class RevisionTests(unittest.TestCase):
         source=self.base/'source.png';font=Path('/System/Library/Fonts/Hiragino Sans GB.ttc');texts=visual_plan()['cover_texts']
         copy.render_bold_typo(bg,source,texts,font,(1080,1440),preserve_background=True)
         with Image.open(source) as image:self.assertGreater(int(image.info['hanabi_background_parts']),1)
+        texts = deepcopy(texts)
+        texts[1]['text'] = 'Kimi K3.1Pro'
+        texts[2]['text'] = 'Kimi K3.1Pro'
         data={'kind':'image','action':'typeset','platform':'xhs','model':'GLM5.3','source_image':str(source),'cover_texts':texts,
               'typography':{'scale':1.2,'align':'left','font':'hiragino_sans'},'background_style':{},'prompt':'原背景词'}
         settings={**self.settings,'CONTENT_OPS_FONT':str(font)}

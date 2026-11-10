@@ -183,8 +183,8 @@ export class ContentOpsRevisionUI {
     const fontSelect=this.q('[name=coverFont]');const font=context.typography?.font||'source_han_sans';
     fontSelect.value=[...fontSelect.options].some(option=>option.value===font)?font:'source_han_sans';
     this.coverTexts=(context.coverTexts||[]).map(t=>({...t,scale:Number.isFinite(t.scale)?t.scale:1}));
-    const roles={hook:'开场句',benefit:'利益句',model:'型号（当前批次）',payoff:'爽点'};
-    this.q('[data-cover-texts]').innerHTML=this.coverTexts.map((text,i)=>`<div class="revision-cover-line"><label>${esc(roles[text.role]||'封面字')}<input data-cover-index="${i}" value="${esc(text.text)}" maxlength="80" ${text.role==='model'?'readonly':''}></label><label class="revision-cover-scale">字号%<input data-scale-index="${i}" type="number" min="60" max="150" step="5" value="${Math.round((text.scale??1)*100)}"></label><label class="revision-cover-highlight"><input type="checkbox" data-highlight-index="${i}" ${this.imageSettings.highlight_roles?.includes(text.role)?'checked':''}>高亮</label></div>`).join('');
+    const roles={hook:'开场句',benefit:'利益句',model:'型号（可修改）',payoff:'爽点'};
+    this.q('[data-cover-texts]').innerHTML=this.coverTexts.map((text,i)=>`<div class="revision-cover-line"><label>${esc(roles[text.role]||'封面字')}<input data-cover-index="${i}" value="${esc(text.text)}" maxlength="80"></label><label class="revision-cover-scale">字号%<input data-scale-index="${i}" type="number" min="60" max="150" step="5" value="${Math.round((text.scale??1)*100)}"></label><label class="revision-cover-highlight"><input type="checkbox" data-highlight-index="${i}" ${this.imageSettings.highlight_roles?.includes(text.role)?'checked':''}>高亮</label></div>`).join('');
     for(const key of ['ink','accent'])this.setColor(key,this.imageSettings[key]||'');
     this.loadColorGrade(context.colorGrade);
   }

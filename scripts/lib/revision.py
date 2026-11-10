@@ -16,6 +16,21 @@ from . import gateway, words
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def validate_edited_cover_texts(texts, platform, model):
+    """Manual cover edits keep user wording rather than generation-only contracts."""
+    from . import copy
+    if not isinstance(texts, list) or not 3 <= len(texts) <= 4:
+        raise ValueError('请填写3～4行封面文字')
+    for index, item in enumerate(texts, 1):
+        if (not isinstance(item, dict) or item.get('role') not in ('hook', 'benefit', 'model', 'payoff')
+                or not isinstance(item.get('text'), str) or not item['text'].strip()
+                or len(item['text']) > 80 or re.search(r'[\x00-\x1f\x7f]', item['text'])):
+            raise ValueError('封面文字须为1～80字的有效单行文本')
+        copy.normalize_line_scale(item.get('scale', 1))
+        copy.check_cover_words(item['text'], platform, model, context=f'封面短字第{index}项')
+    return texts
+
+
 def regenerate_image(data, settings, output):
     from . import copy, backgrounds
     prompt = data.get('prompt')
@@ -33,10 +48,7 @@ def regenerate_image(data, settings, output):
     if mode == 'layered_poster':
         copy.check_bold_typo_subject(copy.positive_visual_text(prompt))
         texts = data.get('cover_texts')
-        plan = {'collection_name':'大字报','structure':{},'cover_texts':texts,'visual_prompt':'满幅平面背景'}
-        copy.validate_visual_plan(plan,data['model'],data['platform'])
-        for item in texts:
-            copy.normalize_line_scale(item.get('scale', 1) if isinstance(item, dict) else 1)
+        validate_edited_cover_texts(texts, data['platform'], data['model'])
         style = backgrounds.normalize_style(data.get('background_style'))
         font = copy.resolve_cover_font(typography, settings)
     size = copy.poster_size(data['platform'])
@@ -62,9 +74,7 @@ def typeset_image(data, settings, output):
     if output.exists():
         raise ValueError('修改结果文件已存在，拒绝覆盖')
     texts = data.get('cover_texts')
-    copy.validate_visual_plan({'collection_name':'大字报','structure':{},'cover_texts':texts,'visual_prompt':'满幅平面背景'},data['model'],data['platform'])
-    for item in texts:
-        copy.normalize_line_scale(item.get('scale', 1) if isinstance(item, dict) else 1)
+    validate_edited_cover_texts(texts, data['platform'], data['model'])
     style = backgrounds.normalize_style(data.get('background_style'))
     typography = copy.normalize_typography(data.get('typography'))
     color_grade = copy.normalize_color_grade(data.get('color_grade'))
