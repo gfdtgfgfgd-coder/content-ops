@@ -69,3 +69,5 @@ description: 用公司网关文案模型与网关图像模型为给定产品名�
 批次调优：先核对参考锚图分配与 design_signature，标题使用近期真实样本，具体创作边界引用内容规范；性能排障先比较 manifest 各阶段 elapsed_seconds，不以请求数推断总耗时。合并参数及大字报误报回归见 GUIDE「封面同构链路与排障」。
 
 充分抽象流程与信息预算引用 `rules/content-spec.md`，可复用观察/归类/重组方法见 `skills/content-methods/references/multimodal-playbook.md`「抽象参考与视觉重组」。数据表现与视觉复杂度分开判断，不以主观美观代替互动证据。
+
+商业海报生成先填写 communication_brief 与 art_direction，再落实到成品说明；两者的字段与事实边界引用 `rules/content-spec.md`。最终图像请求只执行成品画面与准确文案，不把原图分析、反推复刻限制或 creative_plan 工程JSON直接当构图指令；方案仍保存在 manifest 供追溯。

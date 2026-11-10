@@ -66,6 +66,8 @@ class PipelineTests(unittest.TestCase):
             prompt=copy.direct_image_prompt({'model':'GLM5.3'},'xhs',plan)
             self.assertIn('抽象后独立设计',prompt)
             self.assertNotIn('保持参考图分区比例',prompt)
+            self.assertNotIn('创作决策：',prompt)
+            self.assertNotIn('region_proportions',prompt)
         clean=visual_plan(layout='上中下')
         clean['scene_labels']=['API']
         with self.assertRaisesRegex(ValueError,'风险词'):
@@ -852,7 +854,9 @@ class PipelineTests(unittest.TestCase):
             self.assertIn('attention_strategy', content[0]['text'])
             self.assertIn('creative_brief', content[0]['text'])
             self.assertIn('model_materials', content[0]['text'])
-            self.assertIn('主视觉与辅助模块必须提供互补信息', content[0]['text'])
+            self.assertIn('communication_brief', content[0]['text'])
+            self.assertIn('art_direction', content[0]['text'])
+            self.assertNotIn('reference_negative_prompt', content[0]['text'])
             self.assertNotIn('先拆解并锁死', content[0]['text'])
             self.assertIn('像素光标', content[0]['text'])
             for pollution in ['本次核心卖点。','旧副标题污染唯一标记','旧高亮污染唯一标记','避免告示牌贴纸感','明确主物件、场景、冷暖光影']:
