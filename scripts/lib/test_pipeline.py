@@ -1157,6 +1157,17 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn('限制仍属于本段', selected['text'])
         self.assertIn('短能力及其限制', selected['text'])
         self.assertEqual(materials['sha256'], __import__('hashlib').sha256(materials['text'].encode()).hexdigest())
+        with patch.object(copy, 'extract_model_corpus', return_value=''):
+            missing = copy.visual_model_materials('未入库型号')
+        self.assertEqual(missing['text'], '')
+        self.assertTrue(missing['corpus_missing'])
+        with patch.object(copy, 'extract_model_corpus', return_value='* ' + ('超长完整段' * 40) + '\n'):
+            with self.assertRaisesRegex(ValueError, 'CONTENT_OPS_VISUAL_MATERIAL_CHARS'):
+                copy.visual_model_materials('用户输入型号', 40)
+        flash = copy.visual_model_materials('DeepSeek V4.1 Flash')
+        self.assertFalse(flash.get('corpus_missing'))
+        self.assertGreater(len(flash['text']), 1000)
+        self.assertEqual(copy.resolve_product_model('DeepSeek V4.1 Flash'), 'DeepSeek V4.1')
 
     def test_cover_corpus_is_model_scoped_and_all_combinations_pass_risk_check(self):
         models=('GLM-5.3','Kimi K3.1 Pro','DeepSeek V4.1')
@@ -1179,7 +1190,8 @@ class PipelineTests(unittest.TestCase):
             copy.check_cover_words(corpus,'xianyu',model)
         for informal,canonical in (('GLM5.3','GLM-5.3'),('glm-5.3','GLM-5.3'),('kimi k3.1','Kimi K3.1 Pro'),
                                    ('Kimi K3.1','Kimi K3.1 Pro'),('Kimi K3.1 Pro Highspeed','Kimi K3.1 Pro'),
-                                   ('deepseek v4.1','DeepSeek V4.1')):
+                                   ('deepseek v4.1','DeepSeek V4.1'),('DeepSeek V4.1 Flash','DeepSeek V4.1'),
+                                   ('deepseek-v4.1-flash','DeepSeek V4.1')):
             with self.subTest(informal=informal):
                 self.assertEqual(copy.resolve_product_model(informal,require_cover=True),canonical)
                 adapted=copy.extract_cover_corpus(canonical,display_model=informal)

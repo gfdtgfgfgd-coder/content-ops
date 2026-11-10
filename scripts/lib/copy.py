@@ -1382,6 +1382,14 @@ def visual_model_materials(model, max_chars=16000):
     if max_chars < 1:
         raise ValueError('视觉资料字符预算须为正整数')
     corpus = extract_model_corpus(model)
+    if not corpus.strip():
+        # Freeform / unresolved display names keep generating with an empty evidence pack.
+        empty = ''
+        return {'source': 'data/model-corpus.md 主能力摘要及其引用的证据章节',
+                'text': empty, 'sha256': hashlib.sha256(empty.encode()).hexdigest(),
+                'evidence_sections': [], 'missing_evidence_sections': [],
+                'omitted_evidence_sections': [], 'omitted_summary_blocks': [],
+                'character_budget': max_chars, 'corpus_missing': True}
     summary = re.split(r'^##\s+2\.', corpus, maxsplit=1, flags=re.M)[0]
     sections = {m.group(1): m.group(0) for m in re.finditer(
         r'^##\s+(\d+)\.[^\n]*\n[\s\S]*?(?=^##\s|\Z)', corpus, flags=re.M)}
@@ -1394,14 +1402,24 @@ def visual_model_materials(model, max_chars=16000):
     # including their continuations, instead of cutting off qualifiers at a byte limit.
     blocks = re.split(r'(?m)(?=^[*+-] |^##\s)', summary)
     selected, summary_omitted = [], []
+    oversized = False
     for index, block in enumerate(blocks):
         if sum(map(len, selected)) + len(block) <= max_chars:
             selected.append(block)
         else:
             summary_omitted.append(index + 1)
+            if len(block) > max_chars:
+                oversized = True
     material = ''.join(selected)
     if not material.strip():
-        raise ValueError('视觉资料预算不足以容纳完整来源段，请调整 CONTENT_OPS_VISUAL_MATERIAL_CHARS')
+        if oversized:
+            raise ValueError('视觉资料预算不足以容纳完整来源段，请调整 CONTENT_OPS_VISUAL_MATERIAL_CHARS')
+        empty = ''
+        return {'source': 'data/model-corpus.md 主能力摘要及其引用的证据章节',
+                'text': empty, 'sha256': hashlib.sha256(empty.encode()).hexdigest(),
+                'evidence_sections': [], 'missing_evidence_sections': [],
+                'omitted_evidence_sections': [], 'omitted_summary_blocks': summary_omitted,
+                'character_budget': max_chars, 'corpus_missing': False}
     included, omitted = [], []
     for number in cited:
         if number not in sections or sections[number] in summary:
@@ -1417,7 +1435,7 @@ def visual_model_materials(model, max_chars=16000):
             'text': material, 'sha256': hashlib.sha256(material.encode()).hexdigest(),
             'evidence_sections': included, 'missing_evidence_sections': missing,
             'omitted_evidence_sections': omitted, 'omitted_summary_blocks': summary_omitted,
-            'character_budget': max_chars}
+            'character_budget': max_chars, 'corpus_missing': False}
 
 
 def run(args):
