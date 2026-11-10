@@ -97,7 +97,41 @@ def ensure_compatibility_cc(text):
     return text.rstrip() + '\n兼容 CC、wbuddy 等主流开发工作台。'
 
 
-def structured_body(post, expected_format, platform):
+def shorten_xhs_title(title, model, limit=20):
+    """Omit long product names from overlong Xiaohongshu titles; never cut mid-token."""
+    cleaned = re.sub(r'[\x00-\x1f\x7f]', '', str(title or '')).strip()
+    if len(cleaned) <= limit:
+        return cleaned
+    names = []
+    display = str(model or '').strip()
+    if display:
+        names.append(display)
+        compact = re.sub(r'\s+', '', display)
+        if compact != display:
+            names.append(compact)
+    for name in sorted({item for item in names if item}, key=len, reverse=True):
+        if name not in cleaned:
+            continue
+        stripped = cleaned.replace(name, '', 1)
+        stripped = re.sub(r'\s{2,}', ' ', stripped)
+        stripped = re.sub(r'[！!]{2,}', '！', stripped)
+        stripped = re.sub(r'[？?]{2,}', '？', stripped)
+        stripped = re.sub(r'\s*([！!？?。．])\s*', r'\1', stripped)
+        stripped = stripped.strip(' ，,、·-_|/：:')
+        # Drop orphan edition leftovers like lone "Flash" after removing a long display name.
+        stripped = re.sub(r'(?<![A-Za-z])(?:Flash|Pro|Max|Lite|Turbo|Preview|Highspeed)(?![A-Za-z])', '', stripped, flags=re.I)
+        stripped = re.sub(r'\s{2,}', ' ', stripped).strip(' ，,、·-_|/：:')
+        if stripped and len(stripped) <= limit:
+            token_match = re.search(r'[A-Za-z]+$', stripped.rstrip('！!？?。．'))
+            if token_match:
+                token = token_match.group(0)
+                if name.lower().startswith(token.lower()) and token.lower() != re.sub(r'[^a-z0-9]', '', name.lower()):
+                    continue
+            return stripped
+    return cleaned
+
+
+def structured_body(post, expected_format, platform, model=''):
     if post.get('copy_format') != expected_format:
         raise ValueError('文案结构与指定格式不符：' + expected_format)
     sections = post.get('sections')
@@ -176,7 +210,13 @@ def structured_body(post, expected_format, platform):
         title = cleaned
         post['title'] = title
     if platform == 'xhs' and len(title) > 20:
-        raise ValueError('标题超长：请重新写完整的20字以内标题，不截断型号；可省略型号而突出具体场景')
+        repaired = shorten_xhs_title(title, model)
+        if repaired != title and 1 <= len(repaired) <= 20:
+            print(f'WARN: 标题超长，已省略型号保留为「{repaired}」。')
+            title = repaired
+            post['title'] = title
+        else:
+            raise ValueError('标题超长：请重新写完整的20字以内标题，不截断型号；可省略型号而突出具体场景')
     elif platform != 'xhs' and len(title) > 80:
         raise ValueError('标题超长：请重新写完整的80字以内标题')
     return '\n\n'.join(section['text'] for section in sections)
@@ -414,7 +454,7 @@ def mobile_body(body, maximum=30, allow_heading_runs=False):
                 continue
             heading_run = heading_run + 1 if re.match(r'^\s*[^:：\n]{1,12}[:：].+', line) else 0
             if heading_run >= 3:
-                raise ValueError('正文连续标题冒号说明过多，请改为短句段落；不自动重写或重试')
+                raise ValueError('正文连续标题冒号说明过多，请改为短句段落')
     paragraphs = []
     for paragraph in re.split(r'\n\s*\n', body):
         lines = []
@@ -447,7 +487,15 @@ def validate_posts(value, count, model, rules=None, platform="xhs", copy_format=
         if not isinstance(post, dict):
             raise ValueError('文案条目格式错误')
         if isinstance(post.get('title'), str):
-            post['title'] = ensure_display_product_name(post['title'], model, corpus_model)
+            original_title = post['title']
+            expanded = ensure_display_product_name(original_title, model, corpus_model)
+            # Long display names must not inflate an otherwise legal Xiaohongshu title.
+            if platform == 'xhs' and len(expanded) > 20 and len(re.sub(r'[\x00-\x1f\x7f]', '', original_title).strip()) <= 20:
+                post['title'] = original_title
+                if expanded != original_title:
+                    print('WARN: 标题保留较短写法，避免对外型号把标题撑破20字。')
+            else:
+                post['title'] = expanded
         lines = post.get('title_lines')
         if lines is None:
             lines = post['title_lines'] = ['封面由视觉模型独立规划', model, '独立封面短字']
@@ -465,7 +513,7 @@ def validate_posts(value, count, model, rules=None, platform="xhs", copy_format=
                 hits = word_check.check('\n'.join(s.get('text', '') for s in raw_sections if isinstance(s, dict) and isinstance(s.get('text'), str)), platform, model, rules=rules)
                 if hits:
                     raise ValueError('文案仍含风险词：' + '、'.join(sorted({h['word'] for h in hits})))
-            post['body'] = structured_body(post, format_for(copy_format, format_offset + offset), platform)
+            post['body'] = structured_body(post, format_for(copy_format, format_offset + offset), platform, model)
         if not isinstance(post.get('body'), str) or not 80 <= len(post['body']) <= 500:
             raise ValueError('正文长度应为 80–500 字')
         tags = post.get('tags')
@@ -474,7 +522,14 @@ def validate_posts(value, count, model, rules=None, platform="xhs", copy_format=
         model_tag = '#' + re.sub(r'\s+', '', model)
         matched = next((index for index, tag in enumerate(tags) if same_product_model(tag.lstrip('#'), model)), None)
         if matched is None:
-            raise ValueError('标签中需要包含与模型名一致的型号标签：' + model_tag)
+            if len(tags) < 5:
+                tags.insert(0, model_tag)
+                print(f'WARN: 标签缺少型号，已自动补上 {model_tag}。')
+                matched = 0
+            else:
+                tags[0] = model_tag
+                print(f'WARN: 标签缺少型号，已替换首个标签为 {model_tag}。')
+                matched = 0
         tags[matched] = model_tag
         if not isinstance(post.get('angle'), str) or not post['angle'].strip():
             raise ValueError('缺少文案结构说明')
@@ -524,9 +579,14 @@ def is_copy_rewrite_error(error):
     if not isinstance(error, ValueError):
         return False
     reason = str(error)
-    return ('风险词' in reason or '合法 JSON' in reason or '返回为空' in reason or '多个 JSON' in reason
-            or '近期内容雷同' in reason or '标题超长' in reason or '标题句式雷同' in reason
-            or '同批文案缺少不同结构' in reason or '不能单列适合人群' in reason)
+    markers = (
+        '风险词', '合法 JSON', '返回为空', '多个 JSON', '近期内容雷同', '标题超长', '标题句式雷同',
+        '同批文案缺少不同结构', '不能单列适合人群', '文案结构与指定格式不符', '文案区块顺序或数量不符',
+        '文案区块必须为非空', '正文长度应为', '需要 3–5 个', '标签中需要包含', '缺少文案结构说明',
+        '同批正文重复', '核心卖点须使用 Markdown 加粗', '正文连续标题冒号', '文案数量不符',
+        '适用人群区块不能为空',
+    )
+    return any(marker in reason for marker in markers)
 
 def copy_rewrite_payload(request, error, attempt):
     reason = str(error)
@@ -534,8 +594,14 @@ def copy_rewrite_payload(request, error, attempt):
     match = re.search(r'风险词[:：]\s*(.+)$', reason)
     if match:
         banned = [part.strip() for part in match.group(1).split('、') if part.strip()]
+    model = str(request.get('model') or '').strip()
     if '标题超长' in reason or '标题句式雷同' in reason:
-        instruction = '重写完整标题，严格满足字数上限；不要截断型号，可省略型号改写具体场景。学习recent_title_examples的多种自然句式，不要整批都用短促感叹开场加型号。保留已核验事实，只返回合法JSON。'
+        long_name = f'当前型号「{model}」已占{len(model)}字，标题不要写完整型号，把型号放正文和标签。' if len(model) >= 12 else ''
+        instruction = (
+            '重写完整标题，严格满足字数上限；不要截断型号单词。'
+            f'{long_name}'
+            '可省略型号、突出具体场景。学习recent_title_examples的多种自然句式，不要整批都用短促感叹开场加型号。保留已核验事实，只返回合法JSON。'
+        )
     elif '同批文案缺少不同结构' in reason:
         previous = [str(item).strip() for item in request.get('previous_angles', []) if str(item).strip()]
         avoided = f'禁止复用这些已用角度：{"、".join(previous)}。' if previous else ''
@@ -544,11 +610,24 @@ def copy_rewrite_payload(request, error, attempt):
             f'{avoided}'
             '也不得与本组其它篇重复；标题、正文、标签、人群一并重写，不得只换同义词。只返回合法JSON。'
         )
-    elif '不能单列适合人群' in reason:
+    elif '不能单列适合人群' in reason or '适用人群区块不能为空' in reason:
         instruction = (
-            '上一稿在正文里单列了「适合人群：」标签。人群请写进 audience 区块的自然名单，'
+            '上一稿在正文里单列了「适合人群：」标签或人群区块为空。人群请写进 audience 区块的自然名单，'
             '不要加「适合人群/适用人群/推荐给」前缀；hook 只写行动号召。只返回合法JSON。'
         )
+    elif '文案结构与指定格式不符' in reason or '文案区块顺序或数量不符' in reason or '文案区块必须为非空' in reason:
+        instruction = (
+            '上一稿 sections 与 copy_plan / format_sections 不符。请按每篇 copy_format 原样输出区块 kind 顺序，'
+            '不得增删调换，每个 text 非空。只返回合法JSON。'
+        )
+    elif '正文长度应为' in reason or '同批正文重复' in reason:
+        instruction = '上一稿正文长度或同批重复不合格。重写互不相同的正文，保持80–500字。只返回合法JSON。'
+    elif '需要 3–5 个' in reason or '标签中需要包含' in reason:
+        instruction = '上一稿标签不合格。输出3–5个无空格标签，并包含去空格完整型号标签。只返回合法JSON。'
+    elif '核心卖点须使用 Markdown 加粗' in reason:
+        instruction = '上一稿核心卖点缺少 Markdown 加粗。selling_points 按「【emoji】 **大卖点**：短句。」重写。只返回合法JSON。'
+    elif '正文连续标题冒号' in reason:
+        instruction = '上一稿连续标题冒号说明过多。改为短句段落，避免连续三行「短标题：说明」。只返回合法JSON。'
     elif '近期内容雷同' in reason:
         instruction = '上一稿与近期素材或同批成稿雷同。更换主题切口、开头、卖点组合与使用场景；不得仅换同义词。只返回合法JSON。'
     elif banned:
@@ -561,7 +640,7 @@ def copy_rewrite_payload(request, error, attempt):
         )
     else:
         instruction = (
-            '上一稿返回无法解析或为空，请整组重新写本图全部文案版本。'
+            '上一稿返回无法解析、数量不符或缺少必要字段，请整组重新写本图全部文案版本。'
             '只返回一个合法 JSON 对象，不要使用 Markdown 代码围栏或前后说明文字；'
             '标题、正文、标签、人群按 copy_plan 区分角度，并遵守当前风险词库。'
         )
@@ -828,7 +907,6 @@ def ensure_display_product_name(text, display_model, corpus_model=''):
     display = str(display_model or '').strip()
     if not display or not isinstance(text, str) or not text:
         return text
-    result = text
     candidates = []
     for name in (corpus_model,):
         name = str(name or '').strip()
@@ -840,9 +918,16 @@ def ensure_display_product_name(text, display_model, corpus_model=''):
             candidates.append(resolved)
     except ValueError:
         pass
+    if not candidates:
+        return text
+    # Protect existing display-name hits so shorter formal names cannot expand inside them
+    # (e.g. "DeepSeek V4.1 Flash" must not become "... Flash Flash").
+    placeholder = '\0DISPLAY_NAME\0'
+    protected = text.replace(display, placeholder)
     for name in sorted({c for c in candidates if c}, key=len, reverse=True):
-        if name in result:
-            result = result.replace(name, display)
+        if name and name in protected:
+            protected = protected.replace(name, display)
+    result = protected.replace(placeholder, display)
     if result != text:
         print(f'WARN: 对外产品名已从语料正式名改回输入名「{display}」。')
     return result
@@ -1618,7 +1703,8 @@ def run(args):
            display_rule,
            gap_rule,
            '学习并模仿以下真实高热度小红书/闲鱼帖的标题节奏、排版结构与痛点切入点，针对目标模型进行创作。不要照搬其他产品的参数或旧帖风险词。',
-           '每篇title是独立笔记标题（小红书含标点与emoji≤20字）；不写title_lines或封面文字，封面由视觉模型独立策划。',
+           '每篇title是独立笔记标题（小红书含标点与emoji≤20字）；不写title_lines或封面文字，封面由视觉模型独立策划。'
+           + (f'当前型号「{model}」已占{len(model)}字，小红书标题不要写完整型号，把型号放正文与标签。' if args.platform == 'xhs' and len(model) >= 12 else ''),
            '正文80–500字；排版严格遵守偏好块 platform_rules 中当前平台的 guidance。参考帖仅供节奏参考，不能覆盖现行排版规范。',
            '突出简报里的具体功能、价格亮点、活动或人群；不扩写简报未给出的数字、评测和活动。人群区块自然成段，不使用适合人群：标签。',
            '自主判断audience，不固定行业人群；不写cover_subtitle、cover_highlight等封面字段。',
@@ -1638,7 +1724,10 @@ def run(args):
                   for p in monitoring.recent_posts(load_posts(), novelty_policy, platform=args.platform)]
     request['novelty_policy'] = novelty_policy
     request['recent_title_examples'] = [{'id':p['id'],'title':p['title']} for p in recent if p.get('title')]
-    request['requirements'].append('近期标题同时用于学习句式、语序、长短和标点节奏，只避开原句与事实照搬；近期来源不足则从few_shot_examples学习。不要整批套用短促感叹开头加型号的格式，不预设固定标题模板。型号太长放正文，标题必须完整，不截断英文单词。')
+    request['requirements'].append(
+        '近期标题同时用于学习句式、语序、长短和标点节奏，只避开原句与事实照搬；近期来源不足则从few_shot_examples学习。'
+        '不要整批套用短促感叹开头加型号的格式，不预设固定标题模板。型号太长必须省略出标题、放正文和标签；标题必须完整成句，不截断英文单词。'
+    )
     request['recent_materials'] = recent
     request['requirements'].append('近期素材的原句、开头、卖点组合与场景用于避重，标题句式用于学习：不能复用原句，不得只换型号或同义词。高互动参考只借结构与节奏，不照搬原文、封面短字或承诺；热度不证明事实。日期未知的素材不能认定为旧帖。')
     manifest['recent_materials'] = recent

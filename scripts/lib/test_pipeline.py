@@ -481,6 +481,33 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(fixed[0]['sections'][4]['text'].replace('\n', ''), '程序员、独立开发、全栈工程师')
         self.assertNotIn('适合人群', fixed[0]['body'])
         self.assertTrue(copy.is_copy_rewrite_error(ValueError('正文不能单列适合人群，请自然融入行动号召')))
+        self.assertTrue(copy.is_copy_rewrite_error(ValueError('文案区块顺序或数量不符：format_2')))
+        self.assertTrue(copy.is_copy_rewrite_error(ValueError('正文连续标题冒号说明过多，请改为短句段落')))
+        long_model = 'DeepSeek V4.1 Flash'
+        self.assertEqual(len(long_model), 19)
+        self.assertEqual(copy.shorten_xhs_title('挖到宝！DeepSeek V4.1 Flash跑代码顺手', long_model), '挖到宝！跑代码顺手')
+        long_title = structured_post('format_1')
+        long_title['title'] = '冲！DeepSeek V4.1 Flash长任务够稳'
+        long_title['title_lines'] = ['需求一眼看清', long_model, '开发流程拆得更顺']
+        long_title['tags'] = ['#DeepSeekV41Flash', '#开发流程', '#需求整理']
+        with redirect_stdout(io.StringIO()) as stdout:
+            repaired = copy.validate_posts({'posts': [long_title]}, 1, long_model, copy_format='format_1')
+        self.assertEqual(repaired[0]['title'], '冲！长任务够稳')
+        self.assertIn('省略型号', stdout.getvalue())
+        keep_short = structured_post('format_1')
+        keep_short['title'] = '盘点DeepSeek V4.1这波升级'
+        keep_short['title_lines'] = ['需求一眼看清', long_model, '开发流程拆得更顺']
+        keep_short['tags'] = ['#DeepSeekV41Flash', '#开发流程', '#需求整理']
+        with redirect_stdout(io.StringIO()) as stdout:
+            kept = copy.validate_posts({'posts': [keep_short]}, 1, long_model, copy_format='format_1', corpus_model='DeepSeek V4.1')
+        self.assertEqual(kept[0]['title'], '盘点DeepSeek V4.1这波升级')
+        self.assertLessEqual(len(kept[0]['title']), 20)
+        self.assertIn('较短写法', stdout.getvalue())
+        missing_tag = structured_post('format_1')
+        missing_tag['tags'] = ['#开发流程', '#需求整理', '#独立开发']
+        with redirect_stdout(io.StringIO()):
+            tagged = copy.validate_posts({'posts': [missing_tag]}, 1, 'GLM5.3', copy_format='format_1')
+        self.assertIn('#GLM5.3', tagged[0]['tags'])
         with self.assertRaisesRegex(ValueError, '连续标题冒号'):
             copy.mobile_body('▫️编程辅助：长句说明\n\n▫️需求整理：长句说明\n\n▫️项目协作：长句说明')
         selling_points = '\n'.join([
