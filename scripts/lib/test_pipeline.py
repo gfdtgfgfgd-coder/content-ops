@@ -353,6 +353,24 @@ class PipelineTests(unittest.TestCase):
                 copy.claude_call('sys', '{}', {'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1', 'CONTENT_OPS_API_KEY': 'k',
                                                'CONTENT_OPS_TEXT_MODEL': 't'}, 1, self.base / 'copy-fail.txt')
 
+    def test_gateway_retries_share_timeout_budget(self):
+        import http.client
+        from unittest.mock import MagicMock
+        good = MagicMock()
+        good.__enter__.return_value = io.BytesIO(b'{"ok":true}')
+        with patch.object(gateway.time, 'monotonic', side_effect=[0, 0, 2, 3]), \
+             patch.object(gateway.time, 'sleep'), \
+             patch.object(gateway, 'urlopen', side_effect=[http.client.RemoteDisconnected(), good]) as opener:
+            self.assertEqual(gateway.request_json('https://offline.invalid', {}, 'k', 10), {'ok': True})
+        self.assertEqual([call.kwargs['timeout'] for call in opener.call_args_list], [10, 7])
+        with patch.object(gateway.time, 'monotonic', side_effect=[0, 0, 180]), \
+             patch.object(gateway.time, 'sleep') as sleeper, \
+             patch.object(gateway, 'urlopen', side_effect=TimeoutError()) as opener:
+            with self.assertRaisesRegex(gateway.ImageGenerationError, '超时'):
+                gateway.request_json('https://offline.invalid', {}, 'k', 180)
+        opener.assert_called_once()
+        sleeper.assert_not_called()
+
     def test_copy_pipeline_offline_and_resume(self):
         background = self.base / 'background.png'
         Image.new('RGB', (64, 64), '#eeeeee').save(background)
@@ -1099,6 +1117,35 @@ class PipelineTests(unittest.TestCase):
                     plan=visual_plan();plan['visual_prompt']+=claim
                     with self.assertRaisesRegex(ValueError,'视觉提示词含风险词'):
                         copy.validate_visual_plan(plan,'GLM5.3',platform)
+
+    def test_visual_materials_follow_summary_evidence_without_marketing_or_other_sections(self):
+        corpus = ('# 模型资料\n证据见第 11、14 节；待补第 18 节。\n'
+                  '## 1. 摘要\n视觉与项目开发。\n'
+                  '## 2. 历史营销\n旧促销不得作事实。\n'
+                  '## 11. 发布来源\n具体场景A。\n来源身份未核验。\n'
+                  '## 12. 其他样本\n不相关内容。\n'
+                  '## 14. 官方更新\n具体场景B。\n未作本方复测。\n')
+        with patch.object(copy, 'extract_model_corpus', return_value=corpus):
+            materials = copy.visual_model_materials('用户输入型号')
+        self.assertEqual(materials['evidence_sections'], ['11', '14'])
+        self.assertEqual(materials['missing_evidence_sections'], ['18'])
+        for content in ('具体场景A。', '来源身份未核验。', '具体场景B。', '未作本方复测。'):
+            self.assertIn(content, materials['text'])
+        self.assertNotIn('旧促销不得作事实', materials['text'])
+        self.assertNotIn('不相关内容', materials['text'])
+        with patch.object(copy, 'extract_model_corpus', return_value=corpus):
+            limited = copy.visual_model_materials('用户输入型号', len(materials['text']) - 1)
+        self.assertEqual(limited['omitted_evidence_sections'], ['14'])
+        self.assertNotIn('具体场景B', limited['text'])
+        self.assertIn('来源身份未核验。', limited['text'])
+        large = '# 型号\n## 1. 摘要\n* 大段能力' + '内容' * 100 + '\n限制仍属于本段。\n* 短能力及其限制。\n## 2. 营销\n旧话术。'
+        with patch.object(copy, 'extract_model_corpus', return_value=large):
+            selected = copy.visual_model_materials('用户输入型号', 80)
+        self.assertTrue(selected['omitted_summary_blocks'])
+        self.assertNotIn('大段能力', selected['text'])
+        self.assertNotIn('限制仍属于本段', selected['text'])
+        self.assertIn('短能力及其限制', selected['text'])
+        self.assertEqual(materials['sha256'], __import__('hashlib').sha256(materials['text'].encode()).hexdigest())
 
     def test_cover_corpus_is_model_scoped_and_all_combinations_pass_risk_check(self):
         models=('GLM-5.3','Kimi K3.1 Pro','DeepSeek V4.1')

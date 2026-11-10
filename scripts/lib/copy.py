@@ -1009,14 +1009,14 @@ def visual_prompt_call(post, references, settings, timeout, raw_output, platform
     spec = (ROOT / 'rules/content-spec.md').read_text(encoding='utf-8')
     layout_spec = spec.split('## 封面大字报与视觉规范', 1)[1].split('## 小红书、闲鱼与公众号', 1)[0]
     corpus_model = post.get('corpus_model') or product_model
-    material = re.split(r'^##\s+2\.', extract_model_corpus(corpus_model), maxsplit=1, flags=re.M)[0][:6000]
+    materials = visual_model_materials(corpus_model, settings.get('CONTENT_OPS_VISUAL_MATERIAL_CHARS', '16000'))
     contract = {
         'model': product_model, 'corpus_model': corpus_model, 'reference': source, 'collection_name': expected_layout or '看图识别四大版式',
         'batch': {'index': batch_index, 'count': batch_count, 'previous_plans': [{k:p.get(k) for k in ('collection_name','cover_texts','visual_prompt','background_style','design_signature')} for p in (batch_plans or [])]},
         'reference_reverse_prompt': reverse_record['prompt'],
         'reference_abstraction': references[0].get('visual_abstraction', {}),
         'creative_brief': post.get('brief', ''), 'verified_claims': post.get('verified_claims', []),
-        'model_materials': {'source':'data/model-corpus.md 主能力摘要与证据优先级', 'text':material, 'sha256':hashlib.sha256(material.encode()).hexdigest()},
+        'model_materials': materials,
         'reference_usage':'原图与反推仅用于观察。反推的旧文案、旧型号和复刻限制不作为本次创作指令。',
         'recent_cover_materials': [{'id':p['id'],'cover_ocr':p.get('cover_ocr',''),'title':p.get('title','')} for p in monitoring.recent_posts(load_posts(), monitoring.policy(), platform=platform)],
         'novelty_requirement':'避开近期封面的原短字组合、钩子及卖点组合；只借版式结构，不仅更换型号或同义词。',
@@ -1346,6 +1346,53 @@ def extract_model_corpus(model, root=None):
         if item['id'] == canonical:
             return item['body']
     return ''
+
+def visual_model_materials(model, max_chars=16000):
+    """Follow evidence pointers from the summary, preserving whole source sections."""
+    try:
+        max_chars = int(max_chars)
+    except (TypeError, ValueError):
+        raise ValueError('视觉资料字符预算须为正整数') from None
+    if max_chars < 1:
+        raise ValueError('视觉资料字符预算须为正整数')
+    corpus = extract_model_corpus(model)
+    summary = re.split(r'^##\s+2\.', corpus, maxsplit=1, flags=re.M)[0]
+    sections = {m.group(1): m.group(0) for m in re.finditer(
+        r'^##\s+(\d+)\.[^\n]*\n[\s\S]*?(?=^##\s|\Z)', corpus, flags=re.M)}
+    cited = []
+    for match in re.finditer(r'第\s*(\d+(?:\s*[、,，和及]\s*\d+)*)\s*节', summary):
+        for number in re.findall(r'\d+', match.group(1)):
+            if number not in cited:
+                cited.append(number)
+    # Some model summaries contain long multi-line claims. Keep complete blocks,
+    # including their continuations, instead of cutting off qualifiers at a byte limit.
+    blocks = re.split(r'(?m)(?=^[*+-] |^##\s)', summary)
+    selected, summary_omitted = [], []
+    for index, block in enumerate(blocks):
+        if sum(map(len, selected)) + len(block) <= max_chars:
+            selected.append(block)
+        else:
+            summary_omitted.append(index + 1)
+    material = ''.join(selected)
+    if not material.strip():
+        raise ValueError('视觉资料预算不足以容纳完整来源段，请调整 CONTENT_OPS_VISUAL_MATERIAL_CHARS')
+    included, omitted = [], []
+    for number in cited:
+        if number not in sections or sections[number] in summary:
+            continue
+        candidate = material + '\n\n' + sections[number]
+        if len(candidate) > max_chars:
+            omitted.append(number)
+        else:
+            included.append(number)
+            material = candidate
+    missing = [number for number in cited if number not in sections]
+    return {'source': 'data/model-corpus.md 主能力摘要及其引用的证据章节',
+            'text': material, 'sha256': hashlib.sha256(material.encode()).hexdigest(),
+            'evidence_sections': included, 'missing_evidence_sections': missing,
+            'omitted_evidence_sections': omitted, 'omitted_summary_blocks': summary_omitted,
+            'character_budget': max_chars}
+
 
 def run(args):
     model = args.model.strip()  # Typed display name stays on covers and copy.

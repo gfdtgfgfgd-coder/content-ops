@@ -94,7 +94,7 @@ def transient_gateway_error(error: BaseException) -> bool:
 def friendly_connection_error(error: BaseException, key: str) -> str:
     text = safe_error(str(error), key)
     lowered = text.lower()
-    if any(marker in lowered for marker in ('timed out', 'timeout', '超时')):
+    if isinstance(error, TimeoutError) or any(marker in lowered for marker in ('timed out', 'timeout', '超时')):
         return '网关连接超时，请稍后重试'
     if any(marker in lowered for marker in (
         'remote end closed', 'connection reset', 'broken pipe', 'connection aborted',
@@ -105,11 +105,15 @@ def friendly_connection_error(error: BaseException, key: str) -> str:
 
 
 def request_json(url: str, payload: dict, key: str, timeout: float, *, retries: int = 2) -> dict:
-    """POST JSON to the company gateway; retry brief disconnects a few times."""
+    """POST JSON; brief-disconnect retries share the caller's timeout budget."""
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     attempts = max(1, int(retries) + 1)
+    deadline = time.monotonic() + timeout
     last_error: BaseException | None = None
     for attempt in range(attempts):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise ImageGenerationError(friendly_connection_error(TimeoutError(), key))
         request = Request(
             url,
             data=body,
@@ -117,7 +121,7 @@ def request_json(url: str, payload: dict, key: str, timeout: float, *, retries: 
             method="POST",
         )
         try:
-            with urlopen(request, timeout=timeout) as response:
+            with urlopen(request, timeout=remaining) as response:
                 result = json.load(response)
             break
         except HTTPError as error:
@@ -126,7 +130,10 @@ def request_json(url: str, payload: dict, key: str, timeout: float, *, retries: 
         except (URLError, TimeoutError, ConnectionError, BrokenPipeError, http.client.HTTPException) as error:
             last_error = error
             if attempt + 1 < attempts and transient_gateway_error(error):
-                time.sleep(min(1.5 * (attempt + 1), 4.0))
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise ImageGenerationError(friendly_connection_error(TimeoutError(), key)) from None
+                time.sleep(min(1.5 * (attempt + 1), 4.0, remaining / 2))
                 continue
             raise ImageGenerationError(friendly_connection_error(error, key)) from None
         except (ValueError, UnicodeError):
