@@ -77,6 +77,9 @@
     "hot_percentile": 0.8,
     "history_limit": 30,
     "title_similarity": 0.85,
-    "body_similarity": 0.78
+    "body_similarity": 0.78,
+    "auto_classify": true,
+    "classification_min_confidence": 0.85,
+    "classification_batch_size": 6
   }
 }

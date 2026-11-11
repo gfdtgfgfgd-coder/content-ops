@@ -1275,6 +1275,8 @@ class PipelineTests(unittest.TestCase):
         (self.base/'data/collections.json').write_text('{"collections":[{"name":"大字报","reference_ids":["xhs:ref"]}]}')
         (self.base/'rules').mkdir()
         for source in ('rules/content-spec.md','data/model-corpus.md'):shutil.copy(ROOT/source,self.base/source)
+        # Resume exercises the normal bundled preferences path, not the full-source fallback budget.
+        shutil.copy(ROOT/'data/distilled-preferences.json',self.base/'data/distilled-preferences.json')
         settings={'CONTENT_OPS_API_KEY':'test','CONTENT_OPS_BASE_URL':'https://offline.invalid/v1'}
         argv=['--model','GLM5.3','--count','1','--copy-multiplier','1','--output',str(self.base/'batch'),'--brief','开发任务，便宜量大']
         def generate(*,output,**kwargs):
@@ -1928,6 +1930,59 @@ class RevisionTests(unittest.TestCase):
 
 
 class MonitoringTests(unittest.TestCase):
+    def test_classification_only_targets_unassigned_monitor_imports(self):
+        from . import monitoring as m
+        rows=[{'id':id,'platform':'xhs','source':source,'images':['cover.png']} for id,source in [('a','account_monitor'),('b','account_monitor'),('c','user_added')]]
+        self.assertEqual([p['id'] for p in m.classify_candidates(rows,{'collections':[{'reference_ids':['xhs:a']} ]})],['b'])
+        self.assertEqual([p['id'] for p in m.classify_candidates(rows,{'collections':[{'reference_ids':['a']} ]})],['b'])
+
+    def test_classification_transaction_preserves_memberships_and_rolls_back_failure(self):
+        from . import monitoring as m
+        import hashlib
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'data').mkdir();(root/'config').mkdir();(root/'scripts').mkdir()
+            shutil.copy(ROOT/'config/data-cleaning.json',root/'config/data-cleaning.json')
+            source=root/'data/posts.jsonl';collections=root/'data/collections.json'
+            image=root/'data/images/xhs/a/1.png';image.parent.mkdir(parents=True);Image.new('RGB',(10,10),'red').save(image)
+            rows=[{'id':'a','platform':'xhs','source':'account_monitor','images':['data/images/xhs/a/1.png'],'body':'原文'},
+                  {'id':'b','platform':'xhs','source':'account_monitor','images':['unchanged.png'],'body':'不改'}]
+            source.write_text(''.join(json.dumps(p)+'\n' for p in rows))
+            collections.write_text(json.dumps({'collections':[{'id':'one','name':'大字报','reference_ids':['xhs:b']},{'id':'two','name':'环绕','reference_ids':[]}]}))
+            subprocess.run(['git','init','-q'],cwd=root,check=True)
+            for k,v in [('user.name','test'),('user.email','test@localhost')]:subprocess.run(['git','config',k,v],cwd=root,check=True)
+            subprocess.run(['git','add','.'],cwd=root,check=True);subprocess.run(['git','commit','-qm','fixture'],cwd=root,check=True)
+            raw=source.read_bytes();craw=collections.read_bytes();decision={'a':{'collection':'环绕','abstraction':{'source_image_sha256':hashlib.sha256(image.read_bytes()).hexdigest()}}}
+            (root/'scripts/doctor.py').write_text('raise SystemExit(1)')
+            with patch.object(m,'observe_collections',return_value=decision),self.assertRaises(subprocess.CalledProcessError):
+                m.classify_main(['--root',tmp,'--apply'])
+            self.assertEqual(source.read_bytes(),raw);self.assertEqual(collections.read_bytes(),craw)
+            self.assertFalse((root/'data/.posts.lock').exists())
+            (root/'scripts/doctor.py').write_text('raise SystemExit(0)')
+            with patch.object(m,'observe_collections',return_value=decision):m.classify_main(['--root',tmp,'--apply'])
+            saved=[json.loads(l) for l in source.read_text().splitlines()];self.assertEqual(saved[0]['body'],'原文');self.assertEqual(saved[1],rows[1])
+            groups=json.loads(collections.read_text())['collections'];self.assertEqual(groups[0]['reference_ids'],['xhs:b']);self.assertEqual(groups[1]['reference_ids'],['xhs:a'])
+            # Removing an already observed assignment does not invite automatic resurrection.
+            self.assertEqual(m.classify_candidates(saved,{'collections':[groups[0]]}),[])
+
+    def test_classification_uses_real_image_and_rejects_low_confidence(self):
+        from . import monitoring as m
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'config').mkdir();shutil.copy(ROOT/'config/data-cleaning.json',root/'config/data-cleaning.json')
+            image=root/'data/images/xhs/a/1.png';image.parent.mkdir(parents=True);Image.new('RGB',(100,160),'red').save(image)
+            post={'id':'a','platform':'xhs','images':['data/images/xhs/a/1.png']}
+            item={'id':'a','collection':'环绕','confidence':0.96,'hierarchy':'中心和四角','visual_focus':'中间主体','reading_path':'从中心向外',
+                  'information_modules':['中心主体','四周模块'],'reusable_principles':['中心辐射'],'replaceable_elements':['颜色']}
+            settings={'CONTENT_OPS_VISION_MODEL':'vision-model','CONTENT_OPS_BASE_URL':'https://offline.invalid/v1','CONTENT_OPS_API_KEY':'fake'}
+            response=lambda x:{'model':'vision-model','choices':[{'message':{'content':json.dumps({'items':[x]})}}]}
+            with patch.object(gateway,'request_json',return_value=response(item)) as call:
+                result=m.observe_collections([post],[],{'collections':[{'name':'环绕','reference_ids':[]}]},root,settings)
+                self.assertEqual(result['a']['collection'],'环绕');self.assertIn('source_image_sha256',result['a']['abstraction'])
+                self.assertTrue(any(p['type']=='image_url' for p in call.call_args.args[1]['messages'][0]['content']))
+            with patch.object(gateway,'request_json',return_value=response({**item,'confidence':0.5})):
+                self.assertEqual(m.observe_collections([post],[],{'collections':[{'name':'环绕','reference_ids':[]}]},root,settings),{})
+            with patch.object(gateway,'request_json',return_value=response({**item,'id':'wrong'})),self.assertRaises(ValueError):
+                m.observe_collections([post],[],{'collections':[{'name':'环绕','reference_ids':[]}]},root,settings)
+
     def test_recent_uses_published_time_not_fetch_time_and_preserves_boundary(self):
         from . import monitoring as m
         from datetime import datetime
