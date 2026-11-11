@@ -18,6 +18,11 @@ test('product models resolve informal aliases and reject unknown families before
   assert.deepEqual(models.map(item => item.id).sort(), ['DeepSeek V4.1', 'GLM-5.3', 'Kimi K3.1 Pro']);
   assert.equal(resolveProductModel('kimi k3.1', models, { requireCover: true }), 'Kimi K3.1 Pro');
   assert.equal(resolveProductModel('GLM5.3', models, { requireCover: true }), 'GLM-5.3');
+  assert.equal(resolveProductModel('DeepSeek V4.1 Flash', models, { requireCover: true }), 'DeepSeek V4.1');
+  assert.equal(resolveProductModel('deepseek v4.1 flash', models, { requireCover: true }), 'DeepSeek V4.1');
+  const flash = validateContentOpsInput({ ...input, model: 'DeepSeek V4.1 Flash' }, { productModels: models });
+  assert.equal(flash.model, 'DeepSeek V4.1 Flash');
+  assert.equal(flash.corpusModel, 'DeepSeek V4.1');
   const aliased = validateContentOpsInput({ ...input, model: 'kimi k3.1' }, { productModels: models });
   assert.equal(aliased.model, 'kimi k3.1');
   assert.equal(aliased.corpusModel, 'Kimi K3.1 Pro');

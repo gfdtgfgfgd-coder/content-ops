@@ -39,7 +39,9 @@ export function listProductModels(root) {
     for (const line of lines.slice(1, 12)) {
       const match = line.trim().match(ALIAS_LINE);
       if (!match) continue;
-      for (const alias of match[1].split(/[,，、;/|]+/u)) if (alias.trim()) aliases.add(alias.trim());
+      // Drop trailing commentary after ；/; so notes do not pollute alias tokens.
+      const aliasField = match[1].split(/[；;]/u, 2)[0];
+      for (const alias of aliasField.split(/[,，、;/|]+/u)) if (alias.trim()) aliases.add(alias.trim());
     }
     models.push({ id: names[0], aliases: [...aliases], hasCoverCorpus: COVER.test(part) });
   }

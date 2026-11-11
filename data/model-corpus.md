@@ -3947,7 +3947,8 @@ Kimi K3.1 Pro｜3T级参数后训练大模型
 
 # 三、DeepSeek V4.1 语料库
 
-> 型号别名：deepseek v4.1、DeepSeekV4.1、DS V4.1、DeepSeek V4.1 Flash、deepseek v4.1 flash、DeepSeek-V4.1-Flash、deepseek-v4.1-flash、V4.1 Flash、DeepSeek V4.1 Flash 1017、deepseek-v4.1-flash-1017；本次供稿具体对象为 **V4.1 Flash**，不泛化到整个 V4.1 系列或未来 Pro。
+> 型号别名：deepseek v4.1、DeepSeekV4.1、DS V4.1、DeepSeek V4.1 Flash、deepseek v4.1 flash、DeepSeek-V4.1-Flash、deepseek-v4.1-flash、V4.1 Flash、DeepSeek V4.1 Flash 1017、deepseek-v4.1-flash-1017
+> 本次供稿具体对象为 **V4.1 Flash**，不泛化到整个 V4.1 系列或未来 Pro。
 > **证据优先级**：第 11 节是原始发布稿的来源主张账本，第 14 节是官方 1017 更新与工具计费的证据账本；第 2—10 节为历史营销候选，不是已核实事实，调用时须逐项回查证据与当前产品文档。“天花板、近乎免费、成本可忽略、省九成、完美兼容、即插即用”等缺乏本篇支持，不得直接用于能力或价格承诺。本次只作事实整理与方法沉淀，不作风格终审。
 
 ## 1. 主能力摘要（供稿归因；证据与时效见第 11、14 节）

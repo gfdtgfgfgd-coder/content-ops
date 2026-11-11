@@ -1235,6 +1235,7 @@ class PipelineTests(unittest.TestCase):
         self.assertFalse(flash.get('corpus_missing'))
         self.assertGreater(len(flash['text']), 1000)
         self.assertEqual(copy.resolve_product_model('DeepSeek V4.1 Flash'), 'DeepSeek V4.1')
+        self.assertEqual(flash['character_budget'], 16000)
 
     def test_cover_corpus_is_model_scoped_and_all_combinations_pass_risk_check(self):
         models=('GLM-5.3','Kimi K3.1 Pro','DeepSeek V4.1')
@@ -1258,7 +1259,8 @@ class PipelineTests(unittest.TestCase):
         for informal,canonical in (('GLM5.3','GLM-5.3'),('glm-5.3','GLM-5.3'),('kimi k3.1','Kimi K3.1 Pro'),
                                    ('Kimi K3.1','Kimi K3.1 Pro'),('Kimi K3.1 Pro Highspeed','Kimi K3.1 Pro'),
                                    ('deepseek v4.1','DeepSeek V4.1'),('DeepSeek V4.1 Flash','DeepSeek V4.1'),
-                                   ('deepseek-v4.1-flash','DeepSeek V4.1')):
+                                   ('deepseek-v4.1-flash','DeepSeek V4.1'),('deepseek v4.1 flash','DeepSeek V4.1'),
+                                   ('V4.1 Flash','DeepSeek V4.1'),('DeepSeek V4.1 Flash 1017','DeepSeek V4.1')):
             with self.subTest(informal=informal):
                 self.assertEqual(copy.resolve_product_model(informal,require_cover=True),canonical)
                 adapted=copy.extract_cover_corpus(canonical,display_model=informal)

@@ -781,7 +781,9 @@ def iter_model_sections(root=None):
             match = re.match(r'^>\s*型号别名[:：]\s*(.+)$', line.strip())
             if not match:
                 continue
-            for alias in re.split(r'[,，、;/|]+', match.group(1)):
+            # Drop trailing commentary after ；/; so notes do not pollute alias tokens.
+            alias_field = re.split(r'[；;]', match.group(1), maxsplit=1)[0]
+            for alias in re.split(r'[,，、;/|]+', alias_field):
                 if alias.strip():
                     aliases.add(alias.strip())
         yield {
