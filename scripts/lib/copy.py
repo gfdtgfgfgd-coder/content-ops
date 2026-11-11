@@ -1093,7 +1093,7 @@ def validate_visual_plan(plan, product_model, platform, expected_layout='', rule
         # Reject positive subject instructions; negative prohibitions themselves are allowed.
         check_bold_typo_subject(positive, texts)
         if plan.get('background_style') is not None:
-            plan['background_style'] = backgrounds.normalize_style(plan['background_style'],prompt)
+            plan['background_style'] = backgrounds.normalize_style(plan['background_style'],prompt,ensure_model_highlight=True)
     return plan
 
 
@@ -1458,7 +1458,7 @@ def direct_image_prompt(post, platform, visual_prompt=None, style_mode='auto', s
 
 def bold_typo_background_prompt(visual_prompt, platform, model):
     plan = validate_visual_plan(visual_prompt, model, platform)
-    style = backgrounds.normalize_style(plan.get('background_style'),plan['visual_prompt'])
+    style = backgrounds.normalize_style(plan.get('background_style'),plan['visual_prompt'],ensure_model_highlight=True)
     plan['background_style'] = style
     profile = next(p for p in backgrounds.recipe()['profiles'] if p['id'] == style['profile'])
     ratio = '竖版3:4' if platform == 'xhs' else '方图1:1'

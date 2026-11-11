@@ -25,7 +25,7 @@ def style_options():
     return [{'id': p['id'], 'name': p['label'], 'material': p['prompt']} for p in recipe()['profiles']]
 
 
-def normalize_style(style=None, visual_prompt=''):
+def normalize_style(style=None, visual_prompt='', *, ensure_model_highlight=False):
     profiles = {p['id']: p for p in recipe()['profiles']}
     if style is not None and not isinstance(style, dict):
         raise ValueError('大字报background_style须为对象')
@@ -54,8 +54,8 @@ def normalize_style(style=None, visual_prompt=''):
     roles = style.get('highlight_roles', profile['highlight_roles'])
     if not isinstance(roles, list) or len(roles) > 3 or any(role not in ('hook','benefit','model','payoff') for role in roles) or len(roles) != len(set(roles)):
         raise ValueError('大字报高亮角色无效')
-    # 默认高亮型号：视觉模型若只高亮钩子/利益而漏型号，整组回落到型号高亮，不保留错位高亮。
-    if 'model' not in roles:
+    # 仅视觉方案生成启用：漏掉型号时回落为只高亮型号。手动排版预览/保存必须按勾选原样，否则取消型号高亮会被偷换成只高亮型号。
+    if ensure_model_highlight and 'model' not in roles:
         roles = ['model']
     result['highlight_roles'] = roles
     description = style.get('description', profile['prompt'])

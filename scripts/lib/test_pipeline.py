@@ -578,10 +578,15 @@ class PipelineTests(unittest.TestCase):
         self.assertIn('尤其不得印出', prompt)
         for style in [{'profile':'unknown'},{'profile':'paper_shadow','base':'white'},{'profile':'paper_shadow','highlight_roles':['unknown']}]:
             with self.assertRaises(ValueError):backgrounds.normalize_style(style)
-        forced=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['hook','benefit']})
+        forced=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['hook','benefit']},ensure_model_highlight=True)
         self.assertEqual(forced['highlight_roles'],['model'])
         kept=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['hook','model']})
         self.assertEqual(kept['highlight_roles'],['hook','model'])
+        # 手动排版：取消型号高亮时保留利益句等勾选，不得回落成只高亮型号。
+        manual=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['benefit']})
+        self.assertEqual(manual['highlight_roles'],['benefit'])
+        empty=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':[]})
+        self.assertEqual(empty['highlight_roles'],[])
         copy.check_bold_typo_subject(copy.positive_visual_text('平面像素光标与>>>角标点缀，无立体主体'))
         with self.assertRaises(ValueError):
             copy.check_bold_typo_subject(copy.positive_visual_text('加入电脑插画与3D机器人'))
