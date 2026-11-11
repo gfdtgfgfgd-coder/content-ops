@@ -384,6 +384,8 @@ Datawhale 近一周实测稿已合并到 `data/model-corpus.md` 的 Kimi 同名�
 
 ## 小红书账号每日监测
 
+执行前更新仓库（2026-11-12）：每日任务先在桌面 `/Users/lilith/Desktop/Hanabi` 核对 origin 为本项目 GitHub 仓库、当前分支为 main，检查工作区与未完成的合并/变基；已跟踪文件有未提交修改或本机独有提交时停止并报告，不自动提交他人的工作。执行 `git fetch origin`，确认 HEAD 为 origin/main 的祖先并核对差异后，仅用 `git merge --ff-only origin/main` 更新；已一致则继续。网络/认证失败、分叉、未跟踪文件阻挡更新或生产素材/合集疑似丢失、回退均停止本轮采集，保留现场；不使用强制覆盖、reset --hard、git clean 或自动 stash。无关未跟踪交付物、本机历史、上传缓存、密钥与生产数据均保留。更新后重读最新 AGENTS、README、TODO 与本手册，先运行 `python3 scripts/doctor.py`，通过后再采集；定时任务的执行配置由现有 automation ID `automation` 管理，不另建任务或更新脚本。
+
 账号来源唯一读取 `data/sources/bookmarks-raw.json` 的小红书入口；当前为深度deepAI，ID `69df2b9f0000000032019e07`。策略唯一源 `config/data-cleaning.json` 的 `monitoring`：最近7天从北京时间当天减7天的00:00起算，未知日期不拿抓取时间替代。`published_at` 存带时区的原始平台日期，`published_at_source=xhs_note.time`；人工改日期为 `manual_date`。编辑器原日期不变时不提交日期字段，避免把平台精确时间降为日期。`fetched_at` 仍只代表入库时间。
 
 浏览器使用 agent-reach 路由下的 ego lite，先读 ego-browser skill。一个 TaskSpace 内读取账号时间线，以带签名的原链接逐篇导航；不读Cookie、不自动登录，不调用未观察到的私有接口。滚动到非置顶帖子早于窗口后继续核对边界，不能因顶部旧置顶帖而停止。已有素材按ID对照，补齐其日期并刷新互动；缺页、看不到日期、视频和未完整加载均记录缺口。每分钟最多10个动作，每50篇休息5分钟；验证码/登录失效立即停。 导航优先 `page.goto(url, {waitUntil:"domcontentloaded", timeout:30000})`，随后等对应 note 的 time、desc、图片列表和互动字段齐全；不把第三方资源迟迟不触发 load 当成笔记缺失。若超时已提交新页面，先核对当前URL、作者、noteId与风控状态，只在同一Page继续提取，不反复重开页面。
