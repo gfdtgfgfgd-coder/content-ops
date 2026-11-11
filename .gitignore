@@ -1,7 +1,11 @@
-data/images/
+# data/images/ 精选素材库本地参考图进入 Git 跟踪，解决跨电脑下载缺失问题
+data/images/.prune-*/
+data/images/**/.DS_Store
 data/wecom/raw/
 outputs/**/*.png
 outputs/**/*.jpg
+# 自动批次的文案、原始模型响应与manifest同图片一起保留本机，不纳入源码预算。
+outputs/*/hanabi/
 node_modules/
 __pycache__/
 .DS_Store
@@ -15,3 +19,9 @@ hanabi/node_modules/
 *.app
 
 # 本机临时脚本与中间产物
+data/posts-clean.jsonl
+
+# 素材安全清理的本机快照与事务暂存
+data/posts.jsonl.bak.*
+data/.posts.lock
+data/.posts-prune-*.tmp

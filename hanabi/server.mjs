@@ -6,6 +6,8 @@ import { readFile, stat, mkdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ContentOpsRevisions } from './lib/content-ops-revisions.mjs';
+import { ContentOpsPrompts } from './lib/content-ops-prompts.mjs';
 import { ContentOpsProduction } from './lib/content-ops-production.mjs';
 import { ContentOpsReferenceStore, referenceImageRequestPath } from './lib/content-ops-reference-store.mjs';
 import { ContentOpsEditor } from './lib/content-ops-editor.mjs';
@@ -39,7 +41,9 @@ db.exec(`PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS content_ops_batches
 ); CREATE INDEX IF NOT EXISTS jobs_batch ON analysis_jobs(batch_id,position);`);
 const connections = new ContentOpsConnections({ root: REPO_ROOT });
 const production = new ContentOpsProduction({ db, root: REPO_ROOT, uploadDir: UPLOAD_DIR });
+const revisions = new ContentOpsRevisions({ db, production, root: REPO_ROOT, uploadDir: UPLOAD_DIR });
 const references = new ContentOpsReferenceStore({ root: REPO_ROOT });
+const prompts = new ContentOpsPrompts({db,root:REPO_ROOT,references,production});
 const editor = new ContentOpsEditor({ root: REPO_ROOT, runtimeRoot: existsSync(runtimeRoot) ? runtimeRoot : null });
 
 const json = value => JSON.stringify(value, null, 2);
@@ -89,8 +93,58 @@ async function route(req, res) {
     }
     if (req.method === 'POST' && pathname === '/api/content-ops/generate') return send(res, 200, await production.create(await body(req)));
     if (req.method === 'GET' && pathname === '/api/content-ops/batches') return send(res, 200, { batches: production.list() });
-    const batchMatch = pathname.match(/^\/api\/content-ops\/batches\/([^/]+)(?:\/(stop))?$/u);
+    const promptBatch=pathname.match(/^\/api\/content-ops\/batches\/([\w-]+)\/posts\/([\w-]+)\/prompts$/u);
+    if(promptBatch&&req.method==='GET')return send(res,200,await prompts.generation(promptBatch[1],promptBatch[2]),{'Cache-Control':'no-store'});
+    const promptImage=pathname.match(/^\/api\/content-ops\/image-prompts\/(xhs|xianyu)\/([^/]+)\/([^/]+)$/u);
+    if(promptImage){
+      const target={platform:promptImage[1],id:decodeURIComponent(promptImage[2]),filename:decodeURIComponent(promptImage[3])};
+      if(req.method==='GET')return send(res,200,await prompts.inspect(target),{'Cache-Control':'no-store'});
+      if(req.method!=='POST')return send(res,405,{error:'方法不支持。'});
+      if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机Hanabi页面提交反推请求。'});
+      return send(res,200,{run:await prompts.create(target,await body(req))},{'Cache-Control':'no-store'});
+    }
+    const promptRun=pathname.match(/^\/api\/content-ops\/prompt-runs\/([\w-]+)$/u);
+    if(promptRun&&req.method==='GET')return send(res,200,{run:prompts.public(prompts.get(promptRun[1]))},{'Cache-Control':'no-store'});
+    const revisionTarget = pathname.match(/^\/api\/content-ops\/batches\/([\w-]+)\/posts\/([\w-]+)\/(revisions|apply|preview)$/u);
+    if (revisionTarget) {
+      const [,batchId,jobId,action]=revisionTarget;
+      const headers={'Cache-Control':'no-store'};
+      if(req.method==='GET'&&action==='revisions')return send(res,200,revisions.history(batchId,jobId,parsed.searchParams.get('kind'),Number(parsed.searchParams.get('copyIndex'))),headers);
+      if(req.method!=='POST')return send(res,405,{error:'方法不支持。'},headers);
+      if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机Hanabi页面提交修改。'},headers);
+      const input=await body(req,22*1024*1024);
+      if(action==='preview')return send(res,200,await revisions.preview(batchId,jobId,input),headers);
+      return send(res,200,action==='apply'?revisions.apply(batchId,jobId,input):{revision:await revisions.create(batchId,jobId,input)},headers);
+    }
+    const cancelRevision=pathname.match(/^\/api\/content-ops\/revisions\/([\w-]+)\/cancel$/u);
+    if(req.method==='POST'&&cancelRevision){
+      if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机Hanabi页面取消修改。'});
+      return send(res,200,{revision:revisions.cancel(cancelRevision[1])});
+    }
+    const revisionMatch=pathname.match(/^\/api\/content-ops\/revisions\/([\w-]+)$/u);
+    if(req.method==='GET'&&revisionMatch)return send(res,200,{revision:revisions.public(revisions.get(revisionMatch[1]))},{'Cache-Control':'no-store'});
+    const batchMatch = pathname.match(/^\/api\/content-ops\/batches\/([^/]+)(?:\/(stop|resume))?$/u);
+    if(batchMatch&&req.method==='POST'&&batchMatch[2]==='resume'){if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机Hanabi页面继续生成。'});await body(req);return send(res,200,await production.resume(decodeURIComponent(batchMatch[1])));}
     if (batchMatch) { const id = decodeURIComponent(batchMatch[1]); if (req.method === 'GET' && !batchMatch[2]) return send(res, 200, { batch: production.public(production.get(id)) }); if (req.method === 'POST' && batchMatch[2] === 'stop') return send(res, 200, { batch: production.stop(id) }); }
+    if (req.method === 'GET' && pathname === '/api/content-ops/collections') return send(res, 200, { collections: await references.readCollections() }, { 'Cache-Control': 'no-store' });
+    const collectionMatch = pathname.match(/^\/api\/content-ops\/collections(?:\/([^/]+))?$/u);
+    if (collectionMatch) {
+      let id = null;
+      try { if (collectionMatch[1]) id = decodeURIComponent(collectionMatch[1]); } catch { return send(res, 400, { error: '合集 ID 无效。' }); }
+      const create = !id && req.method === 'POST';
+      const update = id && req.method === 'PUT';
+      const remove = id && req.method === 'DELETE';
+      const headers = { 'Cache-Control': 'no-store' };
+      if (!create && !update && !remove) return send(res, 405, { error: '方法不支持。' }, headers);
+      if (!localJsonRequest(req)) return send(res, 403, { error: '仅允许当前 Hanabi 页面提交 JSON 合集操作。' }, headers);
+      if (remove) return send(res, 200, { deleted: await references.deleteCollection(id) }, headers);
+      const payload = await body(req, 256 * 1024);
+      return send(res, create ? 201 : 200, { collection: create ? await references.createCollection(payload) : await references.updateCollection(id, payload) }, headers);
+    }
+    if (req.method === 'POST' && pathname === '/api/content-ops/references/reorder') {
+      if (!localJsonRequest(req)) return send(res, 403, { error: '仅允许本机 Hanabi 页面提交素材排序。' }, { 'Cache-Control': 'no-store' });
+      return send(res, 200, await references.reorderReferences(await body(req, 256 * 1024)), { 'Cache-Control': 'no-store' });
+    }
     if (req.method === 'GET' && pathname === '/api/content-ops/references') return send(res, 200, await references.list(parsed.searchParams), { 'Cache-Control': 'no-store' });
     const referenceMatch = pathname.match(/^\/api\/content-ops\/references(?:\/([^/]+)(?:\/(edit|delete))?)?$/u);
     if (referenceMatch) {
@@ -105,7 +159,7 @@ async function route(req, res) {
       if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` || req.headers['sec-fetch-site'] === 'cross-site') return send(res, 403, { error: '仅允许当前 Hanabi 页面修改素材。' }, headers);
       if (!remove && !/^application\/json(?:;|$)/iu.test(req.headers['content-type'] || '')) return send(res, 415, { error: '请使用 JSON 提交素材。' }, headers);
       if (remove) return send(res, 200, { deleted: await references.deleteReference(id) }, headers);
-      const payload = await body(req, 21 * 1024 * 1024);
+      const payload = await body(req, 65 * 1024 * 1024);
       return send(res, create ? 201 : 200, { reference: create ? await references.addReference(payload) : await references.updateReference(id, payload) }, headers);
     }
     if (req.method === 'GET' && pathname.startsWith('/api/content-ops/image/')) { const imagePath = referenceImageRequestPath(req.url); const image = await references.image(imagePath); const bytes = await readFile(image.path); res.writeHead(200, { 'Content-Type': image.mimeType, 'Content-Length': bytes.length, 'Cache-Control': 'no-store' }); return res.end(bytes); }
@@ -127,8 +181,18 @@ async function staticFile(req, res, pathname) {
 }
 
 const server = createServer((req, res) => void route(req, res));
-server.on('error', err => { console.error(err); process.exitCode = 1; });
+server.on('error', err => {
+  console.error(err);
+  // EADDRINUSE means another healthy Hanabi is already serving; exit quietly.
+  if (err && err.code === 'EADDRINUSE') process.exit(0);
+  process.exitCode = 1;
+});
 await production.recover();
+revisions.recover();
+prompts.recover();
 server.listen(PORT, HOST, () => console.log(`Hanabi content-ops listening on http://${HOST}:${server.address().port}`));
-const shutdown = async () => { await production.shutdown(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500).unref(); };
+const shutdown = async () => { prompts.shutdown(); revisions.shutdown(); await production.shutdown(); server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 1500).unref(); };
 process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
+// Terminal/nohup parent exit must not take the workbench down with SIGHUP.
+process.on('SIGHUP', () => {});
+try { process.stdin.unref?.(); } catch { /* non-interactive launch has no stdin */ }

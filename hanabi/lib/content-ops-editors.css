@@ -81,11 +81,37 @@
   .editor-form :is(input:not([type=checkbox]),textarea,select) { min-height:44px; }
 }
 
-/* Table columns: 7 columns total */
-.editor-table-scroll thead th:nth-child(1) { width:18%; }
+/* Table columns: 8 columns total */
+.editor-table-scroll thead th:nth-child(1) { width:15%; }
 .editor-table-scroll thead th:nth-child(2) { width:6%; }
-.editor-table-scroll thead th:nth-child(3) { width:14%; }
-.editor-table-scroll thead th:nth-child(4) { width:13%; }
-.editor-table-scroll thead th:nth-child(5) { width:14%; }
-.editor-table-scroll thead th:nth-child(6) { width:24%; }
+.editor-table-scroll thead th:nth-child(3) { width:12%; }
+.editor-table-scroll thead th:nth-child(4) { width:11%; }
+.editor-table-scroll thead th:nth-child(5) { width:13%; }
+.editor-table-scroll thead th:nth-child(6) { width:20%; }
 .editor-table-scroll thead th:nth-child(7) { width:11%; }
+.editor-table-scroll thead th:nth-child(8) { width:12%; }
+
+.editor-row-actions {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.editor-btn-sm {
+  min-height:26px !important;
+  padding:2px 8px !important;
+  font-size:12px !important;
+  font-weight:500 !important;
+  border-radius:4px !important;
+  line-height:1.2 !important;
+}
+.editor-btn-sm:hover {
+  cursor:pointer;
+}
+.editor-btn-danger {
+  color:var(--danger, #e14d4d) !important;
+  border-color:color-mix(in srgb, var(--danger, #e14d4d) 40%, var(--line)) !important;
+}
+.editor-btn-danger:hover {
+  background:color-mix(in srgb, var(--danger, #e14d4d) 12%, transparent) !important;
+  border-color:var(--danger, #e14d4d) !important;
+}

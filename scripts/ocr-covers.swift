@@ -16,6 +16,18 @@ func textFor(_ url: URL) -> String {
     do { try handler.perform([req]) } catch { return "" }
     return (req.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
 }
+// Read-only batch mode for account imports; no production JSONL is rewritten.
+if args.count > 2 && args[1] == "--images-json" {
+    do {
+        let data = try Data(contentsOf: URL(fileURLWithPath: args[2]))
+        let paths = try JSONSerialization.jsonObject(with: data) as? [String] ?? []
+        var result: [String: String] = [:]
+        for path in paths { result[path] = textFor(URL(fileURLWithPath: path)) }
+        let encoded = try JSONSerialization.data(withJSONObject: result, options: [.sortedKeys])
+        print(String(decoding: encoded, as: UTF8.self))
+        exit(0)
+    } catch { fputs("只读OCR失败：\(error)\n", stderr); exit(1) }
+}
 do {
     let raw = try String(contentsOf: dataset, encoding: .utf8)
     var records: [[String: Any]] = []

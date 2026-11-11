@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import sys
 
-COMMANDS = {'copy': ('copy', 'main'), 'image': ('gateway', 'main')}
+COMMANDS = {'copy': ('copy', 'main'), 'image': ('gateway', 'main'), 'revise': ('revision', 'main'), 'reverse': ('prompts', 'main')}
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -15,7 +15,7 @@ def main():
     args = parser.parse_args(sys.argv[1:2])
     rest = sys.argv[2:]
     # Keep full sys.argv: a fallback interpreter must retain the subcommand.
-    required = ('yaml',) if args.command in ('copy', 'clean', 'distill', 'words') else ()
+    required = ('yaml', 'PIL') if args.command in ('revise', 'reverse') else ('yaml',) if args.command in ('copy', 'clean', 'distill', 'words') else ()
     if any(importlib.util.find_spec(name) is None for name in required):
         root = Path(__file__).resolve().parents[1]
         for runtime in (root / 'scratch/.venv/bin/python3', root / '.venv/bin/python'):
