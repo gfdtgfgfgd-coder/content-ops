@@ -305,6 +305,7 @@ test('cover classification distinguishes content topics from layout evidence', (
   }
   assert.equal(classifyReference({title:'GLM5.3'}).model_category,'GLM');
   assert.equal(classifyReference({tags:['Seedance2']}).model_category,'Seedance/视频');
+  assert.equal(classifyReference({title:'DeepSeek V4.1 Flash'}).model_category,'DeepSeek');
   assert.equal(classifyReference({title:'其他工具'}).model_category,'其他');
 });
 
@@ -566,29 +567,40 @@ test('reference order debounces quick moves and preserves the captured collectio
   assert.equal(browser.pendingOrder,null);
 });
 
-test('reference filters use platform and collections, support full load, and default to newest input', async t => {
+test('reference filters use platform, model and collections, support full load, and default to newest input', async t => {
   const {store}=await referenceFixture(t);
-  const first=await store.addReference({title:'第一条'});
-  const second=await store.addReference({title:'第二条'});
-  const third=await store.addReference({platform:'xianyu',title:'第三条'});
-  const fourth=await store.addReference({title:'第四条'});
+  const first=await store.addReference({title:'第一条 GLM5.3'});
+  const second=await store.addReference({title:'第二条 Kimi'});
+  const third=await store.addReference({platform:'xianyu',title:'第三条 DeepSeek'});
+  const fourth=await store.addReference({title:'第四条 Seedance'});
   const collection=await store.createCollection({name:'重点素材'});
   await store.updateCollection(collection.id,{reference_ids:[`xhs:${first.id}`,`xhs:${second.id}`,`xianyu:${third.id}`]});
 
   const all=await store.list(new URLSearchParams({platform:'all',limit:'5000'}));
   assert.deepEqual(all.posts.map(post=>post.id),[fourth.id,third.id,second.id,first.id]);
   assert.equal(all.total,4);assert.equal(all.limit,5000);assert.equal(all.dataset_total,4);
+  assert.deepEqual(all.model_categories,['GLM','Kimi','DeepSeek','Seedance/视频','其他']);
   const allAlias=await store.list(new URLSearchParams({platform:'all',limit:'all'}));
   assert.deepEqual(allAlias.posts.map(post=>post.id),all.posts.map(post=>post.id));assert.equal(allAlias.limit,5000);
   const xhs=await store.list(new URLSearchParams({platform:'xhs',limit:'100'}));
   assert.deepEqual(xhs.posts.map(post=>post.id),[fourth.id,second.id,first.id]);
+  const glm=await store.list(new URLSearchParams({platform:'all',model_category:'GLM',limit:'100'}));
+  assert.deepEqual(glm.posts.map(post=>post.id),[first.id]);
+  assert.equal(glm.posts[0].model_category,'GLM');
+  const deepseek=await store.list(new URLSearchParams({platform:'all',model_category:'DeepSeek',limit:'100'}));
+  assert.deepEqual(deepseek.posts.map(post=>post.id),[third.id]);
+  const seedance=await store.list(new URLSearchParams({platform:'all',model_category:'Seedance/视频',limit:'100'}));
+  assert.deepEqual(seedance.posts.map(post=>post.id),[fourth.id]);
   const grouped=await store.list(new URLSearchParams({platform:'all',collection_id:collection.id,limit:'2',offset:'1'}));
   assert.equal(grouped.total,3);assert.deepEqual(grouped.posts.map(post=>post.id),[second.id,third.id]);
+  const groupedModel=await store.list(new URLSearchParams({platform:'all',collection_id:collection.id,model_category:'Kimi',limit:'100'}));
+  assert.deepEqual(groupedModel.posts.map(post=>post.id),[second.id]);
   const uncategorized=await store.list(new URLSearchParams({platform:'xhs',collection_id:'uncategorized',limit:'100'}));
   assert.deepEqual(uncategorized.posts.map(post=>post.id),[fourth.id]);
   const selected=await store.list(new URLSearchParams({platform:'all',ids:third.id}));
   assert.deepEqual(selected.posts.map(post=>post.id),[third.id]);
-  for(const q of ['sort=newest','model_category=GLM','layout_style=code_ide','collection_id=unknown','collection_id=../','limit=5001'])assert.throws(()=>parseReferenceQuery(new URLSearchParams(q)),{statusCode:400});
+  assert.deepEqual(parseReferenceQuery(new URLSearchParams({model_category:'GLM'})),{platform:'xhs',collectionId:'all',modelCategory:'GLM',offset:0,limit:30,ids:null});
+  for(const q of ['sort=newest','model_category=Unknown','layout_style=code_ide','collection_id=unknown','collection_id=../','limit=5001'])assert.throws(()=>parseReferenceQuery(new URLSearchParams(q)),{statusCode:400});
 });
 
 test('collections support CRUD, atomic persistence, relation filtering, and deletion without deleting references', async t => {

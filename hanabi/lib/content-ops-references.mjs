@@ -22,16 +22,23 @@ export class ContentOpsReferences {
     this.root = root;
     this.fetcher = fetcher;
     this.platform = root.querySelector('#content-ops-ref-platform');
+    this.model = root.querySelector('#content-ops-ref-model');
     this.collection = root.querySelector('#content-ops-ref-collection');
     this.viewModeButton = root.querySelector('#content-ops-ref-view-mode');
     this.manageCollections = root.querySelector('#content-ops-ref-manage-collections');
     this.collections = [];
     this.collectionFilterPreference = 'all';
+    this.modelFilterPreference = 'all';
     this.viewMode = 'expanded';
+    const modelOptions = new Set([...this.model?.options || []].map(option => option.value));
     try {
       const savedFilters = JSON.parse(sessionStorage.getItem('content-ops-reference-filters') || '{}');
       if (savedFilters.platform && ['all', ...platforms].includes(savedFilters.platform)) {
         this.platform.value = savedFilters.platform;
+      }
+      if (savedFilters.modelCategory && modelOptions.has(String(savedFilters.modelCategory))) {
+        this.model.value = String(savedFilters.modelCategory);
+        this.modelFilterPreference = this.model.value;
       }
       if (savedFilters.collectionId) this.collectionFilterPreference = String(savedFilters.collectionId);
     } catch {}
@@ -40,14 +47,17 @@ export class ContentOpsReferences {
     } catch {}
     const saveFilters = () => {
       this.collectionFilterPreference = this.collection.value;
+      this.modelFilterPreference = this.model?.value || 'all';
       try {
         sessionStorage.setItem('content-ops-reference-filters', JSON.stringify({
           platform: this.platform.value,
+          modelCategory: this.model?.value || 'all',
           collectionId: this.collection.value
         }));
       } catch {}
     };
     this.platform.addEventListener('change', saveFilters);
+    this.model?.addEventListener('change', saveFilters);
     this.collection.addEventListener('change', saveFilters);
     this.grid = root.querySelector('#content-ops-ref-grid');
     this.pinnedGrid = root.querySelector('#content-ops-ref-pinned');
@@ -81,6 +91,7 @@ export class ContentOpsReferences {
       this.focusVersion++;
       void this.load(true);
     });
+    this.model?.addEventListener('change', () => { this.focusVersion++; void this.load(true); });
     this.collection.addEventListener('change', () => { this.focusVersion++; void this.load(true); });
     this.manageCollections.addEventListener('click', () => this.openCollectionsDialog());
     this.collectionForm?.addEventListener('submit', event => void this.saveCollection(event));
@@ -444,6 +455,7 @@ export class ContentOpsReferences {
     const oldKey = keyOf(old), newKey = keyOf(post);
     const listed = this.posts.some(item => keyOf(item) === oldKey);
     const matches = (this.platform.value === 'all' || this.platform.value === post.platform)
+      && (this.model?.value === 'all' || !this.model || this.model.value === post.model_category)
       && (this.collection.value === 'all' || (this.collection.value === 'uncategorized'
         ? !post.collection_ids?.length : post.collection_ids?.includes(this.collection.value)));
     const removed = listed && !matches ? new Set([oldKey]) : new Set();
@@ -573,7 +585,7 @@ export class ContentOpsReferences {
     this.status.textContent = '正在读取素材…';
     this.totalLabel.textContent = this.total == null ? '正在读取' : `${this.total} 条`;
     this.progress.textContent = '';
-    const query = new URLSearchParams({platform:this.platform.value, collection_id:this.collection.value, offset:'0', limit:'5000'});
+    const query = new URLSearchParams({platform:this.platform.value, model_category:this.model?.value || 'all', collection_id:this.collection.value, offset:'0', limit:'5000'});
     try {
       const response = await this.fetcher(`/api/content-ops/references?${query}`, {signal:this.controller.signal});
       const data = await response.json();
@@ -617,7 +629,7 @@ export class ContentOpsReferences {
     const hits = (Array.isArray(post.banned_word_hits) ? post.banned_word_hits : []).map(hit => typeof hit === 'string' ? hit : hit?.word || hit?.term || hit?.pattern || hit?.id || '').filter(Boolean);
     const selected = this.selectedKeys.has(keyOf(post));
     const collections = Array.isArray(post.collection_names) ? post.collection_names : [];
-    return `<span class="ref-badge-platform">${post.platform === 'xhs' ? '小红书' : '闲鱼'}</span>${collections.length ? collections.map(name => `<span class="ref-badge-collection">合集：${esc(name)}</span>`).join('') : '<span class="ref-badge-uncategorized">未分类</span>'}${post.label_good === true ? '<span class="ref-badge-good">✅ 精选</span>' : ''}${hits.length ? `<span class="ref-badge-warn">⚠️ 含禁词：${esc([...new Set(hits)].join('、'))}</span>` : ''}${post.heat?.status === 'relative_hot' ? `<span class="ref-badge-good">同账号相对热帖 · 参考权重 ${esc(post.heat.weight)}×</span>` : post.heat ? '<span>互动观察中</span>' : ''}<span class="ref-badge-date">发布：${esc((post.published_at || '').slice(0,10) || '日期未知')}</span>${selected ? '<span class="ref-badge-selected">下批待引用</span>' : ''}`;
+    return `<span class="ref-badge-platform">${post.platform === 'xhs' ? '小红书' : '闲鱼'}</span><span class="ref-badge-model">模型：${esc(post.model_category || '其他')}</span>${collections.length ? collections.map(name => `<span class="ref-badge-collection">合集：${esc(name)}</span>`).join('') : '<span class="ref-badge-uncategorized">未分类</span>'}${post.label_good === true ? '<span class="ref-badge-good">✅ 精选</span>' : ''}${hits.length ? `<span class="ref-badge-warn">⚠️ 含禁词：${esc([...new Set(hits)].join('、'))}</span>` : ''}${post.heat?.status === 'relative_hot' ? `<span class="ref-badge-good">同账号相对热帖 · 参考权重 ${esc(post.heat.weight)}×</span>` : post.heat ? '<span>互动观察中</span>' : ''}<span class="ref-badge-date">发布：${esc((post.published_at || '').slice(0,10) || '日期未知')}</span>${selected ? '<span class="ref-badge-selected">下批待引用</span>' : ''}`;
   }
 
   collectionOptions(post) {
