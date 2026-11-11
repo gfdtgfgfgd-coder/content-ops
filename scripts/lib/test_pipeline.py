@@ -918,6 +918,8 @@ class PipelineTests(unittest.TestCase):
             self.assertIn('model_materials', content[0]['text'])
             self.assertIn('communication_brief', content[0]['text'])
             self.assertIn('art_direction', content[0]['text'])
+            self.assertIn('不得因缺少verified_claims就把用户简报', content[0]['text'])
+            self.assertIn('benefit/payoff', content[0]['text'])
             self.assertNotIn('reference_negative_prompt', content[0]['text'])
             self.assertNotIn('先拆解并锁死', content[0]['text'])
             self.assertIn('像素光标', content[0]['text'])
@@ -1126,6 +1128,29 @@ class PipelineTests(unittest.TestCase):
         copy.validate_visual_plan(visual_plan(prompt='纯纸张便签，禁止3D物件、电脑和代码屏。'),'GLM5.3','xhs')
         hyphen_plan = visual_plan('GLM-5.3', prompt='纯纸张便签，第一行大字，禁止出现API或水印。')
         copy.validate_visual_plan(hyphen_plan, 'GLM5.3', 'xhs', '大字报')
+
+    def test_user_brief_selling_points_must_land_on_cover(self):
+        brief = '便宜稳定、便宜接入、活动价'
+        self.assertEqual(copy.brief_cover_phrases(brief), ['便宜稳定', '便宜接入', '活动价'])
+        missing = visual_plan(model='GLM-5.3', prompt='纯纸张便签，禁止3D物件、电脑和代码屏。')
+        missing['cover_texts'] = [
+            {'role': 'hook', 'text': '代码看花眼？', 'position': '1'},
+            {'role': 'benefit', 'text': '审查多个帮手', 'position': '2'},
+            {'role': 'model', 'text': 'GLM-5.3', 'position': '3'},
+            {'role': 'payoff', 'text': '排查代码问题', 'position': '4'},
+        ]
+        self.assertFalse(copy.cover_reflects_brief(missing, brief))
+        with self.assertRaisesRegex(ValueError, '未体现用户简报'):
+            copy.validate_visual_plan(missing, 'GLM-5.3', 'xhs', '大字报', brief=brief)
+        kept = visual_plan(model='GLM-5.3', prompt='纯纸张便签，禁止3D物件、电脑和代码屏。')
+        kept['cover_texts'] = [
+            {'role': 'hook', 'text': '代码看花眼？', 'position': '1'},
+            {'role': 'benefit', 'text': '便宜稳定', 'position': '2'},
+            {'role': 'model', 'text': 'GLM-5.3', 'position': '3'},
+            {'role': 'payoff', 'text': '活动价', 'position': '4'},
+        ]
+        self.assertTrue(copy.cover_reflects_brief(kept, brief))
+        copy.validate_visual_plan(kept, 'GLM-5.3', 'xhs', '大字报', brief=brief)
 
     def test_visual_plan_layout_ordinals_do_not_trigger_advertising_risks(self):
         instructions=(
