@@ -10,8 +10,28 @@ import { fileURLToPath } from 'node:url';
 import { ContentOpsProduction, validateContentOpsInput } from './content-ops-production.mjs';
 import { listProductModels, resolveProductModel } from './content-ops-models.mjs';
 import { parsePostText, renderPostContent, nextGenerateRequest, generateSubmitLabel } from './content-ops-ui.mjs';
+import { appendSelectionToInstructions } from './content-ops-revision-ui.mjs';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const input = {model:'Kimi K3.1 Pro',platform:'xhs',count:1,backgroundMode:'fresh',requestId:'offline-test-123'};
+
+test('revision selection appends quoted excerpt into AI instructions and truncates at limit', () => {
+  assert.deepEqual(appendSelectionToInstructions('', '  标题更口语  '), {
+    value: '针对这段：\n「标题更口语」',
+    added: true,
+    truncated: false
+  });
+  assert.deepEqual(appendSelectionToInstructions('开头别用问句', '别写好价窗口'), {
+    value: '开头别用问句\n\n针对这段：\n「别写好价窗口」',
+    added: true,
+    truncated: false
+  });
+  assert.equal(appendSelectionToInstructions('已有', '   ').added, false);
+  const long = '字'.repeat(1990);
+  const truncated = appendSelectionToInstructions(long, '这段会被截断的选区');
+  assert.equal(truncated.truncated, true);
+  assert.equal(truncated.value.length, 2000);
+  assert.match(truncated.value, /^字+/u);
+});
 
 test('product models resolve informal aliases and reject unknown families before generation', () => {
   const models = listProductModels(root);
@@ -189,6 +209,10 @@ test('spec analysis uses the configured analysis model and carries source, prior
   const secondPrompt=JSON.parse(calls[1].init.body).messages[0].content;
   assert.match(secondPrompt,/上一版草案/u);assert.match(secondPrompt,/保留原有章节，语气更简洁/u);
   assert.match(secondPrompt,/风险词原料/u);assert.match(secondPrompt,/当前内容生产规范/u);
+  const third=await editor.analyzeSpecSync({trigger:'copy_adopt',addedItem:{action:'ai',instructions:'开头别用问句',adoptedText:'# 定稿\n\n正文'}});
+  assert.equal(third.summary,'round-3');assert.equal(third.trigger,'copy_adopt');
+  assert.match(JSON.parse(calls[2].init.body).messages[0].content,/最终采纳的文案改稿|开头别用问句/u);
+  assert.match(editor.formatCopyAdoptQuote({action:'ai',instructions:'开头别用问句\n价格克制'}),/改稿采纳（AI改稿定稿）：开头别用问句 价格克制/u);
 });
 
 test('spec sync apply rebuilds the bundle and commits only the canonical spec and derived bundle', async t => {
@@ -1292,9 +1316,14 @@ test('revisions preserve original artifacts, isolate copy variants, require adop
   const row=await revisions.create('batch-123','job-12345',revisionInput);
   const ready=await revisionDone(revisions,row.id);assert.equal(ready.status,'ready');
   assert.equal(production.public(production.get('batch-123')).posts[0].copies[0].text,original.posts[0].copies[0].text);
-  const adopted=revisions.apply('batch-123','job-12345',{kind:'copy',copyIndex:1,baseRevision:'original',revisionId:ready.id}).batch;
+  const applied=revisions.apply('batch-123','job-12345',{kind:'copy',copyIndex:1,baseRevision:'original',revisionId:ready.id});
+  const adopted=applied.batch;
   assert.equal(adopted.posts[0].text,revisionInput.text);assert.equal(adopted.posts[0].copies[1].text,'# 原稿B\n\n正文B');
   assert.equal(adopted.posts[0].image,original.posts[0].image);
+  assert.equal(applied.copyLearn?.trigger,'copy_adopt');
+  assert.equal(applied.copyLearn?.addedItem?.action,'manual');
+  assert.match(applied.copyLearn?.addedItem?.adoptedText||'',/新标题/u);
+  assert.equal(applied.corpusGap,null);
   assert.deepEqual(production.original(production.get('batch-123')),original);
   assert.equal(await readFile(join(dir,'original/post-1.md'),'utf8'),'unchanged export');
   assert.equal(calls[0].options.shell,false);

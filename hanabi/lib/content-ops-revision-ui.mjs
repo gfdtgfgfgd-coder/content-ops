@@ -2,11 +2,26 @@ import { generationBlocks } from './content-ops-prompt-ui.mjs';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const HEX = /^#[0-9A-Fa-f]{6}$/u;
 const HIGHLIGHT_SWATCHES = ['#85D6C5','#F0DE79','#EEA5D8','#9AE882','#F0B2DC','#A1DD7C','#38D1D0','#FFB347','#FF8FAB','#C4B5FD'];
+const INSTRUCTIONS_MAX = 2000;
 const normalizeHex = value => {
   let hex = String(value ?? '').trim();
   if (hex && !hex.startsWith('#')) hex = `#${hex}`;
   return HEX.test(hex) ? hex.toUpperCase() : '';
 };
+/** Append a selected copy excerpt into the AI instructions box (pure helper). */
+export function appendSelectionToInstructions(existing, selection, maxLength = INSTRUCTIONS_MAX) {
+  const text = String(selection ?? '').trim();
+  if (!text) return { value: String(existing ?? ''), added: false, truncated: false };
+  const snippet = `针对这段：\n「${text}」`;
+  const base = String(existing ?? '').trimEnd();
+  let value = base ? `${base}\n\n${snippet}` : snippet;
+  let truncated = false;
+  if (value.length > maxLength) {
+    value = value.slice(0, maxLength);
+    truncated = true;
+  }
+  return { value, added: true, truncated };
+}
 async function api(path, body) {
   const response = await fetch(path, { method: body ? 'POST' : 'GET', cache: 'no-store',
     ...(body ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {}) });
@@ -113,6 +128,100 @@ export class ContentOpsRevisionUI {
       if (version?.status==='running') { this.runningId=version.id; this.setBusy(true); void this.poll(version.id,this.token); }
       else if (version?.result) this.preview(version.result,version.id,version.id==='original'?'最初原稿':'历史版本预览');
     });
+    this.mountSelectionToChat();
+  }
+  mountSelectionToChat() {
+    const pop = document.createElement('div');
+    pop.className = 'revision-selection-pop';
+    pop.hidden = true;
+    pop.innerHTML = '<button type="button" data-add-to-chat>加入对话</button>';
+    this.dialog.append(pop);
+    this.selectionPop = pop;
+    this.pendingSelection = '';
+    this.selectionPointer = { x: 0, y: 0 };
+    const schedule = () => {
+      clearTimeout(this.selectionTimer);
+      this.selectionTimer = setTimeout(() => this.refreshSelectionPop(), 16);
+    };
+    this.dialog.addEventListener('pointerup', event => {
+      if (event.target.closest('[data-add-to-chat]')) return;
+      this.selectionPointer = { x: event.clientX, y: event.clientY };
+      schedule();
+    });
+    this.dialog.addEventListener('keyup', event => {
+      if (event.key === 'Escape') { this.hideSelectionPop(); return; }
+      if (event.shiftKey || ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key)) schedule();
+    });
+    document.addEventListener('selectionchange', () => {
+      if (!this.dialog.open) return;
+      schedule();
+    });
+    pop.querySelector('[data-add-to-chat]').addEventListener('pointerdown', event => event.preventDefault());
+    pop.querySelector('[data-add-to-chat]').addEventListener('click', () => this.addSelectionToChat());
+    this.dialog.addEventListener('scroll', () => this.hideSelectionPop(), true);
+    this.dialog.addEventListener('close', () => this.hideSelectionPop());
+  }
+  hideSelectionPop() {
+    clearTimeout(this.selectionTimer);
+    if (this.selectionPop) this.selectionPop.hidden = true;
+    this.pendingSelection = '';
+  }
+  readCopySelection() {
+    if (this.busy || this.kind !== 'copy' || !this.dialog.open) return '';
+    const instructions = this.q('[name=instructions]');
+    const active = document.activeElement;
+    for (const name of ['title', 'body']) {
+      const field = this.q(`[name=${name}]`);
+      if (!field || active !== field || typeof field.selectionStart !== 'number') continue;
+      const text = field.value.slice(field.selectionStart, field.selectionEnd).trim();
+      if (text) return text;
+    }
+    if (active === instructions) return '';
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || !selection.rangeCount) return '';
+    const preview = this.q('.revision-copy-preview');
+    if (!preview?.contains(selection.anchorNode) || !preview.contains(selection.focusNode)) return '';
+    return selection.toString().trim();
+  }
+  refreshSelectionPop() {
+    if (!this.selectionPop || this.selectionPop.contains(document.activeElement)) return;
+    const text = this.readCopySelection();
+    if (!text) {
+      this.selectionPop.hidden = true;
+      return;
+    }
+    this.pendingSelection = text;
+    const pop = this.selectionPop;
+    pop.hidden = false;
+    const dialogRect = this.dialog.getBoundingClientRect();
+    const pad = 8;
+    const width = pop.offsetWidth || 96;
+    const height = pop.offsetHeight || 36;
+    let anchorX = this.selectionPointer.x;
+    let anchorY = this.selectionPointer.y;
+    const active = document.activeElement;
+    if ((!anchorX && !anchorY) && active && this.dialog.contains(active) && ['title','body'].includes(active.name)) {
+      const rect = active.getBoundingClientRect();
+      anchorX = rect.left + Math.min(rect.width / 2, 120);
+      anchorY = rect.top + 8;
+    }
+    let left = anchorX - dialogRect.left - width / 2;
+    let top = anchorY - dialogRect.top - height - 12;
+    left = Math.max(pad, Math.min(left, dialogRect.width - width - pad));
+    top = Math.max(pad, Math.min(top, dialogRect.height - height - pad));
+    if (anchorY - dialogRect.top < height + 24) top = Math.min(dialogRect.height - height - pad, anchorY - dialogRect.top + 12);
+    pop.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+  }
+  addSelectionToChat() {
+    const text = this.pendingSelection || this.readCopySelection();
+    if (!text) { this.hideSelectionPop(); return; }
+    const box = this.q('[name=instructions]');
+    const result = appendSelectionToInstructions(box.value, text, INSTRUCTIONS_MAX);
+    box.value = result.value;
+    box.focus();
+    box.setSelectionRange(box.value.length, box.value.length);
+    this.hideSelectionPop();
+    this.status(result.truncated ? '选区已加入「告诉 AI 怎么修改」，超出部分已截断。' : '已加入「告诉 AI 怎么修改」。', result.truncated);
   }
   endpoint(action = 'revisions') { return `/api/content-ops/batches/${this.batchId}/posts/${this.jobId}/${action}`; }
   async open(index, kind) {
@@ -135,6 +244,7 @@ export class ContentOpsRevisionUI {
     this.q('[data-revision-history]').innerHTML=''; this.q('.revision-copy-preview').innerHTML='';
     this.q('.revision-media img').removeAttribute('src');this.q('[data-revision-download]').hidden=true;
     this.q('[name=imagePrompt]').value='';this.q('[data-cover-texts]').innerHTML='';this.q('[data-generation-prompts]').innerHTML='';
+    this.hideSelectionPop();
     this.setBusy(true); this.dialog.showModal(); this.status('正在读取成稿与版本记录…');
     try {
       const [history,prompts] = await Promise.all([api(this.endpoint()+`?kind=${kind}&copyIndex=${this.copyIndex}`),kind==='image'?api(this.endpoint('prompts')).catch(error=>({error:error.message})):null]); if(token!==this.token)return;
@@ -261,6 +371,7 @@ export class ContentOpsRevisionUI {
   }
   setBusy(busy){
     this.busy=busy;
+    if(busy)this.hideSelectionPop();
     for(const control of this.dialog.querySelectorAll('.revision-controls input,.revision-controls textarea,.revision-controls select,.revision-controls button'))control.disabled=busy&&!control.hasAttribute('data-prompt-copy')&&!control.hasAttribute('data-revision-copy-prompt');
     if(this.kind==='image')for(const selector of ['[data-revision-ai]','[data-revision-region]','[data-revision-upload]'])this.q(selector).disabled=busy||!this.candidate?.image||(selector!=='[data-revision-upload]'&&this.dirty);
     this.q('[data-revision-current]').disabled=busy;this.q('[data-revision-cancel]').disabled=false;
@@ -324,11 +435,16 @@ export class ContentOpsRevisionUI {
   async apply(){
     if(this.busy||!this.candidateId)return;
     const token=this.token;this.setBusy(true);
-    try{const data=await api(this.endpoint('apply'),{kind:this.kind,copyIndex:this.copyIndex,baseRevision:this.expectedRevision,revisionId:this.candidateId});const {batch,corpusGap}=data;
+    try{const data=await api(this.endpoint('apply'),{kind:this.kind,copyIndex:this.copyIndex,baseRevision:this.expectedRevision,revisionId:this.candidateId});const {batch,corpusGap,preferenceLearn,preferenceLearnError}=data;
       if(this.host.batch?.id===batch.id){const before=this.host.batch.status;this.host.batch=batch;this.host.render();if(before!==batch.status){const history=await api('/api/content-ops/batches').catch(()=>null);if(history)this.host.renderHistory?.(history.batches||[]);}}
       if(token!==this.token)return;
-      this.dirty=false;this.expectedRevision=this.candidateId;await this.refreshHistory(token);if(token!==this.token)return;this.q('[data-preview-label]').textContent='当前采用版';this.status(corpusGap?'已采用。可确认是否把缺口补进型号语料库。':'已采用。工作台预览、复制和下载均使用此版。');
-      if(corpusGap)window.dispatchEvent(new CustomEvent('content-ops:spec-sync',{detail:corpusGap}));
+      this.dirty=false;this.expectedRevision=this.candidateId;await this.refreshHistory(token);if(token!==this.token)return;this.q('[data-preview-label]').textContent='当前采用版';
+      if(preferenceLearnError)this.status(`已采用。偏好自动入库失败：${preferenceLearnError}。仍可确认是否写入内容规范。`,true);
+      else if(preferenceLearn)this.status('已采用。正在把定稿改稿偏好同步进内容规范，确认后才会写库。');
+      else if(corpusGap)this.status('已采用。可确认是否把缺口补进型号语料库。');
+      else this.status('已采用。工作台预览、复制和下载均使用此版。');
+      if(preferenceLearn)window.dispatchEvent(new CustomEvent('content-ops:spec-sync',{detail:preferenceLearn}));
+      else if(corpusGap)window.dispatchEvent(new CustomEvent('content-ops:spec-sync',{detail:corpusGap}));
     }catch(error){if(token===this.token)this.status(error.message,true);}
     finally{if(token===this.token)this.setBusy(false);}
   }

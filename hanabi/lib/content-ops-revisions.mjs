@@ -286,27 +286,52 @@ export class ContentOpsRevisions {
     }
     const batch = this.production.public(this.production.get(batchId));
     let corpusGap = null;
+    let copyLearn = null;
     try {
       const row = this.production.get(batchId);
       let manifest = {};
       try { manifest = JSON.parse(readFileSync(join(row.output_dir, 'manifest.json'), 'utf8')); } catch {}
       const post = batch.posts?.find(item => item.jobId === jobId) || batch.posts?.[0];
-      const adoptedText = body.kind === 'copy' ? (post?.copies?.[body.copyIndex]?.text || post?.text || '') : '';
+      const adoptedText = body.kind === 'copy'
+        ? (post?.copies?.find(copy => copy.index === body.copyIndex)?.text || post?.text || '')
+        : '';
       const coverTexts = body.kind === 'image' ? (manifest.posts?.find(item => item.index === post?.index)?.cover_texts || []) : [];
-      corpusGap = {
-        trigger: 'corpus_gap',
-        targetDoc: 'model-corpus',
-        addedItem: {
-          displayModel: batch.model,
-          corpusModel: batch.corpusModel || row.corpus_model || batch.model,
-          kind: body.kind,
-          adoptedText: String(adoptedText).slice(0, 4000),
-          coverTexts,
-          researchNotes: manifest.research_notes || null,
-        },
-      };
+      if (body.kind === 'copy' && body.revisionId !== 'original') {
+        const revision = this.get(body.revisionId);
+        const originalPost = this.production.original(row).posts.find(item => item.jobId === jobId);
+        const baseline = originalPost?.copies?.find(copy => copy.index === body.copyIndex)?.text || '';
+        const instructions = String(revision.instructions || '').trim();
+        if (instructions || String(adoptedText) !== String(baseline)) {
+          copyLearn = {
+            trigger: 'copy_adopt',
+            targetDoc: 'content-spec',
+            addedItem: {
+              action: revision.action,
+              instructions: instructions.slice(0, 1500),
+              sourceText: String(baseline).slice(0, 2000),
+              adoptedText: String(adoptedText).slice(0, 2000),
+              platform: batch.platform,
+              model: batch.model,
+              copyIndex: body.copyIndex,
+            },
+          };
+        }
+      } else if (body.kind === 'image' && body.revisionId !== 'original') {
+        corpusGap = {
+          trigger: 'corpus_gap',
+          targetDoc: 'model-corpus',
+          addedItem: {
+            displayModel: batch.model,
+            corpusModel: batch.corpusModel || row.corpus_model || batch.model,
+            kind: body.kind,
+            adoptedText: String(adoptedText).slice(0, 4000),
+            coverTexts,
+            researchNotes: manifest.research_notes || null,
+          },
+        };
+      }
     } catch {}
-    return { batch, corpusGap };
+    return { batch, corpusGap, copyLearn };
   }
   recover() {
     this.db.prepare("UPDATE content_ops_revisions SET status='failed',error='服务已重启；原稿保留，修改任务不会自动重跑。' WHERE status='running'").run();

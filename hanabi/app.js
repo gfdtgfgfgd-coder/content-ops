@@ -317,17 +317,18 @@ let syncDraft=null;
 async function openSpecSync(input){
   if(!syncDialog.open)syncDialog.showModal();
   const corpus=input.trigger==='corpus_gap'||input.targetDoc==='model-corpus';
-  syncDialog.querySelector('#spec-sync-title').textContent=corpus?'型号语料缺口确认':'同步操作规范确认';
+  const copyAdopt=input.trigger==='copy_adopt';
+  syncDialog.querySelector('#spec-sync-title').textContent=corpus?'型号语料缺口确认':copyAdopt?'文案定稿偏好确认':'同步操作规范确认';
   syncDialog.querySelector('#spec-sync-status').textContent='正在调用分析模型…';
   syncDialog.querySelector('[data-spec-sync-apply]').disabled=true;
-  if(input.trigger==='manual')showView('content-spec',{replace:false,restore:false});
+  if(input.trigger==='manual'||input.trigger==='persona_add'||input.trigger==='word_add'||copyAdopt)showView('content-spec',{replace:false,restore:false});
   if(corpus)showView('corpus',{replace:false,restore:false});
   try{await analyzeSpec(input);}catch(error){syncDialog.querySelector('#spec-sync-status').textContent=`分析失败：${error.message}`;}
 }
 async function analyzeSpec(input){
   const result=await api('/api/content-ops/spec-sync/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});
-  syncDraft=result;
-  syncDialog.querySelector('#spec-sync-status').textContent=result.targetDoc==='model-corpus'?'仅缺口草案，确认后才写入语料库；取消不影响已采用图文。':'请审核差异后确认或继续调整。';
+  syncDraft={...result,trigger:result.trigger||input.trigger};
+  syncDialog.querySelector('#spec-sync-status').textContent=result.targetDoc==='model-corpus'?'仅缺口草案，确认后才写入语料库；取消不影响已采用图文。':input.trigger==='copy_adopt'?'定稿改稿已记入偏好原料；请确认规范草案，取消不会撤回已采用文案与已写入原料。':'请审核差异后确认或继续调整。';
   syncDialog.querySelector('#spec-sync-summary').textContent=result.summary||'模型未提供摘要。';
   syncDialog.querySelector('#spec-sync-before').textContent=result.before;
   syncDialog.querySelector('#spec-sync-after').textContent=result.updatedContent;
@@ -340,7 +341,8 @@ syncDialog.querySelector('[data-spec-sync-reanalyze]').addEventListener('click',
   if(!syncDraft)return;const feedback=syncDialog.querySelector('[name="feedback"]').value.trim();
   if(!feedback){syncDialog.querySelector('#spec-sync-status').textContent='请先填写修改建议。';return;}
   syncDialog.querySelector('[data-spec-sync-reanalyze]').disabled=true;
-  try{await analyzeSpec({trigger:syncDraft.targetDoc==='model-corpus'?'corpus_gap':'manual',targetDoc:syncDraft.targetDoc||'content-spec',previousDraft:syncDraft.updatedContent,feedback,addedItem:syncDraft.addedItem});syncDialog.querySelector('[name="feedback"]').value='';}
+  const trigger=syncDraft.trigger||(syncDraft.targetDoc==='model-corpus'?'corpus_gap':'manual');
+  try{await analyzeSpec({trigger,targetDoc:syncDraft.targetDoc||'content-spec',previousDraft:syncDraft.updatedContent,feedback,addedItem:syncDraft.addedItem});syncDialog.querySelector('[name="feedback"]').value='';}
   catch(error){syncDialog.querySelector('#spec-sync-status').textContent=`重新分析失败：${error.message}`;}
   finally{syncDialog.querySelector('[data-spec-sync-reanalyze]').disabled=false;}
 });
