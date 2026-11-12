@@ -1097,6 +1097,25 @@ test('manifest failure survives a missing stderr',async t=>{
   assert.match(saved.error,/视觉模型请求网络超时/);
 });
 
+test('a second model batch can start while the first is still running',async t=>{
+  const {production,captured}=await productionFixture(t);
+  const first=await production.create({...input,requestId:'concurrent-first-123',model:'GLM-5.3',count:3,copyMultiplier:3});
+  assert.equal(first.batch.status,'running');
+  assert.equal(first.batch.copyCount,9);
+  const second=await production.create({...input,requestId:'concurrent-second-123',model:'Kimi K3.1 Pro',count:2,copyMultiplier:2});
+  assert.equal(second.batch.status,'running');
+  assert.notEqual(first.batch.id,second.batch.id);
+  assert.equal(production.get(first.batch.id).status,'running');
+  assert.equal(production.get(second.batch.id).status,'running');
+  assert.equal(captured.length,2);
+  assert.equal(production.active.size,2);
+  assert.ok(production.active.has(first.batch.id));
+  assert.ok(production.active.has(second.batch.id));
+  production.stop(first.batch.id);
+  assert.equal(production.active.get(first.batch.id).stopped,true);
+  assert.equal(production.active.get(second.batch.id).stopped,false);
+});
+
 test('selected copy switches body and tags, falls back for legacy posts, renders safe bold',async()=>{
   const {copiesForPost,selectedCopy}=await import('./content-ops-ui.mjs');
   const post={text:'# 兼容首篇',copies:[{text:'# A\n\n**卖点A**\n\n#标签A'},{text:'# B\n\n**卖点B**\n\n#标签B'}]};
