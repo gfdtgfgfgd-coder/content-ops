@@ -22,33 +22,53 @@ export class ContentOpsReferences {
     this.root = root;
     this.fetcher = fetcher;
     this.platform = root.querySelector('#content-ops-ref-platform');
+    this.model = root.querySelector('#content-ops-ref-model');
     this.collection = root.querySelector('#content-ops-ref-collection');
+    this.sort = root.querySelector('#content-ops-ref-sort');
     this.viewModeButton = root.querySelector('#content-ops-ref-view-mode');
     this.manageCollections = root.querySelector('#content-ops-ref-manage-collections');
     this.collections = [];
     this.collectionFilterPreference = 'all';
+    this.modelFilterPreference = 'all';
+    this.sortPreference = 'manual';
     this.viewMode = 'expanded';
+    const modelOptions = new Set([...this.model?.options || []].map(option => option.value));
+    const sortOptions = new Set(['manual', 'date_desc', 'date_asc']);
     try {
       const savedFilters = JSON.parse(sessionStorage.getItem('content-ops-reference-filters') || '{}');
       if (savedFilters.platform && ['all', ...platforms].includes(savedFilters.platform)) {
         this.platform.value = savedFilters.platform;
       }
+      if (savedFilters.modelCategory && modelOptions.has(String(savedFilters.modelCategory))) {
+        this.model.value = String(savedFilters.modelCategory);
+        this.modelFilterPreference = this.model.value;
+      }
       if (savedFilters.collectionId) this.collectionFilterPreference = String(savedFilters.collectionId);
+      if (savedFilters.sort && sortOptions.has(String(savedFilters.sort)) && this.sort) {
+        this.sort.value = String(savedFilters.sort);
+        this.sortPreference = this.sort.value;
+      }
     } catch {}
     try {
       if (sessionStorage.getItem('content-ops-ref-view-mode') === 'collapsed') this.viewMode = 'collapsed';
     } catch {}
     const saveFilters = () => {
       this.collectionFilterPreference = this.collection.value;
+      this.modelFilterPreference = this.model?.value || 'all';
+      this.sortPreference = this.sort?.value || 'manual';
       try {
         sessionStorage.setItem('content-ops-reference-filters', JSON.stringify({
           platform: this.platform.value,
-          collectionId: this.collection.value
+          modelCategory: this.model?.value || 'all',
+          collectionId: this.collection.value,
+          sort: this.sort?.value || 'manual'
         }));
       } catch {}
     };
     this.platform.addEventListener('change', saveFilters);
+    this.model?.addEventListener('change', saveFilters);
     this.collection.addEventListener('change', saveFilters);
+    this.sort?.addEventListener('change', saveFilters);
     this.grid = root.querySelector('#content-ops-ref-grid');
     this.pinnedGrid = root.querySelector('#content-ops-ref-pinned');
     this.status = root.querySelector('#content-ops-ref-status');
@@ -81,7 +101,9 @@ export class ContentOpsReferences {
       this.focusVersion++;
       void this.load(true);
     });
+    this.model?.addEventListener('change', () => { this.focusVersion++; void this.load(true); });
     this.collection.addEventListener('change', () => { this.focusVersion++; void this.load(true); });
+    this.sort?.addEventListener('change', () => { this.focusVersion++; void this.load(true); });
     this.manageCollections.addEventListener('click', () => this.openCollectionsDialog());
     this.collectionForm?.addEventListener('submit', event => void this.saveCollection(event));
     this.collectionForm?.querySelectorAll('[data-ref-collections-close]').forEach(button => button.addEventListener('click', () => { if (!this.mutating) this.collectionsDialog.close(); }));
@@ -196,6 +218,29 @@ export class ContentOpsReferences {
     this.collectionFilterPreference = this.collection.value;
   }
 
+  activeFilterNotes() {
+    const notes = [];
+    const collectionValue = this.collection?.value || 'all';
+    if (collectionValue === 'uncategorized') notes.push('未分类');
+    else if (collectionValue !== 'all') {
+      const name = this.collections.find(item => item.id === collectionValue)?.name
+        || this.collection?.selectedOptions?.[0]?.textContent
+        || '合集';
+      notes.push(`合集：${name}`);
+    }
+    const modelValue = this.model?.value || 'all';
+    if (modelValue && modelValue !== 'all') notes.push(`模型：${modelValue}`);
+    const platformValue = this.platform?.value || 'all';
+    if (platformValue === 'xhs') notes.push('小红书');
+    else if (platformValue === 'xianyu') notes.push('闲鱼');
+    return notes;
+  }
+
+  formatTotalLabel(count) {
+    const notes = this.activeFilterNotes();
+    return notes.length ? `共 ${count} 条（${notes.join(' · ')}）` : `共 ${count} 条`;
+  }
+
   renderCollectionList() {
     if (!this.collectionList) return;
     this.collectionList.innerHTML = this.collections.length ? this.collections.map(item => `<div class="ref-collection-row"><div><strong>${esc(item.name)}</strong><span>${item.reference_ids.length} 条素材</span></div><div><button class="button button-outline" type="button" data-ref-collection-edit="${esc(item.id)}">改名</button><button class="button button-outline ref-delete" type="button" data-ref-collection-delete="${esc(item.id)}">删除</button></div></div>`).join('') : '<p class="ref-collection-empty">还没有自定义合集。</p>';
@@ -304,7 +349,7 @@ export class ContentOpsReferences {
         card.querySelector('[data-ref-collection]').innerHTML = this.collectionOptions(post);
       }
       this.total = this.posts.length;
-      this.totalLabel.textContent = `共 ${this.total} 条`;
+      this.totalLabel.textContent = this.formatTotalLabel(this.total);
     }, removed, true);
   }
 
@@ -444,6 +489,7 @@ export class ContentOpsReferences {
     const oldKey = keyOf(old), newKey = keyOf(post);
     const listed = this.posts.some(item => keyOf(item) === oldKey);
     const matches = (this.platform.value === 'all' || this.platform.value === post.platform)
+      && (this.model?.value === 'all' || !this.model || this.model.value === post.model_category)
       && (this.collection.value === 'all' || (this.collection.value === 'uncategorized'
         ? !post.collection_ids?.length : post.collection_ids?.includes(this.collection.value)));
     const removed = listed && !matches ? new Set([oldKey]) : new Set();
@@ -470,7 +516,7 @@ export class ContentOpsReferences {
         collection.reference_ids = collection.reference_ids.map(key => key === oldKey ? newKey : key);
       }
       if (removed.size && this.total != null) this.total = Math.max(0, this.total - 1);
-      this.totalLabel.textContent = `共 ${this.total ?? this.posts.length} 条`;
+      this.totalLabel.textContent = this.formatTotalLabel(this.total ?? this.posts.length);
       this.applyViewMode();
     }, removed, Boolean(pinned));
   }
@@ -527,7 +573,7 @@ export class ContentOpsReferences {
       }
       this.pinnedGrid.hidden = !this.pinned;
       if (listed && this.total != null) this.total = Math.max(0, this.total - 1);
-      this.totalLabel.textContent = `共 ${this.total ?? this.posts.length} 条`;
+      this.totalLabel.textContent = this.formatTotalLabel(this.total ?? this.posts.length);
       for (const collection of this.collections) {
         collection.reference_ids = collection.reference_ids.filter(id => id !== key);
       }
@@ -573,7 +619,8 @@ export class ContentOpsReferences {
     this.status.textContent = '正在读取素材…';
     this.totalLabel.textContent = this.total == null ? '正在读取' : `${this.total} 条`;
     this.progress.textContent = '';
-    const query = new URLSearchParams({platform:this.platform.value, collection_id:this.collection.value, offset:'0', limit:'5000'});
+    const sortMode = this.currentSort();
+    const query = new URLSearchParams({platform:this.platform.value, model_category:this.model?.value || 'all', collection_id:this.collection.value, sort:sortMode, offset:'0', limit:'5000'});
     try {
       const response = await this.fetcher(`/api/content-ops/references?${query}`, {signal:this.controller.signal});
       const data = await response.json();
@@ -587,8 +634,19 @@ export class ContentOpsReferences {
       if (this.pinned && additions.some(post => keyOf(post) === keyOf(this.pinned))) this.pinned = null;
       this.renderPinned();
       this.applyViewMode();
-      this.status.textContent = this.total === 0 ? '当前平台与合集没有匹配素材。' : '素材已全部加载，拖动条目可调整顺序。';
-      this.totalLabel.textContent = `共 ${this.total} 条`;
+      const filterNotes = this.activeFilterNotes();
+      this.status.textContent = this.total === 0
+        ? (filterNotes.length
+          ? `当前筛选没有匹配素材（${filterNotes.join(' · ')}）。可把合集改回「全部合集」、模型改回「全部模型」查看全库。`
+          : '当前平台与合集没有匹配素材。')
+        : sortMode === 'manual'
+          ? (filterNotes.length
+            ? `素材已全部加载（当前筛选：${filterNotes.join(' · ')}）。拖动条目可调整顺序。`
+            : '素材已全部加载，拖动条目可调整顺序。')
+          : sortMode === 'date_desc'
+            ? '已按发布日期从新到旧排列；日期未知的排在末尾。切回自定义顺序后可拖动改序。'
+            : '已按发布日期从旧到新排列；日期未知的排在末尾。切回自定义顺序后可拖动改序。';
+      this.totalLabel.textContent = this.formatTotalLabel(this.total);
     } catch (error) {
       if (version !== this.requestVersion || error.name === 'AbortError') return;
       this.loadError = true;
@@ -617,7 +675,7 @@ export class ContentOpsReferences {
     const hits = (Array.isArray(post.banned_word_hits) ? post.banned_word_hits : []).map(hit => typeof hit === 'string' ? hit : hit?.word || hit?.term || hit?.pattern || hit?.id || '').filter(Boolean);
     const selected = this.selectedKeys.has(keyOf(post));
     const collections = Array.isArray(post.collection_names) ? post.collection_names : [];
-    return `<span class="ref-badge-platform">${post.platform === 'xhs' ? '小红书' : '闲鱼'}</span>${collections.length ? collections.map(name => `<span class="ref-badge-collection">合集：${esc(name)}</span>`).join('') : '<span class="ref-badge-uncategorized">未分类</span>'}${post.label_good === true ? '<span class="ref-badge-good">✅ 精选</span>' : ''}${hits.length ? `<span class="ref-badge-warn">⚠️ 含禁词：${esc([...new Set(hits)].join('、'))}</span>` : ''}${post.heat?.status === 'relative_hot' ? `<span class="ref-badge-good">同账号相对热帖 · 参考权重 ${esc(post.heat.weight)}×</span>` : post.heat ? '<span>互动观察中</span>' : ''}<span class="ref-badge-date">发布：${esc((post.published_at || '').slice(0,10) || '日期未知')}</span>${selected ? '<span class="ref-badge-selected">下批待引用</span>' : ''}`;
+    return `<span class="ref-badge-platform">${post.platform === 'xhs' ? '小红书' : '闲鱼'}</span><span class="ref-badge-model">模型：${esc(post.model_category || '其他')}</span>${collections.length ? collections.map(name => `<span class="ref-badge-collection">合集：${esc(name)}</span>`).join('') : '<span class="ref-badge-uncategorized">未分类</span>'}${post.label_good === true ? '<span class="ref-badge-good">✅ 精选</span>' : ''}${hits.length ? `<span class="ref-badge-warn">⚠️ 含禁词：${esc([...new Set(hits)].join('、'))}</span>` : ''}${post.heat?.status === 'relative_hot' ? `<span class="ref-badge-good">同账号相对热帖 · 参考权重 ${esc(post.heat.weight)}×</span>` : post.heat ? '<span>互动观察中</span>' : ''}<span class="ref-badge-date">发布：${esc((post.published_at || '').slice(0,10) || '日期未知')}</span>${selected ? '<span class="ref-badge-selected">下批待引用</span>' : ''}`;
   }
 
   collectionOptions(post) {
@@ -625,20 +683,30 @@ export class ContentOpsReferences {
     return `<option value="">调整合集…</option><option value="uncategorized">移出全部合集</option>${this.collections.map(item => `<option value="${esc(item.id)}">${current.has(item.id) ? '移出：' : '加入：'}${esc(item.name)}</option>`).join('')}`;
   }
 
+  currentSort() {
+    const value = this.sort?.value || this.sortPreference || 'manual';
+    return value === 'date_desc' || value === 'date_asc' ? value : 'manual';
+  }
+
+  allowsManualReorder() {
+    return this.currentSort() === 'manual';
+  }
+
   card(post) {
     const images = imageList(post);
     const body = String(post.body_full ?? post.body_preview ?? '');
     const key = keyOf(post), collapsed = this.isCardCollapsed(key);
     const outlineOpen = this.viewMode === 'collapsed' && !collapsed;
+    const canReorder = this.allowsManualReorder();
     return `<article class="ref-card${post.label_good === true ? ' ref-card--good' : ''}${post.banned_word_hits?.length ? ' ref-card--warned' : ''}${collapsed ? ' ref-card--collapsed' : ''}${outlineOpen ? ' ref-card--outline-open' : ''}" data-id="${esc(post.id)}" data-platform="${esc(post.platform)}" tabindex="-1">
       <div class="ref-card-head">
-        <button class="ref-drag-handle" type="button" draggable="true" data-ref-drag-handle aria-label="拖动调整素材顺序" title="拖动调整顺序">⠿</button>
+        <button class="ref-drag-handle" type="button" draggable="${canReorder}" data-ref-drag-handle aria-label="${canReorder ? '拖动调整素材顺序' : '按日期排序时不可拖动'}" title="${canReorder ? '拖动调整顺序' : '切回自定义顺序后可拖动'}" ${canReorder ? '' : 'disabled'}>⠿</button>
         <div class="ref-outline-badges">${this.badges(post)}</div>
         <h2 class="ref-title" title="${esc(post.title || '无标题')}">${esc(post.title || '无标题')}</h2>
         <div class="ref-card-actions">
           <button class="ref-icon-button" type="button" data-ref-outline-expand aria-expanded="${!collapsed}" aria-label="${collapsed ? '展开图文' : '收起图文'}" title="${collapsed ? '展开图文' : '收起图文'}">${collapsed ? '▸' : '▾'}</button>
-          <button class="ref-icon-button" type="button" data-ref-move-up aria-label="上移" title="上移">↑</button>
-          <button class="ref-icon-button" type="button" data-ref-move-down aria-label="下移" title="下移">↓</button>
+          <button class="ref-icon-button" type="button" data-ref-move-up aria-label="上移" title="上移" ${canReorder ? '' : 'disabled'}>↑</button>
+          <button class="ref-icon-button" type="button" data-ref-move-down aria-label="下移" title="下移" ${canReorder ? '' : 'disabled'}>↓</button>
           <button class="ref-text-button" type="button" data-ref-select aria-pressed="${this.selectedKeys.has(key)}">${this.selectedKeys.has(key) ? '移出引用' : '引用'}</button>
           <button class="ref-text-button" type="button" data-ref-edit>编辑</button><button class="ref-text-button ref-delete" type="button" data-ref-delete>删除</button>
         </div>
@@ -665,7 +733,7 @@ export class ContentOpsReferences {
   }
 
   async movePost(post, direction) {
-    if (!post || this.loading || this.savingOrder || this.mutating) return;
+    if (!post || !this.allowsManualReorder() || this.loading || this.savingOrder || this.mutating) return;
     const index = this.posts.findIndex(item => keyOf(item) === keyOf(post)), target = index + direction;
     if (index < 0 || target < 0 || target >= this.posts.length) return;
     const [moved] = this.posts.splice(index, 1);
@@ -675,6 +743,7 @@ export class ContentOpsReferences {
   }
 
   scheduleOrderSave() {
+    if (!this.allowsManualReorder()) return;
     this.pendingOrder = {platform:this.platform.value, collectionId:this.collection.value,
       posts:[...this.posts], requestVersion:this.requestVersion};
     clearTimeout(this.orderTimer);
@@ -730,7 +799,7 @@ export class ContentOpsReferences {
   handleDragStart(event) {
     if (!event.target.closest?.('[data-ref-drag-handle]')) return;
     const card = event.target.closest?.('.ref-card');
-    if (!card || !this.grid.contains(card) || this.loading || this.savingOrder || this.mutating) { event.preventDefault(); return; }
+    if (!card || !this.grid.contains(card) || !this.allowsManualReorder() || this.loading || this.savingOrder || this.mutating) { event.preventDefault(); return; }
     this.draggedKey = `${card.dataset.platform}:${card.dataset.id}`;
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', this.draggedKey);

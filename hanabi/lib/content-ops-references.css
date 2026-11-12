@@ -21,10 +21,13 @@
 .ref-card-head .ref-title { flex:1 1 140px; min-width:0; margin:0; }
 .ref-outline-badges > span { padding:2px 5px; border-radius:4px; font-size:12px; line-height:1.5; }
 .ref-badge-platform { background:var(--surface-muted); color:var(--text-soft); }
+.ref-badge-model { background:#e8f1f7; color:#35586f; }
 .ref-outline-badges { display:flex; flex:0 1 auto; flex-wrap:wrap; gap:4px; min-width:0; max-width:38%; }
 .ref-card-actions { margin-left:auto; display:flex; align-items:center; justify-content:flex-end; flex:0 0 auto; gap:2px; min-width:0; }
 .ref-icon-button,.ref-drag-handle { width:28px; height:28px; padding:0; border:1px solid transparent; border-radius:5px; background:transparent; color:var(--text); font:inherit; cursor:pointer; }
 .ref-icon-button:hover,.ref-drag-handle:hover { border-color:var(--line-strong); background:var(--surface-muted); }
+.ref-icon-button:disabled,.ref-drag-handle:disabled { opacity:.35; cursor:not-allowed; }
+.ref-icon-button:disabled:hover,.ref-drag-handle:disabled:hover { border-color:transparent; background:transparent; }
 .ref-drag-handle { flex:0 0 28px; color:var(--text-muted); cursor:grab; font-size:19px; line-height:1; }
 .ref-drag-handle:active { cursor:grabbing; }
 .ref-card--cited { border-left:4px solid #c08a13; padding-left:13px; }

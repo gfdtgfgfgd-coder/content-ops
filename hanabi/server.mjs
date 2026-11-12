@@ -114,7 +114,19 @@ async function route(req, res) {
       if(!localJsonRequest(req))return send(res,403,{error:'仅允许本机Hanabi页面提交修改。'},headers);
       const input=await body(req,22*1024*1024);
       if(action==='preview')return send(res,200,await revisions.preview(batchId,jobId,input),headers);
-      return send(res,200,action==='apply'?revisions.apply(batchId,jobId,input):{revision:await revisions.create(batchId,jobId,input)},headers);
+      if(action==='apply'){
+        const result=revisions.apply(batchId,jobId,input);
+        if(result.copyLearn?.addedItem){
+          try{result.preferenceLearn=await editor.learnFromCopyAdopt(result.copyLearn.addedItem);}
+          catch(error){
+            result.preferenceLearn=result.copyLearn;
+            result.preferenceLearnError=error?.message||'偏好自动入库失败';
+          }
+        }
+        delete result.copyLearn;
+        return send(res,200,result,headers);
+      }
+      return send(res,200,{revision:await revisions.create(batchId,jobId,input)},headers);
     }
     const cancelRevision=pathname.match(/^\/api\/content-ops\/revisions\/([\w-]+)\/cancel$/u);
     if(req.method==='POST'&&cancelRevision){

@@ -15,17 +15,37 @@ const within=(root,path)=>path.startsWith(root+sep);
 const text=value=>Array.isArray(value)?value.map(String).join('\n'):value==null?'':String(value);
 const number=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0?value:0;
 const metric=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0?value:null;
-const modelCategories=new Set(['GLM','Kimi','Seedance/视频','其他']);
+export const modelCategories=new Set(['GLM','Kimi','DeepSeek','Seedance/视频','其他']);
 const layoutStyles=new Set(['code_ide','bold_typo','card_3d','comparison','other']);
 const writes=new Map();
 const maxImageBytes=15*1024*1024;
 const byId=(a,b)=>a.id<b.id?-1:a.id>b.id?1:0;
 const referenceKey=post=>`${post.platform}:${post.id}`;
+const sortModes=new Set(['manual','date_desc','date_asc']);
+const publishedTime=value=>{
+  if(typeof value!=='string'||!value.trim())return null;
+  if(/^\d{4}-\d{2}-\d{2}$/u.test(value)){
+    const stamp=Date.parse(`${value}T00:00:00+08:00`);
+    return Number.isFinite(stamp)?stamp:null;
+  }
+  const stamp=Date.parse(value);
+  return Number.isFinite(stamp)?stamp:null;
+};
+export function comparePublishedAt(a,b,direction='date_desc'){
+  const left=publishedTime(a?.published_at),right=publishedTime(b?.published_at);
+  if(left==null&&right==null)return byId(a,b);
+  if(left==null)return 1;
+  if(right==null)return -1;
+  if(left!==right)return direction==='date_asc'?left-right:right-left;
+  return byId(a,b);
+}
 
 export function parseReferenceQuery(params=new URLSearchParams()){
-  for(const key of params.keys())if(!['platform','offset','limit','ids','collection_id'].includes(key)||params.getAll(key).length!==1)throw fail('素材库查询参数无效。');
-  const platform=params.get('platform')??'xhs',collectionId=params.get('collection_id')??'all';
+  for(const key of params.keys())if(!['platform','offset','limit','ids','collection_id','model_category','sort'].includes(key)||params.getAll(key).length!==1)throw fail('素材库查询参数无效。');
+  const platform=params.get('platform')??'xhs',collectionId=params.get('collection_id')??'all',modelCategory=params.get('model_category')??'all',sort=params.get('sort')??'manual';
   if(!queryPlatforms.has(platform)||!['all','uncategorized'].includes(collectionId)&&!identifier.test(collectionId))throw fail('素材库平台或合集无效。');
+  if(modelCategory!=='all'&&!modelCategories.has(modelCategory))throw fail('素材库模型筛选无效。');
+  if(!sortModes.has(sort))throw fail('素材库排序无效。');
   const integer=(key,fallback,min,max)=>{const raw=params.get(key);if(raw===null)return fallback;if(!/^\d+$/u.test(raw))throw fail('素材库分页参数无效。');const value=Number(raw);if(!Number.isSafeInteger(value)||value<min||value>max)throw fail('素材库分页参数无效。');return value;};
   const offset=integer('offset',0,0,Number.MAX_SAFE_INTEGER),limitRaw=params.get('limit'),limit=limitRaw==='all'?5000:integer('limit',30,1,5000);
   let ids=null;
@@ -34,12 +54,12 @@ export function parseReferenceQuery(params=new URLSearchParams()){
     if(!values.length||values.length>100||values.some(id=>!identifier.test(id)))throw fail('素材引用 ID 无效，单次最多 100 条。');
     ids=[...new Set(values)];
   }
-  return {platform,collectionId,offset,limit,ids};
+  return {platform,collectionId,modelCategory,sort,offset,limit,ids};
 }
 
 export function classifyReference(post){
   const source=[post.model,post.title,post.body,post.cover_ocr,...(Array.isArray(post.tags)?post.tags:[])].filter(Boolean).join(' ').toLocaleLowerCase();
-  const model=/(seedance|即梦|视频生成|视频模型)/iu.test(source)?'Seedance/视频':/(glm|智谱|智谱清言)/iu.test(source)?'GLM':/(kimi|月之暗面)/iu.test(source)?'Kimi':'其他';
+  const model=/(seedance|即梦|视频生成|视频模型)/iu.test(source)?'Seedance/视频':/(glm|智谱|智谱清言)/iu.test(source)?'GLM':/(kimi|月之暗面)/iu.test(source)?'Kimi':/(deepseek|深度求索)/iu.test(source)?'DeepSeek':'其他';
   // Business topics such as “编程/代码” do not describe the cover's layout.
   // Prefer explicit layout terms; short OCR title lines are only a heuristic,
   // never a claim that we inspected pixels. Missing evidence stays “other”.
@@ -563,14 +583,18 @@ export class ContentOpsReferenceStore {
     const collection=collections.find(item=>item.id===query.collectionId);
     if(query.collectionId!=='all'&&query.collectionId!=='uncategorized'&&!collection)throw fail('素材合集不存在。',404);
     const postsByKey=new Map(posts.map(post=>[referenceKey(post),post]));
-    const selected=query.collectionId!=='all'&&query.collectionId!=='uncategorized'
-      ? collection.reference_ids.map(referenceId=>postsByKey.get(referenceId)).filter(Boolean).filter(post=>!query.ids||query.ids.includes(post.id))
+    const matchesModel=post=>query.modelCategory==='all'||post.model_category===query.modelCategory;
+    let selected=query.collectionId!=='all'&&query.collectionId!=='uncategorized'
+      ? collection.reference_ids.map(referenceId=>postsByKey.get(referenceId)).filter(Boolean)
+          .filter(post=>matchesModel(post)&&(!query.ids||query.ids.includes(post.id)))
       : posts.filter(post=>{
         const matchesCollection=query.collectionId==='all'||!post.collection_ids.length;
-        return matchesCollection&&(!query.ids||query.ids.includes(post.id));
+        return matchesCollection&&matchesModel(post)&&(!query.ids||query.ids.includes(post.id));
       });
+    if(query.sort==='date_desc'||query.sort==='date_asc')selected=[...selected].sort((a,b)=>comparePublishedAt(a,b,query.sort));
     // ids limits the result set; pagination and total describe that filtered set.
-    return {total:selected.length,dataset_total:posts.length,offset:query.offset,limit:query.limit,posts:selected.slice(query.offset,query.offset+query.limit),
+    return {total:selected.length,dataset_total:posts.length,offset:query.offset,limit:query.limit,sort:query.sort,posts:selected.slice(query.offset,query.offset+query.limit),
+      model_categories:[...modelCategories],
       ...(query.ids?{missing_ids:query.ids.filter(id=>!selected.some(post=>post.id===id))}:{})};
   }
   async image(path){

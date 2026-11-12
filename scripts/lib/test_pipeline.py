@@ -5,6 +5,7 @@ from copy import deepcopy
 import importlib.util
 import io
 import json
+import re
 import shutil
 from pathlib import Path
 import subprocess
@@ -471,6 +472,43 @@ class PipelineTests(unittest.TestCase):
         self.assertIn('\n\n', rendered)
         self.assertEqual(copy.mobile_body(rendered), rendered)
         self.assertEqual(copy.mobile_body('正文。\n\n适合人群：开发者'), '正文。')
+        self.assertEqual(copy.mobile_body('正文。\n\n👥 适合人群：开发者、前端'), '正文。')
+        self.assertEqual(copy.mobile_body('👥 适合人群：UI开发者、前端工程师'), 'UI开发者、前端工程师')
+        self.assertEqual(copy.normalize_audience_section('👥 适合人群：全栈工程师、算法研究员'), '全栈工程师、算法研究员')
+        labeled = structured_post('format_3')
+        labeled['sections'][4]['text'] = '👥 适合人群：程序员、独立开发、全栈工程师'
+        with redirect_stdout(io.StringIO()):
+            fixed = copy.validate_posts({'posts': [labeled]}, 1, 'GLM5.3', copy_format='format_3')
+        self.assertEqual(fixed[0]['sections'][4]['text'].replace('\n', ''), '程序员、独立开发、全栈工程师')
+        self.assertNotIn('适合人群', fixed[0]['body'])
+        self.assertTrue(copy.is_copy_rewrite_error(ValueError('正文不能单列适合人群，请自然融入行动号召')))
+        self.assertTrue(copy.is_copy_rewrite_error(ValueError('文案区块顺序或数量不符：format_2')))
+        self.assertTrue(copy.is_copy_rewrite_error(ValueError('正文连续标题冒号说明过多，请改为短句段落')))
+        long_model = 'DeepSeek V4.1 Flash'
+        self.assertEqual(len(long_model), 19)
+        self.assertEqual(copy.shorten_xhs_title('挖到宝！DeepSeek V4.1 Flash跑代码顺手', long_model), '挖到宝！跑代码顺手')
+        long_title = structured_post('format_1')
+        long_title['title'] = '冲！DeepSeek V4.1 Flash长任务够稳'
+        long_title['title_lines'] = ['需求一眼看清', long_model, '开发流程拆得更顺']
+        long_title['tags'] = ['#DeepSeekV41Flash', '#开发流程', '#需求整理']
+        with redirect_stdout(io.StringIO()) as stdout:
+            repaired = copy.validate_posts({'posts': [long_title]}, 1, long_model, copy_format='format_1')
+        self.assertEqual(repaired[0]['title'], '冲！长任务够稳')
+        self.assertIn('省略型号', stdout.getvalue())
+        keep_short = structured_post('format_1')
+        keep_short['title'] = '盘点DeepSeek V4.1这波升级'
+        keep_short['title_lines'] = ['需求一眼看清', long_model, '开发流程拆得更顺']
+        keep_short['tags'] = ['#DeepSeekV41Flash', '#开发流程', '#需求整理']
+        with redirect_stdout(io.StringIO()) as stdout:
+            kept = copy.validate_posts({'posts': [keep_short]}, 1, long_model, copy_format='format_1', corpus_model='DeepSeek V4.1')
+        self.assertEqual(kept[0]['title'], '盘点DeepSeek V4.1这波升级')
+        self.assertLessEqual(len(kept[0]['title']), 20)
+        self.assertIn('较短写法', stdout.getvalue())
+        missing_tag = structured_post('format_1')
+        missing_tag['tags'] = ['#开发流程', '#需求整理', '#独立开发']
+        with redirect_stdout(io.StringIO()):
+            tagged = copy.validate_posts({'posts': [missing_tag]}, 1, 'GLM5.3', copy_format='format_1')
+        self.assertIn('#GLM5.3', tagged[0]['tags'])
         with self.assertRaisesRegex(ValueError, '连续标题冒号'):
             copy.mobile_body('▫️编程辅助：长句说明\n\n▫️需求整理：长句说明\n\n▫️项目协作：长句说明')
         selling_points = '\n'.join([
@@ -541,10 +579,15 @@ class PipelineTests(unittest.TestCase):
         self.assertIn('尤其不得印出', prompt)
         for style in [{'profile':'unknown'},{'profile':'paper_shadow','base':'white'},{'profile':'paper_shadow','highlight_roles':['unknown']}]:
             with self.assertRaises(ValueError):backgrounds.normalize_style(style)
-        forced=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['hook','benefit']})
+        forced=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['hook','benefit']},ensure_model_highlight=True)
         self.assertEqual(forced['highlight_roles'],['model'])
         kept=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['hook','model']})
         self.assertEqual(kept['highlight_roles'],['hook','model'])
+        # 手动排版：取消型号高亮时保留利益句等勾选，不得回落成只高亮型号。
+        manual=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':['benefit']})
+        self.assertEqual(manual['highlight_roles'],['benefit'])
+        empty=backgrounds.normalize_style({'profile':'paper_shadow','highlight_roles':[]})
+        self.assertEqual(empty['highlight_roles'],[])
         copy.check_bold_typo_subject(copy.positive_visual_text('平面像素光标与>>>角标点缀，无立体主体'))
         with self.assertRaises(ValueError):
             copy.check_bold_typo_subject(copy.positive_visual_text('加入电脑插画与3D机器人'))
@@ -871,9 +914,14 @@ class PipelineTests(unittest.TestCase):
             self.assertIn('creative_plan', content[0]['text'])
             self.assertIn('attention_strategy', content[0]['text'])
             self.assertIn('creative_brief', content[0]['text'])
+            self.assertIn('service_offer', content[0]['text'])
+            self.assertIn('user_provided_service', content[0]['text'])
             self.assertIn('model_materials', content[0]['text'])
             self.assertIn('communication_brief', content[0]['text'])
             self.assertIn('art_direction', content[0]['text'])
+            self.assertIn('缺少verified_claims不得整段删掉', content[0]['text'])
+            self.assertIn('至少落一条简报短卖点', content[0]['text'])
+            self.assertIn('benefit或payoff', content[0]['text'])
             self.assertNotIn('reference_negative_prompt', content[0]['text'])
             self.assertNotIn('先拆解并锁死', content[0]['text'])
             self.assertIn('像素光标', content[0]['text'])
@@ -1083,6 +1131,45 @@ class PipelineTests(unittest.TestCase):
         hyphen_plan = visual_plan('GLM-5.3', prompt='纯纸张便签，第一行大字，禁止出现API或水印。')
         copy.validate_visual_plan(hyphen_plan, 'GLM5.3', 'xhs', '大字报')
 
+    def test_user_brief_selling_points_must_land_on_cover(self):
+        brief = '便宜稳定、便宜接入、活动价'
+        self.assertEqual(copy.brief_cover_phrases(brief), ['便宜稳定', '便宜接入', '活动价'])
+        missing = visual_plan(model='GLM-5.3', prompt='纯纸张便签，禁止3D物件、电脑和代码屏。')
+        missing['cover_texts'] = [
+            {'role': 'hook', 'text': '代码看花眼？', 'position': '1'},
+            {'role': 'benefit', 'text': '审查多个帮手', 'position': '2'},
+            {'role': 'model', 'text': 'GLM-5.3', 'position': '3'},
+            {'role': 'payoff', 'text': '排查代码问题', 'position': '4'},
+        ]
+        self.assertFalse(copy.cover_reflects_brief(missing, brief))
+        with self.assertRaisesRegex(ValueError, '未体现用户简报'):
+            copy.validate_visual_plan(missing, 'GLM-5.3', 'xhs', '大字报', brief=brief)
+        kept = visual_plan(model='GLM-5.3', prompt='纯纸张便签，禁止3D物件、电脑和代码屏。')
+        kept['cover_texts'] = [
+            {'role': 'hook', 'text': '代码看花眼？', 'position': '1'},
+            {'role': 'benefit', 'text': '便宜稳定', 'position': '2'},
+            {'role': 'model', 'text': 'GLM-5.3', 'position': '3'},
+            {'role': 'payoff', 'text': '活动价', 'position': '4'},
+        ]
+        self.assertTrue(copy.cover_reflects_brief(kept, brief))
+        copy.validate_visual_plan(kept, 'GLM-5.3', 'xhs', '大字报', brief=brief)
+        # Info posters only have one benefit slot; one brief phrase is enough.
+        info = visual_plan(model='GLM-5.3', prompt='纯纸张便签，禁止3D物件、电脑和代码屏。')
+        info['collection_name'] = '上中下'
+        info['cover_texts'] = [
+            {'role': 'model', 'text': 'GLM-5.3', 'position': '1'},
+            {'role': 'benefit', 'text': '便宜量大', 'position': '2'},
+            {'role': 'feature', 'text': '代码编写', 'position': '3'},
+            {'role': 'feature', 'text': '安全审查', 'position': '4'},
+            {'role': 'feature', 'text': '长程任务', 'position': '5'},
+            {'role': 'feature', 'text': '文档处理', 'position': '6'},
+        ]
+        dual = '便宜量大、便宜快速'
+        self.assertEqual(copy.brief_cover_phrases(dual), ['便宜量大', '便宜快速'])
+        self.assertTrue(copy.cover_reflects_brief(info, dual))
+        copy.validate_visual_plan(info, 'GLM-5.3', 'xhs', '上中下', brief=dual)
+        self.assertTrue(copy.is_visual_rewrite_error(ValueError('封面短字未体现用户简报中的卖点')))
+
     def test_visual_plan_layout_ordinals_do_not_trigger_advertising_risks(self):
         instructions=(
             '第一、第三行字后分别叠加青绿色高亮条。',
@@ -1118,6 +1205,15 @@ class PipelineTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError,'视觉提示词含风险词'):
                         copy.validate_visual_plan(plan,'GLM5.3',platform)
 
+    def test_current_service_offer_reads_single_editable_section_and_keeps_source_type(self):
+        spec = '# 规范\n## 当前服务卖点\n本方服务卖点甲，不保证模型效果。\n## 模型能力\n不能混入服务卖点。\n'
+        first = copy.current_service_offer(spec)
+        second = copy.current_service_offer(spec.replace('卖点甲', '卖点乙'))
+        self.assertEqual(first['text'], '本方服务卖点甲，不保证模型效果。')
+        self.assertEqual(first['evidence_type'], 'user_provided_service')
+        self.assertNotEqual(first['sha256'], second['sha256'])
+        self.assertEqual(copy.current_service_offer('# 没有当前业务输入')['text'], '')
+
     def test_visual_materials_follow_summary_evidence_without_marketing_or_other_sections(self):
         corpus = ('# 模型资料\n证据见第 11、14 节；待补第 18 节。\n'
                   '## 1. 摘要\n视觉与项目开发。\n'
@@ -1146,6 +1242,18 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn('限制仍属于本段', selected['text'])
         self.assertIn('短能力及其限制', selected['text'])
         self.assertEqual(materials['sha256'], __import__('hashlib').sha256(materials['text'].encode()).hexdigest())
+        with patch.object(copy, 'extract_model_corpus', return_value=''):
+            missing = copy.visual_model_materials('未入库型号')
+        self.assertEqual(missing['text'], '')
+        self.assertTrue(missing['corpus_missing'])
+        with patch.object(copy, 'extract_model_corpus', return_value='* ' + ('超长完整段' * 40) + '\n'):
+            with self.assertRaisesRegex(ValueError, 'CONTENT_OPS_VISUAL_MATERIAL_CHARS'):
+                copy.visual_model_materials('用户输入型号', 40)
+        flash = copy.visual_model_materials('DeepSeek V4.1 Flash')
+        self.assertFalse(flash.get('corpus_missing'))
+        self.assertGreater(len(flash['text']), 1000)
+        self.assertEqual(copy.resolve_product_model('DeepSeek V4.1 Flash'), 'DeepSeek V4.1')
+        self.assertEqual(flash['character_budget'], 16000)
 
     def test_cover_corpus_is_model_scoped_and_all_combinations_pass_risk_check(self):
         models=('GLM-5.3','Kimi K3.1 Pro','DeepSeek V4.1')
@@ -1168,7 +1276,9 @@ class PipelineTests(unittest.TestCase):
             copy.check_cover_words(corpus,'xianyu',model)
         for informal,canonical in (('GLM5.3','GLM-5.3'),('glm-5.3','GLM-5.3'),('kimi k3.1','Kimi K3.1 Pro'),
                                    ('Kimi K3.1','Kimi K3.1 Pro'),('Kimi K3.1 Pro Highspeed','Kimi K3.1 Pro'),
-                                   ('deepseek v4.1','DeepSeek V4.1')):
+                                   ('deepseek v4.1','DeepSeek V4.1'),('DeepSeek V4.1 Flash','DeepSeek V4.1'),
+                                   ('deepseek-v4.1-flash','DeepSeek V4.1'),('deepseek v4.1 flash','DeepSeek V4.1'),
+                                   ('V4.1 Flash','DeepSeek V4.1'),('DeepSeek V4.1 Flash 1017','DeepSeek V4.1')):
             with self.subTest(informal=informal):
                 self.assertEqual(copy.resolve_product_model(informal,require_cover=True),canonical)
                 adapted=copy.extract_cover_corpus(canonical,display_model=informal)
@@ -1215,15 +1325,19 @@ class PipelineTests(unittest.TestCase):
         (self.base/'data/collections.json').write_text('{"collections":[{"name":"大字报","reference_ids":["xhs:ref"]}]}')
         (self.base/'rules').mkdir()
         for source in ('rules/content-spec.md','data/model-corpus.md'):shutil.copy(ROOT/source,self.base/source)
+        # Resume exercises the normal bundled preferences path, not the full-source fallback budget.
+        shutil.copy(ROOT/'data/distilled-preferences.json',self.base/'data/distilled-preferences.json')
         settings={'CONTENT_OPS_API_KEY':'test','CONTENT_OPS_BASE_URL':'https://offline.invalid/v1'}
         argv=['--model','GLM5.3','--count','1','--copy-multiplier','1','--output',str(self.base/'batch'),'--brief','开发任务，便宜量大']
         def generate(*,output,**kwargs):
             Image.new('RGB',(1080,1440)).save(output)
             return {'width':1080,'height':1440,'bytes':len(output.read_bytes()),'sha256':__import__('hashlib').sha256(output.read_bytes()).hexdigest()}
+        plan = visual_plan()
+        plan['cover_texts'][1]['text'] = '便宜量大'  # lands the user brief sell-point after the paid vision mock
         with patch.object(copy,'ROOT',self.base),patch.object(copy,'load_posts',return_value=[row]), \
              patch.object(gateway,'load_config',return_value=settings), \
              patch.object(copy,'claude_call',return_value=({'posts':[structured_post()]},{})) as text, \
-             patch.object(copy,'visual_prompt_call',return_value=(visual_plan(),{'model':'offline-vision'})) as vision, \
+             patch.object(copy,'visual_prompt_call',return_value=(plan,{'model':'offline-vision'})) as vision, \
              patch.object(gateway,'generate_image',side_effect=gateway.ImageGenerationError('offline failure')) as images,redirect_stdout(io.StringIO()):
             self.assertEqual(copy.main(argv),1)
             manifest_path=self.base/'batch/manifest.json'
@@ -1384,6 +1498,37 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(parse_calls['n'], 2)
         self.assertEqual(usages[0]['attempt'], 2)
         self.assertTrue(usages[0]['risk_rewrite'])
+
+    def test_copy_chunk_rewrites_when_angles_repeat_previous_chunk(self):
+        reused = structured_post(n=1)
+        reused['angle'] = '已用切入角度'
+        fresh = structured_post(n=2)
+        fresh['angle'] = '全新切入角度'
+        settings = {'CONTENT_OPS_API_KEY': 'test', 'CONTENT_OPS_BASE_URL': 'https://offline.invalid/v1'}
+        calls = {'n': 0}
+
+        def collide_then_fresh(system, user, settings, timeout, path):
+            calls['n'] += 1
+            path.write_text('ok', encoding='utf-8')
+            payload = json.loads(user)
+            if calls['n'] == 1:
+                self.assertNotIn('risk_rewrite', payload)
+                return {'posts': [reused]}, {'model': 'offline', 'usage': {}}
+            self.assertIn('risk_rewrite', payload)
+            self.assertIn('同批文案缺少不同结构', payload['risk_rewrite']['rejected_reason'])
+            self.assertIn('已用切入角度', payload['risk_rewrite']['instruction'])
+            return {'posts': [fresh]}, {'model': 'offline', 'usage': {}}
+
+        request = {'copy_plan': [], 'previous_angles': ['已用切入角度'], 'previous_copies': [{'title': '旧标题', 'angle': '已用切入角度', 'audience': '开发者'}]}
+        with patch.object(copy, 'claude_call', side_effect=collide_then_fresh), redirect_stdout(io.StringIO()) as stdout:
+            posts, usages = copy.generate_validated_copy_chunk(
+                'sys', request, settings, 1, self.base / 'copy-angle.txt',
+                1, 'GLM5.3', None, 'xhs', 'format_1', 0)
+        self.assertEqual([p['angle'] for p in posts], ['全新切入角度'])
+        self.assertEqual(calls['n'], 2)
+        self.assertEqual([u['risk_rewrite'] for u in usages], [False, True])
+        self.assertIn('重出第 1/2 次', stdout.getvalue())
+        self.assertTrue(copy.is_copy_rewrite_error(ValueError('同批文案缺少不同结构')))
 
     def test_copy_structure_validation_and_risk_checks_cover_every_version(self):
         posts = [structured_post(copy.format_for('all_variations',i),i+1) for i in range(5)]
@@ -1664,7 +1809,55 @@ class RevisionTests(unittest.TestCase):
         self.assertIn('原始卖点',payload['messages'][1]['content'])
         self.assertIn('用户简报',payload['messages'][1]['content'])
         self.assertIn('内容',payload['messages'][0]['content'])
+        self.assertIn('只改第一行标题', payload['messages'][0]['content'])
         self.assertEqual(result['text'],'# 改写标题\n\n原始卖点')
+        self.assertEqual(result['attempts'], 1)
+
+    def test_title_only_edit_keeps_source_body_and_tags(self):
+        self.assertTrue(self.revision.is_title_only_edit('改标题'))
+        self.assertTrue(self.revision.is_title_only_edit('再改改标题，20字以内改得有吸引力一点'))
+        self.assertTrue(self.revision.is_title_only_edit('标题换个说法，保留卖点'))
+        self.assertFalse(self.revision.is_title_only_edit('改标题\n开头别用问句'))
+        self.assertFalse(self.revision.is_title_only_edit('标题没有吸引力\n针对这段：「结尾再收一下」'))
+        source = '# 旧标题还行\n\n💻 **全栈代码开发**：覆盖项目调试。\n\n#KimiK3.1Pro #全栈开发'
+        rewritten = '# 写代码重构告别逐行翻依赖\n\n整篇被模型重写成另一套措辞。\n\n#别的标签'
+        locked = self.revision.preserve_unedited_copy_parts(source, rewritten, '改标题')
+        self.assertEqual(locked, '# 写代码重构告别逐行翻依赖\n\n💻 **全栈代码开发**：覆盖项目调试。\n\n#KimiK3.1Pro #全栈开发')
+        data = {'kind':'copy','action':'ai','platform':'xhs','model':'Kimi K3.1 Pro','source_text':source,
+                'instructions':'改标题', 'brief':'', 'facts':{}}
+        with patch.object(gateway,'request_json',return_value={'choices':[{'message':{'content':json.dumps({'text':rewritten},ensure_ascii=False)}}]}):
+            result = self.revision.run(data, self.settings)
+        self.assertEqual(result['text'], locked)
+
+    def test_ai_copy_soft_fixes_overlong_title_and_retries_risk_words(self):
+        data = {'kind':'copy','action':'ai','platform':'xhs','model':'Kimi K3.1 Pro','source_text':'# 原标题\n\n原始卖点',
+                'instructions':'标题更吸睛', 'brief':'用户简报', 'facts':{'verified_claims':[]}}
+        # Overlong title is repaired locally on the first return; no paid retry needed.
+        long_ok = {'choices':[{'message':{'content':json.dumps(
+            {'text':'# 挖到宝！Kimi K3.1 Pro工程重构不用翻依赖\n\n原始卖点'}, ensure_ascii=False)}}]}
+        with patch.object(gateway,'request_json',return_value=long_ok) as call, redirect_stdout(io.StringIO()) as stdout:
+            fixed = self.revision.run(data,self.settings)
+        self.assertEqual(call.call_count, 1)
+        self.assertEqual(fixed['attempts'], 1)
+        title = re.sub(r'^#\s*', '', fixed['text'].splitlines()[0])
+        self.assertLessEqual(len(title), 20)
+        self.assertIn('自动收短', stdout.getvalue())
+
+        # Risk words still trigger a paid rewrite with failure feedback (body-directed edit).
+        dirty = '# 好价来了\n\n这波 API 真香'
+        clean = '# 好价来了\n\n这波接入真香'
+        body_data = {**data, 'instructions': '改写正文，去掉风险词'}
+        responses = [
+            {'choices':[{'message':{'content':json.dumps({'text':dirty},ensure_ascii=False)}}]},
+            {'choices':[{'message':{'content':json.dumps({'text':clean},ensure_ascii=False)}}]},
+        ]
+        with patch.object(gateway,'request_json',side_effect=responses) as call, redirect_stdout(io.StringIO()) as stdout:
+            result = self.revision.run(body_data,self.settings)
+        self.assertEqual(call.call_count, 2)
+        self.assertEqual(result['text'], clean)
+        self.assertEqual(result['attempts'], 2)
+        self.assertIn('风险词', call.call_args_list[1].args[1]['messages'][2]['content'])
+        self.assertIn('重出第 1/2 次', stdout.getvalue())
 
     def test_prompt_regeneration_submits_exact_prompt_without_copy_vision_or_image_edit(self):
         for platform in ('xhs','xianyu'):
@@ -1853,6 +2046,59 @@ class RevisionTests(unittest.TestCase):
 
 
 class MonitoringTests(unittest.TestCase):
+    def test_classification_only_targets_unassigned_monitor_imports(self):
+        from . import monitoring as m
+        rows=[{'id':id,'platform':'xhs','source':source,'images':['cover.png']} for id,source in [('a','account_monitor'),('b','account_monitor'),('c','user_added')]]
+        self.assertEqual([p['id'] for p in m.classify_candidates(rows,{'collections':[{'reference_ids':['xhs:a']} ]})],['b'])
+        self.assertEqual([p['id'] for p in m.classify_candidates(rows,{'collections':[{'reference_ids':['a']} ]})],['b'])
+
+    def test_classification_transaction_preserves_memberships_and_rolls_back_failure(self):
+        from . import monitoring as m
+        import hashlib
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'data').mkdir();(root/'config').mkdir();(root/'scripts').mkdir()
+            shutil.copy(ROOT/'config/data-cleaning.json',root/'config/data-cleaning.json')
+            source=root/'data/posts.jsonl';collections=root/'data/collections.json'
+            image=root/'data/images/xhs/a/1.png';image.parent.mkdir(parents=True);Image.new('RGB',(10,10),'red').save(image)
+            rows=[{'id':'a','platform':'xhs','source':'account_monitor','images':['data/images/xhs/a/1.png'],'body':'原文'},
+                  {'id':'b','platform':'xhs','source':'account_monitor','images':['unchanged.png'],'body':'不改'}]
+            source.write_text(''.join(json.dumps(p)+'\n' for p in rows))
+            collections.write_text(json.dumps({'collections':[{'id':'one','name':'大字报','reference_ids':['xhs:b']},{'id':'two','name':'环绕','reference_ids':[]}]}))
+            subprocess.run(['git','init','-q'],cwd=root,check=True)
+            for k,v in [('user.name','test'),('user.email','test@localhost')]:subprocess.run(['git','config',k,v],cwd=root,check=True)
+            subprocess.run(['git','add','.'],cwd=root,check=True);subprocess.run(['git','commit','-qm','fixture'],cwd=root,check=True)
+            raw=source.read_bytes();craw=collections.read_bytes();decision={'a':{'collection':'环绕','abstraction':{'source_image_sha256':hashlib.sha256(image.read_bytes()).hexdigest()}}}
+            (root/'scripts/doctor.py').write_text('raise SystemExit(1)')
+            with patch.object(m,'observe_collections',return_value=decision),self.assertRaises(subprocess.CalledProcessError):
+                m.classify_main(['--root',tmp,'--apply'])
+            self.assertEqual(source.read_bytes(),raw);self.assertEqual(collections.read_bytes(),craw)
+            self.assertFalse((root/'data/.posts.lock').exists())
+            (root/'scripts/doctor.py').write_text('raise SystemExit(0)')
+            with patch.object(m,'observe_collections',return_value=decision):m.classify_main(['--root',tmp,'--apply'])
+            saved=[json.loads(l) for l in source.read_text().splitlines()];self.assertEqual(saved[0]['body'],'原文');self.assertEqual(saved[1],rows[1])
+            groups=json.loads(collections.read_text())['collections'];self.assertEqual(groups[0]['reference_ids'],['xhs:b']);self.assertEqual(groups[1]['reference_ids'],['xhs:a'])
+            # Removing an already observed assignment does not invite automatic resurrection.
+            self.assertEqual(m.classify_candidates(saved,{'collections':[groups[0]]}),[])
+
+    def test_classification_uses_real_image_and_rejects_low_confidence(self):
+        from . import monitoring as m
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'config').mkdir();shutil.copy(ROOT/'config/data-cleaning.json',root/'config/data-cleaning.json')
+            image=root/'data/images/xhs/a/1.png';image.parent.mkdir(parents=True);Image.new('RGB',(100,160),'red').save(image)
+            post={'id':'a','platform':'xhs','images':['data/images/xhs/a/1.png']}
+            item={'id':'a','collection':'环绕','confidence':0.96,'hierarchy':'中心和四角','visual_focus':'中间主体','reading_path':'从中心向外',
+                  'information_modules':['中心主体','四周模块'],'reusable_principles':['中心辐射'],'replaceable_elements':['颜色']}
+            settings={'CONTENT_OPS_VISION_MODEL':'vision-model','CONTENT_OPS_BASE_URL':'https://offline.invalid/v1','CONTENT_OPS_API_KEY':'fake'}
+            response=lambda x:{'model':'vision-model','choices':[{'message':{'content':json.dumps({'items':[x]})}}]}
+            with patch.object(gateway,'request_json',return_value=response(item)) as call:
+                result=m.observe_collections([post],[],{'collections':[{'name':'环绕','reference_ids':[]}]},root,settings)
+                self.assertEqual(result['a']['collection'],'环绕');self.assertIn('source_image_sha256',result['a']['abstraction'])
+                self.assertTrue(any(p['type']=='image_url' for p in call.call_args.args[1]['messages'][0]['content']))
+            with patch.object(gateway,'request_json',return_value=response({**item,'confidence':0.5})):
+                self.assertEqual(m.observe_collections([post],[],{'collections':[{'name':'环绕','reference_ids':[]}]},root,settings),{})
+            with patch.object(gateway,'request_json',return_value=response({**item,'id':'wrong'})),self.assertRaises(ValueError):
+                m.observe_collections([post],[],{'collections':[{'name':'环绕','reference_ids':[]}]},root,settings)
+
     def test_recent_uses_published_time_not_fetch_time_and_preserves_boundary(self):
         from . import monitoring as m
         from datetime import datetime

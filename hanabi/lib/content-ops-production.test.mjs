@@ -10,14 +10,45 @@ import { fileURLToPath } from 'node:url';
 import { ContentOpsProduction, validateContentOpsInput } from './content-ops-production.mjs';
 import { listProductModels, resolveProductModel } from './content-ops-models.mjs';
 import { parsePostText, renderPostContent, nextGenerateRequest, generateSubmitLabel } from './content-ops-ui.mjs';
+import { appendSelectionToInstructions } from './content-ops-revision-ui.mjs';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const input = {model:'Kimi K3.1 Pro',platform:'xhs',count:1,backgroundMode:'fresh',requestId:'offline-test-123'};
+
+test('revision adopt emits spec-sync on document so the sync dialog receives it', async () => {
+  const source = await readFile(new URL('./content-ops-revision-ui.mjs', import.meta.url), 'utf8');
+  assert.match(source, /document\.dispatchEvent\(new CustomEvent\('content-ops:spec-sync'/u);
+  assert.equal((source.match(/window\.dispatchEvent\(new CustomEvent\('content-ops:spec-sync'/ug) || []).length, 0);
+});
+
+test('revision selection appends quoted excerpt into AI instructions and truncates at limit', () => {
+  assert.deepEqual(appendSelectionToInstructions('', '  标题更口语  '), {
+    value: '针对这段：\n「标题更口语」',
+    added: true,
+    truncated: false
+  });
+  assert.deepEqual(appendSelectionToInstructions('开头别用问句', '别写好价窗口'), {
+    value: '开头别用问句\n\n针对这段：\n「别写好价窗口」',
+    added: true,
+    truncated: false
+  });
+  assert.equal(appendSelectionToInstructions('已有', '   ').added, false);
+  const long = '字'.repeat(1990);
+  const truncated = appendSelectionToInstructions(long, '这段会被截断的选区');
+  assert.equal(truncated.truncated, true);
+  assert.equal(truncated.value.length, 2000);
+  assert.match(truncated.value, /^字+/u);
+});
 
 test('product models resolve informal aliases and reject unknown families before generation', () => {
   const models = listProductModels(root);
   assert.deepEqual(models.map(item => item.id).sort(), ['DeepSeek V4.1', 'GLM-5.3', 'Kimi K3.1 Pro']);
   assert.equal(resolveProductModel('kimi k3.1', models, { requireCover: true }), 'Kimi K3.1 Pro');
   assert.equal(resolveProductModel('GLM5.3', models, { requireCover: true }), 'GLM-5.3');
+  assert.equal(resolveProductModel('DeepSeek V4.1 Flash', models, { requireCover: true }), 'DeepSeek V4.1');
+  assert.equal(resolveProductModel('deepseek v4.1 flash', models, { requireCover: true }), 'DeepSeek V4.1');
+  const flash = validateContentOpsInput({ ...input, model: 'DeepSeek V4.1 Flash' }, { productModels: models });
+  assert.equal(flash.model, 'DeepSeek V4.1 Flash');
+  assert.equal(flash.corpusModel, 'DeepSeek V4.1');
   const aliased = validateContentOpsInput({ ...input, model: 'kimi k3.1' }, { productModels: models });
   assert.equal(aliased.model, 'kimi k3.1');
   assert.equal(aliased.corpusModel, 'Kimi K3.1 Pro');
@@ -181,9 +212,13 @@ test('spec analysis uses patch ops, skips full rewrites, and keeps incremental p
       assert.doesNotMatch(prompt,/运营偏好原料：/u);
       return Response.json({choices:[{message:{content:JSON.stringify({summary:'round-1',ops:[{op:'replace',old:marker,new:marker+' 补丁测试。'}]})}}]});
     }
-    assert.match(prompt,/风险词原料/u);assert.match(prompt,/当前底稿/u);assert.match(prompt,/保留原有章节，语气更简洁/u);
-    assert.doesNotMatch(prompt,/上一版草案/u);
-    return Response.json({choices:[{message:{content:JSON.stringify({summary:'round-2',ops:[]})}}]});
+    if(calls.length===2){
+      assert.match(prompt,/风险词原料/u);assert.match(prompt,/当前底稿/u);assert.match(prompt,/保留原有章节，语气更简洁/u);
+      assert.doesNotMatch(prompt,/上一版草案/u);
+      return Response.json({choices:[{message:{content:JSON.stringify({summary:'round-2',ops:[]})}}]});
+    }
+    assert.match(prompt,/最终采纳的文案改稿|开头别用问句/u);
+    return Response.json({choices:[{message:{content:JSON.stringify({summary:'round-3',ops:[]})}}]});
   }});
   const first=await editor.analyzeSpecSync({trigger:'persona_add',addedItem:{id:'Q999',text:'示例新增偏好'}});
   assert.equal(first.summary,'round-1');assert.equal(first.before,spec);assert.equal(calls.length,1);
@@ -194,6 +229,10 @@ test('spec analysis uses patch ops, skips full rewrites, and keeps incremental p
   const second=await editor.analyzeSpecSync({trigger:'manual',previousDraft:first.updatedContent,feedback:'保留原有章节，语气更简洁'});
   assert.equal(second.summary,'round-2');assert.equal(calls.length,2);
   assert.equal(second.updatedContent,first.updatedContent);
+  const third=await editor.analyzeSpecSync({trigger:'copy_adopt',addedItem:{action:'ai',instructions:'开头别用问句',adoptedText:'# 定稿\n\n正文'}});
+  assert.equal(third.summary,'round-3');assert.equal(third.trigger,'copy_adopt');assert.equal(calls.length,3);
+  assert.match(JSON.parse(calls[2].init.body).messages[0].content,/最终采纳的文案改稿|开头别用问句/u);
+  assert.match(editor.formatCopyAdoptQuote({action:'ai',instructions:'开头别用问句\n价格克制'}),/改稿采纳（AI改稿定稿）：开头别用问句 价格克制/u);
 });
 
 test('corpus gap analysis only sends the matching section and applies append patches locally', async t => {
@@ -238,8 +277,17 @@ test('spec sync apply rebuilds the bundle and commits only the canonical spec an
   const editor=new ContentOpsEditor({root:dir,run:(command,args,options)=>editorCommand(command,args,{
     ...options,env:{...process.env,PYTHONPATH:join(root,'scratch/.venv/lib/python3.11/site-packages')}
   })});
-  const result=await editor.applySpecSync({updatedContent:updated,revision:createHash('sha256').update(original).digest('hex'),summary:'测试确认写入'});
+  await assert.rejects(
+    ()=>editor.applySpecSync({updatedContent:updated,revision:createHash('sha256').update(original).digest('hex'),summary:'测试确认写入',unexpected:true}),
+    /编辑参数无效/
+  );
+  await assert.rejects(
+    ()=>editor.applySpecSync({updatedContent:updated,revision:createHash('sha256').update(original).digest('hex'),summary:'测试确认写入',targetDoc:'other'}),
+    /同步目标无效/
+  );
+  const result=await editor.applySpecSync({updatedContent:updated,revision:createHash('sha256').update(original).digest('hex'),summary:'测试确认写入',targetDoc:'content-spec'});
   assert.equal(result.ok,true);
+  assert.equal(result.targetDoc,'content-spec');
   assert.match(result.content,/最近更新时间：/u);
   assert.equal(execFileSync('git',['-C',dir,'status','--porcelain'],{encoding:'utf8'}),'');
   const committed=execFileSync('git',['-C',dir,'show','--pretty=format:','--name-only','HEAD'],{encoding:'utf8'}).trim().split('\n').sort();
@@ -333,6 +381,7 @@ test('cover classification distinguishes content topics from layout evidence', (
   }
   assert.equal(classifyReference({title:'GLM5.3'}).model_category,'GLM');
   assert.equal(classifyReference({tags:['Seedance2']}).model_category,'Seedance/视频');
+  assert.equal(classifyReference({title:'DeepSeek V4.1 Flash'}).model_category,'DeepSeek');
   assert.equal(classifyReference({title:'其他工具'}).model_category,'其他');
 });
 
@@ -500,7 +549,7 @@ test('collection assignment updates existing cards, preserves viewport and selec
   assert.equal(cards[1], original[2]);
   assert.deepEqual(browser.posts.map(post => post.id), ['aa','cc']);
   assert.equal(y, 0);
-  assert.equal(browser.totalLabel.textContent, '共 2 条');
+  assert.equal(browser.totalLabel.textContent, '共 2 条（合集：合集一）');
   assert.deepEqual(stored[1].reference_ids, ['xhs:bb']);
   assert.deepEqual(browser.selectedReferences, [target]);
   assert.equal(browser.expandedOutlineKeys.has('xhs:bb'), true);
@@ -545,7 +594,7 @@ test('editing a reference updates only its card, keeps viewport and state, and r
   // Platform changes under a platform filter remove just that row and retain a nearby anchor.
   browser.platform.value='xhs';next={...next,platform:'xianyu'};
   await browser.refreshAfterMutation('已保存',old,next);
-  assert.deepEqual(cards,[original[0],original[2]]);assert.equal(y,0);assert.equal(browser.totalLabel.textContent,'共 2 条');
+  assert.deepEqual(cards,[original[0],original[2]]);assert.equal(y,0);assert.equal(browser.totalLabel.textContent,'共 2 条（小红书）');
   assert.deepEqual(browser.collections[0].reference_ids,['xianyu:bb']);assert.equal(browser.expandedOutlineKeys.has('xianyu:bb'),true);
   // A focused reference outside the current filter remains pinned and is updated in place.
   browser.pinned=next;original[1].dataset.platform='xianyu';cards.push(original[1]);browser.pinnedGrid.contains=card=>card===original[1];
@@ -577,7 +626,7 @@ test('editor saving preserves modal scroll, reports refresh failures, and ignore
 
 test('reference order debounces quick moves and preserves the captured collection scope', async () => {
   const browser = Object.create(ContentOpsReferences.prototype), calls = [];
-  Object.assign(browser, {platform:{value:'xhs'}, collection:{value:'c1'}, requestVersion:1,
+  Object.assign(browser, {platform:{value:'xhs'}, collection:{value:'c1'}, sort:{value:'manual'}, sortPreference:'manual', requestVersion:1,
     posts:[{platform:'xhs',id:'aa'},{platform:'xhs',id:'bb'}],
     collections:[{id:'c1',reference_ids:['xhs:aa','xianyu:cc','xhs:bb']}],
     collectionRequest:async (...args) => calls.push(args), showSavedStatus:() => {}});
@@ -594,29 +643,64 @@ test('reference order debounces quick moves and preserves the captured collectio
   assert.equal(browser.pendingOrder,null);
 });
 
-test('reference filters use platform and collections, support full load, and default to newest input', async t => {
+test('date sort mode blocks manual reorder persistence', async () => {
+  const browser = Object.create(ContentOpsReferences.prototype);
+  Object.assign(browser, {platform:{value:'xhs'}, collection:{value:'all'}, sort:{value:'date_desc'}, sortPreference:'date_desc',
+    posts:[{platform:'xhs',id:'aa'},{platform:'xhs',id:'bb'}], pendingOrder:null});
+  browser.scheduleOrderSave();
+  assert.equal(browser.pendingOrder,null);
+  await browser.movePost(browser.posts[0], 1);
+  assert.deepEqual(browser.posts.map(post => post.id), ['aa', 'bb']);
+});
+
+test('reference filters use platform, model and collections, support full load, and default to newest input', async t => {
   const {store}=await referenceFixture(t);
-  const first=await store.addReference({title:'第一条'});
-  const second=await store.addReference({title:'第二条'});
-  const third=await store.addReference({platform:'xianyu',title:'第三条'});
-  const fourth=await store.addReference({title:'第四条'});
+  const first=await store.addReference({title:'第一条 GLM5.3'});
+  const second=await store.addReference({title:'第二条 Kimi'});
+  const third=await store.addReference({platform:'xianyu',title:'第三条 DeepSeek'});
+  const fourth=await store.addReference({title:'第四条 Seedance'});
   const collection=await store.createCollection({name:'重点素材'});
   await store.updateCollection(collection.id,{reference_ids:[`xhs:${first.id}`,`xhs:${second.id}`,`xianyu:${third.id}`]});
 
   const all=await store.list(new URLSearchParams({platform:'all',limit:'5000'}));
   assert.deepEqual(all.posts.map(post=>post.id),[fourth.id,third.id,second.id,first.id]);
   assert.equal(all.total,4);assert.equal(all.limit,5000);assert.equal(all.dataset_total,4);
+  assert.deepEqual(all.model_categories,['GLM','Kimi','DeepSeek','Seedance/视频','其他']);
   const allAlias=await store.list(new URLSearchParams({platform:'all',limit:'all'}));
   assert.deepEqual(allAlias.posts.map(post=>post.id),all.posts.map(post=>post.id));assert.equal(allAlias.limit,5000);
   const xhs=await store.list(new URLSearchParams({platform:'xhs',limit:'100'}));
   assert.deepEqual(xhs.posts.map(post=>post.id),[fourth.id,second.id,first.id]);
+  const glm=await store.list(new URLSearchParams({platform:'all',model_category:'GLM',limit:'100'}));
+  assert.deepEqual(glm.posts.map(post=>post.id),[first.id]);
+  assert.equal(glm.posts[0].model_category,'GLM');
+  const deepseek=await store.list(new URLSearchParams({platform:'all',model_category:'DeepSeek',limit:'100'}));
+  assert.deepEqual(deepseek.posts.map(post=>post.id),[third.id]);
+  const seedance=await store.list(new URLSearchParams({platform:'all',model_category:'Seedance/视频',limit:'100'}));
+  assert.deepEqual(seedance.posts.map(post=>post.id),[fourth.id]);
   const grouped=await store.list(new URLSearchParams({platform:'all',collection_id:collection.id,limit:'2',offset:'1'}));
   assert.equal(grouped.total,3);assert.deepEqual(grouped.posts.map(post=>post.id),[second.id,third.id]);
+  const groupedModel=await store.list(new URLSearchParams({platform:'all',collection_id:collection.id,model_category:'Kimi',limit:'100'}));
+  assert.deepEqual(groupedModel.posts.map(post=>post.id),[second.id]);
   const uncategorized=await store.list(new URLSearchParams({platform:'xhs',collection_id:'uncategorized',limit:'100'}));
   assert.deepEqual(uncategorized.posts.map(post=>post.id),[fourth.id]);
   const selected=await store.list(new URLSearchParams({platform:'all',ids:third.id}));
   assert.deepEqual(selected.posts.map(post=>post.id),[third.id]);
-  for(const q of ['sort=newest','model_category=GLM','layout_style=code_ide','collection_id=unknown','collection_id=../','limit=5001'])assert.throws(()=>parseReferenceQuery(new URLSearchParams(q)),{statusCode:400});
+  assert.deepEqual(parseReferenceQuery(new URLSearchParams({model_category:'GLM'})),{platform:'xhs',collectionId:'all',modelCategory:'GLM',sort:'manual',offset:0,limit:30,ids:null});
+  assert.deepEqual(parseReferenceQuery(new URLSearchParams({sort:'date_desc'})),{platform:'xhs',collectionId:'all',modelCategory:'all',sort:'date_desc',offset:0,limit:30,ids:null});
+  for(const q of ['sort=newest','model_category=Unknown','layout_style=code_ide','collection_id=unknown','collection_id=../','limit=5001'])assert.throws(()=>parseReferenceQuery(new URLSearchParams(q)),{statusCode:400});
+
+  await store.updateReference(first.id,{published_at:'2026-01-01'});
+  await store.updateReference(second.id,{published_at:'2026-03-15'});
+  await store.updateReference(third.id,{published_at:'2026-02-10'});
+  // fourth keeps unknown date and stays at the end for both date sorts
+  const newest=await store.list(new URLSearchParams({platform:'all',sort:'date_desc',limit:'100'}));
+  assert.deepEqual(newest.posts.map(post=>post.id),[second.id,third.id,first.id,fourth.id]);
+  assert.equal(newest.sort,'date_desc');
+  const oldest=await store.list(new URLSearchParams({platform:'all',sort:'date_asc',limit:'100'}));
+  assert.deepEqual(oldest.posts.map(post=>post.id),[first.id,third.id,second.id,fourth.id]);
+  assert.equal(oldest.sort,'date_asc');
+  const groupedByDate=await store.list(new URLSearchParams({platform:'all',collection_id:collection.id,sort:'date_desc',limit:'100'}));
+  assert.deepEqual(groupedByDate.posts.map(post=>post.id),[second.id,third.id,first.id]);
 });
 
 test('collections support CRUD, atomic persistence, relation filtering, and deletion without deleting references', async t => {
@@ -1303,9 +1387,14 @@ test('revisions preserve original artifacts, isolate copy variants, require adop
   const row=await revisions.create('batch-123','job-12345',revisionInput);
   const ready=await revisionDone(revisions,row.id);assert.equal(ready.status,'ready');
   assert.equal(production.public(production.get('batch-123')).posts[0].copies[0].text,original.posts[0].copies[0].text);
-  const adopted=revisions.apply('batch-123','job-12345',{kind:'copy',copyIndex:1,baseRevision:'original',revisionId:ready.id}).batch;
+  const applied=revisions.apply('batch-123','job-12345',{kind:'copy',copyIndex:1,baseRevision:'original',revisionId:ready.id});
+  const adopted=applied.batch;
   assert.equal(adopted.posts[0].text,revisionInput.text);assert.equal(adopted.posts[0].copies[1].text,'# 原稿B\n\n正文B');
   assert.equal(adopted.posts[0].image,original.posts[0].image);
+  assert.equal(applied.copyLearn?.trigger,'copy_adopt');
+  assert.equal(applied.copyLearn?.addedItem?.action,'manual');
+  assert.match(applied.copyLearn?.addedItem?.adoptedText||'',/新标题/u);
+  assert.equal(applied.corpusGap,null);
   assert.deepEqual(production.original(production.get('batch-123')),original);
   assert.equal(await readFile(join(dir,'original/post-1.md'),'utf8'),'unchanged export');
   assert.equal(calls[0].options.shell,false);
