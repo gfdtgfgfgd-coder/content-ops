@@ -518,7 +518,7 @@ test('editing a reference updates only its card, keeps viewport and state, and r
   // Platform changes under a platform filter remove just that row and retain a nearby anchor.
   browser.platform.value='xhs';next={...next,platform:'xianyu'};
   await browser.refreshAfterMutation('已保存',old,next);
-  assert.deepEqual(cards,[original[0],original[2]]);assert.equal(y,0);assert.equal(browser.totalLabel.textContent,'共 2 条');
+  assert.deepEqual(cards,[original[0],original[2]]);assert.equal(y,0);assert.equal(browser.totalLabel.textContent,'共 2 条（小红书）');
   assert.deepEqual(browser.collections[0].reference_ids,['xianyu:bb']);assert.equal(browser.expandedOutlineKeys.has('xianyu:bb'),true);
   // A focused reference outside the current filter remains pinned and is updated in place.
   browser.pinned=next;original[1].dataset.platform='xianyu';cards.push(original[1]);browser.pinnedGrid.contains=card=>card===original[1];
