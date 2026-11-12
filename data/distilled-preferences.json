@@ -15,12 +15,12 @@
   ],
   "source_hashes": {
     "skills/simin-persona/SKILL.md": {
-      "sha256": "1ba129168dcadda9ded317a7a12572b5f5edfa2fc93bb2245b741024e42a2365",
-      "bytes": 26523
+      "sha256": "4c46cc26065953ac3758c98928cfce689f52639a42a31977b42a94a048db28d8",
+      "bytes": 26726
     },
     "data/wecom/simin-feedback.jsonl": {
-      "sha256": "e464476e7621edfc498b89500c439b14632106792dac0cf2dd71e5657bc86f40",
-      "bytes": 22114
+      "sha256": "eedf17e19ce5015b8211b098afad44e0f5fc608a4d7e60112eb112bcbe9d0311",
+      "bytes": 22417
     },
     "data/wecom/risk-words.md": {
       "sha256": "1db1c0cb58032ff0e1c89b65676645699f8e795d2d45c075fea901b42734486d",
@@ -450,6 +450,11 @@
         "id": "Q62",
         "date": "2026-11-12",
         "quote": "改稿采纳：代码是主卖点时写前面；勿用好消息‼️白菜价机械复读；勿写复杂项目要搞定类陈旧收尾"
+      },
+      {
+        "id": "Q63",
+        "date": "2026-11-12",
+        "quote": "改稿采纳（AI改稿定稿）：针对这段： 「想把代码开发和三维脚本工作流打通的开发者，Kimi K3.1 Pro 值得上手一试。」跟标题重复了"
       }
     ],
     "evidence_limit": "截至客户端当前可加载最早端的记录，未证明更早历史不存在；不代表思敏全部偏好。"
