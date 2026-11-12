@@ -473,7 +473,7 @@ test('collection assignment updates existing cards, preserves viewport and selec
   assert.equal(cards[1], original[2]);
   assert.deepEqual(browser.posts.map(post => post.id), ['aa','cc']);
   assert.equal(y, 0);
-  assert.equal(browser.totalLabel.textContent, '共 2 条');
+  assert.equal(browser.totalLabel.textContent, '共 2 条（合集：合集一）');
   assert.deepEqual(stored[1].reference_ids, ['xhs:bb']);
   assert.deepEqual(browser.selectedReferences, [target]);
   assert.equal(browser.expandedOutlineKeys.has('xhs:bb'), true);
@@ -550,7 +550,7 @@ test('editor saving preserves modal scroll, reports refresh failures, and ignore
 
 test('reference order debounces quick moves and preserves the captured collection scope', async () => {
   const browser = Object.create(ContentOpsReferences.prototype), calls = [];
-  Object.assign(browser, {platform:{value:'xhs'}, collection:{value:'c1'}, requestVersion:1,
+  Object.assign(browser, {platform:{value:'xhs'}, collection:{value:'c1'}, sort:{value:'manual'}, sortPreference:'manual', requestVersion:1,
     posts:[{platform:'xhs',id:'aa'},{platform:'xhs',id:'bb'}],
     collections:[{id:'c1',reference_ids:['xhs:aa','xianyu:cc','xhs:bb']}],
     collectionRequest:async (...args) => calls.push(args), showSavedStatus:() => {}});
@@ -565,6 +565,16 @@ test('reference order debounces quick moves and preserves the captured collectio
   assert.deepEqual(browser.collections[0].reference_ids,calls[0][2].reference_ids);
   assert.equal(browser.savingOrder,false);
   assert.equal(browser.pendingOrder,null);
+});
+
+test('date sort mode blocks manual reorder persistence', async () => {
+  const browser = Object.create(ContentOpsReferences.prototype);
+  Object.assign(browser, {platform:{value:'xhs'}, collection:{value:'all'}, sort:{value:'date_desc'}, sortPreference:'date_desc',
+    posts:[{platform:'xhs',id:'aa'},{platform:'xhs',id:'bb'}], pendingOrder:null});
+  browser.scheduleOrderSave();
+  assert.equal(browser.pendingOrder,null);
+  await browser.movePost(browser.posts[0], 1);
+  assert.deepEqual(browser.posts.map(post => post.id), ['aa', 'bb']);
 });
 
 test('reference filters use platform, model and collections, support full load, and default to newest input', async t => {
@@ -599,8 +609,22 @@ test('reference filters use platform, model and collections, support full load, 
   assert.deepEqual(uncategorized.posts.map(post=>post.id),[fourth.id]);
   const selected=await store.list(new URLSearchParams({platform:'all',ids:third.id}));
   assert.deepEqual(selected.posts.map(post=>post.id),[third.id]);
-  assert.deepEqual(parseReferenceQuery(new URLSearchParams({model_category:'GLM'})),{platform:'xhs',collectionId:'all',modelCategory:'GLM',offset:0,limit:30,ids:null});
+  assert.deepEqual(parseReferenceQuery(new URLSearchParams({model_category:'GLM'})),{platform:'xhs',collectionId:'all',modelCategory:'GLM',sort:'manual',offset:0,limit:30,ids:null});
+  assert.deepEqual(parseReferenceQuery(new URLSearchParams({sort:'date_desc'})),{platform:'xhs',collectionId:'all',modelCategory:'all',sort:'date_desc',offset:0,limit:30,ids:null});
   for(const q of ['sort=newest','model_category=Unknown','layout_style=code_ide','collection_id=unknown','collection_id=../','limit=5001'])assert.throws(()=>parseReferenceQuery(new URLSearchParams(q)),{statusCode:400});
+
+  await store.updateReference(first.id,{published_at:'2026-01-01'});
+  await store.updateReference(second.id,{published_at:'2026-03-15'});
+  await store.updateReference(third.id,{published_at:'2026-02-10'});
+  // fourth keeps unknown date and stays at the end for both date sorts
+  const newest=await store.list(new URLSearchParams({platform:'all',sort:'date_desc',limit:'100'}));
+  assert.deepEqual(newest.posts.map(post=>post.id),[second.id,third.id,first.id,fourth.id]);
+  assert.equal(newest.sort,'date_desc');
+  const oldest=await store.list(new URLSearchParams({platform:'all',sort:'date_asc',limit:'100'}));
+  assert.deepEqual(oldest.posts.map(post=>post.id),[first.id,third.id,second.id,fourth.id]);
+  assert.equal(oldest.sort,'date_asc');
+  const groupedByDate=await store.list(new URLSearchParams({platform:'all',collection_id:collection.id,sort:'date_desc',limit:'100'}));
+  assert.deepEqual(groupedByDate.posts.map(post=>post.id),[second.id,third.id,first.id]);
 });
 
 test('collections support CRUD, atomic persistence, relation filtering, and deletion without deleting references', async t => {
