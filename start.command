@@ -75,22 +75,65 @@ fi
 # 6. 启动 Hanabi 前端服务
 # 说明：不要用 LaunchAgent 直接盯桌面上的源码目录——macOS 会拦截后台读 Desktop，表现为刷新后服务被掐断。
 # 这里用 nohup 在用户会话里常驻；PID 写入 scratch/hanabi.pid，便于自检。
+# Node 不会热更新已 import 的服务端模块：前端刷新能拿到新 JS，但 API 仍可能是旧进程。
+# 因此源码比 PID 文件新、或带 --reload / HANABI_RELOAD=1 时，必须重启，否则会出现
+# 「前端已发 sort，后端仍报查询参数无效」这类新旧错配。
 PID_FILE="scratch/hanabi.pid"
-echo "→ 检查 Hanabi 服务状态..."
-if curl --fail --silent "http://127.0.0.1:6187/healthz" >/dev/null 2>&1; then
-  echo "✓ Hanabi 服务已在运行：http://127.0.0.1:6187"
-  open "http://127.0.0.1:6187" 2>/dev/null || true
-  exit 0
-fi
+FORCE_RELOAD=0
+for arg in "$@"; do
+  case "$arg" in
+    --reload|--restart) FORCE_RELOAD=1 ;;
+  esac
+done
+[[ "${HANABI_RELOAD:-0}" == "1" ]] && FORCE_RELOAD=1
 
-if [[ -f "$PID_FILE" ]]; then
+hanabi_code_newer_than_pid() {
+  [[ -f "$PID_FILE" ]] || return 0
+  local newest=""
+  newest="$(find hanabi/server.mjs hanabi/lib -type f \( -name '*.mjs' -o -name '*.js' \) -print0 2>/dev/null | xargs -0 stat -f '%m' 2>/dev/null | sort -nr | head -n1)"
+  local pid_mtime=""
+  pid_mtime="$(stat -f '%m' "$PID_FILE" 2>/dev/null || true)"
+  [[ -n "$newest" && -n "$pid_mtime" && "$newest" -gt "$pid_mtime" ]]
+}
+
+stop_hanabi() {
+  local reason="$1"
+  echo "→ ${reason}"
+  local old_pid=""
   old_pid="$(cat "$PID_FILE" 2>/dev/null || true)"
   if [[ -n "${old_pid:-}" ]] && kill -0 "$old_pid" 2>/dev/null; then
-    echo "→ 发现残留进程 $old_pid 但健康检查失败，正在结束并重启…"
     kill "$old_pid" 2>/dev/null || true
-    sleep 1
+  fi
+  local port_pid=""
+  port_pid="$(lsof -tiTCP:6187 -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -n "${port_pid:-}" ]]; then
+    kill $port_pid 2>/dev/null || true
+  fi
+  sleep 1
+  port_pid="$(lsof -tiTCP:6187 -sTCP:LISTEN 2>/dev/null || true)"
+  if [[ -n "${port_pid:-}" ]]; then
+    kill -9 $port_pid 2>/dev/null || true
+    sleep 0.5
   fi
   rm -f "$PID_FILE"
+}
+
+echo "→ 检查 Hanabi 服务状态..."
+if curl --fail --silent "http://127.0.0.1:6187/healthz" >/dev/null 2>&1; then
+  if (( FORCE_RELOAD )) || hanabi_code_newer_than_pid; then
+    stop_hanabi "检测到需加载最新服务端代码，正在重启 Hanabi…"
+  else
+    echo "✓ Hanabi 服务已在运行：http://127.0.0.1:6187"
+    open "http://127.0.0.1:6187" 2>/dev/null || true
+    exit 0
+  fi
+elif [[ -f "$PID_FILE" ]]; then
+  old_pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+  if [[ -n "${old_pid:-}" ]] && kill -0 "$old_pid" 2>/dev/null; then
+    stop_hanabi "发现残留进程 $old_pid 但健康检查失败，正在结束并重启…"
+  else
+    rm -f "$PID_FILE"
+  fi
 fi
 
 echo "→ 正在后台启动 Hanabi..."

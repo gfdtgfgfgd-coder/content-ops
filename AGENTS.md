@@ -33,6 +33,7 @@ Lilith 或同事随时会通过 Prompt 丢新需求过来。流程固定：
 - **【强约束】规则与代码修改必须当次完成 Git 提交（严禁遗留脏工作区）**：任何 Agent 在新增或修改 `rules/`、`skills/`、`data/wecom/`、`data/distilled-preferences.json` 等偏好源文件或完成代码修改后，必须在当次回复前立即执行 `git add` 和 `git commit`。严禁遗留未提交的 modified 文件在工作区；否则会导致用户在 Hanabi 网页端点击「确认同步规范」时触发 `cleanSources` 安全门禁报警（“偏好来源有未提交的本机改动”）。
 
 - **D16 允许改 Hanabi。** `hanabi/` 是 content-ops 专用前端，只改必要文件，不重构整个项目。
+- **改完 Hanabi 服务端必须重启 6187。** `hanabi/server.mjs` / `hanabi/lib/*.mjs` 由常驻 Node 进程加载，不热更新；只刷新网页会继续打旧 API。改完后执行 `./start.command --reload`（或确认 `start.command` 因源码较新已自动重启），并用带新参数的接口自验通过后再汇报。
 - **不写死。** 每个脚本只做一件事，输入输出都是文件（JSON / Markdown / 图片），参数走命令行或配置文件，不把平台名、账号名、关键词硬编码。
 - **抓取限速。** 操控浏览器抓取时，单账号每分钟不超过 10 个动作，每抓 50 条休息 5 分钟，支持断点续抓（已抓的 id 跳过）。遇到验证码或登录失效立刻停，记录到任务卡，不硬闯。
 - **隐私。** 企微聊天原文、截图只留本机 `data/wecom/raw/`（已 gitignore），进 git 的只有提炼后的偏好规则和风险词。
