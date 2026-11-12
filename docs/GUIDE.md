@@ -112,6 +112,8 @@ JavaGuide 复杂项目样本索引：`data/model-corpus.md` GLM 第 11 节“十
 | `docs/` | 文档与治理层 | **系统手册与历史记录**。存放工程治理说明与操作指南（本《系统操作手册》`GUIDE.md`）以及重大版本演进记录（`CHANGELOG.md`）。 |
 | `rules/` | 业务规则层 | **核心业务规范与风控源**。存放业务写稿与做图的唯一文档《内容生产规范》（`content-spec.md`）、风险词机器源（`banned-words-quick.yaml`）和受众标签规则（`audience-tags.yaml`）。 |
 | `scripts/` | 服务与 CLI 层 | **后端脚本与流水线服务**。提供 fetch（数据抓取）、build（清洗/偏好包提炼/精简）、generate（文案/视觉/生图流水线）、doctor（体量与规范门禁闸门）等核心脚本与测试套件。 |
+| `config/safe-pull-main.sh` | 本机安全更新 | 仅对 `origin/main` 做 `fetch` + `merge --ff-only`；工作区脏、分叉、独有提交或未完成合并/变基时停止并写日志，不用 stash / hard reset / clean。参数可传仓库根路径；日志默认写 `~/Library/Application Support/Content Alchemy/repo-sync/safe-pull.log`。不进 `scripts/` 入口白名单，避免新增服务层入口。 |
+| `config/com.contentops.safe-pull.plist` | 每日更新 LaunchAgent 模板 | 本机每天 10:00（系统时区）触发安全快进；安装副本在 `~/Library/LaunchAgents/com.contentops.safe-pull.plist`，可执行副本与日志在 Application Support 的 `repo-sync/`，避免以 Desktop 为 WorkingDirectory。改脚本后需把仓库内脚本再复制到该目录并 `launchctl bootstrap` 重载。 |
 | `skills/` | Agent 技能层 | **可复用技能与提示词库**。存放思敏运营风格与反例提示（`simin-persona/SKILL.md`）、小红书爆款标题句式库（`xhs-title-patterns/`）等模块化 Agent 技能。 |
 | `~/.codex/skills/ai-content-alchemy/`（仓库外） | 创作方法知识库 | 独立 Git 仓库；`references/style-profiles.md` 保存文型与叙事选择，`references/model-launch-playbook.md` 保存模型横测的方法和核验边界。文章任务、数字与来源唯一保存在本仓库 `data/model-corpus.md`，方法档案只引用，不复制数据账本。 |
 | `outputs/` | 业务交付层 | **AI 图文生成交付物与成稿归档**。存放生成图文流水线产出的最终文案 Markdown、海报图片、生成清单（`manifest.json`）及复核日志。其中历史基线样本已由 Git 版本库跟踪；已导出的交付成片不得清空、回滚或覆盖，重跑必须选择新目录。 |
@@ -384,7 +386,9 @@ Datawhale 近一周实测稿已合并到 `data/model-corpus.md` 的 Kimi 同名�
 
 ## 小红书账号每日监测
 
-执行前更新仓库（2026-11-12）：每日任务先在桌面 `/Users/lilith/Desktop/Hanabi` 核对 origin 为本项目 GitHub 仓库、当前分支为 main，检查工作区与未完成的合并/变基；已跟踪文件有未提交修改或本机独有提交时停止并报告，不自动提交他人的工作。执行 `git fetch origin`，确认 HEAD 为 origin/main 的祖先并核对差异后，仅用 `git merge --ff-only origin/main` 更新；已一致则继续。网络/认证失败、分叉、未跟踪文件阻挡更新或生产素材/合集疑似丢失、回退均停止本轮采集，保留现场；不使用强制覆盖、reset --hard、git clean 或自动 stash。无关未跟踪交付物、本机历史、上传缓存、密钥与生产数据均保留。更新后重读最新 AGENTS、README、TODO 与本手册，先运行 `python3 scripts/doctor.py`，通过后再采集；定时任务的执行配置由现有 automation ID `automation` 管理，不另建任务或更新脚本。
+执行前更新仓库（2026-11-12）：每日任务先在桌面 `/Users/lilith/Desktop/Hanabi` 核对 origin 为本项目 GitHub 仓库、当前分支为 main，检查工作区与未完成的合并/变基；已跟踪文件有未提交修改或本机独有提交时停止并报告，不自动提交他人的工作。执行 `git fetch origin`，确认 HEAD 为 origin/main 的祖先并核对差异后，仅用 `git merge --ff-only origin/main` 更新；已一致则继续。网络/认证失败、分叉、未跟踪文件阻挡更新或生产素材/合集疑似丢失、回退均停止本轮采集，保留现场；不使用强制覆盖、reset --hard、git clean 或自动 stash。无关未跟踪交付物、本机历史、上传缓存、密钥与生产数据均保留。更新后重读最新 AGENTS、README、TODO 与本手册，先运行 `python3 scripts/doctor.py`，通过后再采集；该机采集定时任务仍由现有 automation ID `automation` 管理。
+
+本机桌面仓库每日 10:00 自动更新（2026-11-12）：路径 `/Users/mac/Desktop/content-ops` 使用 LaunchAgent `com.contentops.safe-pull`（模板 `config/com.contentops.safe-pull.plist`）调用 `config/safe-pull-main.sh`，规则与上文一致（仅快进、脏工作区/分叉即停、不覆盖生产数据）。日志在 `~/Library/Application Support/Content Alchemy/repo-sync/`。手动试跑：`bash config/safe-pull-main.sh`。若 launchd 无法读 Desktop，给 `/bin/bash` 完整磁盘访问后执行 `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.contentops.safe-pull.plist`。Cursor 云端定时代理改的是云端副本，不能代替本机 LaunchAgent。
 
 账号来源唯一读取 `data/sources/bookmarks-raw.json` 的小红书入口；当前为深度deepAI，ID `69df2b9f0000000032019e07`。策略唯一源 `config/data-cleaning.json` 的 `monitoring`：最近7天从北京时间当天减7天的00:00起算，未知日期不拿抓取时间替代。`published_at` 存带时区的原始平台日期，`published_at_source=xhs_note.time`；人工改日期为 `manual_date`。编辑器原日期不变时不提交日期字段，避免把平台精确时间降为日期。`fetched_at` 仍只代表入库时间。
 

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  每日 10:00（本机时区）安全快进 origin/main。
+  可执行文件与日志在 Application Support，避免 launchd 直接以 Desktop 为 WorkingDirectory。
+  若被 TCC 拦截访问 Desktop 仓库，请给 /bin/bash 完整磁盘访问权限后重载。
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.contentops.safe-pull</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/mac/Library/Application Support/Content Alchemy/repo-sync/safe-pull-main.sh</string>
+    <string>/Users/mac/Desktop/content-ops</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/mac/Library/Application Support/Content Alchemy/repo-sync</string>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>10</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>CONTENT_OPS_SYNC_LOG_DIR</key>
+    <string>/Users/mac/Library/Application Support/Content Alchemy/repo-sync</string>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/Users/mac/Library/Application Support/Content Alchemy/repo-sync/launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/mac/Library/Application Support/Content Alchemy/repo-sync/launchd.err.log</string>
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>
