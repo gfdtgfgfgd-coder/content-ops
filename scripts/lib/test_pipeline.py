@@ -1584,6 +1584,22 @@ class PipelineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'正文重复'):
             copy.validate_posts({'posts':[structured_post(),duplicate]},2,'GLM5.3',copy_format='format_1')
 
+    def test_glm_corpus_brief_stays_inside_checked_boundary(self):
+        section = copy.extract_model_corpus('GLM-5.3')
+        brief = copy.corpus_for_brief(section)
+        self.assertLess(len(brief), 700)
+        self.assertIn('不是又快又便宜的万能模型', brief)
+        self.assertIn('不把 Flash', brief)
+        self.assertNotIn('真实主能力', brief)
+        for word in ('无损', '不遗忘', '奶茶', '极速', '无限量', '即插即用', 'API', 'OpenAI', '最强开源'):
+            self.assertNotIn(word, brief)
+        self.assertIn('## 1.', section)
+        kimi = copy.corpus_for_brief(copy.extract_model_corpus('Kimi K3.1 Pro'))
+        self.assertIn('第 11 节', kimi)
+        self.assertNotIn('生成可采用的边界', kimi)
+        self.assertTrue(copy.extract_model_corpus('GLM-5.3-Flash'))
+        self.assertEqual(copy.extract_model_corpus('GLM-5.2'), '')
+
     def test_small_copy_length_overages_are_trimmed_with_warnings(self):
         post = structured_post()
         post['sections'][0]['text'] = '开头内容需要稍微增加几个字，达到三十四字边界以上但仍然可以自然修剪完成'

@@ -72,7 +72,7 @@ export class ContentOpsUI {
     document.querySelector('#content-ops-stop').onclick=()=>void this.stop();
     document.querySelector('#content-ops-resume')?.addEventListener('click',()=>void this.resume());
     document.querySelector('#content-ops-new').onclick=()=>{clearTimeout(this.timer);this.batch=null;document.querySelector('#content-ops-history').value='';sessionStorage.removeItem('hanabi.content-ops-request');sessionStorage.removeItem('hanabi.content-ops-review-batch');void this.loadReferenceCards(storedReferences());this.render();document.querySelector('#content-ops-model').focus();};
-    document.querySelector('#content-ops-history').onchange=async event=>{if(!event.target.value||this.busy||this.batch?.status==='running')return;try{this.batch=(await api('/api/content-ops/batches/'+event.target.value)).batch;this.panel.open=true;this.applyBatchToForm(this.batch);await this.loadReferenceCards(storedReferences());this.render();document.querySelector('[data-view="generate"]')?.click();this.schedule();}catch(error){this.notice.textContent=error.message;}};
+    document.querySelector('#content-ops-history').onchange=async event=>{if(!event.target.value||this.busy)return;clearTimeout(this.timer);try{this.batch=(await api('/api/content-ops/batches/'+event.target.value)).batch;this.panel.open=true;this.applyBatchToForm(this.batch);await this.loadReferenceCards(storedReferences());this.render();document.querySelector('[data-view="generate"]')?.click();this.schedule();}catch(error){this.notice.textContent=error.message;}};
     this.result.addEventListener('click',async event=>{
       const tab=event.target.closest('[data-copy-version]'),copy=event.target.closest('[data-content-ops-copy]'),zoom=event.target.closest('[data-content-ops-zoom]'),chat=event.target.closest('[data-content-ops-chat]'),reference=event.target.closest('[data-content-ops-reference]');
       const downloadCopy=event.target.closest('[data-content-ops-download-copy]');
@@ -226,9 +226,10 @@ export class ContentOpsUI {
     const submit=document.querySelector('#content-ops-submit');
     submit.disabled=locked;
     submit.textContent=generateSubmitLabel({busy:this.busy,running,batchStatus:this.batch?.status||''});
-    document.querySelector('#content-ops-stop').hidden=!running;document.querySelector('#content-ops-new').hidden=!this.batch||locked;
+    // Keep「另做一批」and history available while this batch runs so another model can start in parallel.
+    document.querySelector('#content-ops-stop').hidden=!running;document.querySelector('#content-ops-new').hidden=!this.batch||this.busy;
     const resume=document.querySelector('#content-ops-resume');if(resume)resume.hidden=locked||!this.batch?.resumable;
-    document.querySelector('#content-ops-history').disabled=locked;
+    document.querySelector('#content-ops-history').disabled=this.busy;
     for(const control of this.form.querySelectorAll('input,select,textarea'))control.disabled=locked;
     this.result.setAttribute('aria-busy',String(locked));
     const completed=this.batch?.posts.filter(post=>post.status==='completed').length||0;

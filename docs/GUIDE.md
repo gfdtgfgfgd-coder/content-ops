@@ -171,7 +171,7 @@ AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，
 
 启动方式：在仓库根目录运行 `./start.command`，或在 Finder 双击。默认服务地址为 `http://127.0.0.1:6187`。Node 服务端模块不热更新：改过 `hanabi/server.mjs` 或 `hanabi/lib/*.mjs` 后，仅刷新网页不够；`start.command` 若发现这些文件比 `scratch/hanabi.pid` 新会自动重启，也可显式 `./start.command --reload`（或 `HANABI_RELOAD=1`）。否则会出现前端已发新查询参数、旧进程仍报「素材库查询参数无效」的错配。最新代码、精选参考图与内容方法统一合入 `main`；换机克隆选择 `main`，原 `codex/reference-collections-outline` 分支与完整历史保留。已有仓库切换前必须确认生产素材和合集一致，不覆盖本机运行态资料。主导航提供生成图文、素材库、原料库、操作规范。文档内容由白名单 API 实时读取仓库源，不保存第二份副本。
 
-生成图文页面设置模型名、平台、图片数、封面风格、文案结构与每图文案数，可填写简报并选择素材。当前草稿引用唯一持久化源为 `sessionStorage['content-ops-reference-selection']`：素材库引用状态与生成表单双向同步，表单移除/清空会立即更新素材库；查看历史批次时，历史引用只在右侧作为只读事实展示，不回灌草稿。新批次依次调用文案、视觉提示词和图像阶段；手选参考按所选内容原样传递，未手选时后端只自动匹配 1 条同平台最佳参考。文案若因风险词校验失败，或返回空/非法 JSON（含未闭合 Markdown 围栏），会带着失败原因自动重出最多 2 次（每图合计最多 3 次文案调用），结构错误等其他校验仍立即失败；视觉与生图阶段仍不自动收费重试。每张海报只读取一张结构锚图，视觉阶段独立产出结构与封面短字，图像阶段按平台尺寸生成完整海报。续跑依 manifest 与来源哈希判定，不重复已完成收费阶段。成稿仍需规划 agent 做事实、合规和视觉复核，未经复核不发布。
+生成图文页面设置模型名、平台、图片数、封面风格、文案结构与每图文案数，可填写简报并选择素材。当前草稿引用唯一持久化源为 `sessionStorage['content-ops-reference-selection']`：素材库引用状态与生成表单双向同步，表单移除/清空会立即更新素材库；查看历史批次时，历史引用只在右侧作为只读事实展示，不回灌草稿。允许多批并发生成：第一批仍在跑时可点「另做一批」或切换历史，再为另一型号开第二批；每批独立子进程与输出目录，停止/续跑只作用于当前批次。新批次依次调用文案、视觉提示词和图像阶段；手选参考按所选内容原样传递，未手选时后端只自动匹配 1 条同平台最佳参考。文案若因风险词校验失败，或返回空/非法 JSON（含未闭合 Markdown 围栏），会带着失败原因自动重出最多 2 次（每图合计最多 3 次文案调用），结构错误等其他校验仍立即失败；视觉与生图阶段仍不自动收费重试。每张海报只读取一张结构锚图，视觉阶段独立产出结构与封面短字，图像阶段按平台尺寸生成完整海报。续跑依 manifest 与来源哈希判定，不重复已完成收费阶段。成稿仍需规划 agent 做事实、合规和视觉复核，未经复核不发布。
 
 素材编辑弹窗默认展示六行 OCR，最小 120px 且支持纵向拖拽，保存保留换行。图片缩略网格逐张删除、第一张标记封面；可多选或拖拽追加 PNG/JPEG/WebP，每张≤15MB、单次新增≤50张/45MB、总数≤200张。删除只在保存成功后落盘；取消不改原文件。删除全部图片时保留标题或正文即可存为纯文字，OCR 不代替标题正文。新增接口使用 `retained_images`（当前素材的原相对路径，有序且不重复）和 `new_images`（Base64数组），仍兼容旧 `image`；两种协议不可混用。保留图校验所属路径、真实文件和非符号链接，新图随机命名避免覆盖；同一事务原子更换目录与 JSONL、更新跨平台合集引用、Git成功后物理清理旧目录，失败恢复。图库编辑清空历史 `image_urls`，避免下游按旧抓取URL复活已删图片。
 
@@ -179,7 +179,7 @@ AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，
 
 素材顺序以文件为唯一源：初始按 JSONL 倒序展示，原生拖拽手柄或 ↑/↓ 触发 250ms 合并保存；全部合集/未分类通过 `POST /api/content-ops/references/reorder`（`{platform,ids}`）重排 `data/posts.jsonl`，只替换所选素材槽位、保留其他平台或隐藏素材的位置。自定义合集通过 `PUT /api/content-ops/collections/:id` 更新 `reference_ids`（`platform:id`），仅改变该合集的顺序。合集 CRUD 使用 `/api/content-ops/collections`（GET/POST）与 `/:id`（PUT/DELETE）；两种写入复用本机同源校验、存储锁、临时文件 fsync 与原子 rename，不创建排序缓存。
 
-原料库包含运营偏好和风险词库。两者只增不删：运营偏好基于 persona 标准、反例和已去敏反馈摘录；风险词直接追加到 YAML。新增条目会保存源数据并调用规则提炼分析模型，打开操作规范确认面板。也可在原料库或操作规范点击「同步原料库」进行全量比对。确认后写入 `rules/content-spec.md`、重建偏好包并提交；取消只放弃规范草案，不回滚已成功保存的原料。修改建议可多轮重新分析。`/api/content-ops/spec-sync/apply` 允许字段为 `updatedContent` / `revision` / `summary` / `targetDoc`（`content-spec` 或 `model-corpus`）；前端确认同步会带上分析草案的 `targetDoc`，服务端不得因该字段报「编辑参数无效」。
+原料库包含运营偏好和风险词库。两者只增不删：运营偏好基于 persona 标准、反例和已去敏反馈摘录；风险词直接追加到 YAML。新增条目会保存源数据并调用规则提炼分析模型，打开操作规范确认面板。也可在原料库或操作规范点击「同步原料库」进行全量比对。分析模型只返回短补丁（`replace` / 语料 `append`），由本机拼出完整草案，不要求模型整份回写规范或语料；增量触发（新增偏好/风险词）不附带整份原料正文，语料缺口只送相关专节。确认后写入 `rules/content-spec.md`、重建偏好包并提交；取消只放弃规范草案，不回滚已成功保存的原料。修改建议可多轮重新分析。`/api/content-ops/spec-sync/apply` 允许字段为 `updatedContent` / `revision` / `summary` / `targetDoc`（`content-spec` 或 `model-corpus`）；前端确认同步会带上分析草案的 `targetDoc`，服务端不得因该字段报「编辑参数无效」。
 
 操作规范下提供《内容生产规范》《系统操作手册》和只读《模型语料库》。内容生产规范是业务规则唯一文档；系统手册只说明操作和工程治理；语料库供创作参考，不覆盖事实或规范。
 
@@ -317,7 +317,7 @@ python3 scripts/check.py --help
 
 清洗只补充风险检查信号和明确的人群字段，不覆盖帖子原文。配置见 `config/data-cleaning.json`。`data/distilled-preferences.json` 是可删除、可重建的偏好缓存；源路径见 `config/preference-build.json`，使用 `python3 scripts/build.py distill` 重建，第二次应显示 `changed=false`。生成脚本优先读取该包，损坏时在收费调用前失败；缺失时才按代码中的显式回退源加载。
 
-当前帖子唯一源为 `data/posts.jsonl`；风险规则唯一源为 `rules/banned-words-quick.yaml`；运营偏好事实源为 `skills/simin-persona/SKILL.md` 和 `data/wecom/simin-feedback.jsonl`。模型语料库唯一源为 `data/model-corpus.md`。用户提供的模型文章合并到对应型号专节，保留来源、入库日期、证据状态与数据口径；供稿不等于独立核验，不另存全文/评论副本。Kimi 发布供稿、媒体样本、阿颖作者评测及评论调查线索见该文件第 11 节；同一数据被多次转述不视为独立验证。不要编辑派生包代替源文件。本轮新闻综述的来源与定点核验继续维护在 Kimi 第 11 节；可复用方法唯一维护在本机炼丹炉 `skills/content-methods/references/model-launch-playbook.md` 的“模型发布新闻综述”节，仓库只引用。
+当前帖子唯一源为 `data/posts.jsonl`；风险规则唯一源为 `rules/banned-words-quick.yaml`；运营偏好事实源为 `skills/simin-persona/SKILL.md` 和 `data/wecom/simin-feedback.jsonl`。模型语料库唯一源为 `data/model-corpus.md`。用户提供的模型文章合并到对应型号专节，保留来源、入库日期、证据状态与数据口径；供稿不等于独立核验，不另存全文/评论副本。Kimi 发布供稿、媒体样本、阿颖作者评测及评论调查线索见该文件第 11 节；同一数据被多次转述不视为独立验证。不要编辑派生包代替源文件。GLM-5.3 的生成默认只取该文件「生成可采用的边界」；后面的供稿长文和历史句式不是默认事实。活动块的证据门槛写在 `rules/content-spec.md`。合集归属以 `data/collections.json` 为准。本轮新闻综述的来源与定点核验继续维护在 Kimi 第 11 节；可复用方法唯一维护在本机炼丹炉 `skills/content-methods/references/model-launch-playbook.md` 的“模型发布新闻综述”节，仓库只引用。
 
 刘小排三组作品供稿索引：`data/model-corpus.md`“刘小排三组实测吸收”记录来源、任务与作者报告；通用验收只维护在本仓内容方法 `skills/content-methods/references/model-launch-playbook.md`“改稿不变量与工具自用验收”，叙事选项见其 `references/style-profiles.md`“作品采用决策型”。无新增全文或评论档案。
 
@@ -366,9 +366,11 @@ Datawhale 近一周实测稿已合并到 `data/model-corpus.md` 的 Kimi 同名�
 | D6–D9：素材、隐私与模型职责 | 小红书质量以人工精选为准、闲鱼按「想要」排序；企微原文留本机；规则与风格终审交规划 agent，执行与图像任务由可替换模型承担。 |
 | D10–D15：内容与偏好事实源 | 平台价格表达及封面层级写入 `rules/content-spec.md`；persona 保存在 `skills/simin-persona/SKILL.md`，每帖受众标签使用 `rules/audience-tags.yaml`。风险词机器源仅 `rules/banned-words-quick.yaml`。 |
 | D16–D19：工作台与对外红线 | Hanabi 是 content-ops 专用工作台；Model Price Watch 只用于调研、不进入当日生成链路；小红书与闲鱼禁 API 字样，所有对外内容禁境外模型品牌与型号。 |
-| D20–D25：单源、分层与生产链路 | D20 由 `doctor.py` 和 repo budget 落门禁；跟踪文件预算曾落后实际仓库数量，2026-11-07 按当前131个有效工作区文件同步门槛（含需保留的输出 sidecar），字节及单文件上限不变；D21 采用 Lilith、规划 agent、执行 agent、批量 agent 四元分工；D22 文案/视觉/图像分阶段、分类即时派生、文档白名单直读；D23 素材 CRUD 直接维护 `data/posts.jsonl`；D24 模型语料唯一源为 `data/model-corpus.md`，由 Hanabi 只读展示并按配置供生成使用；D25 大字报改为 AI 无字底图加 Pillow 排字，其他版式继续完整海报直出。 |
+| D20–D25：单源、分层与生产链路 | D20 由 `doctor.py` 和 repo budget 落门禁；跟踪文件预算曾落后实际仓库数量，2026-11-07 按当前131个有效工作区文件同步门槛（含需保留的输出 sidecar），字节及单文件上限不变；D21 采用 Lilith、规划 agent、执行 agent、批量 agent 四元分工；D22 文案/视觉/图像分阶段、分类即时派生、文档白名单直读；D23 素材 CRUD 直接维护 `data/posts.jsonl`；D24 模型语料唯一源为 `data/model-corpus.md`，由 Hanabi 只读展示并按配置供生成使用；GLM-5.3 默认简报只注入该文件的已核边界，不把供稿长文当成事实；D25 大字报改为 AI 无字底图加 Pillow 排字，其他版式继续完整海报直出。 |
 | D26：素材库本地参考图纳入 Git 跟踪与体量预算扩容 | 外部图床/CDN URL（小红书等）具有时效签名，过期后报 403 无法重新下载，本机 `data/images/`（共 45 张精选参考图）为唯一生产事实。为确保其他电脑 clone 或下载仓库后完整可用、不出现“本机图片缺失或无法读取”，移除 `.gitignore` 中对 `data/images/` 的忽略，将 45 张精选参考图纳入 Git 跟踪，并将 `config/repo-budget.json` 跟踪文件上限调整为 180 个、体量上限调整为 12000 KB。 |
 | D27：定向账号监测与新增原图预算 | 用户授权采集近7天图文与每日增量，已确认新增32篇且保留原素材；文件上限180→260、总体12000→32000KB，为真实原图及少量后续增量留余量。单文件、scratch限制不变，不清理生产数据来过闸；未来达到预算时停止入库并报告，不自动无限扩容。 |
+| D28：图文批次可并发生成 | 取消“全局仅一批 running”闸门；同一时刻可为不同型号开多批，各自独立子进程、输出目录与停止/续跑。界面在生成中仍可「另做一批」或切换历史；不自动排队串行。 |
+| D29：分析模型只回补丁 | `/api/content-ops/spec-sync/analyze` 要求模型返回短 `ops`，本机应用到现行规范/语料；禁止整份 `updatedContent` 回写。增量同步精简提示词；语料缺口只送匹配专节。 |
 | 角色术语 | 旧记录中的 Codex/Gemini 等名称仅是历史实现，不是固定角色要求；按四元分工理解，模型供应商可替换。 |
 | X1–X4：否决项 | 不以外部大模型重写底层、不全站抓取、不训练思敏偏好模型、不把界面永久排除；偏好以可审的 SKILL.md 管理，当前 Hanabi 工作台按 D16 承担可视化入口。 |
 
