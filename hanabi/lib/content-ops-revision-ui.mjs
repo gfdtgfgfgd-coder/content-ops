@@ -239,7 +239,7 @@ export class ContentOpsRevisionUI {
     this.q('.revision-image-tools').open=false;
     const ai=this.q('.revision-ai');if(kind==='image')this.q('.revision-image-tools').append(ai);else this.q('.revision-controls').insertBefore(ai,this.q('.revision-history'));
     this.q('[data-revision-ai]').textContent = kind==='image'?'生成改图预览':'生成改写预览';
-    this.q('[data-ai-help]').textContent = kind==='image'?'AI 会读取当前预览图。仅本次改图调用图像模型，结果先预览。':'AI 只改写当前预览文案，保留未要求修改的事实，结果先预览。';
+    this.q('[data-ai-help]').textContent = kind==='image'?'AI 会读取当前预览图。仅本次改图调用图像模型，结果先预览。':'只写「改标题」时正文和标签会原样保留；点名的段落才会改。结果先预览。';
     this.q('[name=instructions]').value=''; this.q('[data-revision-apply]').disabled=true;
     this.q('[data-revision-history]').innerHTML=''; this.q('.revision-copy-preview').innerHTML='';
     this.q('.revision-media img').removeAttribute('src');this.q('[data-revision-download]').hidden=true;
@@ -443,8 +443,13 @@ export class ContentOpsRevisionUI {
       else if(preferenceLearn)this.status('已采用。正在把定稿改稿偏好同步进内容规范，确认后才会写库。');
       else if(corpusGap)this.status('已采用。可确认是否把缺口补进型号语料库。');
       else this.status('已采用。工作台预览、复制和下载均使用此版。');
-      if(preferenceLearn)window.dispatchEvent(new CustomEvent('content-ops:spec-sync',{detail:preferenceLearn}));
-      else if(corpusGap)window.dispatchEvent(new CustomEvent('content-ops:spec-sync',{detail:corpusGap}));
+      // Must dispatch on document: app.js listens on document; window-target events never reach it.
+      // Close the revision modal first so the sync dialog is not buried under another top-layer dialog.
+      const syncDetail=preferenceLearn||corpusGap||null;
+      if(syncDetail){
+        if(this.dialog.open)this.dialog.close();
+        queueMicrotask(()=>document.dispatchEvent(new CustomEvent('content-ops:spec-sync',{detail:syncDetail})));
+      }
     }catch(error){if(token===this.token)this.status(error.message,true);}
     finally{if(token===this.token)this.setBusy(false);}
   }

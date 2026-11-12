@@ -5,6 +5,7 @@ from copy import deepcopy
 import importlib.util
 import io
 import json
+import re
 import shutil
 from pathlib import Path
 import subprocess
@@ -1792,33 +1793,55 @@ class RevisionTests(unittest.TestCase):
         self.assertIn('原始卖点',payload['messages'][1]['content'])
         self.assertIn('用户简报',payload['messages'][1]['content'])
         self.assertIn('内容',payload['messages'][0]['content'])
+        self.assertIn('只改第一行标题', payload['messages'][0]['content'])
         self.assertEqual(result['text'],'# 改写标题\n\n原始卖点')
         self.assertEqual(result['attempts'], 1)
 
-    def test_ai_copy_retries_when_title_too_long_then_succeeds(self):
-        data = {'kind':'copy','action':'ai','platform':'xhs','model':'GLM5.3','source_text':'# 原标题\n\n原始卖点',
+    def test_title_only_edit_keeps_source_body_and_tags(self):
+        self.assertTrue(self.revision.is_title_only_edit('改标题'))
+        self.assertTrue(self.revision.is_title_only_edit('再改改标题，20字以内改得有吸引力一点'))
+        self.assertTrue(self.revision.is_title_only_edit('标题换个说法，保留卖点'))
+        self.assertFalse(self.revision.is_title_only_edit('改标题\n开头别用问句'))
+        self.assertFalse(self.revision.is_title_only_edit('标题没有吸引力\n针对这段：「结尾再收一下」'))
+        source = '# 旧标题还行\n\n💻 **全栈代码开发**：覆盖项目调试。\n\n#KimiK3.1Pro #全栈开发'
+        rewritten = '# 写代码重构告别逐行翻依赖\n\n整篇被模型重写成另一套措辞。\n\n#别的标签'
+        locked = self.revision.preserve_unedited_copy_parts(source, rewritten, '改标题')
+        self.assertEqual(locked, '# 写代码重构告别逐行翻依赖\n\n💻 **全栈代码开发**：覆盖项目调试。\n\n#KimiK3.1Pro #全栈开发')
+        data = {'kind':'copy','action':'ai','platform':'xhs','model':'Kimi K3.1 Pro','source_text':source,
+                'instructions':'改标题', 'brief':'', 'facts':{}}
+        with patch.object(gateway,'request_json',return_value={'choices':[{'message':{'content':json.dumps({'text':rewritten},ensure_ascii=False)}}]}):
+            result = self.revision.run(data, self.settings)
+        self.assertEqual(result['text'], locked)
+
+    def test_ai_copy_soft_fixes_overlong_title_and_retries_risk_words(self):
+        data = {'kind':'copy','action':'ai','platform':'xhs','model':'Kimi K3.1 Pro','source_text':'# 原标题\n\n原始卖点',
                 'instructions':'标题更吸睛', 'brief':'用户简报', 'facts':{'verified_claims':[]}}
-        long_title = '# ' + '超长标题字' * 6 + '\n\n原始卖点'
-        short = '# 好价来了速安排\n\n原始卖点'
+        # Overlong title is repaired locally on the first return; no paid retry needed.
+        long_ok = {'choices':[{'message':{'content':json.dumps(
+            {'text':'# 挖到宝！Kimi K3.1 Pro工程重构不用翻依赖\n\n原始卖点'}, ensure_ascii=False)}}]}
+        with patch.object(gateway,'request_json',return_value=long_ok) as call, redirect_stdout(io.StringIO()) as stdout:
+            fixed = self.revision.run(data,self.settings)
+        self.assertEqual(call.call_count, 1)
+        self.assertEqual(fixed['attempts'], 1)
+        title = re.sub(r'^#\s*', '', fixed['text'].splitlines()[0])
+        self.assertLessEqual(len(title), 20)
+        self.assertIn('自动收短', stdout.getvalue())
+
+        # Risk words still trigger a paid rewrite with failure feedback (body-directed edit).
+        dirty = '# 好价来了\n\n这波 API 真香'
+        clean = '# 好价来了\n\n这波接入真香'
+        body_data = {**data, 'instructions': '改写正文，去掉风险词'}
         responses = [
-            {'choices':[{'message':{'content':json.dumps({'text':long_title},ensure_ascii=False)}}]},
-            {'choices':[{'message':{'content':json.dumps({'text':short},ensure_ascii=False)}}],'usage':{'total_tokens':12}},
+            {'choices':[{'message':{'content':json.dumps({'text':dirty},ensure_ascii=False)}}]},
+            {'choices':[{'message':{'content':json.dumps({'text':clean},ensure_ascii=False)}}]},
         ]
         with patch.object(gateway,'request_json',side_effect=responses) as call, redirect_stdout(io.StringIO()) as stdout:
-            result=self.revision.run(data,self.settings)
+            result = self.revision.run(body_data,self.settings)
         self.assertEqual(call.call_count, 2)
-        self.assertEqual(result['text'], short)
+        self.assertEqual(result['text'], clean)
         self.assertEqual(result['attempts'], 2)
-        retry_payload = call.call_args_list[1].args[1]
-        self.assertEqual(len(retry_payload['messages']), 3)
-        self.assertIn('标题过长', retry_payload['messages'][2]['content'])
+        self.assertIn('风险词', call.call_args_list[1].args[1]['messages'][2]['content'])
         self.assertIn('重出第 1/2 次', stdout.getvalue())
-
-        always_long = {'choices':[{'message':{'content':json.dumps({'text':long_title},ensure_ascii=False)}}]}
-        with patch.object(gateway,'request_json',return_value=always_long) as stuck, redirect_stdout(io.StringIO()):
-            with self.assertRaisesRegex(ValueError, '标题过长'):
-                self.revision.run(data,self.settings)
-        self.assertEqual(stuck.call_count, 3)
 
     def test_prompt_regeneration_submits_exact_prompt_without_copy_vision_or_image_edit(self):
         for platform in ('xhs','xianyu'):

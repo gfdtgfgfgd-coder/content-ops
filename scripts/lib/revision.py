@@ -129,12 +129,97 @@ def typeset_image(data, settings, output):
         background.unlink(missing_ok=True)
 
 
+COPY_REVISION_RETRIES = 2
+
+
+def title_limit(platform):
+    return 20 if platform == 'xhs' else 80
+
+
+def parse_markdown_post(text=''):
+    """Split saved Markdown copy into title / body / trailing tags (mirrors Hanabi parsePostText)."""
+    lines = str(text or '').replace('\r\n', '\n').replace('\r', '\n').strip().split('\n')
+    title = re.sub(r'^#{1,6}\s+', '', lines.pop(0) if lines else '').strip()
+    tags = []
+    while lines:
+        line = lines[-1].strip()
+        if not line:
+            lines.pop()
+            continue
+        if not re.fullmatch(r'(?:#[^\s#]+\s*)+', line):
+            break
+        tags[0:0] = line.split()
+        lines.pop()
+    return {'title': title, 'body': '\n'.join(lines).strip(), 'tags': tags}
+
+
+def format_markdown_post(title, body='', tags=None):
+    title = re.sub(r'^#{1,6}\s+', '', str(title or '').strip())
+    parts = [f'# {title}'.rstrip()]
+    body = str(body or '').strip()
+    if body:
+        parts.extend(['', body])
+    tag_line = ' '.join(
+        tag if str(tag).startswith('#') else f'#{tag}'
+        for tag in (tags or []) if str(tag).strip()
+    ).strip()
+    if tag_line:
+        parts.extend(['', tag_line])
+    return '\n'.join(parts)
+
+
+def is_title_only_edit(instructions):
+    """True when the user only asked to change the title; body/tags must stay byte-stable."""
+    raw = str(instructions or '').strip()
+    if not raw:
+        return False
+    # Drop short quoted title samples so「旧标题」does not look like a body edit.
+    text = re.sub(r'[「『“"].{0,40}?[」』”"]', '', raw)
+    # Affirmations that the body should stay are still title-only.
+    text = re.sub(r'保留卖点|正文不动|别动正文|不要改正文|正文保持原样', '', text)
+    body_markers = (
+        '正文', '开头', '结尾', '价格', '卖点', '标签', '段落', '这段', '那句', '针对这段',
+        '不要用', '别用', '删掉', '删除', '加上', '增加', '补充', '重写全文', '改写正文',
+        '全文', '整篇', '适合干', '占的屏幕', '问句', '好价', '蓝橙', '撞色',
+    )
+    if any(marker in text for marker in body_markers):
+        return False
+    if '标题' not in text and not re.search(r'改标题|换标题', text):
+        return False
+    stripped = text
+    for pattern in (
+        r'请?帮我?',
+        r'(?:把|将)?标题',
+        r'(?:再)?改改?',
+        r'换个说法|换个切口',
+        r'(?:换|优化|重写|起名)',
+        r'(?:一下|下)',
+        r'(?:得?更?有?吸引力|更?吸睛|毫无吸引力|没有吸引力|不够吸引力|没什么吸引力)',
+        r'(?:一点|一些)',
+        r'\d+\s*字以内',
+        r'小红书',
+        r'[，。！？、,.!?;；：:\s]+',
+    ):
+        stripped = re.sub(pattern, '', stripped)
+    return stripped == ''
+
+
+def preserve_unedited_copy_parts(source_text, revised_text, instructions):
+    """If the user only asked for a title change, keep source body and tags verbatim."""
+    if not is_title_only_edit(instructions):
+        return revised_text
+    source = parse_markdown_post(source_text)
+    revised = parse_markdown_post(revised_text)
+    title = revised['title'] or source['title']
+    return format_markdown_post(title, source['body'], source['tags'])
+
+
 def validate_copy(text, platform, model):
     if not isinstance(text, str) or not text.strip() or len(text) > 18000 or re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text):
         raise ValueError('文案须为非空文本，最多18000字，不能含控制字符')
     text = text.strip()
     title = re.sub(r'^#{1,6}\s*', '', text.splitlines()[0]).strip()
-    if not title or len(title) > (20 if platform == 'xhs' else 80):
+    if not title or len(title) > title_limit(platform):
         raise ValueError('标题过长：小红书最多20字，闲鱼最多80字')
     hits = words.check(text, platform, model)
     if hits:
@@ -142,33 +227,109 @@ def validate_copy(text, platform, model):
     return text
 
 
+def soft_fix_title(text, platform, model):
+    """Shorten an overlong Markdown title in place so AI rewrite can still publish."""
+    from . import copy
+    lines = str(text or '').splitlines()
+    if not lines:
+        return text
+    match = re.match(r'^(#{1,6}\s*)(.*)$', lines[0])
+    prefix, title = (match.group(1), match.group(2).strip()) if match else ('# ', lines[0].strip())
+    limit = title_limit(platform)
+    if not title or len(title) <= limit:
+        return text
+    repaired = copy.shorten_xhs_title(title, model, limit) if platform == 'xhs' else title
+    if not repaired or len(repaired) > limit:
+        # Last resort: cut at punctuation / space near the limit, never leave an empty title.
+        cut = limit
+        for index in range(min(limit, len(title)), max(7, limit // 2), -1):
+            if title[index - 1] in '，。！？、；： ,.!?':
+                cut = index
+                break
+        repaired = title[:cut].rstrip(' ，,、·-_|/：:#')
+    if not repaired:
+        return text
+    if repaired != title:
+        print(f'WARN: 改写标题超长，已自动收短为「{repaired}」。')
+        lines[0] = prefix + repaired
+    return '\n'.join(lines)
+
+
+def is_copy_revision_retryable(error):
+    reason = str(error)
+    return any(marker in reason for marker in ('标题过长', '风险词', '未返回完整文案', '改写文案被截断'))
+
+
 def revise_copy(data, settings):
     if data['action'] == 'manual':
         return {'text': validate_copy(data.get('text'), data['platform'], data['model'])}
     from .preferences import load_preferences
     preference, _, _, _, _ = load_preferences(ROOT/'data/distilled-preferences.json', data['platform'], 26000)
+    limit = title_limit(data['platform'])
     prompt = ('修改下方这一篇文案，保留未要求修改的事实、型号、价格和信息。'
               '只允许使用原文、当前简报、已核验事实和用户本次明确提供的资料，不新增实测、库存或效果承诺。'
-              '遵守当前内容规范和风险词，不照搬参考帖事实。只返回JSON对象，text字段是完整Markdown文案，'
-              '第一行是标题，随后是正文和标签。修改只影响当前文案版本。\n' + preference)
-    response = gateway.request_json(settings['CONTENT_OPS_BASE_URL'].rstrip('/')+'/chat/completions', {
-        'model': settings['CONTENT_OPS_TEXT_MODEL'], 'messages': [
+              '遵守当前内容规范和风险词，不照搬参考帖事实。'
+              '未在 instructions 点名修改的句子、卖点条目、价格段、结尾和标签禁止改写、调序或同义替换。'
+              '若 instructions 只要求改标题/换标题/标题更有吸引力等，则正文与末尾标签必须与 source_text 逐字相同，只改第一行标题。'
+              f'标题第一行必须完整可读且不超过{limit}字（小红书20、闲鱼80）；宁可换短切口，也不截断半个词。'
+              '只返回JSON对象，text字段是完整Markdown文案，第一行是标题，随后是正文和标签。修改只影响当前文案版本。\n'
+              + preference)
+    user_payload = {key: data.get(key) for key in ('platform', 'model', 'source_text', 'brief', 'facts', 'instructions')}
+    last_error, last_usage = None, {}
+    for attempt in range(COPY_REVISION_RETRIES + 1):
+        messages = [
             {'role': 'system', 'content': prompt},
-            {'role': 'user', 'content': json.dumps({key: data.get(key) for key in
-              ('platform', 'model', 'source_text', 'brief', 'facts', 'instructions')}, ensure_ascii=False)}],
-        'max_tokens': 8000, 'temperature': 0.4, 'response_format': {'type': 'json_object'}
-    }, settings['CONTENT_OPS_API_KEY'], 180)
-    choice = response.get('choices', [{}])[0]
-    if choice.get('finish_reason') == 'length':
-        raise ValueError('改写文案被截断，原稿已保留；可缩短修改要求后重试')
-    raw = choice.get('message', {}).get('content', '').strip()
-    raw = re.sub(r'^```(?:json)?\s*|\s*```$', '', raw)
-    try:
-        text = json.loads(raw)['text']
-    except (ValueError, KeyError, TypeError):
-        raise ValueError('改写模型未返回完整文案，原稿已保留') from None
-    return {'text': validate_copy(text, data['platform'], data['model']),
-            'model': settings['CONTENT_OPS_TEXT_MODEL'], 'usage': response.get('usage', {})}
+            {'role': 'user', 'content': json.dumps(user_payload, ensure_ascii=False)},
+        ]
+        if attempt > 0:
+            messages.append({'role': 'user', 'content': json.dumps({
+                'retry': True,
+                'attempt': attempt,
+                'previous_error': str(last_error),
+                'title_limit': limit,
+                'instruction': (
+                    f'上一稿校验失败：{last_error}。请整篇重写当前文案；'
+                    f'标题必须≤{limit}字且意思完整，避开风险词；'
+                    '不要沿用超长标题；只返回JSON对象{"text":"完整Markdown文案"}。'
+                ),
+            }, ensure_ascii=False)})
+        try:
+            response = gateway.request_json(settings['CONTENT_OPS_BASE_URL'].rstrip('/') + '/chat/completions', {
+                'model': settings['CONTENT_OPS_TEXT_MODEL'], 'messages': messages,
+                'max_tokens': 8000, 'temperature': 0.4, 'response_format': {'type': 'json_object'}
+            }, settings['CONTENT_OPS_API_KEY'], 180)
+        except gateway.ImageGenerationError as error:
+            raise ValueError(f'改写请求失败：{error}；原稿已保留') from None
+        choice = response.get('choices', [{}])[0]
+        last_usage = response.get('usage', {})
+        if choice.get('finish_reason') == 'length':
+            last_error = ValueError('改写文案被截断，原稿已保留；可缩短修改要求后重试')
+            if attempt >= COPY_REVISION_RETRIES:
+                raise last_error
+            print(f'WARN: AI改写被截断，正在重出第 {attempt + 1}/{COPY_REVISION_RETRIES} 次…')
+            continue
+        raw = choice.get('message', {}).get('content', '').strip()
+        raw = re.sub(r'^```(?:json)?\s*|\s*```$', '', raw)
+        try:
+            text = json.loads(raw)['text']
+        except (ValueError, KeyError, TypeError):
+            last_error = ValueError('改写模型未返回完整文案，原稿已保留')
+            if attempt >= COPY_REVISION_RETRIES:
+                raise last_error from None
+            print(f'WARN: AI改写返回无法解析，正在重出第 {attempt + 1}/{COPY_REVISION_RETRIES} 次…')
+            continue
+        text = soft_fix_title(text, data['platform'], data['model'])
+        text = preserve_unedited_copy_parts(data.get('source_text', ''), text, data.get('instructions', ''))
+        try:
+            return {'text': validate_copy(text, data['platform'], data['model']),
+                    'model': settings['CONTENT_OPS_TEXT_MODEL'], 'usage': last_usage,
+                    'attempts': attempt + 1}
+        except ValueError as error:
+            last_error = error
+            if not is_copy_revision_retryable(error) or attempt >= COPY_REVISION_RETRIES:
+                raise
+            print(f'WARN: AI改写校验失败（{error}），正在重出第 {attempt + 1}/{COPY_REVISION_RETRIES} 次…')
+    raise last_error
 
 
 def multipart_request(url, fields, files, key, timeout=240):
