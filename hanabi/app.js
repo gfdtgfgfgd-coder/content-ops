@@ -238,11 +238,6 @@ function mountDocumentViews() {
         editor.querySelector('h1').hidden = true;
       }
     }
-    if(view==='rules'){
-      const editor=editors.get('persona');
-      const button=syncButton.cloneNode(true);button.addEventListener('click',()=>void openSpecSync({trigger:'manual'}));
-      editor.querySelector('.content-ops-editors').prepend(button);
-    }
     let active = defaultTabs[view] || docs[0][0], version = 0;
     const select = async (name = active, { restore = false } = {}) => {
       active = name; const request = ++version;
