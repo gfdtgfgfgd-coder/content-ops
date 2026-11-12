@@ -918,8 +918,9 @@ class PipelineTests(unittest.TestCase):
             self.assertIn('model_materials', content[0]['text'])
             self.assertIn('communication_brief', content[0]['text'])
             self.assertIn('art_direction', content[0]['text'])
-            self.assertIn('不得因缺少verified_claims就把用户简报', content[0]['text'])
-            self.assertIn('benefit/payoff', content[0]['text'])
+            self.assertIn('缺少verified_claims不得整段删掉', content[0]['text'])
+            self.assertIn('至少落一条简报短卖点', content[0]['text'])
+            self.assertIn('benefit或payoff', content[0]['text'])
             self.assertNotIn('reference_negative_prompt', content[0]['text'])
             self.assertNotIn('先拆解并锁死', content[0]['text'])
             self.assertIn('像素光标', content[0]['text'])
@@ -1151,6 +1152,22 @@ class PipelineTests(unittest.TestCase):
         ]
         self.assertTrue(copy.cover_reflects_brief(kept, brief))
         copy.validate_visual_plan(kept, 'GLM-5.3', 'xhs', '大字报', brief=brief)
+        # Info posters only have one benefit slot; one brief phrase is enough.
+        info = visual_plan(model='GLM-5.3', prompt='纯纸张便签，禁止3D物件、电脑和代码屏。')
+        info['collection_name'] = '上中下'
+        info['cover_texts'] = [
+            {'role': 'model', 'text': 'GLM-5.3', 'position': '1'},
+            {'role': 'benefit', 'text': '便宜量大', 'position': '2'},
+            {'role': 'feature', 'text': '代码编写', 'position': '3'},
+            {'role': 'feature', 'text': '安全审查', 'position': '4'},
+            {'role': 'feature', 'text': '长程任务', 'position': '5'},
+            {'role': 'feature', 'text': '文档处理', 'position': '6'},
+        ]
+        dual = '便宜量大、便宜快速'
+        self.assertEqual(copy.brief_cover_phrases(dual), ['便宜量大', '便宜快速'])
+        self.assertTrue(copy.cover_reflects_brief(info, dual))
+        copy.validate_visual_plan(info, 'GLM-5.3', 'xhs', '上中下', brief=dual)
+        self.assertTrue(copy.is_visual_rewrite_error(ValueError('封面短字未体现用户简报中的卖点')))
 
     def test_visual_plan_layout_ordinals_do_not_trigger_advertising_risks(self):
         instructions=(
@@ -1314,10 +1331,12 @@ class PipelineTests(unittest.TestCase):
         def generate(*,output,**kwargs):
             Image.new('RGB',(1080,1440)).save(output)
             return {'width':1080,'height':1440,'bytes':len(output.read_bytes()),'sha256':__import__('hashlib').sha256(output.read_bytes()).hexdigest()}
+        plan = visual_plan()
+        plan['cover_texts'][1]['text'] = '便宜量大'  # lands the user brief sell-point after the paid vision mock
         with patch.object(copy,'ROOT',self.base),patch.object(copy,'load_posts',return_value=[row]), \
              patch.object(gateway,'load_config',return_value=settings), \
              patch.object(copy,'claude_call',return_value=({'posts':[structured_post()]},{})) as text, \
-             patch.object(copy,'visual_prompt_call',return_value=(visual_plan(),{'model':'offline-vision'})) as vision, \
+             patch.object(copy,'visual_prompt_call',return_value=(plan,{'model':'offline-vision'})) as vision, \
              patch.object(gateway,'generate_image',side_effect=gateway.ImageGenerationError('offline failure')) as images,redirect_stdout(io.StringIO()):
             self.assertEqual(copy.main(argv),1)
             manifest_path=self.base/'batch/manifest.json'
@@ -1774,6 +1793,32 @@ class RevisionTests(unittest.TestCase):
         self.assertIn('用户简报',payload['messages'][1]['content'])
         self.assertIn('内容',payload['messages'][0]['content'])
         self.assertEqual(result['text'],'# 改写标题\n\n原始卖点')
+        self.assertEqual(result['attempts'], 1)
+
+    def test_ai_copy_retries_when_title_too_long_then_succeeds(self):
+        data = {'kind':'copy','action':'ai','platform':'xhs','model':'GLM5.3','source_text':'# 原标题\n\n原始卖点',
+                'instructions':'标题更吸睛', 'brief':'用户简报', 'facts':{'verified_claims':[]}}
+        long_title = '# ' + '超长标题字' * 6 + '\n\n原始卖点'
+        short = '# 好价来了速安排\n\n原始卖点'
+        responses = [
+            {'choices':[{'message':{'content':json.dumps({'text':long_title},ensure_ascii=False)}}]},
+            {'choices':[{'message':{'content':json.dumps({'text':short},ensure_ascii=False)}}],'usage':{'total_tokens':12}},
+        ]
+        with patch.object(gateway,'request_json',side_effect=responses) as call, redirect_stdout(io.StringIO()) as stdout:
+            result=self.revision.run(data,self.settings)
+        self.assertEqual(call.call_count, 2)
+        self.assertEqual(result['text'], short)
+        self.assertEqual(result['attempts'], 2)
+        retry_payload = call.call_args_list[1].args[1]
+        self.assertEqual(len(retry_payload['messages']), 3)
+        self.assertIn('标题过长', retry_payload['messages'][2]['content'])
+        self.assertIn('重出第 1/2 次', stdout.getvalue())
+
+        always_long = {'choices':[{'message':{'content':json.dumps({'text':long_title},ensure_ascii=False)}}]}
+        with patch.object(gateway,'request_json',return_value=always_long) as stuck, redirect_stdout(io.StringIO()):
+            with self.assertRaisesRegex(ValueError, '标题过长'):
+                self.revision.run(data,self.settings)
+        self.assertEqual(stuck.call_count, 3)
 
     def test_prompt_regeneration_submits_exact_prompt_without_copy_vision_or_image_edit(self):
         for platform in ('xhs','xianyu'):
