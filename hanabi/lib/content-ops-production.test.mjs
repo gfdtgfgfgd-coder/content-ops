@@ -14,6 +14,12 @@ import { appendSelectionToInstructions } from './content-ops-revision-ui.mjs';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const input = {model:'Kimi K3.1 Pro',platform:'xhs',count:1,backgroundMode:'fresh',requestId:'offline-test-123'};
 
+test('revision adopt emits spec-sync on document so the sync dialog receives it', async () => {
+  const source = await readFile(new URL('./content-ops-revision-ui.mjs', import.meta.url), 'utf8');
+  assert.match(source, /document\.dispatchEvent\(new CustomEvent\('content-ops:spec-sync'/u);
+  assert.equal((source.match(/window\.dispatchEvent\(new CustomEvent\('content-ops:spec-sync'/ug) || []).length, 0);
+});
+
 test('revision selection appends quoted excerpt into AI instructions and truncates at limit', () => {
   assert.deepEqual(appendSelectionToInstructions('', '  标题更口语  '), {
     value: '针对这段：\n「标题更口语」',
@@ -234,8 +240,17 @@ test('spec sync apply rebuilds the bundle and commits only the canonical spec an
   const editor=new ContentOpsEditor({root:dir,run:(command,args,options)=>editorCommand(command,args,{
     ...options,env:{...process.env,PYTHONPATH:join(root,'scratch/.venv/lib/python3.11/site-packages')}
   })});
-  const result=await editor.applySpecSync({updatedContent:updated,revision:createHash('sha256').update(original).digest('hex'),summary:'测试确认写入'});
+  await assert.rejects(
+    ()=>editor.applySpecSync({updatedContent:updated,revision:createHash('sha256').update(original).digest('hex'),summary:'测试确认写入',unexpected:true}),
+    /编辑参数无效/
+  );
+  await assert.rejects(
+    ()=>editor.applySpecSync({updatedContent:updated,revision:createHash('sha256').update(original).digest('hex'),summary:'测试确认写入',targetDoc:'other'}),
+    /同步目标无效/
+  );
+  const result=await editor.applySpecSync({updatedContent:updated,revision:createHash('sha256').update(original).digest('hex'),summary:'测试确认写入',targetDoc:'content-spec'});
   assert.equal(result.ok,true);
+  assert.equal(result.targetDoc,'content-spec');
   assert.match(result.content,/最近更新时间：/u);
   assert.equal(execFileSync('git',['-C',dir,'status','--porcelain'],{encoding:'utf8'}),'');
   const committed=execFileSync('git',['-C',dir,'show','--pretty=format:','--name-only','HEAD'],{encoding:'utf8'}).trim().split('\n').sort();

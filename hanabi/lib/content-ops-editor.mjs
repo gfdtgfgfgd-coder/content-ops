@@ -376,8 +376,10 @@ export class ContentOpsEditor {
     return {summary:result.summary,updatedContent:result.updatedContent,revision:hash(spec),before:spec,targetDoc:'content-spec',trigger:input.trigger,addedItem:input.addedItem||null};
   }
   async applySpecSync(input){
-    fields(input,['updatedContent','revision','summary']);
+    // Frontend always sends targetDoc from the analyze draft; reject unknown keys only.
+    fields(input,['updatedContent','revision','summary','targetDoc']);
     const targetDoc=input.targetDoc||'content-spec';
+    if(!['content-spec','model-corpus'].includes(targetDoc))throw fail('同步目标无效。');
     if(targetDoc==='model-corpus'){
       if(typeof input.updatedContent!=='string'||Buffer.byteLength(input.updatedContent)>240000||!/^#\s/m.test(input.updatedContent)||!/^[0-9a-f]{64}$/u.test(input.revision||'')||input.summary!==undefined&&(typeof input.summary!=='string'||input.summary.length>4000))throw fail('语料草案或版本无效。');
       return this.serialize(async()=>{const root=await this.root(),unlock=await this.lock(root);let oldCorpus,written=false,committed=false;try{

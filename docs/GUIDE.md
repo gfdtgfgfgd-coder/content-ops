@@ -179,7 +179,7 @@ AI 底图接近纯色时记录 `flat_ai_background=true`，补足本机材质，
 
 素材顺序以文件为唯一源：初始按 JSONL 倒序展示，原生拖拽手柄或 ↑/↓ 触发 250ms 合并保存；全部合集/未分类通过 `POST /api/content-ops/references/reorder`（`{platform,ids}`）重排 `data/posts.jsonl`，只替换所选素材槽位、保留其他平台或隐藏素材的位置。自定义合集通过 `PUT /api/content-ops/collections/:id` 更新 `reference_ids`（`platform:id`），仅改变该合集的顺序。合集 CRUD 使用 `/api/content-ops/collections`（GET/POST）与 `/:id`（PUT/DELETE）；两种写入复用本机同源校验、存储锁、临时文件 fsync 与原子 rename，不创建排序缓存。
 
-原料库包含运营偏好和风险词库。两者只增不删：运营偏好基于 persona 标准、反例和已去敏反馈摘录；风险词直接追加到 YAML。新增条目会保存源数据并调用规则提炼分析模型，打开操作规范确认面板。也可在原料库或操作规范点击「同步原料库」进行全量比对。确认后写入 `rules/content-spec.md`、重建偏好包并提交；取消只放弃规范草案，不回滚已成功保存的原料。修改建议可多轮重新分析。
+原料库包含运营偏好和风险词库。两者只增不删：运营偏好基于 persona 标准、反例和已去敏反馈摘录；风险词直接追加到 YAML。新增条目会保存源数据并调用规则提炼分析模型，打开操作规范确认面板。也可在原料库或操作规范点击「同步原料库」进行全量比对。确认后写入 `rules/content-spec.md`、重建偏好包并提交；取消只放弃规范草案，不回滚已成功保存的原料。修改建议可多轮重新分析。`/api/content-ops/spec-sync/apply` 允许字段为 `updatedContent` / `revision` / `summary` / `targetDoc`（`content-spec` 或 `model-corpus`）；前端确认同步会带上分析草案的 `targetDoc`，服务端不得因该字段报「编辑参数无效」。
 
 操作规范下提供《内容生产规范》《系统操作手册》和只读《模型语料库》。内容生产规范是业务规则唯一文档；系统手册只说明操作和工程治理；语料库供创作参考，不覆盖事实或规范。
 
