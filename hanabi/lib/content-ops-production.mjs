@@ -53,7 +53,7 @@ export function validateContentOpsInput(body, defaults = {}) {
 }
 
 export class ContentOpsProduction {
-  constructor({ db, root, uploadDir, spawnProcess = spawn }) { Object.assign(this, { db, root: resolve(root), uploadDir, spawnProcess }); this.active = null; this.resumeTasks = new Map();
+  constructor({ db, root, uploadDir, spawnProcess = spawn }) { Object.assign(this, { db, root: resolve(root), uploadDir, spawnProcess }); this.active = new Map(); this.resumeTasks = new Map();
     // Existing installations retain batches; add optional columns in place.
     const columns = new Set(db.prepare('PRAGMA table_info(content_ops_batches)').all().map(column => column.name));
     if (!columns.has('brief')) db.exec("ALTER TABLE content_ops_batches ADD COLUMN brief TEXT NOT NULL DEFAULT ''");
@@ -87,7 +87,7 @@ export class ContentOpsProduction {
     const config = await this.config();
     const input = validateContentOpsInput(body, config), prior = this.db.prepare('SELECT * FROM content_ops_batches WHERE request_id=?').get(input.requestId);
     if (prior) { if ((prior.brief || '') !== input.brief || prior.model !== input.model || (prior.corpus_model || prior.model) !== input.corpusModel || prior.platform !== input.platform || (prior.copy_format || 'all_variations') !== input.copyFormat || (prior.copy_multiplier ?? 1) !== input.copyMultiplier || prior.count !== input.count || prior.background_mode !== input.backgroundMode || (prior.style_mode || 'auto') !== input.styleMode || (prior.style_preset || '') !== input.stylePreset || (prior.style_prompt || '') !== input.stylePrompt || !sameRefs(parse(prior.reference_ids, []), input.references)) throw fail('同一请求标识的内容已改变，请另起一批。', 409); return { batch: this.public(prior), reused: true }; }
-    if (this.db.prepare("SELECT 1 FROM content_ops_batches WHERE status='running'").get()) throw fail('已有一批图文正在生成，请完成或停止后再开始。', 409);
+    // Multiple batches may run at once (e.g. model A still generating while model B starts).
     if (!config.available || !config.configured) throw fail('本机生成脚本或公司网关尚未配置。', 503); if (input.backgroundMode === 'cached' && !config.cachedAvailable) throw fail('本机缓存背景不存在，请恢复背景文件或选择生成新背景。', 409);
     const id = randomUUID(), time = now(), date = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai' }).format(new Date()), outputDir = join(this.root, 'outputs', date, 'hanabi', id), jobIds = [];
     this.db.exec('BEGIN IMMEDIATE'); try { for (let position = 1; position <= input.count; position++) { const jobId = randomUUID(); jobIds.push(jobId); this.db.prepare("INSERT INTO analysis_jobs(id,batch_id,position,status,result,error,progress,progress_message,attachments,created_at,updated_at) VALUES(?,?,?,'analyzing','','',1,'正在生成文案','[]',?,?)").run(jobId, id, position, time, time); } this.db.prepare("INSERT INTO content_ops_batches(id,request_id,model,corpus_model,platform,count,background_mode,style_mode,style_preset,style_prompt,copy_format,copy_multiplier,reference_ids,brief,status,job_ids,output_dir,error,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,'running',?,?,?, ?,?)").run(id, input.requestId, input.model, input.corpusModel, input.platform, input.count, input.backgroundMode, input.styleMode, input.stylePreset, input.stylePrompt, input.copyFormat, input.copyMultiplier, JSON.stringify(input.references), input.brief, JSON.stringify(jobIds), outputDir, '', time, time); this.db.exec('COMMIT'); } catch (error) { try { this.db.exec('ROLLBACK'); } catch {} throw error; }
@@ -104,7 +104,6 @@ export class ContentOpsProduction {
     const row = this.get(id);
     if (row.status === 'running' || row.status === 'completed') return { batch:this.public(row), reused:true };
     if (!['failed','partial'].includes(row.status) || !this.public(row).resumable) throw fail('这批尚无完整可复用文案，请另做一批。');
-    if (this.db.prepare("SELECT 1 FROM content_ops_batches WHERE status='running'").get()) throw fail('已有一批图文正在生成，请稍后继续。',409);
     const manifest = JSON.parse(await readFile(join(row.output_dir,'manifest.json'),'utf8'));
     if (manifest.product_model !== row.model || manifest.platform !== row.platform) throw fail('原始生成记录与批次不一致，未发起模型调用。');
     // Append a recovery snapshot beside the local history, preserving every exported original.
@@ -123,7 +122,9 @@ export class ContentOpsProduction {
     await writeFile(join(outputDir,'manifest.json'),JSON.stringify(manifest,null,2));
     this.db.exec('BEGIN IMMEDIATE');
     try {
-      if (this.db.prepare("SELECT 1 FROM content_ops_batches WHERE status='running'").get() || this.get(id).output_dir !== row.output_dir) throw fail('批次状态已改变，请重新读取后继续。',409);
+      // Only this batch's race matters; other models may already be generating.
+      const latest = this.get(id);
+      if (latest.status === 'running' || latest.output_dir !== row.output_dir) throw fail('批次状态已改变，请重新读取后继续。',409);
       this.db.prepare("UPDATE content_ops_batches SET output_dir=?,status='running',error='',updated_at=? WHERE id=?").run(outputDir,now(),id);
       this.db.prepare("UPDATE analysis_jobs SET status='analyzing',error='',progress_message='复用已有结果，仅继续未完成阶段',updated_at=? WHERE batch_id=? AND status!='completed'").run(now(),id);
       this.db.exec('COMMIT');
@@ -132,7 +133,7 @@ export class ContentOpsProduction {
     return { batch:this.public(this.get(id)), reused:false };
   }
   async run(id, { resume = false } = {}) {
-    const row = this.get(id), python = [join(this.root, 'scratch/.venv/bin/python'), join(this.root, '.venv/bin/python')].find(path => existsSync(path)) || 'python3', args = [join(this.root, 'scripts/generate.py'), 'copy', '--model', row.model, '--corpus-model', row.corpus_model || row.model, '--platform', row.platform, '--count', String(row.count), '--copy-format', row.copy_format || 'all_variations', '--copy-multiplier', String(row.copy_multiplier ?? 1), '--output', row.output_dir, '--config', gatewayEnvPath(this.root), '--brief', row.brief || '', '--style-mode', row.style_mode || 'auto'], refs = parse(row.reference_ids, []), referenceFile = this.referencePath(id), current = { id, child: null, stopped: false, message: '', stderr: '' }; this.active = current;
+    const row = this.get(id), python = [join(this.root, 'scratch/.venv/bin/python'), join(this.root, '.venv/bin/python')].find(path => existsSync(path)) || 'python3', args = [join(this.root, 'scripts/generate.py'), 'copy', '--model', row.model, '--corpus-model', row.corpus_model || row.model, '--platform', row.platform, '--count', String(row.count), '--copy-format', row.copy_format || 'all_variations', '--copy-multiplier', String(row.copy_multiplier ?? 1), '--output', row.output_dir, '--config', gatewayEnvPath(this.root), '--brief', row.brief || '', '--style-mode', row.style_mode || 'auto'], refs = parse(row.reference_ids, []), referenceFile = this.referencePath(id), current = { id, child: null, stopped: false, message: '', stderr: '' }; this.active.set(id, current);
     if (resume) args.push('--resume');
     if ((row.style_mode || 'auto') === 'manual') { if (row.style_preset) args.push('--style-preset', row.style_preset); if (row.style_prompt) args.push('--style-prompt', row.style_prompt); }
     try { if (refs.length) { await mkdir(join(this.root, 'scratch', 'hanabi-runtime'), { recursive: true }); await writeFile(referenceFile, JSON.stringify(refs)); args.push('--references', referenceFile); } if (row.background_mode === 'cached') args.push('--background', this.backgroundPath()); const child = this.spawnProcess(python, args, { cwd: this.root, env: process.env, stdio: ['ignore', 'pipe', 'pipe'], shell: false }); current.child = child; child.stderr.on('data', chunk => { current.stderr = (current.stderr + chunk.toString()).slice(-4000); }); child.stdout.on('data', () => this.db.prepare("UPDATE analysis_jobs SET progress=40,progress_message='文案已保存，正在完成图片',updated_at=? WHERE batch_id=? AND status='analyzing'").run(now(), id)); child.once('error', error => void this.finish(id, 1, error.message)); child.once('close', code => void this.finish(id, code ?? 1, current.stopped ? current.message : current.stderr)); } catch (error) { await this.finish(id, 1, error.message); }
@@ -170,9 +171,9 @@ export class ContentOpsProduction {
       if (ok) completed++;
       this.db.prepare('UPDATE analysis_jobs SET status=?,result=?,copies=?,error=?,progress=?,progress_message=?,attachments=?,updated_at=? WHERE id=?').run(ok ? 'completed' : 'failed', text, JSON.stringify(copies), ok ? '' : message.slice(0, 1800), ok ? 100 : 0, ok ? '图文已保存到燃放预览' : copies.length || attachment ? '生成未完成，已保留部分结果' : '生成失败，尚无可用图文结果', JSON.stringify(attachment ? [attachment] : []), now(), job.id);
     }
-    const status = completed === row.count ? 'completed' : completed ? 'partial' : 'failed'; this.db.prepare('UPDATE content_ops_batches SET status=?,error=?,updated_at=? WHERE id=?').run(status, status === 'completed' ? '' : `${completed}/${row.count} 张封面组完成；${generationError || firstProblem || '生成未完成'}`.slice(0, 1800), now(), id); if (this.active?.id === id) this.active = null; await rm(this.referencePath(id), { force: true });
+    const status = completed === row.count ? 'completed' : completed ? 'partial' : 'failed'; this.db.prepare('UPDATE content_ops_batches SET status=?,error=?,updated_at=? WHERE id=?').run(status, status === 'completed' ? '' : `${completed}/${row.count} 张封面组完成；${generationError || firstProblem || '生成未完成'}`.slice(0, 1800), now(), id); if (this.active.get(id)?.id === id) this.active.delete(id); await rm(this.referencePath(id), { force: true });
   }
   async recover() { for (const row of this.db.prepare("SELECT * FROM content_ops_batches WHERE status='running'").all()) await this.finish(row.id, 1, '服务已重启，收费任务不会自动重跑。'); }
-  stop(id) { const row = this.get(id); if (row.status === 'running' && this.active?.id === id) { this.active.stopped = true; this.active.message = '用户已停止；已完成文件保留。'; this.active.child?.kill('SIGTERM'); } return this.public(row); }
-  async shutdown() { if (!this.active) return; this.active.stopped = true; this.active.message = '服务已停止；已有文件保留。'; this.active.child?.kill('SIGTERM'); }
+  stop(id) { const row = this.get(id); const current = this.active.get(id); if (row.status === 'running' && current) { current.stopped = true; current.message = '用户已停止；已完成文件保留。'; current.child?.kill('SIGTERM'); } return this.public(row); }
+  async shutdown() { for (const current of this.active.values()) { current.stopped = true; current.message = '服务已停止；已有文件保留。'; current.child?.kill('SIGTERM'); } }
 }

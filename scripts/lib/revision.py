@@ -264,7 +264,8 @@ def revise_copy(data, settings):
     if data['action'] == 'manual':
         return {'text': validate_copy(data.get('text'), data['platform'], data['model'])}
     from .preferences import load_preferences
-    preference, _, _, _, _ = load_preferences(ROOT/'data/distilled-preferences.json', data['platform'], 26000)
+    # content-spec + persona after GLM evidence gates and Q59–Q62 updates need a bit more room than the old 26k hard cap.
+    preference, _, _, _, _ = load_preferences(ROOT/'data/distilled-preferences.json', data['platform'], 28000)
     limit = title_limit(data['platform'])
     prompt = ('修改下方这一篇文案，保留未要求修改的事实、型号、价格和信息。'
               '只允许使用原文、当前简报、已核验事实和用户本次明确提供的资料，不新增实测、库存或效果承诺。'

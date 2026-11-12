@@ -192,33 +192,70 @@ test('connections rejects malformed/injected config before file mutation or upst
   assert.equal(calls,0);
 });
 
-test('spec analysis uses the configured analysis model and carries source, prior draft, and user feedback across rounds', async t => {
+test('spec analysis uses patch ops, skips full rewrites, and keeps incremental prompts lean', async t => {
   const dir=await mkdtemp(join(root,'scratch/spec-analysis-'));
   t.after(()=>rm(dir,{recursive:true,force:true}));
   execFileSync('git',['clone','--quiet','--shared',root,dir]);
   await mkdir(join(dir,'scratch'),{recursive:true});
   await writeFile(join(dir,'scratch/gateway.env'),'CONTENT_OPS_BASE_URL=https://analysis.invalid/v1\nCONTENT_OPS_API_KEY=fake-key-only\nCONTENT_OPS_ANALYSIS_MODEL=analysis-test\n');
   const spec=await readFile(join(dir,'rules/content-spec.md'),'utf8');
+  const marker='先确认任务事实、目标平台和账号身份，再开始写稿。';
   const calls=[];
   const editor=new ContentOpsEditor({root:dir,fetchRequest:async(url,init)=>{
     calls.push({url,init});
     const request=JSON.parse(init.body), prompt=request.messages[0].content;
-    return Response.json({choices:[{message:{content:JSON.stringify({summary:`round-${calls.length}`,updatedContent:spec})}}]});
+    assert.equal(request.max_tokens,4000);
+    assert.equal(request.response_format?.type,'json_object');
+    assert.match(prompt,/不要返回完整/u);
+    if(calls.length===1){
+      assert.match(prompt,/示例新增偏好/u);
+      assert.doesNotMatch(prompt,/运营偏好原料：/u);
+      return Response.json({choices:[{message:{content:JSON.stringify({summary:'round-1',ops:[{op:'replace',old:marker,new:marker+' 补丁测试。'}]})}}]});
+    }
+    if(calls.length===2){
+      assert.match(prompt,/风险词原料/u);assert.match(prompt,/当前底稿/u);assert.match(prompt,/保留原有章节，语气更简洁/u);
+      assert.doesNotMatch(prompt,/上一版草案/u);
+      return Response.json({choices:[{message:{content:JSON.stringify({summary:'round-2',ops:[]})}}]});
+    }
+    assert.match(prompt,/最终采纳的文案改稿|开头别用问句/u);
+    return Response.json({choices:[{message:{content:JSON.stringify({summary:'round-3',ops:[]})}}]});
   }});
   const first=await editor.analyzeSpecSync({trigger:'persona_add',addedItem:{id:'Q999',text:'示例新增偏好'}});
   assert.equal(first.summary,'round-1');assert.equal(first.before,spec);assert.equal(calls.length,1);
   assert.equal(calls[0].url,'https://analysis.invalid/v1/chat/completions');
   assert.equal(JSON.parse(calls[0].init.body).model,'analysis-test');
-  assert.match(JSON.parse(calls[0].init.body).messages[0].content,/示例新增偏好/u);
+  assert.match(first.updatedContent,/补丁测试/u);
+  assert.notEqual(first.updatedContent,spec);
   const second=await editor.analyzeSpecSync({trigger:'manual',previousDraft:first.updatedContent,feedback:'保留原有章节，语气更简洁'});
   assert.equal(second.summary,'round-2');assert.equal(calls.length,2);
-  const secondPrompt=JSON.parse(calls[1].init.body).messages[0].content;
-  assert.match(secondPrompt,/上一版草案/u);assert.match(secondPrompt,/保留原有章节，语气更简洁/u);
-  assert.match(secondPrompt,/风险词原料/u);assert.match(secondPrompt,/当前内容生产规范/u);
+  assert.equal(second.updatedContent,first.updatedContent);
   const third=await editor.analyzeSpecSync({trigger:'copy_adopt',addedItem:{action:'ai',instructions:'开头别用问句',adoptedText:'# 定稿\n\n正文'}});
-  assert.equal(third.summary,'round-3');assert.equal(third.trigger,'copy_adopt');
+  assert.equal(third.summary,'round-3');assert.equal(third.trigger,'copy_adopt');assert.equal(calls.length,3);
   assert.match(JSON.parse(calls[2].init.body).messages[0].content,/最终采纳的文案改稿|开头别用问句/u);
   assert.match(editor.formatCopyAdoptQuote({action:'ai',instructions:'开头别用问句\n价格克制'}),/改稿采纳（AI改稿定稿）：开头别用问句 价格克制/u);
+});
+
+test('corpus gap analysis only sends the matching section and applies append patches locally', async t => {
+  const dir=await mkdtemp(join(root,'scratch/corpus-analysis-'));
+  t.after(()=>rm(dir,{recursive:true,force:true}));
+  execFileSync('git',['clone','--quiet','--shared',root,dir]);
+  await mkdir(join(dir,'scratch'),{recursive:true});
+  await writeFile(join(dir,'scratch/gateway.env'),'CONTENT_OPS_BASE_URL=https://analysis.invalid/v1\nCONTENT_OPS_API_KEY=fake-key-only\nCONTENT_OPS_ANALYSIS_MODEL=analysis-test\n');
+  const corpus=await readFile(join(dir,'data/model-corpus.md'),'utf8');
+  const calls=[];
+  const editor=new ContentOpsEditor({root:dir,fetchRequest:async(url,init)=>{
+    calls.push(JSON.parse(init.body).messages[0].content);
+    assert.match(calls[0],/# 一、GLM/u);
+    assert.doesNotMatch(calls[0],/^# 二、Kimi/mu);
+    assert.ok(calls[0].length<120000);
+    return Response.json({choices:[{message:{content:JSON.stringify({summary:'缺口一条',ops:[{op:'append',text:'# 测试专节\n\n仅用于离线补丁。'}]})}}]});
+  }});
+  const result=await editor.analyzeSpecSync({trigger:'corpus_gap',addedItem:{displayModel:'GLM-5.3',corpusModel:'GLM-5.3',kind:'copy',adoptedText:'示例'}});
+  assert.equal(result.summary,'缺口一条');
+  assert.equal(result.before,corpus);
+  assert.match(result.updatedContent,/# 测试专节\n\n仅用于离线补丁。/u);
+  assert.ok(result.updatedContent.length>corpus.length);
+  assert.equal(calls.length,1);
 });
 
 test('spec sync apply rebuilds the bundle and commits only the canonical spec and derived bundle', async t => {
@@ -1175,6 +1212,25 @@ test('manifest failure survives a missing stderr',async t=>{
   const saved=production.public(production.get(batch.id));
   assert.match(saved.posts[0].error,/^视觉模型请求网络超时/);
   assert.match(saved.error,/视觉模型请求网络超时/);
+});
+
+test('a second model batch can start while the first is still running',async t=>{
+  const {production,captured}=await productionFixture(t);
+  const first=await production.create({...input,requestId:'concurrent-first-123',model:'GLM-5.3',count:3,copyMultiplier:3});
+  assert.equal(first.batch.status,'running');
+  assert.equal(first.batch.copyCount,9);
+  const second=await production.create({...input,requestId:'concurrent-second-123',model:'Kimi K3.1 Pro',count:2,copyMultiplier:2});
+  assert.equal(second.batch.status,'running');
+  assert.notEqual(first.batch.id,second.batch.id);
+  assert.equal(production.get(first.batch.id).status,'running');
+  assert.equal(production.get(second.batch.id).status,'running');
+  assert.equal(captured.length,2);
+  assert.equal(production.active.size,2);
+  assert.ok(production.active.has(first.batch.id));
+  assert.ok(production.active.has(second.batch.id));
+  production.stop(first.batch.id);
+  assert.equal(production.active.get(first.batch.id).stopped,true);
+  assert.equal(production.active.get(second.batch.id).stopped,false);
 });
 
 test('selected copy switches body and tags, falls back for legacy posts, renders safe bold',async()=>{
