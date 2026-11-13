@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "distilled_at": "2026-11-12",
+  "distilled_at": "2026-11-13",
   "sources": [
     "simin-persona",
     "risk-words",
@@ -15,12 +15,12 @@
   ],
   "source_hashes": {
     "skills/simin-persona/SKILL.md": {
-      "sha256": "d1476e0f39894842290fdfc9e536372685d6d2711b64e2ae7651c3f4cf783bee",
-      "bytes": 27651
+      "sha256": "a79d0cd7e1dcaa65c085c503c0654d7d092eb85571a41c0b98c90c79261a5506",
+      "bytes": 28144
     },
     "data/wecom/simin-feedback.jsonl": {
-      "sha256": "0d38723e7a0105269ca80a272162dbc980c0834202d8a32d7f1858f055fc6d4b",
-      "bytes": 23542
+      "sha256": "1e48c01113306aab052199d46e74f9ad8561af648e7884fe52ac5e3c97734c4d",
+      "bytes": 24135
     },
     "data/wecom/risk-words.md": {
       "sha256": "1db1c0cb58032ff0e1c89b65676645699f8e795d2d45c075fea901b42734486d",
@@ -465,6 +465,11 @@
         "id": "Q65",
         "date": "2026-11-12",
         "quote": "改稿采纳（AI改稿定稿）：针对这段： 「便宜接入」和 针对这段： 「便宜量大接入使用」重合"
+      },
+      {
+        "id": "Q66",
+        "date": "2026-11-13",
+        "quote": "改稿采纳（AI改稿定稿）：针对这段： 「算力」尽量别用这个词 针对这段： 「🛡️ 架构逻辑推演：梳理多层级调用关系，定位潜在的设计冲突。 💻 模块代码编写：根据需求拆解单元，逐步输出对应实现。 🧩 跨文件异常定位：关联上下文核对，找出深层报错根源。 📖 长程任务跟进：吃透整体架构约束，按步骤推进长流程。」似乎不是主要卖点"
       }
     ],
     "evidence_limit": "截至客户端当前可加载最早端的记录，未证明更早历史不存在；不代表思敏全部偏好。"
